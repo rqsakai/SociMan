@@ -85,3 +85,53 @@ export function setPasswordForm({ passwordMinLength, passwordMaxLength }: Passwo
   return z.object({ provisionalPassword: passwordField(passwordMinLength, passwordMaxLength) });
 }
 export type SetPasswordForm = z.infer<ReturnType<typeof setPasswordForm>>;
+
+// Perfis e contas (specs/003-contas-sociais): os mesmos limites do backend (data-model.md).
+const perfilStatusField = z.enum(["em_preparacao", "ativo", "pausado"]);
+const perfilDataFields = {
+  name: z.string().trim().min(1, "Informe o nome").max(80, "O nome pode ter no máximo 80 caracteres"),
+  niche: z.string().trim().max(200, "O nicho pode ter no máximo 200 caracteres"),
+  bio: z.string().trim().max(2000, "A descrição pode ter no máximo 2000 caracteres"),
+  language: z.string().regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, "Idioma inválido"),
+  status: perfilStatusField,
+};
+
+export const editPerfilForm = z.object(perfilDataFields);
+export type EditPerfilForm = z.infer<typeof editPerfilForm>;
+
+export const createPerfilForm = z.object({
+  ...perfilDataFields,
+  slug: z
+    .string()
+    .trim()
+    .min(2, "O identificador precisa ter pelo menos 2 caracteres")
+    .max(60, "O identificador pode ter no máximo 60 caracteres")
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Use só minúsculas, números e hífen (ex.: a-taverna-nerd)"),
+});
+export type CreatePerfilForm = z.infer<typeof createPerfilForm>;
+
+const contaStatusField = z.enum(["planejada", "ativa", "pausada", "encerrada"]);
+const platformField = z.enum(["tiktok", "youtube", "instagram", "kwai", "facebook", "x", "outra"]);
+
+// "@ ou link": um link (http/https) vira `url` e a API extrai o @; o resto vira `handle`.
+export const contaForm = z
+  .object({
+    platform: platformField,
+    platformName: z.string().trim().max(40, "O nome da plataforma pode ter no máximo 40 caracteres"),
+    handleOrUrl: z.string().trim().min(1, "Informe o @ ou o link").max(500, "Texto longo demais"),
+    status: contaStatusField,
+    notes: z.string().trim().max(500, "A observação pode ter no máximo 500 caracteres"),
+  })
+  .refine((data) => data.platform !== "outra" || data.platformName.length > 0, {
+    message: "Informe o nome da plataforma",
+    path: ["platformName"],
+  })
+  .refine((data) => data.platform !== "outra" || isUrl(data.handleOrUrl), {
+    message: "Em “Outra”, cole o link da conta",
+    path: ["handleOrUrl"],
+  });
+export type ContaForm = z.infer<typeof contaForm>;
+
+export function isUrl(value: string): boolean {
+  return /^https?:\/\/\S+$/i.test(value.trim());
+}

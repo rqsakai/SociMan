@@ -35,6 +35,16 @@ class Settings(BaseSettings):
     smtp_timeout: int = 5
     app_url: str = "http://localhost:8180"
 
+    # Imagens (spec 003): MinIO (bucket privado) + imgproxy (derivados em /img).
+    s3_endpoint: str = "minio:9000"
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
+    s3_bucket: str = "sociman"
+    s3_secure: bool = False
+    imgproxy_key: str | None = None  # hex; sem key/salt as URLs são "unsafe" (só dev)
+    imgproxy_salt: str | None = None
+    img_public_path: str = "/img"
+
     @model_validator(mode="after")
     def _jwt_secret(self) -> "Settings":
         if self.jwt_secret and len(self.jwt_secret) >= 32:

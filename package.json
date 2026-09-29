@@ -14,6 +14,7 @@
     "dev:web": "npm run dev -w @sociman/web",
     "build": "npm run build -w @sociman/web",
     "typecheck": "tsc -p packages/contract && tsc -p apps/web",
+    "test:api": "sh scripts/test-api.sh",
     "test:e2e": "playwright test",
     "preview:csp": "npm run build -w @sociman/web && npm run preview -w @sociman/web",
     "check:bundle": "node scripts/check-bundle.mjs",

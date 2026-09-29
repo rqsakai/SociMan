@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { crc32, deflateSync } from "node:zlib";
 import { expect, type Page } from "@playwright/test";
 import { BASE_URL, MAILPIT_URL, OWNER } from "./fixtures";
 
@@ -178,4 +179,33 @@ export async function createVerifiedMember(page: Page, member: Member = newMembe
   await changeProvisionalPassword(page, member);
   await logout(page);
   return member;
+}
+
+// --- imagens ---
+
+// PNG RGB válido de `width`×`height`, montado em memória (sem dependência nova):
+// assinatura + IHDR + IDAT (linhas com filtro 0, deflate) + IEND.
+export function pngBuffer(width: number, height: number): Buffer {
+  const chunk = (type: string, data: Buffer): Buffer => {
+    const typeAndData = Buffer.concat([Buffer.from(type, "ascii"), data]);
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(typeAndData));
+    return Buffer.concat([len, typeAndData, crc]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; // bits por canal
+  ihdr[9] = 2; // RGB
+  const row = Buffer.alloc(1 + width * 3);
+  for (let x = 0; x < width; x++) row.set([200, 60, (x * 255) / width], 1 + x * 3);
+  const raw = Buffer.concat(Array.from({ length: height }, () => row));
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk("IHDR", ihdr),
+    chunk("IDAT", deflateSync(raw)),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
 }

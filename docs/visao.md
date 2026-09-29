@@ -50,7 +50,13 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    - **O service worker guarda só os arquivos da interface** (sem `/api`, sem tokens). Tem a tela
      "Sem conexão" e o aviso de versão nova.
    - **iPhone:** melhor esforço.
-3. `003-contas-sociais`: CRUD de contas, com upload de logo e banner (MinIO + imgproxy).
+3. `003-contas-sociais` ✅ **implementada** (`specs/003-contas-sociais/`, 2026-09-29). Decisões:
+   - **Perfil** (marca da agência) agrupa as **contas por plataforma**. O slug é fixo depois de
+     criado.
+   - **Histórico genérico** (`entity_versions`), reaproveitado pelas próximas specs: autor e
+     antes/depois em toda mutação, arquivar em vez de apagar, e reversão só pelo dono.
+   - **Logo e banner** no MinIO, validados pelo conteúdo, públicos na rede de casa via `/img`.
+   - **Testes da API numa stack efêmera** (`npm run test:api`).
 4. `004-kit-de-marca`: tokens visuais por conta.
 5. `005-avatares-e-poses`
 6. `006-cenas`

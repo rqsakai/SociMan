@@ -19,7 +19,7 @@ function NavItem({ to, children }: { to: string; children: ReactNode }) {
   );
 }
 
-// Casca da área logada com a navegação: "Usuários" e "Segurança" só para o dono.
+// Casca da área logada com a navegação: "Perfis" para todos; "Usuários" e "Segurança" só para o dono.
 export function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const isOwner = useAuth((s) => s.user?.role === "dono");
@@ -35,6 +35,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <AppShell
       nav={
         <>
+          <NavItem to="/app/perfis">Perfis</NavItem>
           {isOwner && <NavItem to="/app/usuarios">Usuários</NavItem>}
           {isOwner && <NavItem to="/app/seguranca">Segurança</NavItem>}
           <NavItem to="/app/conta">Minha conta</NavItem>

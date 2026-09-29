@@ -1,7 +1,7 @@
 import type { components } from "./generated/schema";
 
 // O OpenAPI tipa `ErrorBody.code` como string; a lista fechada vem do contrato
-// (specs/001-auth/contracts/http-api.md).
+// (specs/001-auth e specs/003-contas-sociais, contracts/http-api.md).
 export const errorCodes = [
   "validation_error",
   "invalid_credentials",
@@ -16,6 +16,12 @@ export const errorCodes = [
   "last_owner",
   "not_found",
   "conflict",
+  "slug_in_use",
+  "handle_in_use",
+  "active_platform_exists",
+  "version_conflict",
+  "revert_conflict",
+  "invalid_image",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

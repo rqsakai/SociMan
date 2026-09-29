@@ -14,6 +14,19 @@ export type ForgotPasswordRequest = components["schemas"]["ForgotIn"];
 export type ResetPasswordRequest = components["schemas"]["ResetIn"];
 export type SecurityEvent = components["schemas"]["SecurityEvent"];
 export type SecurityEventPage = components["schemas"]["SecurityEventPage"];
+export type Perfil = components["schemas"]["Perfil"];
+export type PerfilStatus = components["schemas"]["PerfilStatus"];
+export type Conta = components["schemas"]["Conta"];
+export type ContaStatus = components["schemas"]["ContaStatus"];
+export type Platform = components["schemas"]["Platform"];
+export type ImageRef = components["schemas"]["ImageRef"];
+export type EntityVersion = components["schemas"]["Version"];
+export type CreatePerfilRequest = components["schemas"]["CreatePerfilIn"];
+export type UpdatePerfilRequest = components["schemas"]["UpdatePerfilIn"];
+export type CreateContaRequest = components["schemas"]["CreateContaIn"];
+export type UpdateContaRequest = components["schemas"]["UpdateContaIn"];
+export type PerfilFilters = NonNullable<paths["/api/perfis"]["get"]["parameters"]["query"]>;
+export type ImageKind = "logo" | "banner";
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -95,6 +108,93 @@ export function createApiClient(options: ApiClientOptions = {}) {
     securityEvents: {
       list: (query: SecurityEventFilters = {}) =>
         unwrap(client.GET("/api/security-events", { params: { query } })),
+    },
+    perfis: {
+      list: (query: PerfilFilters = {}) => unwrap(client.GET("/api/perfis", { params: { query } })),
+      slugSuggestion: (name: string) =>
+        unwrap(client.GET("/api/perfis/slug-suggestion", { params: { query: { name } } })),
+      create: (body: CreatePerfilRequest) => unwrap(client.POST("/api/perfis", { body })),
+      get: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}", { params: { path: { perfil_id: perfilId } } })),
+      update: (perfilId: string, body: UpdatePerfilRequest) =>
+        unwrap(client.PATCH("/api/perfis/{perfil_id}", { params: { path: { perfil_id: perfilId } }, body })),
+      archive: (perfilId: string, version: number) =>
+        unwrap(
+          client.POST("/api/perfis/{perfil_id}/archive", {
+            params: { path: { perfil_id: perfilId } },
+            body: { version },
+          }),
+        ),
+      restore: (perfilId: string, version: number) =>
+        unwrap(
+          client.POST("/api/perfis/{perfil_id}/restore", {
+            params: { path: { perfil_id: perfilId } },
+            body: { version },
+          }),
+        ),
+      versions: (perfilId: string) =>
+        unwrap(
+          client.GET("/api/perfis/{perfil_id}/versions", { params: { path: { perfil_id: perfilId } } }),
+        ),
+      revert: (perfilId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/perfis/{perfil_id}/revert", {
+            params: { path: { perfil_id: perfilId } },
+            body: { version, toVersion },
+          }),
+        ),
+      // multipart/form-data: o openapi-fetch repassa FormData sem serializar e
+      // deixa o navegador montar o Content-Type com o boundary.
+      uploadImage: (perfilId: string, kind: ImageKind, file: Blob, version: number) => {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("version", String(version));
+        const init = { params: { path: { perfil_id: perfilId } }, body: form as never };
+        return unwrap(
+          kind === "logo"
+            ? client.PUT("/api/perfis/{perfil_id}/logo", init)
+            : client.PUT("/api/perfis/{perfil_id}/banner", init),
+        );
+      },
+      clearImage: (perfilId: string, kind: ImageKind, version: number) => {
+        const init = { params: { path: { perfil_id: perfilId } }, body: { version } };
+        return unwrap(
+          kind === "logo"
+            ? client.POST("/api/perfis/{perfil_id}/logo/clear", init)
+            : client.POST("/api/perfis/{perfil_id}/banner/clear", init),
+        );
+      },
+    },
+    contas: {
+      create: (perfilId: string, body: CreateContaRequest) =>
+        unwrap(
+          client.POST("/api/perfis/{perfil_id}/contas", { params: { path: { perfil_id: perfilId } }, body }),
+        ),
+      update: (contaId: string, body: UpdateContaRequest) =>
+        unwrap(client.PATCH("/api/contas/{conta_id}", { params: { path: { conta_id: contaId } }, body })),
+      archive: (contaId: string, version: number) =>
+        unwrap(
+          client.POST("/api/contas/{conta_id}/archive", {
+            params: { path: { conta_id: contaId } },
+            body: { version },
+          }),
+        ),
+      restore: (contaId: string, version: number) =>
+        unwrap(
+          client.POST("/api/contas/{conta_id}/restore", {
+            params: { path: { conta_id: contaId } },
+            body: { version },
+          }),
+        ),
+      revert: (contaId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/contas/{conta_id}/revert", {
+            params: { path: { conta_id: contaId } },
+            body: { version, toVersion },
+          }),
+        ),
+      versions: (contaId: string) =>
+        unwrap(client.GET("/api/contas/{conta_id}/versions", { params: { path: { conta_id: contaId } } })),
     },
     config: () => unwrap(client.GET("/api/config")),
     health: () => unwrap(client.GET("/api/health")),

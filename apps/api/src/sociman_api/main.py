@@ -9,6 +9,9 @@ from sociman_api.auth.router_events import router as events_router
 from sociman_api.auth.router_users import router as users_router
 from sociman_api.db import get_engine
 from sociman_api.errors import install_openapi_error_contract, register_error_handlers
+from sociman_api.perfis.router_contas import router as contas_router
+from sociman_api.perfis.router_imagens import router as imagens_router
+from sociman_api.perfis.router_perfis import router as perfis_router
 from sociman_api.redis import get_redis
 
 app = FastAPI(title="SociMan API", version="0.1.0", openapi_url="/api/openapi.json", docs_url="/api/docs")
@@ -16,6 +19,9 @@ register_error_handlers(app)
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(events_router)
+app.include_router(perfis_router)
+app.include_router(contas_router)
+app.include_router(imagens_router)
 install_openapi_error_contract(app)
 
 

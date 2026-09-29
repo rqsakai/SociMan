@@ -12,6 +12,10 @@ import AppHome from "./pages/AppHome";
 import ChangePassword from "./pages/ChangePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import Login from "./pages/Login";
+import ContaHistorico from "./pages/perfis/ContaHistorico";
+import PerfilDetalhe from "./pages/perfis/PerfilDetalhe";
+import PerfilNovo from "./pages/perfis/PerfilNovo";
+import PerfisList from "./pages/perfis/PerfisList";
 import ResetPassword from "./pages/ResetPassword";
 import SecurityEvents from "./pages/SecurityEvents";
 import Users from "./pages/Users";
@@ -70,6 +74,38 @@ export default function App() {
               element={
                 <RequireAuth>
                   <Account />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app/perfis"
+              element={
+                <RequireAuth>
+                  <PerfisList />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app/perfis/novo"
+              element={
+                <RequireAuth>
+                  <PerfilNovo />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app/perfis/:id"
+              element={
+                <RequireAuth>
+                  <PerfilDetalhe />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app/contas/:id/historico"
+              element={
+                <RequireAuth>
+                  <ContaHistorico />
                 </RequireAuth>
               }
             />

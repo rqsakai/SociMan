@@ -58,6 +58,8 @@ services:
       PYTHONDONTWRITEBYTECODE: "1"
       UV_CACHE_DIR: /tmp/uv-cache   # UID 1000 não tem HOME gravável no container
       UV_NO_SYNC: "1"               # o venv (/opt/venv) já vem pronto da imagem
+      IMGPROXY_KEY: ${IMGPROXY_KEY:-}     # opcionais (.env da raiz, gitignored): URLs /img assinadas
+      IMGPROXY_SALT: ${IMGPROXY_SALT:-}
     volumes:
       - ./apps/api:/app   # código ao vivo; o venv fica em /opt/venv na imagem
     depends_on:
@@ -157,6 +159,8 @@ services:
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       IMGPROXY_ALLOWED_SOURCES: "s3://sociman/"
+      IMGPROXY_KEY: ${IMGPROXY_KEY:-}
+      IMGPROXY_SALT: ${IMGPROXY_SALT:-}
     depends_on:
       minio:
         condition: service_healthy

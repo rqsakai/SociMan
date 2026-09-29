@@ -1,4 +1,5 @@
-"""Fixtures dos testes (research R9): Postgres e Redis reais do compose, banco `sociman_test`.
+"""Fixtures dos testes (research R9): Postgres, Redis e MinIO reais do compose, banco
+`sociman_test` e bucket `TEST_S3_BUCKET` (nunca o bucket de dev).
 
 Rode no container: `docker compose exec api uv run pytest`.
 """
@@ -6,6 +7,7 @@ Rode no container: `docker compose exec api uv run pytest`.
 import itertools
 import os
 from collections.abc import Callable, Iterator
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -13,6 +15,8 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
+from minio import Minio
+from minio.deleteobjects import DeleteObject
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -26,7 +30,10 @@ API_DIR = Path(__file__).resolve().parents[1]
 
 def _point_settings_to_test() -> None:
     """Troca DATABASE_URL/REDIS_URL pelos de teste antes de qualquer engine ou cliente existir."""
-    missing = [k for k in ("TEST_DATABASE_URL", "TEST_REDIS_URL") if not os.environ.get(k)]
+    missing = [
+        k for k in ("TEST_DATABASE_URL", "TEST_REDIS_URL", "TEST_S3_BUCKET")
+        if not os.environ.get(k)
+    ]
     if missing:
         raise pytest.UsageError(
             f"Faltam {', '.join(missing)}: rode os testes no container "
@@ -34,6 +41,8 @@ def _point_settings_to_test() -> None:
         )
     os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
     os.environ["REDIS_URL"] = os.environ["TEST_REDIS_URL"]
+    # Já no import, não só na fixture `s3_bucket`: nenhum teste grava no bucket de dev.
+    os.environ["S3_BUCKET"] = os.environ["TEST_S3_BUCKET"]
     for cached in (get_settings, get_engine, get_sessionmaker, get_redis):
         cached.cache_clear()
 
@@ -52,15 +61,64 @@ def _migrated() -> None:
     command.upgrade(cfg, "head")
 
 
+# Ordem irrelevante (CASCADE); as da 003 só entram se a migration já existir.
+_TABLES = ("users", "one_time_tokens", "security_events", "entity_versions", "images", "contas",
+           "perfis")
+
+
 @pytest.fixture(autouse=True)
 def _clean_state() -> Iterator[None]:
     with get_engine().begin() as conn:
-        conn.execute(
-            text("TRUNCATE users, one_time_tokens, security_events RESTART IDENTITY CASCADE")
-        )
+        existing = [t for t in _TABLES
+                    if conn.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar()]
+        conn.execute(text(f"TRUNCATE {', '.join(existing)} RESTART IDENTITY CASCADE"))
     get_redis().flushdb()
     yield
     app.dependency_overrides.clear()
+
+
+@dataclass(frozen=True)
+class TestBucket:
+    """O bucket de teste no MinIO real do compose, com o cliente `minio` direto."""
+
+    __test__ = False  # não é uma classe de teste do pytest
+
+    name: str
+    client: Minio
+
+    def keys(self) -> list[str]:
+        return [o.object_name for o in self.client.list_objects(self.name, recursive=True)]
+
+    def empty(self) -> None:
+        """Apaga os objetos SÓ do bucket de teste (o domínio nunca apaga; isto é só teste)."""
+        if self.name != os.environ["TEST_S3_BUCKET"] or self.name == "sociman":
+            raise RuntimeError(f"recusando esvaziar o bucket {self.name!r}")
+        errors = self.client.remove_objects(
+            self.name, (DeleteObject(k) for k in self.keys())
+        )
+        for error in errors:  # remove_objects é preguiçoso: iterar executa
+            raise RuntimeError(f"falha ao apagar {error.name}: {error.message}")
+
+
+@pytest.fixture(scope="session")
+def s3_bucket() -> TestBucket:
+    """Garante `settings.s3_bucket == TEST_S3_BUCKET` e o bucket criado. Não esvazia: use
+    `s3` (por teste) ou `s3_bucket.empty()`."""
+    settings = get_settings()
+    name = os.environ["TEST_S3_BUCKET"]
+    assert settings.s3_bucket == name, "settings.s3_bucket deveria ser o bucket de teste"
+    client = Minio(settings.s3_endpoint, access_key=settings.s3_access_key,
+                   secret_key=settings.s3_secret_key, secure=settings.s3_secure)
+    if not client.bucket_exists(name):
+        client.make_bucket(name)
+    return TestBucket(name=name, client=client)
+
+
+@pytest.fixture
+def s3(s3_bucket: TestBucket) -> TestBucket:
+    """Bucket de teste vazio no início do teste."""
+    s3_bucket.empty()
+    return s3_bucket
 
 
 @pytest.fixture

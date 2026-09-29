@@ -24,7 +24,8 @@ docs/reference/volans arquitetura, ADRs e produto do volans (referência)
 ```bash
 docker compose up -d                        # stack: http://localhost:8180  https://localhost:8543
 curl http://localhost:8180/api/health       # {"status":"ok","db":"ok","redis":"ok"}
-docker compose exec api uv run pytest       # API (banco sociman_test + Redis DB 15; NUNCA duas suítes ao mesmo tempo)
+npm run test:api [-- args do pytest]      # API em stack EFÊMERA (docker-compose.test.yml): sobe Postgres/Redis/MinIO, roda o pytest e faz down -v sempre; pode rodar em paralelo
+docker compose exec api uv run pytest       # alternativa rápida no dev (banco sociman_test + Redis DB 15; NUNCA duas ao mesmo tempo)
 docker compose exec api uv run ruff check .
 npm run check:web                           # check:contract + typecheck + build + check:bundle/csp/secrets
 npm run gen:contract                        # OpenAPI do FastAPI → packages/contract (roda no host, sem Docker)
@@ -53,6 +54,10 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 10. **`JWT_SECRET`** fica em `apps/api/.env` (gitignored). Sem ele a API usa um segredo efêmero e toda sessão cai a cada reload.
 11. **Service worker só no build de produção** (modo casa). Em dev (Vite) não há SW. `test:e2e` exige modo dev e `test:e2e:pwa` exige modo prod — não rode os dois ao mesmo tempo. O e2e do PWA usa `http://localhost:8180` porque o Chromium de teste não tem a CA e recusa SW com certificado inválido.
 12. **Chaves da CA** ficam em `docker/certs/ca/` (gitignored, 600). Nunca compartilhe `sociman-ca.key`; só `sociman-ca.crt/.cer` são públicos.
+13. **Mudou `docker/nginx/*`?** Rode `docker compose restart edge`. O template é montado como arquivo, e `up -d` não recria o container.
+14. **Specs de domínio usam `history.py`** (princípio VII): toda mutação chama `history.record` na mesma transação (autor, antes/depois), cada entidade tem `version` (controle otimista → 409 `version_conflict`) e `__versioned_fields__`/`__immutable_fields__`. **Não existe DELETE no domínio**: arquivar/restaurar; reversão só pelo dono.
+15. **Imagens:** `storage.py` (MinIO, bucket privado, sem delete) + `imaging.py` (validação Pillow pelo conteúdo, URLs `/img` do imgproxy). `IMGPROXY_KEY`/`IMGPROXY_SALT` no `.env` da raiz assinam as URLs; sem eles é `unsafe` (só dev). O edge aceita até 8 MB em `/api/`; a API limita a 5 MB.
+16. **FastAPI 0.141 envolve rotas incluídas em `_IncludedRouter`**: procurar rota em `app.routes` não funciona (use `app.openapi()`).
 
 ## Regras de negócio herdadas da agência (não mudam)
 - O SociMan **nunca publica** em rede social.

@@ -1,0 +1,96 @@
+# SociMan — stack EFÊMERA dos testes da API. Não use direto: rode `npm run test:api`
+# (ou ./scripts/test-api.sh), que sobe tudo com um nome de projeto único e SEMPRE
+# derruba com `down -v` (containers, rede e volumes apagados) ao terminar.
+#
+# Nada de porta publicada no host, nada de volume nomeado: Postgres e MinIO gravam em
+# tmpfs e o Redis roda sem persistência. Credenciais SÓ de teste (sobrescreva por variável).
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${TEST_PG_USER:-sociman_test}
+      POSTGRES_PASSWORD: ${TEST_PG_PASSWORD:-sociman_test}
+      POSTGRES_DB: ${TEST_PG_DB:-sociman_test}
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  minio:
+    image: minio/minio:latest
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${TEST_S3_ACCESS_KEY:-sociman-test}
+      MINIO_ROOT_PASSWORD: ${TEST_S3_SECRET_KEY:-sociman-test-secret}
+    tmpfs:
+      - /data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  minio-init:
+    image: minio/mc:latest
+    environment:
+      MC_USER: ${TEST_S3_ACCESS_KEY:-sociman-test}
+      MC_PASSWORD: ${TEST_S3_SECRET_KEY:-sociman-test-secret}
+      MC_BUCKET: ${TEST_S3_BUCKET:-sociman-test}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - mc alias set t http://minio:9000 "$$MC_USER" "$$MC_PASSWORD" && mc mb -p "t/$$MC_BUCKET"
+    depends_on:
+      minio:
+        condition: service_healthy
+
+  pytest:
+    build: ./apps/api
+    # Tag fixa: execuções em paralelo reaproveitam a mesma imagem (o `down` não a apaga).
+    image: sociman-api-test:latest
+    user: "1000:1000"   # arquivos no bind mount ficam do usuário do host
+    working_dir: /app
+    environment:
+      ENV: test
+      DATABASE_URL: &db-url postgresql+psycopg://${TEST_PG_USER:-sociman_test}:${TEST_PG_PASSWORD:-sociman_test}@postgres:5432/${TEST_PG_DB:-sociman_test}
+      TEST_DATABASE_URL: *db-url
+      REDIS_URL: redis://redis:6379/0
+      TEST_REDIS_URL: redis://redis:6379/15
+      S3_ENDPOINT: minio:9000
+      S3_ACCESS_KEY: ${TEST_S3_ACCESS_KEY:-sociman-test}
+      S3_SECRET_KEY: ${TEST_S3_SECRET_KEY:-sociman-test-secret}
+      S3_BUCKET: ${TEST_S3_BUCKET:-sociman-test}
+      TEST_S3_BUCKET: ${TEST_S3_BUCKET:-sociman-test}
+      # Fixo e público: só assina tokens da stack efêmera (não é segredo).
+      JWT_SECRET: ${TEST_JWT_SECRET:-teste-efemero-nao-e-segredo-0123456789abcdef}
+      # Os testes usam MemoryEmailSender; um host inexistente faz qualquer envio real falhar.
+      SMTP_HOST: smtp.invalido.test
+      SMTP_PORT: "1025"
+      PYTHONDONTWRITEBYTECODE: "1"
+      UV_CACHE_DIR: /tmp/uv-cache   # UID 1000 não tem HOME gravável no container
+      UV_NO_SYNC: "1"               # o venv (/opt/venv) já vem pronto da imagem
+    volumes:
+      - ./apps/api:/app   # código ao vivo; o venv fica em /opt/venv na imagem
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    command: ["uv", "run", "pytest"]

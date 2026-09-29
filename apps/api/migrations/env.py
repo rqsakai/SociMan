@@ -3,9 +3,11 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from sociman_api.auth import models as _auth_models  # noqa: F401 — registra no metadata
+from sociman_api import history as _history  # noqa: F401 — registra no metadata
+from sociman_api.auth import models as _auth_models  # noqa: F401
 from sociman_api.config import get_settings
 from sociman_api.db import Base
+from sociman_api.perfis import models as _perfis_models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
