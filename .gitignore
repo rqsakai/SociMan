@@ -24,3 +24,4 @@ data/
 docker/certs/ca/*
 !docker/certs/ca/.gitkeep
 .playwright-mcp/
+.e2e/

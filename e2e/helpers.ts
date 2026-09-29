@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { crc32, deflateSync } from "node:zlib";
 import { expect, type APIRequestContext, type Page } from "@playwright/test";
-import { BASE_URL, MAILPIT_URL, OWNER } from "./fixtures";
+import { BASE_URL, COMPOSE_ARGS, MAILPIT_URL, OWNER, PG_DB, PG_USER } from "./fixtures";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 
@@ -13,9 +13,9 @@ export function uniqueEmail(prefix: string): string {
 
 // --- docker compose ---
 
-// Roda `docker compose <args>` na raiz do repo; `input` vai para o stdin.
+// Roda `docker compose <args>` na stack e2e (E2E_COMPOSE), na raiz do repo; `input` vai para o stdin.
 export function compose(args: string[], input?: string): string {
-  return execFileSync("docker", ["compose", ...args], {
+  return execFileSync("docker", ["compose", ...COMPOSE_ARGS, ...args], {
     cwd: repoRoot,
     input,
     encoding: "utf8",
@@ -42,7 +42,7 @@ export async function waitForHealth(timeoutMs: number): Promise<void> {
 // Vence todos os tokens de reset de senha direto no Postgres.
 export function expireResetTokens(): void {
   compose([
-    "exec", "-T", "postgres", "psql", "-U", "sociman", "-d", "sociman", "-c",
+    "exec", "-T", "postgres", "psql", "-U", PG_USER, "-d", PG_DB, "-c",
     "update one_time_tokens set expires_at = now() - interval '1 minute' where purpose='reset_password'",
   ]);
 }
@@ -108,7 +108,7 @@ export function tokenFromLink(link: string): string {
   return new URL(link, BASE_URL).searchParams.get("token")!;
 }
 
-// Zera os contadores de limite de tentativa (chaves rl:* no Redis de dev). A suíte faz muitos
+// Zera os contadores de limite de tentativa (chaves rl:* no Redis da stack e2e). A suíte faz muitos
 // logins com o mesmo dono e o mesmo IP e estouraria o limite do app (10/conta e 30/IP a cada
 // 15 min), que é testado no pytest. Isto só mexe nos contadores, nunca no limite.
 export function resetRateLimits(): void {

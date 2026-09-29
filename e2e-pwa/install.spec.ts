@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { HOME_IP, waitForActiveSW } from "./helpers";
+import { HOME_IP, HTTPS_URL, waitForActiveSW } from "./helpers";
 
 // US1: o app é instalável (manifest + SW) e o modo casa redireciona HTTP → HTTPS
 // só para o IP da casa.
@@ -18,13 +18,13 @@ test("o HTML aponta para o manifest e o SW fica activated", async ({ page }) => 
   await waitForActiveSW(page);
 });
 
-test("localhost:8180 continua sem redirecionamento", async ({ request }) => {
-  const res = await request.get("http://localhost:8180/", { maxRedirects: 0 });
+test("localhost continua sem redirecionamento", async ({ request }) => {
+  const res = await request.get("/", { maxRedirects: 0 });
   expect(res.status()).toBe(200);
 });
 
 test("HTTP pelo IP da casa redireciona para HTTPS", async ({ request }) => {
-  const res = await request.get("http://localhost:8180/app", {
+  const res = await request.get("/app", {
     headers: { Host: `${HOME_IP}:8180` },
     maxRedirects: 0,
   });
@@ -33,7 +33,7 @@ test("HTTP pelo IP da casa redireciona para HTTPS", async ({ request }) => {
 });
 
 test("a CA da casa é servida em HTTP, sem redirecionamento", async ({ request }) => {
-  const res = await request.get("http://localhost:8180/sociman-ca.crt", {
+  const res = await request.get("/sociman-ca.crt", {
     headers: { Host: `${HOME_IP}:8180` },
     maxRedirects: 0,
   });
@@ -42,18 +42,24 @@ test("a CA da casa é servida em HTTP, sem redirecionamento", async ({ request }
 });
 
 // A cadeia do HTTPS: confiando SÓ na CA da casa, o certificado do edge vale para o IP da casa
-// e para localhost (FR-004). Sem isso os aparelhos não instalam o app.
+// e para localhost (FR-004). Sem isso os aparelhos não instalam o app. O edge e2e só escuta em
+// 127.0.0.1: a conexão vai para lá e a identidade é conferida contra cada nome.
 test("o HTTPS do edge é válido para a CA da casa (IP da casa e localhost)", async () => {
   const { readFileSync } = await import("node:fs");
   const https = await import("node:https");
+  const tls = await import("node:tls");
   const ca = readFileSync("docker/certs/ca/sociman-ca.crt");
-  for (const host of ["192.168.86.47", "localhost"]) {
+  const port = Number(new URL(HTTPS_URL).port);
+  for (const name of [HOME_IP, "localhost"]) {
     const status = await new Promise<number>((resolve, reject) => {
       https
-        .get({ host, port: 8543, path: "/api/health", ca, servername: host === "localhost" ? host : undefined },
-          (res) => { res.resume(); resolve(res.statusCode ?? 0); })
+        .get({
+          host: "127.0.0.1", port, path: "/api/health", ca,
+          servername: name === "localhost" ? name : undefined,
+          checkServerIdentity: (_host, cert) => tls.checkServerIdentity(name, cert),
+        }, (res) => { res.resume(); resolve(res.statusCode ?? 0); })
         .on("error", reject);
     });
-    expect(status, `HTTPS em ${host}`).toBe(200);
+    expect(status, `HTTPS em ${name}`).toBe(200);
   }
 });

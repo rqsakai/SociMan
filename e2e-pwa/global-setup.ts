@@ -1,9 +1,8 @@
 import { request } from "@playwright/test";
 import e2eGlobalSetup from "../e2e/global-setup";
+import { HTTPS_URL } from "./helpers";
 
-const HTTPS_URL = "https://localhost:8543";
-
-// Espera o edge HTTPS (modo prod) e reaproveita o setup do e2e de dev:
+// Espera o edge HTTPS (modo prod) e reaproveita o setup do e2e:
 // reset-db, dono de teste e Mailpit vazio.
 async function waitForHttpsHealth(timeoutMs: number): Promise<void> {
   const ctx = await request.newContext({ ignoreHTTPSErrors: true });
@@ -24,7 +23,7 @@ async function waitForHttpsHealth(timeoutMs: number): Promise<void> {
     await ctx.dispose();
   }
   throw new Error(
-    `${HTTPS_URL}/api/health não respondeu 200 em ${timeoutMs} ms (${last}). A stack está em modo prod (npm run casa:up)?`,
+    `${HTTPS_URL}/api/health não respondeu 200 em ${timeoutMs} ms (${last}). A stack e2e subiu no perfil pwa (npm run test:e2e:pwa)?`,
   );
 }
 

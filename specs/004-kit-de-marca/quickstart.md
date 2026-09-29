@@ -124,7 +124,7 @@ Em "Queridinhos", aba Cortes:
 npm run test:api                           # stack efêmera; inclui ffmpeg real e amostragem de quadros
 docker compose exec api uv run ruff check .
 npm run check:web                          # contrato regenerado, typecheck, build, CSP (inalterada)
-npm run test:e2e                           # inclui e2e/marca.spec.ts (precisa do worker)
+npm run test:e2e                           # stack efêmera (não toca o dev); inclui e2e/marca.spec.ts, com worker próprio
 ```
 Obrigatórios:
 - SC-002: `openshorts.subtitle` dentro das faixas e enums do gerador, para kits gerados;
