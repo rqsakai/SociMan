@@ -6,9 +6,9 @@
  *   search?: { value: string; onChange: (value: string) => void; placeholder?: string }
  *                                   campo "Buscar" (opcional; sem a prop, o campo não aparece)
  *
- * À esquerda: trilha (Início › … › página) e o título da página, vindos de usePageMeta
- * (./page-meta.tsx) ou, sem ele, do item do menu que casa com a URL. O título NÃO é heading:
- * o <h1> continua na página.
+ * À esquerda: só a trilha (Início › … › página), vinda de usePageMeta (./page-meta.tsx) ou,
+ * sem ele, do item do menu que casa com a URL. O título fica só no <h1> da página (pedido do
+ * dono: sem título repetido no topo).
  * À direita: busca, sino de notificações (spec 006), menu de conta ("Minha conta" e "Sair") e o botão "Sair" (o e2e usa
  * getByRole("button", { name: "Sair" })).
  */
@@ -83,7 +83,7 @@ export function Topbar({ onOpenMenu, search }: TopbarProps) {
 
         <div className="min-w-0 flex-1">
           <Breadcrumb>
-            <BreadcrumbList className="text-xs">
+            <BreadcrumbList className="text-sm">
               {crumbs.map((crumb) => (
                 <Fragment key={`${crumb.label}-${crumb.to ?? ""}`}>
                   <BreadcrumbItem>
@@ -103,7 +103,6 @@ export function Topbar({ onOpenMenu, search }: TopbarProps) {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <p className="truncate text-base font-bold">{title}</p>
         </div>
 
         <div className="flex items-center gap-1">
