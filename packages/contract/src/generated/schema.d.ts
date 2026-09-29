@@ -2689,6 +2689,10 @@ export interface components {
             /** Archived */
             archived: boolean;
             canal: components["schemas"]["CanalRef"] | null;
+            /** Clipeatual */
+            clipeAtual: number | null;
+            /** Clipesprevistos */
+            clipesPrevistos: number | null;
             /** Clipsimportados */
             clipsImportados: number;
             /** Clipstotal */
@@ -2703,6 +2707,11 @@ export interface components {
             direitoNoEnvio: components["schemas"]["DireitoEnvio"] | null;
             /** Errormessage */
             errorMessage: string | null;
+            etapa: components["schemas"]["EnvioEtapa"] | null;
+            /** Etapamensagem */
+            etapaMensagem: string | null;
+            /** Etapapct */
+            etapaPct: number | null;
             /** Finishedat */
             finishedAt: string | null;
             /**
@@ -2790,6 +2799,11 @@ export interface components {
             cortes: components["schemas"]["Corte"][];
             envio: components["schemas"]["Envio"];
         };
+        /**
+         * EnvioEtapa
+         * @enum {string}
+         */
+        EnvioEtapa: "fila" | "baixando" | "transcrevendo" | "escolhendo_momentos" | "processando_clipes" | "legendas" | "importando" | "concluido" | "erro";
         /**
          * EnvioOrigem
          * @enum {string}
@@ -3374,7 +3388,7 @@ export interface components {
          * NotificacaoTipo
          * @enum {string}
          */
-        NotificacaoTipo: "envio_pronto" | "envio_sem_clipes" | "envio_falhou" | "envio_confirmar_qualidade" | "openshorts_fora" | "hora_de_postar" | "cota_youtube" | "canal_erro";
+        NotificacaoTipo: "envio_pronto" | "envio_sem_clipes" | "envio_falhou" | "envio_confirmar_qualidade" | "envio_momentos" | "openshorts_fora" | "hora_de_postar" | "cota_youtube" | "canal_erro";
         /** NotificacoesList */
         NotificacoesList: {
             /** Items */

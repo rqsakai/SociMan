@@ -13,6 +13,8 @@ em ordem e de forma idempotente (`UNIQUE (envio_id, clip_index)`: o já importad
    do OpenShorts), com versão `created` do `system:agendador` e `created_by` = autor do envio;
 7. com a marca automática, o mesmo `marcar` do botão "Aplicar marca" (→ `na_fila`).
 
+O progresso real (FR-010a) é commitado antes de cada passo lento: `legendas` (clipe N de M,
+durante o `/api/subtitle`) e `importando` (download e MinIO), com o % geral de 90 a 100.
 Cada clipe é commitado ao terminar (um reinício no meio retoma do próximo). A deduplicação é
 pelo **trecho** no vídeo de origem (início e fim, com tolerância de 1 s), não pela ordem: um
 "tentar de novo" com job novo depois de uma importação parcial pode devolver os clipes em outra
@@ -44,7 +46,7 @@ from sociman_api.cortes import worker
 from sociman_api.cortes.models import Corte, CorteOrigem, CorteStatus
 from sociman_api.cortes.probe import InvalidVideo, probe
 from sociman_api.cortes.render import HOOK_MAX_CHARS
-from sociman_api.envios import avisos
+from sociman_api.envios import avisos, progresso
 from sociman_api.envios.models import Envio, EnvioStatus
 from sociman_api.envios.openshorts import (
     OpenShortsClient,
@@ -151,6 +153,8 @@ def importar_clipe(db: Session, client: OpenShortsClient, envio: Envio, pos: int
     video_url = str(clip.get("video_url") or "")
     idx = indice_openshorts(clip, pos)
     video_url, legenda = _legendar(client, envio, idx, video_url)
+    if legenda == "kit":
+        _etapa(db, envio, progresso.Etapa.importando, pos)
 
     datadir.ensure_writable()
     pasta = work_dir(envio.id)
@@ -188,6 +192,12 @@ def importar_clipe(db: Session, client: OpenShortsClient, envio: Envio, pos: int
                    history.snapshot(corte), {"envio_id": envio.id, "clip_index": clip_index})
     db.flush()
     return corte
+
+
+def _etapa(db: Session, envio: Envio, etapa: progresso.Etapa, pos: int) -> None:
+    """Clipe `pos + 1` de `clipes_previstos` (o total do job), visível já: commit."""
+    progresso.gravar(envio, progresso.clipes(etapa, pos, envio.clipes_previstos or pos + 1))
+    db.commit()
 
 
 def _marca_automatica(db: Session, envio: Envio, corte: Corte,
@@ -284,13 +294,16 @@ def importar(db: Session, client: OpenShortsClient, envio: Envio) -> None:
         _erro(db, envio, "o OpenShorts não devolveu os clipes", agora)
         return
     envio.clips_total = len(clips)
+    envio.clipes_previstos = len(clips)
 
     feitos = Feitos(db, envio)
     kits = cortes_service.KitCache(db)
     marca = bool((envio.config or {}).get("marca_automatica"))
+    kit = (envio.config or {}).get("legenda", "kit") == "kit"
     for pos, clip in enumerate(clips):
         if feitos.ja_importado(clip, pos):
             continue
+        _etapa(db, envio, progresso.Etapa.legendas if kit else progresso.Etapa.importando, pos)
         try:
             corte = importar_clipe(db, client, envio, pos, clip, feitos.proximo_indice(clip, pos))
         except OpenShortsNaoEncontrado:
@@ -321,6 +334,8 @@ def importar(db: Session, client: OpenShortsClient, envio: Envio) -> None:
     envio.clips_total = max(len(clips), len(feitos))
     envio.progress = 100
     envio.attempts = 0
+    progresso.gravar(envio, progresso.Progresso(progresso.Etapa.concluido, 100, None,
+                                                envio.clips_total, None, "Pronto", 100))
     envio.error_code = None
     envio.error_message = None
     _encerrar(envio)

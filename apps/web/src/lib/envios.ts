@@ -1,8 +1,8 @@
-import { toApiError, type Envio, type EnvioStatus, type PadroesCorte } from "@sociman/contract";
+import { toApiError, type Envio, type EnvioEtapa, type EnvioStatus, type PadroesCorte } from "@sociman/contract";
 import { refreshSession } from "./api";
 import { useAuth } from "./authStore";
 
-export type { Envio, EnvioConfig, EnvioStatus, PadroesCorte } from "@sociman/contract";
+export type { Envio, EnvioConfig, EnvioEtapa, EnvioStatus, PadroesCorte } from "@sociman/contract";
 
 // Seleção e envio ao OpenShorts (spec 006, US2–US4): rótulos pt-BR, texto do status ao vivo,
 // padrões de corte, envio do avulso por arquivo (XHR, com progresso) e chaves do TanStack Query.
@@ -24,13 +24,13 @@ export const envioStatusLabel: Record<EnvioStatus, string> = {
 export const ANDAMENTO: EnvioStatus[] = ["na_fila", "aguardando_openshorts", "processando", "importando"];
 export const emAndamento = (e: Pick<Envio, "status">) => ANDAMENTO.includes(e.status);
 
-// "Na fila (2º)", "Processando: 3 clipes prontos", "Importando 4/6".
+// "Na fila (2º)", "Processando 45%", "Importando 4/6". A etapa real vem em `etapaMensagem`.
 export function envioStatusText(e: Pick<Envio, "status" | "queuePosition" | "progress" | "clipsTotal" | "clipsImportados">): string {
   switch (e.status) {
     case "na_fila":
       return e.queuePosition ? `Na fila (${e.queuePosition}º)` : "Na fila";
     case "processando":
-      return e.clipsTotal ? `Processando: ${e.clipsTotal} clipes prontos` : `Processando ${e.progress}%`;
+      return `Processando ${e.progress}%`;
     case "importando":
       return `Importando ${e.clipsImportados}/${e.clipsTotal ?? "?"}`;
     case "pronto":
@@ -38,6 +38,37 @@ export function envioStatusText(e: Pick<Envio, "status" | "queuePosition" | "pro
     default:
       return envioStatusLabel[e.status];
   }
+}
+
+// Etapa real do OpenShorts (FR-010a). O detalhe com o % da etapa e o "clipe N de M" vem pronto da
+// API (`etapaMensagem`); o rótulo é o fallback e o nome na lista de etapas do detalhe.
+export const envioEtapaLabel: Record<EnvioEtapa, string> = {
+  fila: "Na fila do OpenShorts",
+  baixando: "Baixando o vídeo",
+  transcrevendo: "Transcrevendo o vídeo",
+  escolhendo_momentos: "Escolhendo os momentos",
+  processando_clipes: "Cortando os clipes",
+  legendas: "Aplicando legendas do kit",
+  importando: "Importando",
+  concluido: "Pronto",
+  erro: "Erro",
+};
+
+// Linha única do andamento, com o % geral junto: "Processando 10% · Transcrevendo o vídeo 25%",
+// "Processando 55% · Cortando clipe 3 de 9 (cenas 40%)"; na fila, só "Na fila do OpenShorts (2º)".
+export function envioProgressoTexto(e: Pick<Envio, "status" | "progress" | "etapa" | "etapaMensagem">): string | null {
+  if (e.status !== "processando" && e.status !== "importando") return null;
+  const detalhe = e.etapaMensagem || (e.etapa ? envioEtapaLabel[e.etapa] : null);
+  if (e.etapa === "fila") return detalhe;
+  return detalhe ? `Processando ${e.progress}% · ${detalhe}` : `Processando ${e.progress}%`;
+}
+
+// Etapas mostradas no detalhe do envio, na ordem; a das legendas só com a legenda do kit.
+export function envioEtapasLista(legendaKit: boolean): EnvioEtapa[] {
+  const etapas: EnvioEtapa[] = ["fila", "baixando", "transcrevendo", "escolhendo_momentos", "processando_clipes"];
+  if (legendaKit) etapas.push("legendas");
+  etapas.push("importando", "concluido");
+  return etapas;
 }
 
 export const envioStatusTone: Record<EnvioStatus, string> = {

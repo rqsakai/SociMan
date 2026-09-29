@@ -10,7 +10,11 @@ O que dá para ligar:
 - `needs_confirmation` (o `/api/process` pede confirmação de qualidade, menos com
   `force_low_quality`);
 - `resultado`: `"ok"`, `"sem_clipes"` ("No clips could be rendered") ou `"falhou"`;
-- `n_clipes`, `passos_fila` e `passos_processando` (quantos `GET /api/status` em cada fase);
+- `n_clipes`, `passos_fila` e `passos_processando` (quantos `GET /api/status` em cada fase).
+  Em `processing`, os `logs` são os de um job real (com o ruído do TensorFlow, do yt-dlp e da
+  transcrição), revelados em `len(BLOCOS)` blocos ao longo dos `passos_processando`: com 1 passo,
+  tudo de uma vez (até o 1º clipe pronto); com 6, um bloco por consulta. O `result.clips[:1]` só
+  aparece com o último bloco;
 - `expirar(job_id)` (404 em tudo daquele job, como depois da retenção de 24 h);
 - `sem_fala` (índices cujo `/api/subtitle` e transcrição respondem 400);
 - `falhar_download` (quantos downloads respondem 500);
@@ -35,6 +39,48 @@ from sociman_api.envios.openshorts import OpenShortsClient
 
 BASE = "http://openshorts.test"
 NO_CLIPS = "No clips could be rendered from this video."
+
+
+def blocos_de_log(job_id: str, n_clipes: int) -> list[list[str]]:
+    """As etapas de um job real do OpenShorts (logs de 2026-09-29), com o ruído."""
+    return [
+        [f"Job {job_id} queued.", "Job started by worker.",
+         "INFO: Created TensorFlow Lite XNNPACK delegate for CPU.",
+         "🔍 Debug: yt-dlp version: 2026.09.16.232951", "📥 Downloading video from YouTube...",
+         "⚠️ YOUTUBE_COOKIES env var not found.", "📥 Download attempt: HD",
+         ("W0000 00:00:1790697872.126668  657378 inference_feedback_manager.cc:114] Feedback "
+          "manager requires a model with a single signature inference."),
+         "[debug] Encodings: locale UTF-8, fs utf-8, pref UTF-8, out utf-8 (No ANSI)",
+         "[youtube] Extracting URL: https://www.youtube.com/watch?v=PWMQq7Ba_lU",
+         f"[download] Destination: output/{job_id}/fonte.f299.mp4",
+         ("[download]   0.0% of  293.97MiB at  Unknown B/s ETA Unknown\r[download]  45.3% of  "
+          "293.97MiB at   21.30MiB/s ETA 00:07\r[download] 100% of  293.97MiB in 00:00:25 at "
+          "23.06MiB/s")],
+        ["✅ Download succeeded (HD).", f"✅ Video downloaded in 38.24s: output/{job_id}/fonte.mp4",
+         "🎛️  Choosing a layout for this video…",
+         "🎬 Layout: none (confianza 0.95) — The video features a single speaker.",
+         "🎙️  Transcribing video...", "🎙️ Waiting for a free transcription slot…"],
+        ["🎙️ Transcribing… 25% (102s)", "🎙️ Transcribing… 50% (196s)"],
+        ["🎙️ Transcribing… 75% (288s)", "🎙️ Transcribing… 100% (375s)",
+         "🧹 [ASR] resident models released", "Detected language 'pt', 236 segments",
+         "[0.00s -> 4.20s]  🔥 Found 42 clips! (fala do vídeo, não é marco)",
+         "🤖  Analyzing with local LLM at https://api.anthropic.com/v1 (2-pass: score → detail)...",
+         "🤖  Model: claude-sonnet-4-6 | language: pt", "Built 14 scoring window(s).",
+         "Shortlisted 10 window(s) for detail."],
+        [f"🔥 Found {n_clipes} clips!", f"Saved metadata to output/{job_id}/fonte_metadata.json",
+         "🎬 Processing Clip 1: 10.0s - 35.5s", "Title: ✅ Clip 9 ready (título, não é marco)",
+         "🎞️ [Encoder] video encoder: libx264 (FFMPEG_ENCODER=x264)",
+         "🚀 Reframe engine v2 (ffmpeg-native render)",
+         "/app/scene_detection.py:109: UserWarning: The given NumPy array is not writable",
+         "tensor = torch.from_numpy(np.ascontiguousarray(frames)).to(model.device)",
+         "🎬 Scene engine: TransNetV2 — 27 scenes",
+         ("Analyzing Scenes:   0%|          | 0/27 [00:00<?, ?it/s]\r   Analyzing Scenes:  41%|"
+          "████      | 11/27 [00:06<00:09,  1.80it/s]")],
+        ["Analyzing Scenes: 100%|██████████| 27/27 [00:14<00:00,  1.80it/s]",
+         f"✅ Clip saved to output/{job_id}/fonte_clip_1.mp4", "⏱️ Reframe v2 total: 224.9s",
+         f"✅ Clip 1 ready: output/{job_id}/fonte_clip_1.mp4",
+         "🎬 Processing Clip 2: 40.0s - 65.5s"],
+    ]
 
 
 def gerar_clipe(dest: Path, segundos: int = 2) -> bytes:
@@ -186,8 +232,13 @@ class OpenShortsFake:
                                            "queue": {"position": 2, "ahead": 1,
                                                      "eta_seconds": 600}})
         if job.polls <= self.passos_fila + self.passos_processando:
-            return self._json(200, base | {"status": "processing", "queue": None,
-                                           "result": {"clips": job.clips[:1]}})
+            passo = job.polls - self.passos_fila
+            blocos = blocos_de_log(job_id, job.n_clipes)
+            n = -(-passo * len(blocos) // self.passos_processando)  # teto
+            logs = [linha for bloco in blocos[:n] for linha in bloco]
+            clips = job.clips[:1] if n >= len(blocos) else []
+            return self._json(200, base | {"status": "processing", "queue": None, "logs": logs,
+                                           "result": {"clips": clips} if clips else None})
         if job.resultado == "sem_clipes":
             return self._json(200, base | {"status": "failed", "queue": None, "result": None,
                                            "logs": base["logs"] + [NO_CLIPS]})

@@ -1,5 +1,5 @@
-"""Notificações dos envios (research R11): pronto, sem clipes, falhou, confirmar qualidade e
-OpenShorts fora. Vão para o autor do envio e os donos ativos, com `dedupe_key` por rodada de
+"""Notificações dos envios (research R11): momentos escolhidos, pronto, sem clipes, falhou,
+confirmar qualidade e OpenShorts fora. Vão para o autor do envio e os donos ativos, com `dedupe_key` por rodada de
 envio (`sent_at`): um reinício do agendador no meio não duplica o aviso, e um "tentar de novo"
 gera um aviso novo.
 """
@@ -40,6 +40,15 @@ def notificar(db: Session, envio: Envio, tipo: NotificacaoTipo, titulo: str,
         f"{tipo.value}:{envio.id}:{_rodada(envio)}",
         notificacoes.destinatarios_padrao(db, autor(envio)),
     )
+
+
+def momentos(db: Session, envio: Envio) -> int:
+    """A única transição do meio do processamento que vai para o sino (FR-010a)."""
+    n = envio.clipes_previstos
+    corpo = (f"{n} clipe{'s' if n != 1 else ''} em produção no OpenShorts" if n
+             else "Os clipes estão em produção no OpenShorts")
+    return notificar(db, envio, NotificacaoTipo.envio_momentos,
+                     f"Momentos escolhidos: {_titulo(envio)}", corpo)
 
 
 def pronto(db: Session, envio: Envio) -> int:

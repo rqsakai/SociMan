@@ -12,9 +12,11 @@ Tabela de respostas de R6:
   reenviar sozinho**; 429 → `na_fila` com +60 s; 400/403 → `falhou` com o motivo traduzido;
 - fora do ar (conexão, timeout, 5xx) → `aguardando_openshorts` com backoff de 30 s → 1 → 2 →
   5 min, e volta sozinho. Depois de 30 min sem resposta, um aviso `openshorts_fora` por período;
-- polling: `queued` guarda a posição; `processing` estima o progresso (teto de 90%);
-  `completed` → `importando`; `failed` → `sem_clipes` ("No clips could be rendered") ou
-  `falhou`; 404 → `falhou` ("O OpenShorts não tem mais este job; envie de novo").
+- polling: `queued` guarda a posição; `processing` grava a etapa real lida dos logs
+  (`progresso.py`: etapa, % da etapa, clipe N de M e o % geral ponderado, teto de 90%) e avisa
+  uma vez quando os momentos são escolhidos; `completed` → `importando`; `failed` →
+  `sem_clipes` ("No clips could be rendered") ou `falhou`; 404 → `falhou` ("O OpenShorts não tem
+  mais este job; envie de novo").
 
 Tudo é estado de job (sem versão). O estado fica no banco: reiniciar o agendador continua o
 polling. O cliente entra por parâmetro (os testes passam o fake).
@@ -29,7 +31,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from sociman_api import storage
-from sociman_api.envios import avisos
+from sociman_api.envios import avisos, progresso
 from sociman_api.envios.models import Envio, EnvioOrigem, EnvioStatus
 from sociman_api.envios.openshorts import (
     OpenShortsClient,
@@ -49,7 +51,6 @@ BACKOFF_FORA_S = (30, 60, 120, 300)
 OCUPADO_S = 60
 FORA_AVISO = timedelta(minutes=30)
 PROGRESSO_TETO = 90
-CLIPES_PADRAO = 5  # sem quantidade (a IA decide), a estimativa usa 5 clipes
 
 JOB_PERDIDO = "O OpenShorts não tem mais este job; envie de novo"
 SEM_CLIPES = "O OpenShorts não encontrou clipes neste vídeo"
@@ -208,23 +209,23 @@ def acompanhar(db: Session, client: OpenShortsClient, envio: Envio, agora: datet
     envio.attempts = 0
     envio.next_attempt_at = None
     estado = st.get("status")
-    if estado == "queued":
-        pos = (st.get("queue") or {}).get("position")
-        envio.openshorts_queue_pos = pos if isinstance(pos, int) and pos > 0 else None
-        envio.progress = 0
-    elif estado == "processing":
-        envio.openshorts_queue_pos = None
-        if envio.started_at is None:
+    anterior = progresso.Etapa(envio.etapa) if envio.etapa in progresso.ETAPAS else None
+    if estado in ("queued", "processing"):
+        p = progresso.interpretar(st, anterior)
+        progresso.gravar(envio, p)
+        if estado == "processing" and envio.started_at is None:
             envio.started_at = func.now()
-        prontos = len(_clipes(st))
-        alvo = (envio.config or {}).get("quantidade") or CLIPES_PADRAO
-        envio.progress = min(PROGRESSO_TETO, int(prontos * PROGRESSO_TETO / alvo))
+        if p.etapa == progresso.Etapa.processando_clipes and \
+                anterior != progresso.Etapa.processando_clipes:
+            db.flush()
+            avisos.momentos(db, envio)  # uma vez por rodada (dedupe), não a cada etapa
     elif estado == "completed":
         clips = _clipes(st)
         envio.openshorts_queue_pos = None
         if not clips:
             _sem_clipes(db, envio)
             return
+        progresso.gravar(envio, progresso.interpretar(st, anterior))
         envio.status = EnvioStatus.importando
         envio.clips_total = len(clips)
         envio.progress = PROGRESSO_TETO

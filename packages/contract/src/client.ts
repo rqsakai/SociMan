@@ -80,6 +80,7 @@ export type PadroesCorte = components["schemas"]["PadroesCorte"];
 export type PadroesCorteRequest = components["schemas"]["PadroesCorteIn"];
 export type Envio = components["schemas"]["Envio"];
 export type EnvioStatus = components["schemas"]["EnvioStatus"];
+export type EnvioEtapa = components["schemas"]["EnvioEtapa"];
 export type EnvioConfig = components["schemas"]["EnvioConfig"];
 // Campos com default no servidor saem obrigatórios no tipo gerado; aqui ficam opcionais.
 type Defaulted<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;

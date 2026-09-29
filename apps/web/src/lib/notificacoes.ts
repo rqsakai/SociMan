@@ -12,6 +12,7 @@ export const tipoLabel: Record<NotificacaoTipo, string> = {
   envio_sem_clipes: "Sem clipes",
   envio_falhou: "Envio falhou",
   envio_confirmar_qualidade: "Confirmar qualidade",
+  envio_momentos: "Momentos escolhidos",
   openshorts_fora: "OpenShorts fora do ar",
   hora_de_postar: "Hora de postar",
   cota_youtube: "Cota do YouTube",

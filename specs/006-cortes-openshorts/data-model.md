@@ -146,7 +146,11 @@ A linha é a **seleção** e depois o **job no OpenShorts** (R4, R6).
 | `force_low_quality` | bool not null default false | "Enviar mesmo assim" depois de `confirmar_qualidade` |
 | `openshorts_job_id` | text null | |
 | `openshorts_queue_pos` | smallint null | posição na fila do gerador |
-| `progress` | smallint not null default 0 | 0..100 (estimativa, R6) |
+| `progress` | smallint not null default 0 | 0..100: % geral **estimado e ponderado por etapa** (tabela abaixo) |
+| `etapa` | text null | etapa real (migration `0007_envio_progresso`): `fila`, `baixando`, `transcrevendo`, `escolhendo_momentos`, `processando_clipes`, `legendas`, `importando`, `concluido`, `erro` (check) |
+| `etapa_pct` | smallint null | 0..100: % da etapa, quando o OpenShorts o informa |
+| `clipe_atual`, `clipes_previstos` | smallint null | "clipe N de M" na geração, na legenda e na importação |
+| `etapa_mensagem` | text null | detalhe curto em pt-BR (ex.: "Transcrevendo o vídeo 25%", "Cortando clipe 3 de 9 (cenas 40%)"); o SPA junta com o % geral |
 | `clips_total` | smallint null | clipes em `result.clips` |
 | `clips_importados` | smallint not null default 0 | |
 | `attempts` | smallint not null default 0 | tentativas de submissão ou importação |
@@ -156,6 +160,16 @@ A linha é a **seleção** e depois o **job no OpenShorts** (R4, R6).
 | `error_message` | text null | pt-BR |
 | `sent_at`, `started_at`, `finished_at` | timestamptz null | |
 | `version`, `archived_at`, `archived_by`, AuditMixin | | `created_by` = quem selecionou; o autor do envio fica no histórico |
+
+**Progresso por etapa** (`envios/progresso.py`, puro): a trilha `openshorts` lê `status`, `logs`,
+`queue` e `partial` do `GET /api/status/{job}` a cada consulta e grava as colunas acima; a trilha
+`importacao` grava `legendas` (durante o `/api/subtitle` do SociMan) e `importando`. Faixas do %
+geral: fila 0; baixando 0–5; transcrevendo 5–35; escolhendo os momentos 35–40; gerando os clipes
+40–90 (clipes prontos ÷ previstos); legendas e importação 90–100 (clipes importados ÷ total);
+concluído 100. O % geral nunca volta dentro do mesmo job (só a volta para a fila zera). Linha
+desconhecida mantém a última etapa reconhecida. Na API, `pronto` → `concluido`, `falhou` e
+`sem_clipes` → `erro`, `na_fila`/`aguardando_openshorts` → `fila`; "enviar", "tentar de novo"
+e "enviar mesmo assim" zeram as colunas.
 
 Índices:
 - `(status, next_attempt_at)` para as trilhas;
@@ -254,7 +268,7 @@ Só INSERT.
 |---|---|---|
 | `id` | bigint identity PK | cursor do polling (`after`) |
 | `user_id` | uuid not null FK → users.id | destinatário |
-| `tipo` | enum `notificacao_tipo` (`envio_pronto`, `envio_sem_clipes`, `envio_falhou`, `envio_confirmar_qualidade`, `openshorts_fora`, `hora_de_postar`, `cota_youtube`, `canal_erro`) | |
+| `tipo` | enum `notificacao_tipo` (`envio_pronto`, `envio_sem_clipes`, `envio_falhou`, `envio_confirmar_qualidade`, `envio_momentos` (0007: momentos escolhidos, um por rodada), `openshorts_fora`, `hora_de_postar`, `cota_youtube`, `canal_erro`) | |
 | `titulo` | text not null | ex.: "Hora de postar: <título> no TikTok" |
 | `corpo` | text not null default '' | |
 | `link` | text not null | rota do SPA (`/app/envios/…`, `/app/cortes/…`) |

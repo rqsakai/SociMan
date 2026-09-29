@@ -15,6 +15,7 @@ from sociman_api.auth.schemas import CamelModel
 from sociman_api.canais.schemas import CanalRef, VideoFonteRef  # os mesmos nomes no OpenAPI
 from sociman_api.cortes.schemas import Corte
 from sociman_api.envios.models import DireitoEnvio, EnvioOrigem, EnvioStatus
+from sociman_api.envios.progresso import EnvioEtapa
 from sociman_api.perfis.schemas import UserRef, VersionNumber
 
 Layout = Literal["auto", "none", "split", "screencast", "speaker_cut"]
@@ -94,10 +95,18 @@ class Envio(CamelModel):
     config: EnvioConfig | None
     direito_no_envio: DireitoEnvio | None
     precisa_aviso: bool  # canal sem_acordo ou avulso: a UI mostra o aviso de direito
-    progress: int
+    progress: int  # % geral estimado, ponderado por etapa (envios/progresso.py)
     queue_position: int | None
     clips_total: int | None
     clips_importados: int
+    # Progresso real (FR-010a): null em selecionado, confirmar_qualidade e descartado.
+    etapa: EnvioEtapa | None
+    etapa_pct: int | None
+    clipe_atual: int | None
+    clipes_previstos: int | None
+    # Detalhe da etapa em pt-BR ("Transcrevendo o vídeo 25%", "Cortando clipe 3 de 9 (cenas 40%)");
+    # o SPA junta com o % geral: "Processando 10% · Transcrevendo o vídeo 25%".
+    etapa_mensagem: str | None
     error_message: str | None
     sent_at: datetime | None
     finished_at: datetime | None

@@ -2516,6 +2516,28 @@
               }
             ]
           },
+          "clipeAtual": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clipeatual"
+          },
+          "clipesPrevistos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clipesprevistos"
+          },
           "clipsImportados": {
             "title": "Clipsimportados",
             "type": "integer"
@@ -2576,6 +2598,38 @@
               }
             ],
             "title": "Errormessage"
+          },
+          "etapa": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EnvioEtapa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "etapaMensagem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etapamensagem"
+          },
+          "etapaPct": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etapapct"
           },
           "finishedAt": {
             "anyOf": [
@@ -2682,6 +2736,11 @@
           "queuePosition",
           "clipsTotal",
           "clipsImportados",
+          "etapa",
+          "etapaPct",
+          "clipeAtual",
+          "clipesPrevistos",
+          "etapaMensagem",
           "errorMessage",
           "sentAt",
           "finishedAt",
@@ -2875,6 +2934,21 @@
         ],
         "title": "EnvioDetalhe",
         "type": "object"
+      },
+      "EnvioEtapa": {
+        "enum": [
+          "fila",
+          "baixando",
+          "transcrevendo",
+          "escolhendo_momentos",
+          "processando_clipes",
+          "legendas",
+          "importando",
+          "concluido",
+          "erro"
+        ],
+        "title": "EnvioEtapa",
+        "type": "string"
       },
       "EnvioOrigem": {
         "enum": [
@@ -4426,6 +4500,7 @@
           "envio_sem_clipes",
           "envio_falhou",
           "envio_confirmar_qualidade",
+          "envio_momentos",
           "openshorts_fora",
           "hora_de_postar",
           "cota_youtube",

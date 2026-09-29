@@ -31,6 +31,7 @@ class NotificacaoTipo(enum.StrEnum):
     envio_sem_clipes = "envio_sem_clipes"
     envio_falhou = "envio_falhou"
     envio_confirmar_qualidade = "envio_confirmar_qualidade"
+    envio_momentos = "envio_momentos"  # 0007: momentos escolhidos, um por rodada
     openshorts_fora = "openshorts_fora"
     hora_de_postar = "hora_de_postar"
     cota_youtube = "cota_youtube"

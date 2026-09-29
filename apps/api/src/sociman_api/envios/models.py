@@ -31,11 +31,13 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from sociman_api.auth.models import AuditMixin
 from sociman_api.db import Base
+from sociman_api.envios.progresso import Etapa
 from sociman_api.perfis.models import _Versioned
 
 LAYOUTS = ("auto", "none", "split", "screencast", "speaker_cut")
 FORMATOS = ("vertical", "square")
 LEGENDAS = ("kit", "gerador", "nenhuma")
+ETAPAS = tuple(e.value for e in Etapa)  # na ordem, para o check
 
 
 def _in(column: str, values: tuple[str, ...]) -> str:
@@ -127,6 +129,9 @@ class Envio(_Versioned, AuditMixin, Base):
             name="ck_envios_enviado_config",
         ),
         CheckConstraint("progress BETWEEN 0 AND 100", name="ck_envios_progress"),
+        CheckConstraint(f"etapa IS NULL OR {_in('etapa', ETAPAS)}", name="ck_envios_etapa"),
+        CheckConstraint("etapa_pct IS NULL OR etapa_pct BETWEEN 0 AND 100",
+                        name="ck_envios_etapa_pct"),
         CheckConstraint("char_length(source_title) BETWEEN 1 AND 200",
                         name="ck_envios_source_title"),
     )
@@ -175,6 +180,12 @@ class Envio(_Versioned, AuditMixin, Base):
     progress: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, default=0, server_default=text("0")
     )
+    # Progresso real (envios/progresso.py, migration 0007): `progress` é o % geral estimado.
+    etapa: Mapped[str | None] = mapped_column(Text)
+    etapa_pct: Mapped[int | None] = mapped_column(SmallInteger)
+    clipe_atual: Mapped[int | None] = mapped_column(SmallInteger)
+    clipes_previstos: Mapped[int | None] = mapped_column(SmallInteger)
+    etapa_mensagem: Mapped[str | None] = mapped_column(Text)
     clips_total: Mapped[int | None] = mapped_column(SmallInteger)
     clips_importados: Mapped[int] = mapped_column(
         SmallInteger, nullable=False, default=0, server_default=text("0")

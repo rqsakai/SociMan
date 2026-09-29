@@ -5,7 +5,9 @@ tem o ffmpeg) e atende, na porta 8000:
 - a parte da API do OpenShorts que o cliente `envios/openshorts.py` usa: `/health`,
   `POST /api/process`, `POST|PUT /api/uploads`, `GET /api/status/{job}`, `POST /api/subtitle`,
   `GET /api/clip/{job}/{i}/transcript` e `GET /videos/{job}/{arquivo}`. O job passa por
-  `queued → processing → completed` em poucos segundos, e os clipes são MP4 sintéticos gerados
+  `queued → processing → completed` em alguns segundos; em `processing`, os `logs` são os de um
+  job real (download, transcrição 25..100%, escolha dos momentos, clipe 1 pronto), revelados aos
+  poucos, para a tela mostrar as etapas. Os clipes são MP4 sintéticos gerados
   com o ffmpeg na subida. Uma fonte com `sem-clipes` na URL ou no título termina em "No clips";
 - `GET /youtube/v3/{channels,playlistItems,videos,search}`: dois canais e seus vídeos, sem
   miniaturas externas (`thumbnails` vazio, e a API devolve `null`). O e2e nunca chama o Google.
@@ -27,7 +29,7 @@ from urllib.parse import parse_qs, urlsplit
 PORTA = 8000
 N_CLIPES = 3
 FILA_S = 1.5  # tempo em `queued`
-PROCESSANDO_S = 2.5  # tempo em `processing`
+PROCESSANDO_S = 12.0  # tempo em `processing` (os blocos de log vão aparecendo nesse tempo)
 NO_CLIPS = "No clips could be rendered from this video."
 CORES = ("0x336699", "0x993366", "0x669933")
 DIR = Path(tempfile.mkdtemp(prefix="openshorts-fake-"))
@@ -163,6 +165,35 @@ def _clip(job_id: str, i: int) -> dict:
             "video_url": f"/videos/{job_id}/fonte_clip_{i + 1}.mp4"}
 
 
+def blocos_de_log(job_id: str) -> list[list[str]]:
+    """Etapas de um job real do OpenShorts (logs de 2026-09-29), com o ruído que o SociMan
+    ignora (TensorFlow, yt-dlp, segmentos da transcrição, UserWarning)."""
+    return [
+        [f"Job {job_id} queued.", "Job started by worker.",
+         "INFO: Created TensorFlow Lite XNNPACK delegate for CPU.",
+         "📥 Downloading video from YouTube...", "📥 Download attempt: HD",
+         "W0000 00:00:1790697872.126668  657378 inference_feedback_manager.cc:114] Feedback "
+         "manager requires a model with a single signature inference.",
+         "[debug] Encodings: locale UTF-8, fs utf-8, pref UTF-8, out utf-8 (No ANSI)",
+         f"[download] Destination: output/{job_id}/fonte.f299.mp4"],
+        ["✅ Download succeeded (HD).", f"✅ Video downloaded in 3.1s: output/{job_id}/fonte.mp4",
+         "🎛️  Choosing a layout for this video…", "🎙️  Transcribing video..."],
+        ["🎙️ Transcribing… 25% (2s)"],
+        ["🎙️ Transcribing… 50% (4s)"],
+        ["🎙️ Transcribing… 75% (6s)", "🎙️ Transcribing… 100% (8s)",
+         "Detected language 'pt', 12 segments", "[0.00s -> 4.20s]  olá, este é o vídeo",
+         "🤖  Analyzing with local LLM at http://llm (2-pass: score → detail)...",
+         "Built 3 scoring window(s)."],
+        [f"🔥 Found {N_CLIPES} clips!", "🎬 Processing Clip 1: 10.0s - 35.5s",
+         "Title: Título do clipe 1", "🚀 Reframe engine v2 (ffmpeg-native render)",
+         "/app/scene_detection.py:109: UserWarning: The given NumPy array is not writable",
+         "🎬 Scene engine: TransNetV2 — 27 scenes"],
+        ["Analyzing Scenes: 100%|██████████| 27/27 [00:01<00:00, 18.0it/s]",
+         f"✅ Clip 1 ready: output/{job_id}/fonte_clip_1.mp4",
+         "🎬 Processing Clip 2: 40.0s - 65.5s"],
+    ]
+
+
 def process(body: dict) -> tuple[int, dict]:
     upload_id = body.get("upload_id")
     if upload_id is not None and not UPLOADS.get(upload_id):
@@ -186,8 +217,12 @@ def status(job_id: str) -> tuple[int, dict]:
         return 200, base | {"status": "queued", "result": None,
                             "queue": {"position": 1, "ahead": 0, "eta_seconds": 5}}
     if passou < FILA_S + PROCESSANDO_S:
-        return 200, base | {"status": "processing", "queue": None,
-                            "result": {"clips": job["clips"][:1]}}
+        blocos = blocos_de_log(job_id)
+        n = 1 + int((passou - FILA_S) / PROCESSANDO_S * len(blocos))
+        logs = [linha for bloco in blocos[:n] for linha in bloco]
+        clips = job["clips"][:1] if n >= len(blocos) else []
+        return 200, base | {"status": "processing", "queue": None, "logs": logs,
+                            "result": {"clips": clips} if clips else None}
     if job["sem_clipes"]:
         return 200, base | {"status": "failed", "queue": None, "result": None,
                             "logs": base["logs"] + [NO_CLIPS]}

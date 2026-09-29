@@ -154,7 +154,17 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await nav(page, "Envios").click();
   await page.getByRole("tab", { name: "Envios" }).click();
   const envios = page.getByRole("table", { name: "Envios" });
+  // FR-010a: "Processando N% · <etapa real>" (o fake revela logs de um job real em ~12 s), com
+  // ícone e a barra do % geral, enquanto o envio anda
+  const etapa = envios.locator("[data-etapa]").first();
+  await expect(etapa).toHaveText(
+    /^Processando \d+% · (Baixando o vídeo|Vídeo baixado|Transcrevendo o vídeo|Escolhendo os momentos|Cortando clipe \d de 3|Aplicando legendas do kit \d de 3|Importando)/,
+    { timeout: 30_000 },
+  );
+  await expect(envios.getByRole("progressbar", { name: "Progresso do envio" }).first()).toBeVisible();
+  await page.screenshot({ path: `${SHOTS}/006-envios-etapa.png`, fullPage: true });
   await expect(envios.getByText("Pronto: 3 clipes")).toHaveCount(2, { timeout: 180_000 });
+  await expect(envios.locator("[data-etapa]")).toHaveCount(0);
   await page.screenshot({ path: `${SHOTS}/006-envios.png`, fullPage: true });
 
   // a notificação chega no sino (polling de 20 s)
@@ -167,6 +177,11 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   // a versão do envio registra o membro como autor e o direito "Sem acordo"
   await envios.getByRole("link", { name: /Entrevista com dev/ }).click();
   await expect(page.getByRole("heading", { name: "Entrevista com dev", level: 1 })).toBeVisible();
+  // o detalhe lista as etapas; no fim, todas concluídas (legenda do kit incluída)
+  const etapas = page.getByRole("list", { name: "Etapas do envio" });
+  await expect(etapas.getByRole("listitem")).toHaveCount(8);
+  await expect(etapas).toContainText("Aplicando legendas do kit");
+  await expect(etapas.getByText("(concluída)")).toHaveCount(8);
   await expect(page.getByRole("list").filter({ has: page.getByRole("listitem", { name: /Versão/ }) })).toContainText(member.name);
 
   // ---- US4: revisão do outro envio: arquivar um clipe e aplicar a marca nos outros ----

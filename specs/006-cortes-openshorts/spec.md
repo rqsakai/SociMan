@@ -23,6 +23,17 @@
 - Q: Evidência de direito por print? → A: **Link ou nota nesta spec**; upload de imagem (print) entra depois da 007, usando a biblioteca de assets.
 - Q: Envio e corte sem reversão por snapshot? → A: **Sim, exceção aceita do princípio VII**: voltar atrás é arquivar/restaurar o corte ou fazer um envio novo; o histórico continua visível.
 - Q: Nome do menu dos canais? → A: **"Canais-fonte"** (evita colisão com a aba "Fontes" de tipografia do perfil).
+- Q: Como mostrar o progresso do processamento? → A: Etapa real do OpenShorts em pt-BR (na fila,
+  baixando, transcrevendo, escolhendo os momentos, gerando os clipes, legendando, importando), com o
+  % da etapa quando o OpenShorts o informa e "clipe N de M" na geração, na legenda e na
+  importação. O % geral é uma **estimativa ponderada por etapa**. O sino só avisa as transições
+  importantes: momentos escolhidos, pronto, sem clipes e falhou.
+- Q: Formato do texto de progresso? → A: Sempre o % geral junto da etapa, numa linha só:
+  "Processando 10% · Transcrevendo o vídeo 25%", "Processando 55% · Cortando clipe 3 de 9 (cenas
+  40%)", "Processando 85% · Aplicando legendas do kit 2 de 9", "Processando 95% · Importando 4 de
+  9"; na fila, "Na fila do OpenShorts (2º)". Rótulos: Baixando o vídeo, Transcrevendo o vídeo,
+  Escolhendo os momentos, Cortando os clipes, Aplicando legendas do kit, Importando. O detalhe do
+  envio lista as etapas, com check nas concluídas e a atual destacada.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -94,7 +105,8 @@ acordo" ou avulso. Depois do envio, acompanha o processamento e **avisa** quando
 **Why this priority**: é o coração do fluxo de cortes.
 
 **Independent Test**: selecionar um vídeo, conferir a configuração pré-preenchida do perfil,
-enviar, ver o status "Na fila → Processando (N clipes prontos) → Pronto" e receber a notificação no sino do
+enviar, ver o status "Na fila → Processando 10% · Transcrevendo o vídeo 25% → … · Cortando clipe
+3 de 9 → … · Aplicando legendas do kit → Pronto" com a barra do % geral, e receber a notificação no sino do
 painel.
 
 **Acceptance Scenarios**:
@@ -112,6 +124,12 @@ painel.
    link para o resultado.
 5. **Given** o OpenShorts fora do ar, **When** o usuário envia, **Then** o envio fica "Aguardando o
    OpenShorts" e é retomado sozinho quando ele volta.
+6. **Given** um job em processamento, **When** o usuário abre a lista ou o detalhe do envio,
+   **Then** vê numa linha o % geral e a etapa real em pt-BR, com ícone (ex.: "Processando 10% ·
+   Transcrevendo o vídeo 25%", "Processando 55% · Cortando clipe 3 de 9 (cenas 40%)", "Na fila do
+   OpenShorts (2º)"), a barra do % geral estimado; no detalhe, a lista das etapas com check nas
+   concluídas e a atual destacada. O sino avisa uma vez quando os momentos são escolhidos (sem um
+   aviso por etapa).
 
 ---
 
@@ -225,6 +243,11 @@ de postar", com botões para copiar os textos e baixar o vídeo.
   (princípio II). Dono e membro podem enviar depois de confirmar o aviso; nada bloqueia.
 - **FR-010**: O sistema DEVE enviar cada vídeo ao OpenShorts, acompanhar o status até o fim e
   sobreviver a reinício (do SociMan ou do OpenShorts), retomando o acompanhamento.
+- **FR-010a**: Durante o processamento, o sistema DEVE mostrar a **etapa real** (fila, baixando,
+  transcrevendo, escolhendo os momentos, gerando os clipes, legendas, importando, concluído ou
+  erro), lida do `status`, dos `logs`, da `queue` e do `partial` do OpenShorts, com o % da etapa
+  quando houver, "clipe N de M" e um % geral estimado e ponderado por etapa. Linha de log
+  desconhecida nunca quebra o acompanhamento: a etapa continua a última reconhecida.
 - **FR-011**: O usuário DEVE ser avisado no app quando um envio termina ou falha: sino de
   notificações com lista e marcação de lidas, e notificação do navegador quando permitida e o app
   estiver aberto (aba ou app instalado). Web Push com o app fechado fica fora desta spec.

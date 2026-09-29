@@ -30,6 +30,7 @@ const tipoTone: Record<NotificacaoTipo, string> = {
   envio_sem_clipes: "bg-warning",
   envio_falhou: "bg-destructive",
   envio_confirmar_qualidade: "bg-warning",
+  envio_momentos: "bg-info",
   openshorts_fora: "bg-destructive",
   hora_de_postar: "bg-primary",
   cota_youtube: "bg-warning",

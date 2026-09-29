@@ -82,9 +82,11 @@ def test_submete_e_acompanha_ate_importando(client, owner, envio, db, openshorts
     r = client.get(f"/api/envios/{envio['id']}", headers=owner[1])
     assert r.json()["envio"]["queuePosition"] == 2
 
-    volta(db, fake)  # processing, 1 clipe pronto de 5 estimados
+    volta(db, fake)  # processing: logs até o 1º clipe pronto de 3 (clipe 2 de 3)
     row = envio_row(db, envio["id"])
-    assert row.openshorts_queue_pos is None and row.progress == 18
+    assert row.openshorts_queue_pos is None and row.progress == 56
+    assert (row.etapa, row.clipe_atual, row.clipes_previstos, row.etapa_mensagem) == (
+        "processando_clipes", 2, 3, "Cortando clipe 2 de 3")
     assert row.started_at is not None
 
     volta(db, fake)  # completed
@@ -94,14 +96,44 @@ def test_submete_e_acompanha_ate_importando(client, owner, envio, db, openshorts
     assert fake.pedidos().count(("POST", "/api/process")) == 1
 
 
+def test_etapas_reais_em_sequencia(client, owner, envio, db, openshorts_fake):
+    """O fake revela os logs de um job real um bloco por consulta; a API mostra cada etapa, o %
+    geral só sobe e o sino avisa uma vez, quando os momentos são escolhidos."""
+    fake = openshorts_fake
+    fake.passos_processando = 6
+    volta(db, fake)  # submete
+    vistos = []
+    for _ in range(1 + 6):  # queued + 6 blocos
+        volta(db, fake)
+        e = client.get(f"/api/envios/{envio['id']}", headers=owner[1]).json()["envio"]
+        vistos.append((e["etapa"], e["etapaPct"], e["etapaMensagem"], e["progress"],
+                       e["clipeAtual"], e["clipesPrevistos"]))
+    assert vistos == [
+        ("fila", None, "Na fila do OpenShorts (2º)", 0, None, None),
+        ("baixando", 100, "Vídeo baixado, preparando", 5, None, None),
+        ("transcrevendo", 0, "Aguardando a vez de transcrever", 5, None, None),
+        ("transcrevendo", 50, "Transcrevendo o vídeo 50%", 20, None, None),
+        ("escolhendo_momentos", None, "Escolhendo os momentos", 38, None, None),
+        ("processando_clipes", 0, "Cortando clipe 1 de 3 (cenas 41%)", 40, 1, 3),
+        ("processando_clipes", 33, "Cortando clipe 2 de 3", 56, 2, 3),
+    ]
+    avisos = _notificacoes(db, NotificacaoTipo.envio_momentos)
+    assert len(avisos) == 1 and avisos[0].corpo == "3 clipes em produção no OpenShorts"
+    assert avisos[0].titulo.startswith("Momentos escolhidos: ")
+
+    volta(db, fake)  # completed
+    e = client.get(f"/api/envios/{envio['id']}", headers=owner[1]).json()["envio"]
+    assert (e["status"], e["etapa"], e["progress"], e["clipesPrevistos"]) == (
+        "importando", "importando", 90, 3)
+    assert len(_notificacoes(db, NotificacaoTipo.envio_momentos)) == 1
+
+
 def test_progresso_tem_teto_de_90(client, owner, perfil, db, openshorts_fake):
     fake = openshorts_fake
     fake.passos_fila = 0
+    fake.n_clipes = 1  # "Found 1 clips!" e o clipe 1 pronto: a geração inteira, ainda processing
     video = criar_video(criar_canal(CanalDireito.proprio))
     e = enviado(client, owner[1], perfil["id"], video, )
-    row = envio_row(db, e["id"])
-    row.config = row.config | {"quantidade": 1}
-    db.commit()
     volta(db, fake)
     volta(db, fake)
     assert envio_row(db, e["id"]).progress == 90

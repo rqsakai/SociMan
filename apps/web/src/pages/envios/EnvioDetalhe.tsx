@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DireitoBadge } from "../../components/canais/DireitoBadge";
 import { ClipReview } from "../../components/envios/ClipReview";
 import { envioTitulo } from "../../components/envios/EnviarDialog";
-import { EnvioStatus } from "../../components/envios/EnvioStatus";
+import { EnvioEtapas, EnvioStatus } from "../../components/envios/EnvioStatus";
 import { HistoryHeading, VersionHistory } from "../../components/VersionHistory";
 import { api } from "../../lib/api";
 import {
@@ -186,6 +186,7 @@ export default function EnvioDetalhe() {
           <div aria-live="polite">
             <EnvioStatus envio={envio} className="max-w-sm" />
           </div>
+          <EnvioEtapas envio={envio} legendaKit={envio.config?.legenda === "kit"} className="max-w-md" />
           {envio.status === "aguardando_openshorts" && (
             <Alert>
               <CircleAlert aria-hidden="true" />

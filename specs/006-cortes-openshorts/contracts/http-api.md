@@ -34,9 +34,18 @@ Envio        { id, perfilId, origem: "canal"|"avulso_link"|"avulso_arquivo", vid
                canal: { id, title, direito }|null, sourceUrl|null, sourceTitle,
                status: EnvioStatus, config: EnvioConfig|null, direitoNoEnvio: Direito|"avulso"|null,
                precisaAviso: bool,     # true se canal sem_acordo ou avulso (a UI mostra o aviso)
-               progress: int, queuePosition|null, clipsTotal|null, clipsImportados: int,
+               progress: int,          # % geral estimado, ponderado por etapa (data-model)
+               queuePosition|null, clipsTotal|null, clipsImportados: int,
+               etapa: EnvioEtapa|null, etapaPct: int|null, clipeAtual: int|null,
+               clipesPrevistos: int|null, etapaMensagem: str|null,   # progresso real (0007)
                errorMessage|null, sentAt|null, finishedAt|null, archived: bool, version,
                createdAt, createdBy: UserRef|null }
+EnvioEtapa   "fila"|"baixando"|"transcrevendo"|"escolhendo_momentos"|"processando_clipes"
+             |"legendas"|"importando"|"concluido"|"erro"
+             # null em selecionado, confirmar_qualidade e descartado. etapaMensagem é o detalhe
+             # em pt-BR: "Na fila do OpenShorts (2º)", "Transcrevendo o vídeo 25%", "Cortando
+             # clipe 3 de 9 (cenas 40%)", "Aplicando legendas do kit 2 de 9", "Importando 4 de 9";
+             # o SPA mostra "Processando {progress}% · {etapaMensagem}" (fora da fila)
 EnvioStatus  "selecionado"|"na_fila"|"aguardando_openshorts"|"confirmar_qualidade"|"processando"
              |"importando"|"pronto"|"sem_clipes"|"falhou"|"descartado"
 Corte        o da 004 + { origem: "upload"|"openshorts", envioId|null, clipIndex|null,
@@ -49,6 +58,7 @@ Postagem     { id, corteId, conta: ContaRef (plataforma, @), titulo, descricao, 
                lembrado: bool, archived: bool, version, updatedAt, updatedBy }
 Sugestao     { id, plataforma, titulo, descricao, hashtags: string[], ajustes: string[], model, createdAt }
 Notificacao  { id: int, tipo, titulo, corpo, link, createdAt, lida: bool }
+             # tipo inclui envio_momentos (0007): "Momentos escolhidos", um por rodada de envio
 Integracoes  { youtube: "ok"|"ausente"|"invalida", openshorts: "ok"|"fora", claude: "ok"|"ausente",
                cotaYoutube: { usadas: int, limite: int, renovaEm: datetime } }
 ```

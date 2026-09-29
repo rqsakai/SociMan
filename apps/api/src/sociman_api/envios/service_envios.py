@@ -24,7 +24,7 @@ from sociman_api.auth.deps import Actor
 from sociman_api.canais.models import CanalDireito, CanalFonte, VideoFonte
 from sociman_api.cortes import service as cortes_service
 from sociman_api.cortes.models import Corte
-from sociman_api.envios import schemas, service_padroes
+from sociman_api.envios import progresso, schemas, service_padroes
 from sociman_api.envios.models import DireitoEnvio, Envio, EnvioOrigem, EnvioStatus
 from sociman_api.errors import ApiError
 from sociman_api.marca import service_kit
@@ -92,6 +92,7 @@ def envios_out(db: Session, envios: Sequence[Envio]) -> list[schemas.Envio]:
     for e in envios:
         video = videos.get(e.video_fonte_id) if e.video_fonte_id else None
         canal = canais.get(e.canal_fonte_id) if e.canal_fonte_id else None
+        etapa = progresso.publico(e)
         out.append(schemas.Envio(
             id=e.id, perfil_id=e.perfil_id, origem=e.origem,
             video=schemas.VideoFonteRef(
@@ -105,7 +106,9 @@ def envios_out(db: Session, envios: Sequence[Envio]) -> list[schemas.Envio]:
             config=_config_out(e.config), direito_no_envio=e.direito_no_envio,
             precisa_aviso=precisa_aviso(e, canal), progress=e.progress,
             queue_position=e.openshorts_queue_pos, clips_total=e.clips_total,
-            clips_importados=e.clips_importados, error_message=e.error_message,
+            clips_importados=e.clips_importados, etapa=etapa.etapa, etapa_pct=etapa.etapa_pct,
+            clipe_atual=etapa.clipe_atual, clipes_previstos=etapa.clipes_previstos,
+            etapa_mensagem=etapa.mensagem, error_message=e.error_message,
             sent_at=e.sent_at, finished_at=e.finished_at, archived=e.archived,
             version=e.version, created_at=e.created_at,
             created_by=users.get(e.created_by) if e.created_by else None,
@@ -382,6 +385,7 @@ def _zerar_job(envio: Envio) -> None:
     envio.error_message = None
     envio.started_at = None
     envio.finished_at = None
+    progresso.zerar(envio)
 
 
 def confirmar_qualidade(db: Session, actor: Actor, envio_id: uuid.UUID, version: int,
@@ -427,6 +431,7 @@ def retry(db: Session, actor: Actor, envio_id: uuid.UUID, version: int) -> Envio
     if envio.error_code in ERROS_IMPORTACAO and envio.openshorts_job_id:
         envio.status = EnvioStatus.importando
         envio.attempts = 0
+        progresso.zerar(envio)
         envio.next_attempt_at = None
         envio.error_code = None
         envio.error_message = None

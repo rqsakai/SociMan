@@ -20,8 +20,9 @@ from sociman_api import history, storage
 from sociman_api.canais.models import CanalDireito
 from sociman_api.config import get_settings
 from sociman_api.cortes.models import Corte, CorteOrigem, CorteStatus
+from sociman_api.db import get_sessionmaker
 from sociman_api.envios import acompanhamento, importacao
-from sociman_api.envios.models import EnvioStatus
+from sociman_api.envios.models import Envio, EnvioStatus
 from sociman_api.notificacoes.models import Notificacao, NotificacaoTipo
 
 # Fixtures compartilhadas (atribuídas, e não importadas, para o ruff não acusar F811).
@@ -123,6 +124,36 @@ def test_importa_todos_os_clipes_em_revisao(client, owner, member, perfil, db, f
                    headers=h)
     assert len(r.json()["items"]) == 3
     assert _importar(db, fake) == 0
+
+
+def test_etapas_legendas_e_importando(client, owner, perfil, db, fake, monkeypatch):
+    """FR-010a: cada passo lento fica visível (commit) com clipe N de M e o % geral 90..100."""
+    _, h = owner
+    e = _ate_importando(client, h, perfil["id"], db, fake)
+    vistos: list[tuple] = []
+
+    def espiar(fn):
+        def wrapper(*args, **kwargs):
+            with get_sessionmaker()() as outra:  # o que a API vê: só o que foi commitado
+                row = outra.get(Envio, uuid.UUID(e["id"]))
+                vistos.append((row.etapa, row.etapa_mensagem, row.progress))
+            return fn(*args, **kwargs)
+        return wrapper
+
+    monkeypatch.setattr(importacao, "_legendar", espiar(importacao._legendar))
+    monkeypatch.setattr(importacao, "probe", espiar(importacao.probe))
+    _importar(db, fake)
+    assert vistos == [
+        ("legendas", "Aplicando legendas do kit 1 de 3", 90),
+        ("importando", "Importando 1 de 3", 90),
+        ("legendas", "Aplicando legendas do kit 2 de 3", 93),
+        ("importando", "Importando 2 de 3", 93),
+        ("legendas", "Aplicando legendas do kit 3 de 3", 96),
+        ("importando", "Importando 3 de 3", 96),
+    ]
+    out = client.get(f"/api/envios/{e['id']}", headers=h).json()["envio"]
+    assert (out["etapa"], out["etapaMensagem"], out["progress"]) == (
+        "concluido", "Pronto: 3 clipes", 100)
 
 
 def test_clipe_sem_fala_e_legenda_do_gerador(client, owner, perfil, db, fake):

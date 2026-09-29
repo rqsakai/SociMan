@@ -655,6 +655,35 @@ e amanhã às 19:00; ver no calendário; na hora, receber "Hora de postar" com c
 
 ---
 
+## Emenda 2026-09-29: progresso real do OpenShorts (US3, FR-010a)
+
+- [X] T085 Emendar `spec.md` (Clarifications, US3-6, FR-010a), `data-model.md` (colunas `etapa`,
+  `etapa_pct`, `clipe_atual`, `clipes_previstos`, `etapa_mensagem`; faixas do % geral; tipo
+  `envio_momentos`) e `contracts/http-api.md` (`Envio` + `EnvioEtapa`).
+- [X] T086 Criar `apps/api/src/sociman_api/envios/progresso.py` (puro): `{status, logs, queue,
+  partial}` → etapa, % da etapa, clipe N de M, posição na fila, mensagem pt-BR e % geral
+  ponderado; ignora o ruído (`[debug]`, `W0000`, `UserWarning`, linhas da transcrição, barras do
+  yt-dlp) e mantém a última etapa reconhecida.
+- [X] T087 Migration `0007_envio_progresso` (down_revision `0006_cortes_openshorts`): colunas
+  anuláveis com checks e o valor `envio_momentos` em `notificacao_tipo`; modelo `Envio`.
+- [X] T088 Trilha `openshorts` grava o progresso a cada consulta (% geral sem voltar no mesmo
+  job) e avisa `envio_momentos` uma vez por rodada; a trilha `importacao` grava `legendas` e
+  `importando` com clipe N de M; "enviar"/"tentar de novo" zeram; schema `Envio` em camelCase.
+- [X] T089 Testes: `tests/unit/test_progresso.py` (amostras reais de log, com o ruído) e a trilha
+  com o fake emitindo logs realistas em sequência (`tests/fakes/openshorts_fake.py`); o
+  `e2e/fakes/server.py` passa pelas etapas no tempo.
+- [X] T090 SPA: etapa com ícone, barra do % geral e a mensagem na lista e no detalhe dos envios
+  (polling existente); rótulo e cor de `envio_momentos` no sino. `npm run gen:contract`.
+- [X] T091 e2e `cortes-openshorts.spec.ts` confere a etapa exibida durante o processamento; rodar
+  `npm run test:api`, `ruff`, `npm run check:web` e `npm run test:e2e`; aplicar no dev
+  (`docker compose restart api agendador`) e conferir os envios reais.
+- [X] T092 Formato do dono: uma linha "Processando N% · <etapa>" (rótulos Baixando o vídeo,
+  Transcrevendo o vídeo, Escolhendo os momentos, Cortando os clipes, Aplicando legendas do kit,
+  Importando; "Cortando clipe 3 de 9 (cenas 40%)"); lista das etapas no detalhe do envio, com check
+  nas concluídas e a atual destacada; e2e confere a linha e a lista.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
