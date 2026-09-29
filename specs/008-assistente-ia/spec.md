@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-29
 
-**Status**: Draft
+**Status**: Clarified (Q1–Q3 respondidas em 2026-09-29)
 
 **Input**: User description: "Um botão 'Melhorar com IA' nos campos de texto (descrição para prompt do
 avatar, tom de voz, regras de imagem, prompt do cenário, bio do perfil, bordões e séries, título,
@@ -23,6 +23,18 @@ chamada é registrada."
   relevante, que abre um painel junto do campo (sem sair da tela).
 - Q: A IA pode salvar sozinha? → A: Não. A proposta só vira valor do campo quando o usuário aplica,
   e aplicar segue o mesmo caminho de salvar à mão (histórico, versão, reversão pelo dono).
+- Q: O que o botão "Aplicar" faz? → A: **Salva na hora** (1 clique), só aquele campo, pelo caminho
+  normal de salvar da entidade (validação, versão otimista com 409, histórico com autor humano e a
+  marca "com ajuda da IA"), disparado pelo painel. As outras alterações não salvas do formulário
+  continuam no formulário, sem salvar e sem se perder. "Editar e aplicar" edita a proposta no
+  painel e salva do mesmo jeito. (Q1 = B)
+- Q: Em que idioma saem as "Regras de imagem" do avatar? → A: No idioma do perfil (pt-BR). A
+  descrição para prompt do avatar e o prompt do ambiente do cenário continuam em inglês. (Q2 = B)
+- Q: Bordões e séries: a IA propõe a lista inteira ou um item? → A: Uma **lista de sugestões com
+  seleção**: o usuário marca quais aceitar, e os aceitos entram na lista do kit ao aplicar. "Gerar
+  mais" pede novas sugestões levando os itens já aceitos (os do kit e os marcados na sessão) e os
+  rejeitados na sessão, para não repetir e manter o estilo. A lista do kit continua com no máximo
+  20 itens. (Q3)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -34,7 +46,12 @@ o botão "Gerar". Com a caixa vazia, a IA melhora o texto atual (ou cria um, se 
 vazio), seguindo as regras daquele tipo de campo. Com a caixa preenchida (ex.: "deixa mais curto e
 acrescenta que ela usa avental rosa"), a IA segue a instrução. A resposta traz a proposta e uma
 explicação curta do que mudou e por quê. O usuário vê o antes e o depois lado a lado e escolhe:
-**Aplicar**, **Editar e aplicar**, **Outra versão** ou **Descartar**.
+**Aplicar** (salva na hora só aquele campo), **Editar e aplicar** (ajusta a proposta no painel e
+salva), **Outra versão** ou **Descartar**.
+
+Nos **bordões** e nas **séries** do kit (listas), a IA devolve uma lista de sugestões. O usuário
+marca as que quer, pode editar as marcadas, e "Aplicar" acrescenta as marcadas à lista do kit.
+"Gerar mais" traz sugestões novas, diferentes das já aceitas e das rejeitadas na sessão.
 
 **Why this priority**: é o valor central pedido pelo dono: textos melhores (prompts, títulos, bios)
 com menos esforço, sem perder o controle.
@@ -51,15 +68,28 @@ no histórico do avatar, com o autor humano.
    zero a partir do contexto do perfil e da entidade (ex.: nome e tipo do asset).
 3. **Given** uma instrução escrita, **When** o usuário gera, **Then** a proposta segue a instrução e a
    explicação diz como ela foi atendida.
-4. **Given** uma proposta, **When** o usuário clica em Aplicar, **Then** o campo recebe o texto, a
-   entidade é salva pelo caminho normal (com versão e histórico) e a autoria é do usuário, com a
-   marca "com ajuda da IA".
+4. **Given** uma proposta, **When** o usuário clica em Aplicar, **Then** a entidade é salva na hora
+   só com aquele campo, pelo caminho normal (validação, versão e histórico), o campo mostra o valor
+   salvo e a autoria é do usuário, com a marca "com ajuda da IA".
 5. **Given** uma proposta, **When** o usuário clica em Outra versão, **Then** recebe uma alternativa
    diferente das anteriores daquela sessão, sem perder as já geradas.
 6. **Given** uma proposta, **When** o usuário descarta ou fecha o painel, **Then** nada muda no campo
    nem na entidade.
-7. **Given** alterações não salvas no formulário, **When** o usuário aplica uma proposta, **Then** só
-   aquele campo muda; o resto do que ele digitou continua lá.
+7. **Given** alterações não salvas em outros campos do formulário, **When** o usuário aplica uma
+   proposta, **Then** só aquele campo é salvo; o resto do que ele digitou continua no formulário,
+   sem salvar e sem se perder, e o próximo "Salvar" da tela funciona sem conflito de versão.
+8. **Given** uma proposta, **When** o usuário clica em Editar e aplicar, muda o texto no painel e
+   salva, **Then** a entidade é salva com o texto editado e o registro marca a chamada como
+   "editada".
+9. **Given** o painel de bordões (ou séries) com sugestões, **When** o usuário marca algumas e
+   aplica, **Then** só as marcadas entram no fim da lista do kit, sem repetir itens que já estão
+   nela, e o kit é salvo com uma versão "com ajuda da IA".
+10. **Given** sugestões marcadas e não marcadas na sessão, **When** o usuário clica em Gerar mais,
+    **Then** as novas sugestões não repetem nenhum item já aceito (do kit ou marcado) nem os
+    rejeitados na sessão, e as sugestões anteriores continuam visíveis.
+11. **Given** uma lista do kit com 20 itens (ou marcações que a completariam), **When** o usuário
+    tenta marcar mais, **Then** o painel avisa que a lista está cheia (máximo de 20) e não deixa
+    marcar além do que cabe.
 
 ---
 
@@ -70,7 +100,9 @@ Cada tipo de campo tem suas próprias regras de escrita (o "system prompt"), por
   cabelo, roupa e estilo de forma fixa, para manter a consistência da personagem entre gerações;
 - **prompt de ambiente do cenário**: em inglês, luz, época, paleta e enquadramento;
 - **título de postagem**: pt-BR, curto, com gancho, no limite da plataforma;
-- **bio do perfil**, **bordões**, **tom de voz**, **regras de imagem**, **descrição de asset** etc.
+- **regras de imagem do avatar**: no idioma do perfil (pt-BR), frases curtas do que sempre e do que
+  nunca mostrar;
+- **bio do perfil**, **bordões**, **tom de voz**, **descrição de asset** etc.
 
 O pedido à IA sempre leva: as regras do tipo de campo, o contexto do perfil (nome, nicho, idioma,
 tom, bordões, paleta com nomes e, quando existir, a persona/avatar relacionado), o valor atual do
@@ -150,7 +182,14 @@ polêmico", aplicar, e ver a postagem salva com o novo título e a chamada no re
   regras do tipo de campo; conteúdo de terceiros (transcrição, textos de vídeos) entra como dado, não
   como instrução.
 - Outra pessoa salvou a entidade enquanto o painel estava aberto: aplicar recusa com o aviso de
-  conflito de versão (como nas outras telas), sem perder a proposta.
+  conflito de versão (como nas outras telas), sem perder a proposta nem o que foi digitado no
+  formulário.
+- Aplicar falha (validação, rede, entidade arquivada): nada é salvo, a proposta continua no painel
+  e o formulário fica como estava.
+- Postagem ainda não criada (corte + conta): aplicar cria a postagem em rascunho só com aquele
+  campo (ou os três, em "Sugerir textos").
+- Lista do kit cheia (20 itens): o painel avisa e só deixa marcar o que cabe; com a lista cheia,
+  "Gerar" fica desabilitado com o aviso.
 - Tempo esgotado (mais de 30 s): mensagem clara, com "Tentar de novo".
 - Perfil sem kit ou sem persona: a IA usa o que existir e a explicação diz o que faltou de contexto.
 - Várias gerações seguidas no mesmo campo: todas ficam acessíveis na sessão do painel até fechar.
@@ -169,10 +208,14 @@ polêmico", aplicar, e ver a postagem salva com o novo título e a chamada no re
   instrução. Conteúdo de terceiros DEVE entrar como dado delimitado, nunca como instrução.
 - **FR-004**: A resposta DEVE trazer a proposta e uma explicação curta (até 3 frases) do que mudou e
   por quê, e respeitar os limites do campo (tamanho, idioma, formato).
-- **FR-005**: O usuário DEVE poder Aplicar, Editar e aplicar, pedir Outra versão (diferente das já
-  geradas na sessão) ou Descartar. Nada é salvo sem uma dessas ações humanas.
-- **FR-006**: Aplicar DEVE salvar pelo mesmo caminho da edição manual (validação, versão, conflito,
-  histórico com autor humano e reversão pelo dono), marcando a versão como "com ajuda da IA".
+- **FR-005**: O usuário DEVE poder Aplicar (salva na hora), Editar e aplicar (edita no painel e
+  salva), pedir Outra versão (diferente das já geradas na sessão) ou Descartar. Nada é salvo sem o
+  clique humano em Aplicar ou no salvar do Editar e aplicar; gerar nunca salva.
+- **FR-006**: Aplicar DEVE salvar pelo mesmo caminho da edição manual (validação, versão, conflito
+  409, histórico com autor humano e reversão pelo dono), marcando a versão como "com ajuda da IA".
+  O salvar leva **só aquele campo** (atualização parcial; no kit, que é salvo inteiro, os tokens
+  salvos com só aquele campo trocado). As outras alterações não salvas do formulário DEVEM
+  continuar no formulário, e o formulário DEVE passar a usar a versão nova da entidade.
 - **FR-007**: Cada tipo de campo DEVE ter regras (system prompt) padrão que vêm com o SociMan. O dono
   DEVE poder ver, editar e voltar ao padrão; o membro só vê. Mudanças nas regras ficam no histórico.
 - **FR-008**: Toda chamada DEVE ser registrada com autor, data, perfil, entidade, campo, tipo de
@@ -184,17 +227,26 @@ polêmico", aplicar, e ver a postagem salva com o novo título e a chamada no re
   painel e registro), mantendo o histórico de sugestões já feitas.
 - **FR-011**: O assistente NUNCA publica nem envia conteúdo para rede social (princípio I); só
   devolve texto para o usuário decidir.
+- **FR-012**: Nos bordões e nas séries do kit, a IA DEVE devolver uma lista de sugestões que o
+  usuário marca (e pode editar) antes de aplicar; aplicar DEVE acrescentar só as marcadas ao fim da
+  lista, sem repetir itens (sem diferenciar maiúsculas) e sem passar de 20 itens (o painel avisa
+  quando a lista está cheia). "Gerar mais" DEVE enviar à IA os itens já aceitos (os da lista e os
+  marcados na sessão) e os rejeitados na sessão, e as sugestões novas não DEVEM repetir nenhum
+  deles.
 
 ### Key Entities
 
 - **Tipo de campo**: identificador estável (ex.: `avatar.descricao_prompt`, `avatar.tom_de_voz`,
-  `avatar.regras_imagem`, `cenario.prompt_ambiente`, `perfil.bio`, `kit.bordao`, `kit.serie`,
-  `postagem.titulo`, `postagem.descricao`, `postagem.hashtags`, `asset.nome`, `asset.descricao`),
-  com rótulo, idioma esperado, limites e onde é usado.
+  `avatar.regras_imagem`, `cenario.prompt_ambiente`, `perfil.bio`, `kit.bordoes`, `kit.series`,
+  `postagem.titulo`, `postagem.descricao`, `postagem.hashtags`, `postagem.textos`, `asset.nome`,
+  `asset.descricao`), com rótulo, idioma esperado, formato (texto, lista ou sugestões com
+  seleção), limites e onde é usado.
 - **Regras do tipo de campo** (system prompt): texto atual, texto padrão, autor e data da última
   mudança, versão e histórico.
 - **Chamada ao assistente**: autor, data, perfil, entidade e campo, tipo, instrução, entrada,
-  propostas geradas (uma ou mais na sessão), desfecho, duração, custo aproximado, erro.
+  propostas geradas (uma ou mais na sessão), nos bordões e séries os itens já aceitos e os
+  rejeitados enviados como contexto e os itens que entraram no kit, desfecho, duração, custo
+  aproximado, erro.
 
 ## Success Criteria *(mandatory)*
 
@@ -202,7 +254,7 @@ polêmico", aplicar, e ver a postagem salva com o novo título e a chamada no re
 
 - **SC-001**: Do clique em "Melhorar com IA" até ver a proposta leva menos de 15 segundos em 95% das
   chamadas.
-- **SC-002**: Aplicar uma proposta leva no máximo 2 cliques a partir da proposta visível.
+- **SC-002**: Aplicar uma proposta (e salvá-la) leva 1 clique a partir da proposta visível.
 - **SC-003**: 100% das propostas aplicadas aparecem no histórico da entidade com autor humano e a
   marca "com ajuda da IA"; 0 alterações salvas sem ação humana.
 - **SC-004**: Em 10 gerações de "descrição para prompt de imagem", 100% saem em inglês e mantêm os
@@ -216,9 +268,9 @@ polêmico", aplicar, e ver a postagem salva com o novo título e a chamada no re
   mesmo registro de chamadas passa a cobrir todos os tipos de campo.
 - As regras são globais por tipo de campo (valem para todos os perfis); o que muda por perfil é o
   contexto enviado. Regras por perfil ficam para depois, se forem necessárias.
-- A interação é por gerações independentes na sessão do painel ("Outra versão" e nova instrução), sem
-  conversa longa persistida; o histórico da sessão some ao fechar o painel, mas cada chamada fica no
-  registro.
+- A interação é por gerações independentes na sessão do painel ("Outra versão", "Gerar mais" e
+  nova instrução), sem conversa longa persistida; o histórico da sessão some ao fechar o painel,
+  mas cada chamada fica no registro.
 - Não há limite de gasto que bloqueie o uso; o controle é pelo resumo de custo do mês. Um aviso de
   teto mensal pode entrar depois.
 - Imagens não são geradas aqui (a geração continua no Flow/Veo, decisão de 2026-09-24); a IA só

@@ -74,6 +74,13 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 - **Arquivar:** só o uso no **kit** bloqueia (409 `asset_in_use`); cortes só informam. O kit guarda o `fundo_imagem_id` mesmo com fundo `cor`: para liberar a imagem, escolha outra.
 - **Seletores do kit** (fundo e marca d'água) listam da biblioteca (`GET …/assets/imagens`) com "Abrir biblioteca"; "Enviar imagem" cria o asset. As rotas antigas `…/fundos` e `…/marca-dagua` ficam `deprecated`.
 
+## Assistente de IA (desde a spec 008)
+- **Código:** pacote `ia/` (`tipos.py` com os 13 tipos de campo **em código**, `regras_padrao.py`, `prompt.py` com a base fixa `ia/1`, `cliente.py`, `saida.py`, `custo.py`, `service.py`, `service_regras.py`, `aplicacao.py`, router `/api/ia/*` com `operationId` `ia_*`). As regras editadas pelo dono ficam em `ia_regras` (sem linha = padrão do código; `entity_type = "ia_regra"`, "Voltar ao padrão" grava `texto = NULL`). Tela `/app/assistente-ia` (Regras para todos; Registro e Resumo só o dono).
+- **Registro:** `ia_chamadas` é a `sugestoes_texto` da 006 renomeada (mesmos ids; as linhas antigas viram `postagem.textos`). Toda geração é gravada, inclusive com erro (503/504/502), com desfecho `sem_acao`/`aplicada`/`editada`/`descartada`/`erro` e custo aproximado.
+- **Aplicar salva só o campo** (1 clique) pelo save normal da tela, com `ia: [{ tipoCampo, chamadaId, itens? }]` no corpo (`PATCH` de asset, perfil e postagem, `PUT` do kit com os tokens **salvos**, `POST` que cria a postagem). O `ia.aplicacao.marcar` roda antes do `history.record` e grava `details.ia` (o selo "com ajuda da IA"); o autor continua o humano. Gerar nunca salva. As outras alterações não salvas continuam no formulário.
+- **Bordões e séries** usam o formato `sugestoes` (marcar, "Gerar mais" com aceitos e rejeitados da sessão, lista do kit ≤ 20). Hashtags são `lista`; "Sugerir textos" da postagem é `textos_postagem`.
+- **`ANTHROPIC_BASE_URL`** (vazio = padrão do SDK) só é usado no e2e, apontando para o `openshorts-fake` (`POST /v1/messages`: "lento" e "fora do limite" na instrução ativam os modos de erro). As rotas de sugestões da 006 (`/api/cortes/{id}/sugestoes`) ficam `deprecated`.
+
 ## Armadilhas
 1. **Containers rodam como UID 1000.** Se uma pasta de bind mount não existir, o Docker a cria como root (foi o que aconteceu com `docker/certs`). Crie antes.
 2. **CSP estrita em produção** (herdada do volans). `check:csp` compara `apps/web/vite.config.ts` com `docker/nginx/05-edge-mode.envsh`. Mudou um, mude o outro.

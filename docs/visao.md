@@ -79,11 +79,21 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    - **Biblioteca por perfil:** avatares (looks, poses, descrição fixa para prompt), cenários, fundos,
      stickers, marcas d'água e imagens; os fundos e marcas d'água da 004 migraram sem perda.
    - **Só o kit bloqueia arquivar**; o uso em cortes é informativo. Link estável e download do original.
-8. `008-assistente-ia` 📝 **especificada** (`specs/008-assistente-ia/`, 2026-09-29): botão "Melhorar com IA"
-   nos campos de texto, com regras (system prompt) por tipo de campo ajustáveis pelo dono, proposta
-   com explicação e aplicação só por ação humana.
+8. `008-assistente-ia` ✅ **implementada** (`specs/008-assistente-ia/`, 2026-09-29; falta validar com o Claude real, T050).
+   Decisões:
+   - **"Melhorar com IA"** em 13 tipos de campo (avatar, cenário, asset, perfil, kit, postagem), com
+     instrução opcional, proposta + explicação, Outra versão e Descartar.
+   - **Aplicar salva direto** só aquele campo (autor humano, selo "com ajuda da IA" no histórico); o
+     que foi digitado nos outros campos não se perde.
+   - **Bordões e séries:** lista de sugestões com seleção e "Gerar mais" (sem repetir aceitos/rejeitados).
+   - **Regras por tipo de campo** editáveis pelo dono, com histórico e "voltar ao padrão"; registro de
+     chamadas e resumo de custo do mês. As sugestões da 006 migraram para o mesmo registro.
 9. `009-mcp`: servidor MCP sobre a API (o número fica, porque a constitution e as specs citam a `009-mcp`).
 10. `010-cenas`
 11. `011-scripts`: roteiros por cena e avatar.
 12. `012-produtos-shop`
 13. `013-importacao`: migrar `../shared/perfis/*` e `../shared/shop/*` para o banco.
+14. `014-publicacao-redes` 🔒 **futura, depende de emenda do princípio I** (pedido do dono em 2026-09-29):
+   enviar cortes finalizados (e depois vídeos de avatar/afiliado e vídeos próprios) como **rascunho**
+   para a conta, **agendar** e **publicar**, começando pelo app sandbox do TikTok (contas
+   @atavernanerd e @meusqueridinhos10 já liberadas). Pesquisa em `docs/pesquisa/publicacao-redes.md`.
