@@ -79,8 +79,11 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    - **Biblioteca por perfil:** avatares (looks, poses, descrição fixa para prompt), cenários, fundos,
      stickers, marcas d'água e imagens; os fundos e marcas d'água da 004 migraram sem perda.
    - **Só o kit bloqueia arquivar**; o uso em cortes é informativo. Link estável e download do original.
-8. `008-cenas`
+8. `008-assistente-ia` 📝 **especificada** (`specs/008-assistente-ia/`, 2026-09-29): botão "Melhorar com IA"
+   nos campos de texto, com regras (system prompt) por tipo de campo ajustáveis pelo dono, proposta
+   com explicação e aplicação só por ação humana.
 9. `009-mcp`: servidor MCP sobre a API (o número fica, porque a constitution e as specs citam a `009-mcp`).
-10. `010-scripts`: roteiros por cena e avatar.
-11. `011-produtos-shop`
-12. `012-importacao`: migrar `../shared/perfis/*` e `../shared/shop/*` para o banco.
+10. `010-cenas`
+11. `011-scripts`: roteiros por cena e avatar.
+12. `012-produtos-shop`
+13. `013-importacao`: migrar `../shared/perfis/*` e `../shared/shop/*` para o banco.
