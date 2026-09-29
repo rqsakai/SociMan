@@ -1,13 +1,21 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Conta, CreateContaRequest, Perfil, UpdateContaRequest } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Plus, Save } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { Archive, ArchiveRestore, ExternalLink, History, Loader2, Pencil, Plus, Save, X } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
-import { Card } from "../../components/layout";
+import { toast } from "sonner";
+import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, NativeSelect } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import { PlatformIcon } from "../../components/PlatformIcon";
-import { Alert, Button, Field, Input, Select, Textarea } from "../../components/ui";
 import { HistoryHeading, VersionHistory } from "../../components/VersionHistory";
 import { api } from "../../lib/api";
 import { contaForm, isUrl, type ContaForm } from "../../lib/forms";
@@ -16,11 +24,17 @@ import {
   contaPlatformText,
   contaStatusLabel,
   contaVersionsKey,
-  errorText,
   formatContaValue,
   platformLabel,
 } from "../../lib/perfis";
-import type { Feedback } from "./PerfilDetalhe";
+
+// Cor do status da conta na tabela.
+const contaStatusBadge: Record<Conta["status"], string> = {
+  planejada: "bg-info text-info-foreground",
+  ativa: "bg-success text-success-foreground",
+  pausada: "bg-warning text-warning-foreground",
+  encerrada: "bg-secondary text-secondary-foreground",
+};
 
 type Panel = { kind: "edit" | "history"; conta: Conta };
 
@@ -28,13 +42,16 @@ interface ContasTabProps {
   perfil: Perfil;
   contas: Conta[];
   onChanged: () => Promise<void>;
+  // Erro da API: o PerfilDetalhe mostra num Alert (com "Recarregar" no conflito de versão).
   onError: (err: unknown) => void;
-  setFeedback: (feedback: Feedback | null) => void;
+  // Limpa o erro anterior antes de uma nova ação.
+  onActionStart: () => void;
 }
 
 // Aba Contas do perfil (US2): lista, adicionar, editar, arquivar/restaurar e histórico por conta.
 // O SociMan só registra as contas; nada é publicado nem alterado nas plataformas (FR-007).
-export function ContasTab({ perfil, contas, onChanged, onError, setFeedback }: ContasTabProps) {
+// Sucesso vira toast; erro sobe para o Alert do PerfilDetalhe.
+export function ContasTab({ perfil, contas, onChanged, onError, onActionStart }: ContasTabProps) {
   const queryClient = useQueryClient();
   const [panel, setPanel] = useState<Panel | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -47,15 +64,15 @@ export function ContasTab({ perfil, contas, onChanged, onError, setFeedback }: C
   }
 
   async function toggleArchive(conta: Conta) {
-    setFeedback(null);
+    onActionStart();
     setBusyId(conta.id);
     try {
       if (conta.archived) {
         await api.contas.restore(conta.id, conta.version);
-        setFeedback({ tone: "success", text: "Conta restaurada." });
+        toast.success("Conta restaurada.");
       } else {
         await api.contas.archive(conta.id, conta.version);
-        setFeedback({ tone: "success", text: "Conta arquivada." });
+        toast.success("Conta arquivada.");
       }
       await changed(conta);
     } catch (err) {
@@ -65,73 +82,110 @@ export function ContasTab({ perfil, contas, onChanged, onError, setFeedback }: C
     }
   }
 
+  // Ações da linha: na coluna própria a partir de 640 px; abaixo disso, sob a conta.
+  function rowActions(conta: Conta) {
+    return (
+      <>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            onActionStart();
+            setPanel({ kind: "edit", conta });
+          }}
+        >
+          <Pencil aria-hidden="true" />
+          Editar
+        </Button>
+        <ConfirmButton
+          variant="ghost"
+          size="sm"
+          label={conta.archived ? "Restaurar" : "Arquivar"}
+          icon={conta.archived ? ArchiveRestore : Archive}
+          busy={busyId === conta.id}
+          disabled={busyId !== null}
+          title={conta.archived ? `Restaurar @${conta.handle}?` : `Arquivar @${conta.handle}?`}
+          description={
+            conta.archived
+              ? "A conta volta ao registro do perfil com o status que tinha."
+              : "A conta sai do registro ativo do perfil. Nada muda na plataforma: o SociMan não encerra contas."
+          }
+          onConfirm={() => toggleArchive(conta)}
+        />
+        <Button type="button" variant="ghost" size="sm" onClick={() => setPanel({ kind: "history", conta })}>
+          <History aria-hidden="true" />
+          Histórico
+        </Button>
+      </>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <Card>
-        <h2 className="mb-4 text-lg font-medium">Contas nas plataformas</h2>
-        {contas.length === 0 ? (
-          <p className="text-sm text-muted">Nenhuma conta cadastrada.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-border text-muted">
-                <tr>
-                  <th className="py-2 pr-4 font-medium">Plataforma</th>
-                  <th className="py-2 pr-4 font-medium">@</th>
-                  <th className="py-2 pr-4 font-medium">Link</th>
-                  <th className="py-2 pr-4 font-medium">Status</th>
-                  <th className="py-2 font-medium">
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle>
+            <h2>Contas nas plataformas</h2>
+          </CardTitle>
+          <CardDescription>O SociMan só registra as contas; nada é publicado nem alterado nas plataformas.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {contas.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhuma conta cadastrada.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs uppercase">Conta</TableHead>
+                  <TableHead className="hidden text-xs uppercase md:table-cell">Link</TableHead>
+                  <TableHead className="text-xs uppercase">Status</TableHead>
+                  <TableHead className="hidden sm:table-cell">
                     <span className="sr-only">Ações</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {contas.map((conta) => (
-                  <tr key={conta.id} className={`border-b border-border last:border-0 ${conta.archived ? "text-muted" : ""}`}>
-                    <td className="py-2 pr-4">
-                      <span className="flex items-center gap-2">
-                        <PlatformIcon platform={conta.platform} label={contaPlatformText(conta)} />
-                        {contaPlatformText(conta)}
+                  <TableRow key={conta.id} className={conta.archived ? "text-muted-foreground" : undefined}>
+                    <TableCell>
+                      <span className="flex items-center gap-3">
+                        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                          <PlatformIcon platform={conta.platform} label={contaPlatformText(conta)} className="size-5" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block font-semibold">@{conta.handle}</span>
+                          <span className="block text-xs text-muted-foreground">{contaPlatformText(conta)}</span>
+                        </span>
                       </span>
-                    </td>
-                    <td className="py-2 pr-4">@{conta.handle}</td>
-                    <td className="py-2 pr-4">
+                      <div className="mt-2 -ml-2 flex flex-wrap gap-1 sm:hidden">{rowActions(conta)}</div>
+                    </TableCell>
+                    <TableCell className="hidden max-w-xs md:table-cell">
                       <a
                         href={conta.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 break-all hover:underline"
+                        className="inline-flex items-center gap-1 break-all whitespace-normal hover:underline"
                       >
                         {conta.url}
                         <ExternalLink className="size-3 shrink-0" aria-hidden="true" />
                       </a>
-                    </td>
-                    <td className="py-2 pr-4">
-                      {contaStatusLabel[conta.status]}
-                      {conta.archived && " · arquivada"}
-                    </td>
-                    <td className="py-2">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        <RowAction
-                          onClick={() => {
-                            setFeedback(null);
-                            setPanel({ kind: "edit", conta });
-                          }}
-                        >
-                          Editar
-                        </RowAction>
-                        <RowAction disabled={busyId !== null} onClick={() => void toggleArchive(conta)}>
-                          {conta.archived ? "Restaurar" : "Arquivar"}
-                        </RowAction>
-                        <RowAction onClick={() => setPanel({ kind: "history", conta })}>Histórico</RowAction>
+                        <Badge className={contaStatusBadge[conta.status]}>{contaStatusLabel[conta.status]}</Badge>
+                        {conta.archived && <Badge className="bg-dark text-dark-foreground">arquivada</Badge>}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="flex flex-wrap justify-end gap-1">{rowActions(conta)}</div>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
       </Card>
 
       {panel?.kind === "edit" && panelConta && (
@@ -141,11 +195,11 @@ export function ContasTab({ perfil, contas, onChanged, onError, setFeedback }: C
           onCancel={() => setPanel(null)}
           onSaved={async () => {
             setPanel(null);
-            setFeedback({ tone: "success", text: "Conta salva." });
+            toast.success("Conta salva.");
             await changed(panelConta);
           }}
           onError={onError}
-          onSubmitStart={() => setFeedback(null)}
+          onSubmitStart={onActionStart}
         />
       )}
       {panel?.kind === "history" && panelConta && (
@@ -155,21 +209,13 @@ export function ContasTab({ perfil, contas, onChanged, onError, setFeedback }: C
       <AddContaCard
         perfil={perfil}
         onCreated={async (conta) => {
-          setFeedback({ tone: "success", text: `Conta @${conta.handle} adicionada.` });
+          toast.success(`Conta @${conta.handle} adicionada.`);
           await onChanged();
         }}
         onError={onError}
-        onSubmitStart={() => setFeedback(null)}
+        onSubmitStart={onActionStart}
       />
     </div>
-  );
-}
-
-function RowAction({ children, ...props }: { children: ReactNode; disabled?: boolean; onClick: () => void }) {
-  return (
-    <Button type="button" variant="ghost" className="!w-auto !px-2 !py-1 whitespace-nowrap" {...props}>
-      {children}
-    </Button>
   );
 }
 
@@ -194,15 +240,15 @@ function ContaFields({
           {({ id, describedBy, invalid }) =>
             // Campo desabilitado sairia do formulário; fixo, a plataforma vem dos defaultValues.
             platformLocked ? (
-              <Input id={id} value={platformLabel[platform]} readOnly aria-readonly="true" className="bg-bg text-muted" />
+              <Input id={id} value={platformLabel[platform]} readOnly aria-readonly="true" className="bg-muted text-muted-foreground" />
             ) : (
-              <Select id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("platform")}>
+              <NativeSelect id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("platform")}>
                 {Object.entries(platformLabel).map(([value, label]) => (
                   <option key={value} value={value}>
                     {label}
                   </option>
                 ))}
-              </Select>
+              </NativeSelect>
             )
           }
         </Field>
@@ -214,35 +260,36 @@ function ContaFields({
           </Field>
         )}
       </div>
-      <Field label="@ ou link" error={errors.handleOrUrl?.message}>
+      <Field
+        label="@ ou link"
+        error={errors.handleOrUrl?.message}
+        hint={
+          platform === "outra"
+            ? "Cole o link da conta; o @ é tirado dele."
+            : "Digite o @ (o link é preenchido sozinho) ou cole o link da conta (o @ é tirado dele)."
+        }
+      >
         {({ id, describedBy, invalid }) => (
-          <>
-            <Input
-              id={id}
-              autoComplete="off"
-              spellCheck={false}
-              placeholder={platform === "outra" ? "https://…" : "@meuperfil"}
-              aria-invalid={invalid}
-              aria-describedby={describedBy}
-              {...field("handleOrUrl")}
-            />
-            <p className="text-xs text-muted">
-              {platform === "outra"
-                ? "Cole o link da conta; o @ é tirado dele."
-                : "Digite o @ (o link é preenchido sozinho) ou cole o link da conta (o @ é tirado dele)."}
-            </p>
-          </>
+          <Input
+            id={id}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder={platform === "outra" ? "https://…" : "@meuperfil"}
+            aria-invalid={invalid}
+            aria-describedby={describedBy}
+            {...field("handleOrUrl")}
+          />
         )}
       </Field>
       <Field label="Status" error={errors.status?.message}>
         {({ id, describedBy, invalid }) => (
-          <Select id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("status")}>
+          <NativeSelect id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("status")}>
             {Object.entries(contaStatusLabel).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>
             ))}
-          </Select>
+          </NativeSelect>
         )}
       </Field>
       <Field label="Observação" error={errors.notes?.message}>
@@ -294,15 +341,22 @@ function AddContaCard({
   }
 
   return (
-    <Card className="max-w-xl">
-      <h2 className="mb-4 text-lg font-medium">Nova conta</h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <ContaFields form={form} />
-        <Button type="submit" className="!w-auto" loading={isSubmitting}>
-          {!isSubmitting && <Plus className="size-4" aria-hidden="true" />}
-          Adicionar conta
-        </Button>
-      </form>
+    <Card className="max-w-xl shadow-card">
+      <CardHeader>
+        <CardTitle>
+          <h2>Nova conta</h2>
+        </CardTitle>
+        <CardDescription>Uma conta ativa por plataforma em cada perfil.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <ContaFields form={form} />
+          <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+            {isSubmitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Plus aria-hidden="true" />}
+            Adicionar conta
+          </Button>
+        </form>
+      </CardContent>
     </Card>
   );
 }
@@ -360,22 +414,28 @@ function EditContaCard({
   }
 
   return (
-    <Card className="max-w-xl">
-      <h2 className="mb-4 text-lg font-medium">
-        Editar @{conta.handle} ({contaPlatformText(conta)})
-      </h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <ContaFields form={form} platformLocked />
-        <div className="flex gap-2">
-          <Button type="submit" className="!w-auto" loading={isSubmitting}>
-            {!isSubmitting && <Save className="size-4" aria-hidden="true" />}
-            Salvar
-          </Button>
-          <Button type="button" variant="ghost" className="!w-auto" onClick={onCancel}>
-            Cancelar
-          </Button>
-        </div>
-      </form>
+    <Card className="max-w-xl shadow-card">
+      <CardHeader>
+        <CardTitle>
+          <h2>
+            Editar @{conta.handle} ({contaPlatformText(conta)})
+          </h2>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <ContaFields form={form} platformLocked />
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+              {isSubmitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+              Salvar
+            </Button>
+            <Button type="button" variant="ghost" onClick={onCancel}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      </CardContent>
     </Card>
   );
 }
@@ -391,31 +451,39 @@ function ContaHistoryCard({
 }) {
   const versions = useQuery({ queryKey: contaVersionsKey(conta.id), queryFn: () => api.contas.versions(conta.id) });
   return (
-    <Card>
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <Card className="shadow-card">
+      <CardHeader>
         <HistoryHeading>{`Histórico de @${conta.handle} (${contaPlatformText(conta)})`}</HistoryHeading>
-        <div className="flex gap-2 text-sm">
-          <Link to={`/app/contas/${conta.id}/historico`} className="px-2 py-1 text-muted hover:text-text hover:underline">
-            Abrir em página própria
-          </Link>
-          <Button type="button" variant="ghost" className="!w-auto !px-2 !py-1" onClick={onClose}>
+        <CardAction className="flex gap-1">
+          <Button asChild variant="link" size="sm">
+            <Link to={`/app/contas/${conta.id}/historico`}>Abrir em página própria</Link>
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+            <X aria-hidden="true" />
             Fechar
           </Button>
-        </div>
-      </div>
-      {versions.isPending && <p aria-live="polite">Carregando…</p>}
-      {versions.isError && <Alert tone="error">{errorText(versions.error)}</Alert>}
-      {versions.data && (
-        <VersionHistory
-          versions={versions.data.items}
-          labels={contaFieldLabel}
-          formatValue={formatContaValue}
-          onRevert={async (toVersion) => {
-            await api.contas.revert(conta.id, conta.version, toVersion);
-            await onReverted();
-          }}
-        />
-      )}
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        {versions.isPending && (
+          <p aria-live="polite" className="text-sm text-muted-foreground">
+            Carregando…
+          </p>
+        )}
+        {versions.isError && <ApiErrorAlert error={versions.error} />}
+        {versions.data && (
+          <VersionHistory
+            versions={versions.data.items}
+            labels={contaFieldLabel}
+            formatValue={formatContaValue}
+            onRevert={async (toVersion) => {
+              await api.contas.revert(conta.id, conta.version, toVersion);
+              await onReverted();
+            }}
+            onReload={onReverted}
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }

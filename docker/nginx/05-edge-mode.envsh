@@ -1,13 +1,14 @@
 #!/bin/sh
 # Roda antes do envsubst do entrypoint oficial do nginx: define upstream e CSP
 # conforme EDGE_MODE.
-#   dev  (default) → Vite dev com HMR; CSP com 'unsafe-inline' (injeções do
-#                    Vite dev são inline por design — mesmo caso do vite.config)
-#   prod           → build estático servido pelo web-prod; CSP ESTRITA (a mesma
-#                    strictCsp de apps/web/vite.config.ts — é o que a Azion serve)
+#   dev  (default) → Vite dev com HMR; CSP de produção + 'unsafe-inline' no
+#                    script-src (preamble inline do Vite dev — mesmo caso do vite.config)
+#   prod           → build estático servido pelo web-prod; CSP de produção (a mesma
+#                    strictCsp de apps/web/vite.config.ts): script-src estrito e
+#                    style-src 'self' 'unsafe-inline' (constitution 2.0.0, ADR 0001)
 set -e
 
-STRICT_CSP="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'"
+STRICT_CSP="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'"
 
 if [ "$EDGE_MODE" = "prod" ]; then
   export WEB_UPSTREAM="web-prod:80"

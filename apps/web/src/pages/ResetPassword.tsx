@@ -1,11 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApiError } from "@sociman/contract";
-import { KeyRound, Lock } from "lucide-react";
+import { CircleAlert, KeyRound, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { AuthLayout } from "../components/layout";
-import { Alert, Button, Field, Input } from "../components/ui";
+import { Field } from "@/components/ui/field";
+import { AuthShell } from "@/components/shell";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { api } from "../lib/api";
 import { resetForm, type ResetForm } from "../lib/forms";
 import { useAppConfig } from "../lib/useAppConfig";
@@ -41,36 +44,41 @@ export default function ResetPassword() {
     }
   }
 
+  const newLinkFooter = (
+    <Link className="font-semibold text-primary hover:underline" to="/forgot-password">
+      Pedir novo link
+    </Link>
+  );
+
   if (!token) {
     return (
-      <AuthLayout title="Redefinir senha">
-        <Alert tone="error">Link inválido ou expirado — peça um novo</Alert>
-        <p className="mt-4 text-sm">
-          <Link className="text-text underline hover:text-muted" to="/forgot-password">
-            Pedir novo link
-          </Link>
-        </p>
-      </AuthLayout>
+      <AuthShell title="Redefinir senha" footer={newLinkFooter}>
+        <Alert variant="destructive">
+          <CircleAlert aria-hidden="true" />
+          <AlertDescription>Link inválido ou expirado — peça um novo</AlertDescription>
+        </Alert>
+      </AuthShell>
     );
   }
 
   return (
-    <AuthLayout title="Redefinir senha">
+    <AuthShell
+      title="Redefinir senha"
+      description="Escolha uma senha nova"
+      footer={linkInvalid ? newLinkFooter : undefined}
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        {serverError && <Alert tone="error">{serverError}</Alert>}
-        {linkInvalid && (
-          <p className="text-sm">
-            <Link className="text-text underline hover:text-muted" to="/forgot-password">
-              Pedir novo link
-            </Link>
-          </p>
+        {serverError && (
+          <Alert variant="destructive">
+            <CircleAlert aria-hidden="true" />
+            <AlertDescription>{serverError}</AlertDescription>
+          </Alert>
         )}
         <Field label="Nova senha" error={errors.newPassword?.message}>
           {({ id, describedBy, invalid }) => (
             <Input
               id={id}
               type="password"
-              icon={Lock}
               autoComplete="new-password"
               aria-invalid={invalid}
               aria-describedby={describedBy}
@@ -83,7 +91,6 @@ export default function ResetPassword() {
             <Input
               id={id}
               type="password"
-              icon={Lock}
               autoComplete="new-password"
               aria-invalid={invalid}
               aria-describedby={describedBy}
@@ -91,11 +98,16 @@ export default function ResetPassword() {
             />
           )}
         </Field>
-        <Button type="submit" loading={isSubmitting}>
-          {!isSubmitting && <KeyRound className="size-4" aria-hidden="true" />}
+        <Button
+          type="submit"
+          className="tone-primary w-full text-xs font-bold tracking-wide uppercase"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+        >
+          {isSubmitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <KeyRound aria-hidden="true" />}
           Redefinir senha
         </Button>
       </form>
-    </AuthLayout>
+    </AuthShell>
   );
 }

@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { crc32, deflateSync } from "node:zlib";
-import { expect, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Page } from "@playwright/test";
 import { BASE_URL, MAILPIT_URL, OWNER } from "./fixtures";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -108,9 +108,40 @@ export function tokenFromLink(link: string): string {
   return new URL(link, BASE_URL).searchParams.get("token")!;
 }
 
+// Zera os contadores de limite de tentativa (chaves rl:* no Redis de dev). A suíte faz muitos
+// logins com o mesmo dono e o mesmo IP e estouraria o limite do app (10/conta e 30/IP a cada
+// 15 min), que é testado no pytest. Isto só mexe nos contadores, nunca no limite.
+export function resetRateLimits(): void {
+  compose(["exec", "-T", "redis", "sh", "-c", "redis-cli --scan --pattern 'rl:*' | xargs -r redis-cli del >/dev/null"]);
+}
+
+// --- API ---
+
+// Access token do usuário via POST /api/auth/login (para montar dados sem passar pela UI).
+export async function apiToken(request: APIRequestContext, email: string, password: string): Promise<string> {
+  resetRateLimits();
+  const res = await request.post("/api/auth/login", { data: { email, password } });
+  expect(res.status(), "POST /api/auth/login").toBe(200);
+  return ((await res.json()) as { accessToken: string }).accessToken;
+}
+
+// Cria um perfil via POST /api/perfis (status padrão: Em preparação).
+export async function createPerfilViaApi(
+  request: APIRequestContext,
+  token: string,
+  perfil: { name: string; slug: string; niche?: string },
+): Promise<void> {
+  const res = await request.post("/api/perfis", {
+    headers: { Authorization: `Bearer ${token}` },
+    data: perfil,
+  });
+  expect(res.status(), `POST /api/perfis (${perfil.slug})`).toBe(201);
+}
+
 // --- UI ---
 
 export async function login(page: Page, email: string, password: string): Promise<void> {
+  resetRateLimits();
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Senha").fill(password);

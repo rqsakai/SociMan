@@ -14,7 +14,7 @@
 
 ## Service worker (Workbox `generateSW`)
 - `registerType: "prompt"`, `clientsClaim: false`, `skipWaiting` só quando o usuário aceita.
-- `globPatterns`: `**/*.{js,css,html,svg,png,ico}` (o manifest entra pelo próprio plugin).
+- `globPatterns`: `**/*.{js,css,html,svg,png,ico,woff2}` (o manifest entra pelo próprio plugin; woff2 = fonte local, desde a 005).
 - `navigateFallback: "/index.html"`, `navigateFallbackDenylist: [/^\/api\//, /^\/img\//, /^\/sociman-ca\./]`.
 - `runtimeCaching`: **nenhum**.
 - `cleanupOutdatedCaches: true`.

@@ -1,22 +1,29 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Perfil, UpdatePerfilRequest } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, ArrowLeft, RefreshCw, Save } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, Loader2, Save } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { AppLayout } from "../../components/AppLayout";
+import { toast } from "sonner";
+import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { ConfirmButton } from "@/components/ConfirmButton";
+import { usePageMeta } from "@/components/shell";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Field, NativeSelect } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "../../components/ImageUpload";
-import { Card } from "../../components/layout";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
-import { Alert, Button, Field, Input, Select, Textarea } from "../../components/ui";
 import { HistoryHeading, VersionHistory } from "../../components/VersionHistory";
 import { api } from "../../lib/api";
 import { editPerfilForm, type EditPerfilForm } from "../../lib/forms";
 import {
-  errorText,
   formatPerfilValue,
-  isVersionConflict,
   languageLabel,
   perfilFieldLabel,
   perfilKey,
@@ -25,8 +32,6 @@ import {
 } from "../../lib/perfis";
 import { ContasTab } from "./ContasTab";
 
-export type Feedback = { tone: "success" | "error" | "info"; text: string; conflict?: boolean };
-
 const tabs = [
   { id: "dados", label: "Dados" },
   { id: "contas", label: "Contas" },
@@ -34,17 +39,19 @@ const tabs = [
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
 
-// /app/perfis/:id: abas Dados, Contas e Histórico, e as ações Arquivar/Restaurar. A aba fica na
-// URL (?aba=contas) para o voltar do navegador e o link direto funcionarem.
+// /app/perfis/:id: cabeçalho "profile" (banner, logo e abas em pílula), abas Dados, Contas e
+// Histórico, e as ações Arquivar/Restaurar. A aba fica na URL (?aba=contas) para o voltar do
+// navegador e o link direto funcionarem. Sucesso vira toast; erro da API fica num Alert.
 export default function PerfilDetalhe() {
   const { id = "" } = useParams();
   const queryClient = useQueryClient();
   const [params, setParams] = useSearchParams();
   const tab: TabId = tabs.some((t) => t.id === params.get("aba")) ? (params.get("aba") as TabId) : "dados";
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const [archiving, setArchiving] = useState(false);
 
   const detail = useQuery({ queryKey: perfilKey(id), queryFn: () => api.perfis.get(id) });
+  usePageMeta({ title: detail.data?.perfil.name ?? "Perfil", breadcrumbs: [{ label: "Perfis", to: "/app/perfis" }] });
 
   // Qualquer mutação do perfil ou das contas muda a lista, o detalhe e o histórico.
   async function refresh() {
@@ -55,33 +62,31 @@ export default function PerfilDetalhe() {
     ]);
   }
 
-  function report(err: unknown) {
-    setFeedback({ tone: "error", text: errorText(err), conflict: isVersionConflict(err) });
-  }
-
   async function reload() {
-    setFeedback(null);
+    setError(null);
     await refresh();
   }
 
-  function selectTab(next: TabId) {
-    setFeedback(null);
+  function selectTab(next: string) {
+    setError(null);
     setParams(next === "dados" ? {} : { aba: next }, { replace: true });
   }
 
   if (detail.isPending) {
     return (
-      <AppLayout>
-        <p aria-live="polite">Carregando…</p>
-      </AppLayout>
+      <div className="space-y-4" aria-live="polite">
+        <span className="sr-only">Carregando…</span>
+        <Skeleton className="h-44 w-full rounded-xl" />
+        <Skeleton className="mx-4 h-24 rounded-xl" />
+      </div>
     );
   }
   if (detail.isError) {
     return (
-      <AppLayout>
-        <Alert tone="error">{errorText(detail.error)}</Alert>
+      <div className="space-y-4">
         <BackLink />
-      </AppLayout>
+        <ApiErrorAlert error={detail.error} />
+      </div>
     );
   }
 
@@ -89,125 +94,125 @@ export default function PerfilDetalhe() {
   const activeContas = contas.filter((c) => !c.archived && c.status === "ativa").length;
 
   async function toggleArchive() {
-    setFeedback(null);
+    setError(null);
     setArchiving(true);
     try {
       if (perfil.archived) {
         await api.perfis.restore(perfil.id, perfil.version);
-        setFeedback({ tone: "success", text: "Perfil restaurado." });
+        toast.success("Perfil restaurado.");
       } else {
         await api.perfis.archive(perfil.id, perfil.version);
-        setFeedback({
-          tone: activeContas > 0 ? "info" : "success",
-          text:
-            activeContas > 0
-              ? "Perfil arquivado. As contas ativas continuam ativas nas plataformas: o SociMan não publica nem encerra nada fora dele."
-              : "Perfil arquivado.",
-        });
+        if (activeContas > 0) {
+          toast.info(
+            "Perfil arquivado. As contas ativas continuam ativas nas plataformas: o SociMan não publica nem encerra nada fora dele.",
+            { duration: 10_000 },
+          );
+        } else {
+          toast.success("Perfil arquivado.");
+        }
       }
       await refresh();
     } catch (err) {
-      report(err);
+      setError(err);
     } finally {
       setArchiving(false);
     }
   }
 
   return (
-    <AppLayout>
+    <div className="space-y-6">
       <BackLink />
-      <PerfilHeader
-        perfil={perfil}
-        actions={
-          <Button type="button" variant="ghost" className="!w-auto border border-border" loading={archiving} onClick={() => void toggleArchive()}>
-            {!archiving && (perfil.archived ? <ArchiveRestore className="size-4" aria-hidden="true" /> : <Archive className="size-4" aria-hidden="true" />)}
-            {perfil.archived ? "Restaurar" : "Arquivar"}
-          </Button>
-        }
-      />
+      <Tabs value={tab} onValueChange={selectTab} className="gap-6">
+        <PerfilHeader
+          perfil={perfil}
+          tabs={
+            <TabsList aria-label="Seções do perfil" className="h-10 rounded-full bg-muted p-1">
+              {tabs.map((t) => (
+                <TabsTrigger key={t.id} value={t.id} className="rounded-full px-4 data-[state=active]:shadow-sm">
+                  {t.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          }
+          actions={
+            <ConfirmButton
+              label={perfil.archived ? "Restaurar" : "Arquivar"}
+              icon={perfil.archived ? ArchiveRestore : Archive}
+              busy={archiving}
+              title={perfil.archived ? `Restaurar ${perfil.name}?` : `Arquivar ${perfil.name}?`}
+              description={
+                perfil.archived
+                  ? "O perfil volta para a lista padrão."
+                  : activeContas > 0
+                    ? "O perfil sai da lista padrão. As contas ativas continuam ativas nas plataformas: o SociMan não publica nem encerra nada fora dele."
+                    : "O perfil sai da lista padrão e pode ser restaurado depois."
+              }
+              onConfirm={toggleArchive}
+            />
+          }
+        />
 
-      {feedback && (
-        <div className="mb-4">
-          <Alert tone={feedback.tone}>
-            {feedback.text}
-            {feedback.conflict && (
-              <Button type="button" variant="ghost" className="!w-auto !px-2 !py-1 ml-2 underline" onClick={() => void reload()}>
-                <RefreshCw className="size-4" aria-hidden="true" />
-                Recarregar
-              </Button>
-            )}
-          </Alert>
-        </div>
-      )}
+        {error !== null && <ApiErrorAlert error={error} onReload={() => void reload()} />}
 
-      <div role="tablist" aria-label="Seções do perfil" className="mb-4 flex gap-1 border-b border-border">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            id={`aba-${t.id}`}
-            aria-selected={tab === t.id}
-            aria-controls={`painel-${t.id}`}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${tab === t.id ? "border-primary text-primary" : "border-transparent text-muted hover:text-text"}`}
-            onClick={() => selectTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      <div role="tabpanel" id={`painel-${tab}`} aria-labelledby={`aba-${tab}`}>
-        {tab === "dados" && (
+        <TabsContent value="dados">
           <DadosTab
             key={`${perfil.id}-${perfil.version}`}
             perfil={perfil}
             onSaved={async (text) => {
-              setFeedback({ tone: "success", text });
+              toast.success(text);
               await refresh();
             }}
-            onError={report}
-            onSubmitStart={() => setFeedback(null)}
+            onError={setError}
+            onSubmitStart={() => setError(null)}
           />
-        )}
-        {tab === "contas" && <ContasTab perfil={perfil} contas={contas} onChanged={refresh} onError={report} setFeedback={setFeedback} />}
-        {tab === "historico" && <PerfilHistorico perfil={perfil} onReverted={refresh} />}
-      </div>
-    </AppLayout>
+        </TabsContent>
+        <TabsContent value="contas">
+          <ContasTab perfil={perfil} contas={contas} onChanged={refresh} onError={setError} onActionStart={() => setError(null)} />
+        </TabsContent>
+        <TabsContent value="historico">
+          <PerfilHistorico perfil={perfil} onReverted={refresh} />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
 
 function BackLink() {
   return (
-    <Link to="/app/perfis" className="mb-4 inline-flex items-center gap-1 text-sm text-muted hover:text-text">
+    <Link to="/app/perfis" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
       <ArrowLeft className="size-4" aria-hidden="true" />
       Perfis
     </Link>
   );
 }
 
-function PerfilHeader({ perfil, actions }: { perfil: Perfil; actions: ReactNode }) {
+// Cabeçalho no estilo "profile": banner largo (a imagem do perfil ou um degradê) e um cartão
+// branco sobreposto com o logo, o nome, o status, as abas em pílula e a ação principal.
+function PerfilHeader({ perfil, tabs, actions }: { perfil: Perfil; tabs: ReactNode; actions: ReactNode }) {
   return (
-    <div className="mb-6 space-y-4">
-      {perfil.banner && (
-        <img
-          src={perfil.banner.urls.medium}
-          alt={`Banner de ${perfil.name}`}
-          className="aspect-[4/1] w-full rounded-panel border border-border object-cover"
-        />
-      )}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <ProfileAvatar name={perfil.name} logo={perfil.logo} size="lg" />
-          <div>
-            <h1 className="text-2xl font-semibold">{perfil.name}</h1>
-            <p className="mt-1 text-sm text-muted">
-              {perfil.slug} · {perfilStatusLabel[perfil.status]}
-              {perfil.archived && " · Arquivado"}
-            </p>
+    <div>
+      <div className="relative h-36 overflow-hidden rounded-xl bg-sidebar-gradient shadow-card sm:h-48">
+        {perfil.banner && (
+          <img src={perfil.banner.urls.medium} alt={`Banner de ${perfil.name}`} className="size-full object-cover" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-dark/50" aria-hidden="true" />
+      </div>
+      <div className="relative mx-3 -mt-12 rounded-xl bg-card p-4 shadow-card sm:mx-6 sm:-mt-16">
+        <div className="flex flex-wrap items-center gap-4">
+          <ProfileAvatar name={perfil.name} logo={perfil.logo} size="lg" className="ring-4 ring-card" />
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-xl font-bold sm:text-2xl">{perfil.name}</h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span className="font-mono text-xs">{perfil.slug}</span>
+              <Badge variant="secondary">{perfilStatusLabel[perfil.status]}</Badge>
+              {perfil.archived && <Badge className="bg-dark text-dark-foreground">Arquivado</Badge>}
+            </div>
+          </div>
+          <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto">
+            {tabs}
+            {actions}
           </div>
         </div>
-        <div className="flex items-center gap-2">{actions}</div>
       </div>
     </div>
   );
@@ -264,64 +269,84 @@ function DadosTab({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-      <Card>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-          <Field label="Nome" error={errors.name?.message}>
-            {({ id, describedBy, invalid }) => (
-              <Input id={id} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} {...field("name")} />
-            )}
-          </Field>
-          <Field label="Identificador">
-            {({ id }) => (
-              <>
-                <Input id={id} value={perfil.slug} readOnly aria-readonly="true" className="bg-bg text-muted" />
-                <p className="text-xs text-muted">O identificador é fixo desde a criação.</p>
-              </>
-            )}
-          </Field>
-          <Field label="Nicho" error={errors.niche?.message}>
-            {({ id, describedBy, invalid }) => (
-              <Input id={id} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} {...field("niche")} />
-            )}
-          </Field>
-          <Field label="Descrição" error={errors.bio?.message}>
-            {({ id, describedBy, invalid }) => (
-              <Textarea id={id} rows={5} aria-invalid={invalid} aria-describedby={describedBy} {...field("bio")} />
-            )}
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Idioma" error={errors.language?.message}>
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle>
+            <h2>Dados do perfil</h2>
+          </CardTitle>
+          <CardDescription>Nome, nicho, descrição, idioma e status.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+            <Field label="Nome" error={errors.name?.message}>
               {({ id, describedBy, invalid }) => (
-                <Select id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("language")}>
-                  {Object.entries(languages).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </Select>
+                <Input id={id} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} {...field("name")} />
               )}
             </Field>
-            <Field label="Status" error={errors.status?.message}>
-              {({ id, describedBy, invalid }) => (
-                <Select id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("status")}>
-                  {Object.entries(perfilStatusLabel).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </Select>
+            <Field label="Identificador" hint="O identificador é fixo desde a criação.">
+              {({ id, describedBy }) => (
+                <Input
+                  id={id}
+                  value={perfil.slug}
+                  readOnly
+                  aria-readonly="true"
+                  aria-describedby={describedBy}
+                  className="bg-muted font-mono text-muted-foreground"
+                />
               )}
             </Field>
-          </div>
-          <Button type="submit" className="!w-auto" loading={isSubmitting}>
-            {!isSubmitting && <Save className="size-4" aria-hidden="true" />}
-            Salvar
-          </Button>
-        </form>
+            <Field label="Nicho" error={errors.niche?.message}>
+              {({ id, describedBy, invalid }) => (
+                <Input id={id} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} {...field("niche")} />
+              )}
+            </Field>
+            <Field label="Descrição" error={errors.bio?.message}>
+              {({ id, describedBy, invalid }) => (
+                <Textarea id={id} rows={5} aria-invalid={invalid} aria-describedby={describedBy} {...field("bio")} />
+              )}
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Idioma" error={errors.language?.message}>
+                {({ id, describedBy, invalid }) => (
+                  <NativeSelect id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("language")}>
+                    {Object.entries(languages).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+              <Field label="Status" error={errors.status?.message}>
+                {({ id, describedBy, invalid }) => (
+                  <NativeSelect id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("status")}>
+                    {Object.entries(perfilStatusLabel).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+            </div>
+            <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+              {isSubmitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+              Salvar
+            </Button>
+          </form>
+        </CardContent>
       </Card>
-      <Card className="space-y-6">
-        <ImageUpload kind="logo" perfil={perfil} onChanged={() => void onSaved("Logo atualizado.")} />
-        <ImageUpload kind="banner" perfil={perfil} onChanged={() => void onSaved("Banner atualizado.")} />
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle>
+            <h2>Imagens</h2>
+          </CardTitle>
+          <CardDescription>Logo e banner do perfil.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <ImageUpload kind="logo" perfil={perfil} onChanged={() => void onSaved("Logo atualizado.")} />
+          <ImageUpload kind="banner" perfil={perfil} onChanged={() => void onSaved("Banner atualizado.")} />
+        </CardContent>
       </Card>
     </div>
   );
@@ -331,21 +356,31 @@ function PerfilHistorico({ perfil, onReverted }: { perfil: Perfil; onReverted: (
   const versions = useQuery({ queryKey: perfilVersionsKey(perfil.id), queryFn: () => api.perfis.versions(perfil.id) });
 
   return (
-    <Card>
-      <HistoryHeading>Histórico do perfil</HistoryHeading>
-      {versions.isPending && <p aria-live="polite">Carregando…</p>}
-      {versions.isError && <Alert tone="error">{errorText(versions.error)}</Alert>}
-      {versions.data && (
-        <VersionHistory
-          versions={versions.data.items}
-          labels={perfilFieldLabel}
-          formatValue={formatPerfilValue}
-          onRevert={async (toVersion) => {
-            await api.perfis.revert(perfil.id, perfil.version, toVersion);
-            await onReverted();
-          }}
-        />
-      )}
+    <Card className="shadow-card">
+      <CardHeader>
+        <HistoryHeading>Histórico do perfil</HistoryHeading>
+        <CardDescription>Da versão mais recente para a mais antiga. Reverter cria uma versão nova; nada é apagado.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {versions.isPending && (
+          <p aria-live="polite" className="text-sm text-muted-foreground">
+            Carregando…
+          </p>
+        )}
+        {versions.isError && <ApiErrorAlert error={versions.error} />}
+        {versions.data && (
+          <VersionHistory
+            versions={versions.data.items}
+            labels={perfilFieldLabel}
+            formatValue={formatPerfilValue}
+            onRevert={async (toVersion) => {
+              await api.perfis.revert(perfil.id, perfil.version, toVersion);
+              await onReverted();
+            }}
+            onReload={onReverted}
+          />
+        )}
+      </CardContent>
     </Card>
   );
 }

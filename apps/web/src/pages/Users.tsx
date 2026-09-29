@@ -1,12 +1,27 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApiError, type User } from "@sociman/contract";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { KeyRound, Lock, Mail, Save, UserPlus } from "lucide-react";
-import { useMemo, useState, type ReactNode } from "react";
+import { KeyRound, Loader2, MailCheck, MoreHorizontal, Pencil, Power, Save, UserPlus } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { AppLayout } from "../components/AppLayout";
-import { Card, PageHeader } from "../components/layout";
-import { Alert, Button, Field, Input, Select } from "../components/ui";
+import { toast } from "sonner";
+import { DataTable, dataTableColumns } from "@/components/data-table";
+import { HeaderCard } from "@/components/shell";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Field, NativeSelect } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { PageHeading } from "../components/PageHeading";
 import { api } from "../lib/api";
 import {
   createUserForm,
@@ -16,10 +31,12 @@ import {
   type EditUserForm,
   type SetPasswordForm,
 } from "../lib/forms";
+import { initials } from "../lib/perfis";
 import { useAppConfig } from "../lib/useAppConfig";
 import { roleLabel } from "../lib/users";
 
-type Feedback = { tone: "success" | "error" | "info"; text: string };
+// Sucesso vira toast; o aviso de e-mail não enviado também (tom "info"); erro fica num <Alert>.
+type Feedback = { tone: "success" | "info"; text: string };
 type Panel = { kind: "edit" | "password"; user: User };
 
 const EMAIL_NOT_SENT =
@@ -35,14 +52,120 @@ function errorText(err: unknown): string {
   return "Não foi possível concluir a operação. Tente de novo.";
 }
 
+function notify({ tone, text }: Feedback) {
+  if (tone === "success") toast.success(text);
+  else toast.info(text, { duration: 10_000 });
+}
+
+const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+
+interface RowActions {
+  busy: boolean;
+  onEdit: (user: User) => void;
+  onPassword: (user: User) => void;
+  onToggleActive: (user: User) => void;
+  onResend: (user: User) => void;
+}
+
+function userColumns(actions: RowActions) {
+  const col = dataTableColumns<User>();
+  return col.columns([
+    // nome + e-mail no mesmo accessor: a busca acha os dois; a ordem segue o nome
+    col.accessor((u) => `${u.name} ${u.email}`, {
+      id: "name",
+      header: "Usuário",
+      cell: (c) => {
+        const user = c.row.original;
+        return (
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden="true"
+              className="tone-dark grid size-9 shrink-0 place-items-center rounded-full text-xs font-semibold"
+            >
+              {initials(user.name)}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{user.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            </div>
+          </div>
+        );
+      },
+    }),
+    col.accessor((u) => roleLabel[u.role], { id: "role", header: "Papel" }),
+    col.accessor((u) => (u.isActive ? "Ativo" : "Inativo"), {
+      id: "situacao",
+      header: "Situação",
+      cell: (c) =>
+        c.row.original.isActive ? (
+          <Badge className="bg-success text-success-foreground uppercase">Ativo</Badge>
+        ) : (
+          <Badge className="bg-dark text-dark-foreground uppercase">Inativo</Badge>
+        ),
+    }),
+    col.accessor((u) => (u.emailVerified ? "Sim" : "Não"), {
+      id: "verificado",
+      header: "Verificado",
+      meta: { className: "hidden sm:table-cell" },
+    }),
+    col.accessor("createdAt", {
+      header: "Criado em",
+      enableGlobalFilter: false,
+      cell: (c) => dateFormat.format(new Date(c.getValue())),
+      meta: { className: "hidden md:table-cell" },
+    }),
+    col.display({
+      id: "acoes",
+      header: () => <span className="sr-only">Ações</span>,
+      meta: { className: "text-right" },
+      cell: (c) => {
+        const user = c.row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" aria-label={`Ações de ${user.name}`} disabled={actions.busy}>
+                <MoreHorizontal aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => actions.onEdit(user)}>
+                <Pencil aria-hidden="true" />
+                Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => actions.onPassword(user)}>
+                <KeyRound aria-hidden="true" />
+                Definir senha provisória
+              </DropdownMenuItem>
+              {!user.emailVerified && (
+                <DropdownMenuItem onSelect={() => actions.onResend(user)}>
+                  <MailCheck aria-hidden="true" />
+                  Reenviar verificação
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant={user.isActive ? "destructive" : "default"}
+                onSelect={() => actions.onToggleActive(user)}
+              >
+                <Power aria-hidden="true" />
+                {user.isActive ? "Desativar" : "Ativar"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    }),
+  ]);
+}
+
 // /app/usuarios (só dono): lista, cria, edita, ativa/desativa, define senha
 // provisória e reenvia a verificação.
 export default function Users() {
   const queryClient = useQueryClient();
-  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
 
-  const { data, isPending, isError } = useQuery({
+  const { data, isPending, isError, error: loadError } = useQuery({
     queryKey: ["users"],
     queryFn: () => api.users.list(),
   });
@@ -51,9 +174,9 @@ export default function Users() {
 
   const toggleActive = useMutation({
     mutationFn: (user: User) => api.users.update(user.id, { isActive: !user.isActive }),
-    onMutate: () => setFeedback(null),
+    onMutate: () => setError(null),
     onSuccess: ({ user }) => {
-      setFeedback({
+      notify({
         tone: "success",
         text: user.isActive
           ? `Acesso de ${user.name} reativado.`
@@ -61,104 +184,70 @@ export default function Users() {
       });
       void refresh();
     },
-    onError: (err) => setFeedback({ tone: "error", text: errorText(err) }),
+    onError: (err) => setError(errorText(err)),
   });
 
   const resendVerification = useMutation({
     mutationFn: (user: User) => api.users.resendVerification(user.id),
-    onMutate: () => setFeedback(null),
+    onMutate: () => setError(null),
     onSuccess: ({ emailSent }, user) =>
-      setFeedback(
+      notify(
         emailSent
           ? { tone: "success", text: `Enviamos um novo link de verificação para ${user.email}.` }
           : { tone: "info", text: EMAIL_NOT_SENT },
       ),
-    onError: (err) => setFeedback({ tone: "error", text: errorText(err) }),
+    onError: (err) => setError(errorText(err)),
   });
 
   const busy = toggleActive.isPending || resendVerification.isPending;
+  const columns = useMemo(
+    () =>
+      userColumns({
+        busy,
+        onEdit: (user) => setPanel({ kind: "edit", user }),
+        onPassword: (user) => setPanel({ kind: "password", user }),
+        onToggleActive: (user) => toggleActive.mutate(user),
+        onResend: (user) => resendVerification.mutate(user),
+      }),
+    // os `mutate` do TanStack Query são estáveis
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [busy],
+  );
 
   function done(message: Feedback) {
     setPanel(null);
-    setFeedback(message);
+    setError(null);
+    notify(message);
     void refresh();
   }
 
   return (
-    <AppLayout>
-      <PageHeader title="Usuários" description="Quem tem acesso ao SociMan e com qual papel." />
-      <div className="space-y-6">
-        {feedback && <Alert tone={feedback.tone}>{feedback.text}</Alert>}
+    <div className="space-y-6">
+      <PageHeading title="Usuários" description="Quem tem acesso ao SociMan e com qual papel." />
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {panel?.kind === "edit" && (
-          <EditUserCard
-            key={panel.user.id}
-            user={panel.user}
-            onCancel={() => setPanel(null)}
-            onDone={done}
-            onError={(err) => setFeedback({ tone: "error", text: errorText(err) })}
-          />
-        )}
-        {panel?.kind === "password" && (
-          <SetPasswordCard
-            key={panel.user.id}
-            user={panel.user}
-            onCancel={() => setPanel(null)}
-            onDone={done}
-            onError={(err) => setFeedback({ tone: "error", text: errorText(err) })}
-          />
-        )}
-
-        <Card>
-          <h2 className="mb-4 text-lg font-medium">Usuários cadastrados</h2>
-          {isPending && <p aria-live="polite">Carregando…</p>}
-          {isError && <p className="text-sm text-danger">Não foi possível carregar os usuários.</p>}
-          {data && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-border text-muted">
-                  <tr>
-                    <th className="py-2 pr-4 font-medium">Nome</th>
-                    <th className="py-2 pr-4 font-medium">E-mail</th>
-                    <th className="py-2 pr-4 font-medium">Papel</th>
-                    <th className="py-2 pr-4 font-medium">Situação</th>
-                    <th className="py-2 pr-4 font-medium">Verificado</th>
-                    <th className="py-2 font-medium">
-                      <span className="sr-only">Ações</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((user) => (
-                    <tr key={user.id} className="border-b border-border last:border-0">
-                      <td className="py-2 pr-4">{user.name}</td>
-                      <td className="py-2 pr-4">{user.email}</td>
-                      <td className="py-2 pr-4">{roleLabel[user.role]}</td>
-                      <td className="py-2 pr-4">{user.isActive ? "Ativo" : "Inativo"}</td>
-                      <td className="py-2 pr-4">{user.emailVerified ? "Sim" : "Não"}</td>
-                      <td className="py-2">
-                        <div className="flex flex-wrap gap-1">
-                          <RowAction onClick={() => setPanel({ kind: "edit", user })}>Editar</RowAction>
-                          <RowAction disabled={busy} onClick={() => toggleActive.mutate(user)}>
-                            {user.isActive ? "Desativar" : "Ativar"}
-                          </RowAction>
-                          <RowAction onClick={() => setPanel({ kind: "password", user })}>
-                            Definir senha provisória
-                          </RowAction>
-                          {!user.emailVerified && (
-                            <RowAction disabled={busy} onClick={() => resendVerification.mutate(user)}>
-                              Reenviar verificação
-                            </RowAction>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <HeaderCard title="Usuários cadastrados" description="Donos gerenciam usuários; membros usam o app.">
+          {isError && (
+            <Alert variant="destructive" className="mb-3">
+              <AlertDescription>{errorText(loadError)}</AlertDescription>
+            </Alert>
           )}
-        </Card>
+          <DataTable
+            label="Usuários"
+            columns={columns}
+            data={data?.items}
+            loading={isPending}
+            getRowId={(u) => u.id}
+            search={{ placeholder: "Nome ou e-mail", label: "Buscar" }}
+            // o mais novo primeiro: quem acabou de ser criado aparece na primeira página
+            initialSorting={[{ id: "createdAt", desc: true }]}
+          />
+        </HeaderCard>
 
         <CreateUserCard
           onCreated={({ user, emailSent }) =>
@@ -168,17 +257,29 @@ export default function Users() {
                 : { tone: "info", text: `Usuário criado. ${EMAIL_NOT_SENT}` },
             )
           }
-          onError={(err) => setFeedback({ tone: "error", text: errorText(err) })}
-          onSubmitStart={() => setFeedback(null)}
+          onError={(err) => setError(errorText(err))}
+          onSubmitStart={() => setError(null)}
         />
       </div>
-    </AppLayout>
+
+      <Dialog open={panel !== null} onOpenChange={(open) => !open && setPanel(null)}>
+        <DialogContent className="sm:max-w-md">
+          {panel?.kind === "edit" && (
+            <EditUserDialog key={panel.user.id} user={panel.user} onCancel={() => setPanel(null)} onDone={done} />
+          )}
+          {panel?.kind === "password" && (
+            <SetPasswordDialog key={panel.user.id} user={panel.user} onCancel={() => setPanel(null)} onDone={done} />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
-function RowAction({ children, ...props }: { children: ReactNode; disabled?: boolean; onClick: () => void }) {
+function SubmitButton({ submitting, icon: Icon, children }: { submitting: boolean; icon: typeof Save; children: string }) {
   return (
-    <Button type="button" variant="ghost" className="!w-auto !px-2 !py-1 whitespace-nowrap" {...props}>
+    <Button type="submit" disabled={submitting} aria-busy={submitting}>
+      {submitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Icon aria-hidden="true" />}
       {children}
     </Button>
   );
@@ -217,53 +318,57 @@ function CreateUserCard({
   }
 
   return (
-    <Card className="max-w-md">
-      <h2 className="mb-4 text-lg font-medium">Novo usuário</h2>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <Field label="Nome" error={errors.name?.message}>
-          {({ id, describedBy, invalid }) => (
-            <Input id={id} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} {...field("name")} />
-          )}
-        </Field>
-        <Field label="E-mail" error={errors.email?.message}>
-          {({ id, describedBy, invalid }) => (
-            <Input
-              id={id}
-              type="email"
-              icon={Mail}
-              autoComplete="off"
-              aria-invalid={invalid}
-              aria-describedby={describedBy}
-              {...field("email")}
-            />
-          )}
-        </Field>
-        <Field label="Papel" error={errors.role?.message}>
-          {({ id, describedBy, invalid }) => (
-            <Select id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("role")}>
-              <option value="membro">{roleLabel.membro}</option>
-              <option value="dono">{roleLabel.dono}</option>
-            </Select>
-          )}
-        </Field>
-        <Field label="Senha provisória" error={errors.provisionalPassword?.message}>
-          {({ id, describedBy, invalid }) => (
-            <Input
-              id={id}
-              type="password"
-              icon={Lock}
-              autoComplete="new-password"
-              aria-invalid={invalid}
-              aria-describedby={describedBy}
-              {...field("provisionalPassword")}
-            />
-          )}
-        </Field>
-        <Button type="submit" loading={isSubmitting}>
-          {!isSubmitting && <UserPlus className="size-4" aria-hidden="true" />}
-          Criar usuário
-        </Button>
-      </form>
+    <Card className="mt-6 shadow-card">
+      <CardHeader>
+        <CardTitle>
+          <h2 className="text-lg font-bold">Novo usuário</h2>
+        </CardTitle>
+        <CardDescription>Entra com a senha provisória e troca no primeiro acesso.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <Field label="Nome" error={errors.name?.message}>
+            {({ id, describedBy, invalid }) => (
+              <Input id={id} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} {...field("name")} />
+            )}
+          </Field>
+          <Field label="E-mail" error={errors.email?.message}>
+            {({ id, describedBy, invalid }) => (
+              <Input
+                id={id}
+                type="email"
+                autoComplete="off"
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                {...field("email")}
+              />
+            )}
+          </Field>
+          <Field label="Papel" error={errors.role?.message}>
+            {({ id, describedBy, invalid }) => (
+              <NativeSelect id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("role")}>
+                <option value="membro">{roleLabel.membro}</option>
+                <option value="dono">{roleLabel.dono}</option>
+              </NativeSelect>
+            )}
+          </Field>
+          <Field label="Senha provisória" error={errors.provisionalPassword?.message}>
+            {({ id, describedBy, invalid }) => (
+              <Input
+                id={id}
+                type="password"
+                autoComplete="new-password"
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                {...field("provisionalPassword")}
+              />
+            )}
+          </Field>
+          <SubmitButton submitting={isSubmitting} icon={UserPlus}>
+            Criar usuário
+          </SubmitButton>
+        </form>
+      </CardContent>
     </Card>
   );
 }
@@ -272,10 +377,10 @@ interface PanelProps {
   user: User;
   onCancel: () => void;
   onDone: (feedback: Feedback) => void;
-  onError: (err: unknown) => void;
 }
 
-function EditUserCard({ user, onCancel, onDone, onError }: PanelProps) {
+function EditUserDialog({ user, onCancel, onDone }: PanelProps) {
+  const [error, setError] = useState<string | null>(null);
   const {
     register: field,
     handleSubmit,
@@ -296,6 +401,7 @@ function EditUserCard({ user, onCancel, onDone, onError }: PanelProps) {
       onCancel();
       return;
     }
+    setError(null);
     try {
       const result = await api.users.update(user.id, changes);
       if (changes.email && result.emailSent === false) {
@@ -309,14 +415,22 @@ function EditUserCard({ user, onCancel, onDone, onError }: PanelProps) {
         onDone({ tone: "success", text: "Alterações salvas." });
       }
     } catch (err) {
-      onError(err);
+      setError(errorText(err));
     }
   }
 
   return (
-    <Card className="max-w-md">
-      <h2 className="mb-4 text-lg font-medium">Editar {user.name}</h2>
+    <>
+      <DialogHeader>
+        <DialogTitle>Editar {user.name}</DialogTitle>
+        <DialogDescription>Trocar o e-mail pede nova verificação e encerra as sessões.</DialogDescription>
+      </DialogHeader>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <Field label="Nome" error={errors.name?.message}>
           {({ id, describedBy, invalid }) => (
             <Input id={id} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} {...field("name")} />
@@ -327,7 +441,6 @@ function EditUserCard({ user, onCancel, onDone, onError }: PanelProps) {
             <Input
               id={id}
               type="email"
-              icon={Mail}
               autoComplete="off"
               aria-invalid={invalid}
               aria-describedby={describedBy}
@@ -337,27 +450,27 @@ function EditUserCard({ user, onCancel, onDone, onError }: PanelProps) {
         </Field>
         <Field label="Papel" error={errors.role?.message}>
           {({ id, describedBy, invalid }) => (
-            <Select id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("role")}>
+            <NativeSelect id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("role")}>
               <option value="membro">{roleLabel.membro}</option>
               <option value="dono">{roleLabel.dono}</option>
-            </Select>
+            </NativeSelect>
           )}
         </Field>
-        <div className="flex gap-2">
-          <Button type="submit" loading={isSubmitting}>
-            {!isSubmitting && <Save className="size-4" aria-hidden="true" />}
-            Salvar
-          </Button>
-          <Button type="button" variant="ghost" onClick={onCancel}>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-        </div>
+          <SubmitButton submitting={isSubmitting} icon={Save}>
+            Salvar
+          </SubmitButton>
+        </DialogFooter>
       </form>
-    </Card>
+    </>
   );
 }
 
-function SetPasswordCard({ user, onCancel, onDone, onError }: PanelProps) {
+function SetPasswordDialog({ user, onCancel, onDone }: PanelProps) {
+  const [error, setError] = useState<string | null>(null);
   const { passwordMinLength, passwordMaxLength } = useAppConfig();
   const resolver = useMemo(
     () => zodResolver(setPasswordForm({ passwordMinLength, passwordMaxLength })),
@@ -370,6 +483,7 @@ function SetPasswordCard({ user, onCancel, onDone, onError }: PanelProps) {
   } = useForm<SetPasswordForm>({ resolver });
 
   async function onSubmit(data: SetPasswordForm) {
+    setError(null);
     try {
       await api.users.setPassword(user.id, data);
       onDone({
@@ -377,20 +491,27 @@ function SetPasswordCard({ user, onCancel, onDone, onError }: PanelProps) {
         text: `Senha provisória definida para ${user.name}. As sessões foram encerradas e a troca será pedida no próximo login.`,
       });
     } catch (err) {
-      onError(err);
+      setError(errorText(err));
     }
   }
 
   return (
-    <Card className="max-w-md">
-      <h2 className="mb-4 text-lg font-medium">Senha provisória de {user.name}</h2>
+    <>
+      <DialogHeader>
+        <DialogTitle>Senha provisória de {user.name}</DialogTitle>
+        <DialogDescription>As sessões são encerradas e a troca é pedida no próximo login.</DialogDescription>
+      </DialogHeader>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <Field label="Nova senha provisória" error={errors.provisionalPassword?.message}>
           {({ id, describedBy, invalid }) => (
             <Input
               id={id}
               type="password"
-              icon={Lock}
               autoComplete="new-password"
               aria-invalid={invalid}
               aria-describedby={describedBy}
@@ -398,16 +519,15 @@ function SetPasswordCard({ user, onCancel, onDone, onError }: PanelProps) {
             />
           )}
         </Field>
-        <div className="flex gap-2">
-          <Button type="submit" loading={isSubmitting}>
-            {!isSubmitting && <KeyRound className="size-4" aria-hidden="true" />}
-            Definir senha
-          </Button>
-          <Button type="button" variant="ghost" onClick={onCancel}>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-        </div>
+          <SubmitButton submitting={isSubmitting} icon={KeyRound}>
+            Definir senha
+          </SubmitButton>
+        </DialogFooter>
       </form>
-    </Card>
+    </>
   );
 }

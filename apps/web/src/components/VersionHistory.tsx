@@ -1,9 +1,23 @@
 import type { EntityVersion } from "@sociman/contract";
-import { History, Undo2 } from "lucide-react";
+import { History, Loader2, Undo2 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useAuth } from "../lib/authStore";
-import { errorText } from "../lib/perfis";
-import { Alert, Button } from "./ui";
+import { ApiErrorAlert } from "./ApiErrorAlert";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "medium" });
 
@@ -13,6 +27,15 @@ export const actionLabel: Record<EntityVersion["action"], string> = {
   archived: "Arquivado",
   restored: "Restaurado",
   reverted: "Revertido",
+};
+
+// Cor do ponto na linha do tempo, por ação.
+const actionDot: Record<EntityVersion["action"], string> = {
+  created: "tone-success",
+  updated: "tone-primary",
+  archived: "tone-dark",
+  restored: "tone-info",
+  reverted: "tone-warning",
 };
 
 const actorKindLabel: Record<string, string> = { "system:cli": "CLI", mcp_client: "Cliente MCP" };
@@ -28,78 +51,93 @@ interface VersionHistoryProps {
   formatValue: (field: string, value: unknown) => string;
   // Sem `onRevert` não há botão de reversão. Com ele, o botão aparece só para o dono (princípio VII).
   onRevert?: (toVersion: number) => Promise<void>;
+  // Recarrega o registro depois de um conflito de versão (botão "Recarregar" no aviso de erro).
+  onReload?: () => Promise<void>;
 }
 
-// Histórico genérico de um registro versionado (FR-012): da versão mais recente para a mais
-// antiga, com Campo | Antes | Depois só dos campos que mudaram. Reutilizável pelas próximas specs.
-export function VersionHistory({ versions, labels, formatValue, onRevert }: VersionHistoryProps) {
+// Histórico genérico de um registro versionado (FR-012) em linha do tempo: da versão mais
+// recente para a mais antiga, com Campo | Antes | Depois só dos campos que mudaram.
+// Reutilizável pelas próximas specs.
+export function VersionHistory({ versions, labels, formatValue, onRevert, onReload }: VersionHistoryProps) {
   const isOwner = useAuth((s) => s.user?.role === "dono");
-  const [confirming, setConfirming] = useState<number | null>(null);
-  const [reverting, setReverting] = useState(false);
-  const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const [reverting, setReverting] = useState<number | null>(null);
+  const [error, setError] = useState<unknown>(null);
   const current = versions[0]?.version;
   const canRevert = Boolean(onRevert) && isOwner;
 
   async function revert(toVersion: number) {
     if (!onRevert) return;
-    setReverting(true);
-    setFeedback(null);
+    setReverting(toVersion);
+    setError(null);
     try {
       await onRevert(toVersion);
-      setFeedback({ tone: "success", text: `Revertido para a versão ${toVersion}.` });
-      setConfirming(null);
+      toast.success(`Revertido para a versão ${toVersion}.`);
     } catch (err) {
-      setFeedback({ tone: "error", text: errorText(err) });
+      setError(err);
     } finally {
-      setReverting(false);
+      setReverting(null);
     }
   }
 
   if (versions.length === 0) {
-    return <p className="text-sm text-muted">Nenhuma alteração registrada.</p>;
+    return <p className="text-sm text-muted-foreground">Nenhuma alteração registrada.</p>;
   }
 
   return (
     <div className="space-y-4">
-      {feedback && <Alert tone={feedback.tone}>{feedback.text}</Alert>}
-      <ol className="space-y-4">
+      {error !== null && (
+        <ApiErrorAlert
+          error={error}
+          onReload={
+            onReload &&
+            (() => {
+              setError(null);
+              void onReload();
+            })
+          }
+        />
+      )}
+      <ol className="relative space-y-6 border-l-2 border-border pl-6 sm:ml-2">
         {versions.map((v) => {
           const fromVersion = typeof v.details.from_version === "number" ? v.details.from_version : null;
           // "archived" também está no snapshot, mas a ação já diz isso; a tabela fica para os dados.
           const fields = v.changedFields.filter((f) => v.action === "updated" || v.action === "reverted" || f !== "archived");
           return (
-            <li key={v.version} className="rounded-panel border border-border p-4" aria-label={`Versão ${v.version}`}>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="text-sm">
-                  <span className="font-medium">Versão {v.version}</span>
-                  {" · "}
-                  <span className="font-medium">{actionLabel[v.action]}</span>
-                  {fromVersion !== null && <span className="text-muted"> (para a versão {fromVersion})</span>}
-                  {v.version === current && <span className="text-muted"> · atual</span>}
+            <li key={v.version} className="relative" aria-label={`Versão ${v.version}`}>
+              <span
+                className={cn("absolute top-1 -left-[2.0625rem] size-4 rounded-full ring-4 ring-card", actionDot[v.action])}
+                aria-hidden="true"
+              />
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <p className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-semibold">{actionLabel[v.action]}</span>
+                  <span className="text-muted-foreground">versão {v.version}</span>
+                  {fromVersion !== null && <span className="text-muted-foreground">(para a versão {fromVersion})</span>}
+                  {v.version === current && <Badge variant="secondary">atual</Badge>}
                 </p>
-                <p className="text-xs text-muted">
+                <p className="text-xs text-muted-foreground">
                   {actorText(v)} · <time dateTime={v.occurredAt}>{dateFormat.format(new Date(v.occurredAt))}</time>
                 </p>
               </div>
 
               {fields.length > 0 && (
-                <div className="mt-3 overflow-x-auto">
+                <div className="mt-2 overflow-x-auto rounded-lg border bg-card">
                   <table className="w-full text-left text-sm">
-                    <thead className="border-b border-border text-muted">
+                    <thead className="border-b bg-muted/50 text-xs text-muted-foreground uppercase">
                       <tr>
-                        <th className="py-1 pr-4 font-medium">Campo</th>
-                        <th className="py-1 pr-4 font-medium">Antes</th>
-                        <th className="py-1 font-medium">Depois</th>
+                        <th className="px-3 py-2 font-semibold">Campo</th>
+                        <th className="px-3 py-2 font-semibold">Antes</th>
+                        <th className="px-3 py-2 font-semibold">Depois</th>
                       </tr>
                     </thead>
                     <tbody>
                       {fields.map((field) => (
-                        <tr key={field} className="border-b border-border align-top last:border-0">
-                          <td className="py-1 pr-4 whitespace-nowrap">{labels[field] ?? field}</td>
-                          <td className="py-1 pr-4 break-words whitespace-pre-wrap text-muted">
+                        <tr key={field} className="border-b align-top last:border-0">
+                          <td className="px-3 py-2 font-medium whitespace-nowrap">{labels[field] ?? field}</td>
+                          <td className="px-3 py-2 break-words whitespace-pre-wrap text-muted-foreground">
                             {v.before ? formatValue(field, v.before[field]) : "—"}
                           </td>
-                          <td className="py-1 break-words whitespace-pre-wrap">{formatValue(field, v.after[field])}</td>
+                          <td className="px-3 py-2 break-words whitespace-pre-wrap">{formatValue(field, v.after[field])}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -108,41 +146,39 @@ export function VersionHistory({ versions, labels, formatValue, onRevert }: Vers
               )}
 
               {canRevert && v.version !== current && (
-                <div className="mt-3">
-                  {confirming === v.version ? (
-                    // Confirmação no próprio item, como diálogo não modal (sem window.confirm).
-                    <div
-                      role="dialog"
-                      aria-label={`Reverter para a versão ${v.version}`}
-                      className="flex flex-wrap items-center gap-2 rounded-field border border-border bg-bg p-3 text-sm"
-                    >
-                      <span>
-                        Voltar aos valores da versão {v.version}? A reversão entra no histórico como uma nova versão; nada é
-                        apagado.
-                      </span>
-                      <Button type="button" className="!w-auto" loading={reverting} onClick={() => void revert(v.version)}>
-                        Reverter
-                      </Button>
-                      <Button type="button" variant="ghost" className="!w-auto" disabled={reverting} onClick={() => setConfirming(null)}>
-                        Cancelar
-                      </Button>
-                    </div>
-                  ) : (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
                     <Button
                       type="button"
-                      variant="ghost"
-                      className="!w-auto border border-border"
-                      disabled={reverting}
-                      onClick={() => {
-                        setFeedback(null);
-                        setConfirming(v.version);
-                      }}
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      disabled={reverting !== null}
+                      aria-busy={reverting === v.version}
                     >
-                      <Undo2 className="size-4" aria-hidden="true" />
+                      {reverting === v.version ? (
+                        <Loader2 className="animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Undo2 aria-hidden="true" />
+                      )}
                       Reverter para esta versão
                     </Button>
-                  )}
-                </div>
+                  </AlertDialogTrigger>
+                  {/* role "dialog" em vez de "alertdialog": contrato de UI dos e2e (getByRole("dialog")) */}
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Reverter para a versão {v.version}?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Os valores voltam aos da versão {v.version}. A reversão entra no histórico como uma nova versão; nada é
+                        apagado.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => void revert(v.version)}>Reverter</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               )}
             </li>
           );
@@ -154,8 +190,8 @@ export function VersionHistory({ versions, labels, formatValue, onRevert }: Vers
 
 export function HistoryHeading({ children }: { children: string }) {
   return (
-    <h2 className="mb-4 flex items-center gap-2 text-lg font-medium">
-      <History className="size-5 text-muted" aria-hidden="true" />
+    <h2 className="flex items-center gap-2 text-base leading-none font-semibold">
+      <History className="size-5 text-muted-foreground" aria-hidden="true" />
       {children}
     </h2>
   );

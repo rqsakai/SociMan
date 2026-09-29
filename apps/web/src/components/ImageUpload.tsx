@@ -1,9 +1,11 @@
 import { ApiError, type ImageKind, type ImageRef, type Perfil } from "@sociman/contract";
-import { ImageUp, Trash2 } from "lucide-react";
+import { CircleAlert, ImageUp, Loader2, Trash2 } from "lucide-react";
 import { useId, useRef, useState, type ChangeEvent } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { api } from "../lib/api";
 import { errorText } from "../lib/perfis";
-import { Alert, Button } from "./ui";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED = ["image/png", "image/jpeg", "image/webp"];
@@ -12,7 +14,7 @@ const TOO_BIG = "Arquivo maior que 5 MB";
 // Limites da FR-008; o servidor confere de novo pelo conteúdo real do arquivo.
 const config: Record<ImageKind, { title: string; minWidth: number; minHeight: number; frame: string }> = {
   logo: { title: "logo", minWidth: 200, minHeight: 200, frame: "size-32 rounded-full" },
-  banner: { title: "banner", minWidth: 1000, minHeight: 250, frame: "aspect-[4/1] w-full rounded-panel" },
+  banner: { title: "banner", minWidth: 1000, minHeight: 250, frame: "aspect-[4/1] w-full rounded-lg" },
 };
 
 function readAsDataUrl(file: File): Promise<string> {
@@ -98,19 +100,19 @@ export function ImageUpload({
 
   return (
     <section className="space-y-3" aria-label={kind === "logo" ? "Logo" : "Banner"}>
-      <h3 className="text-sm font-medium">{kind === "logo" ? "Logo" : "Banner"}</h3>
+      <h3 className="text-sm font-semibold">{kind === "logo" ? "Logo" : "Banner"}</h3>
       {shown ? (
         <img
           src={shown}
           alt={preview ? `Prévia do novo ${title}` : `${kind === "logo" ? "Logo" : "Banner"} de ${perfil.name}`}
-          className={`${frame} border border-border bg-bg object-cover ${preview ? "opacity-60" : ""}`}
+          className={cn(frame, "border bg-muted object-cover shadow-card", preview && "opacity-60")}
         />
       ) : (
-        <div className={`${frame} flex items-center justify-center border border-dashed border-border bg-bg text-xs text-muted`}>
+        <div className={cn(frame, "flex items-center justify-center border-2 border-dashed bg-muted/50 text-xs text-muted-foreground")}>
           Sem {title}
         </div>
       )}
-      <p id={hintId} className="text-xs text-muted">
+      <p id={hintId} className="text-xs text-muted-foreground">
         PNG, JPG ou WebP até 5 MB; mínimo {minWidth}×{minHeight} px.
       </p>
       <input
@@ -127,32 +129,38 @@ export function ImageUpload({
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
-          variant="ghost"
-          className="!w-auto border border-border"
-          loading={busy === "upload"}
+          variant="outline"
+          size="sm"
           disabled={busy !== null}
+          aria-busy={busy === "upload"}
           aria-describedby={hintId}
           onClick={() => inputRef.current?.click()}
         >
-          {busy !== "upload" && <ImageUp className="size-4" aria-hidden="true" />}
+          {busy === "upload" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <ImageUp aria-hidden="true" />}
           {label}
         </Button>
         {current && (
           <Button
             type="button"
             variant="ghost"
-            className="!w-auto"
+            size="sm"
+            className="text-destructive hover:text-destructive"
             aria-label={`Remover ${title}`}
-            loading={busy === "clear"}
             disabled={busy !== null}
+            aria-busy={busy === "clear"}
             onClick={() => void onClear()}
           >
-            {busy !== "clear" && <Trash2 className="size-4" aria-hidden="true" />}
+            {busy === "clear" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Trash2 aria-hidden="true" />}
             Remover
           </Button>
         )}
       </div>
-      {error && <Alert tone="error">{error}</Alert>}
+      {error && (
+        <Alert variant="destructive">
+          <CircleAlert aria-hidden="true" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
     </section>
   );
 }

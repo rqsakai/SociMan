@@ -1,8 +1,10 @@
+import { Info, Loader2, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthShell } from "@/components/shell";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { ChangePasswordForm } from "../components/ChangePasswordForm";
-import { AuthLayout } from "../components/layout";
-import { Alert, Button } from "../components/ui";
 import { logout } from "../lib/authActions";
 import { useAuth } from "../lib/authStore";
 
@@ -19,16 +21,24 @@ export default function ChangePassword() {
   }
 
   return (
-    <AuthLayout title="Trocar senha">
-      <div className="space-y-4">
-        {mustChange && (
-          <Alert tone="info">Sua senha é provisória. Defina uma senha nova para continuar.</Alert>
-        )}
-        <ChangePasswordForm onSuccess={() => navigate("/app", { replace: true })} />
-        <Button type="button" variant="ghost" loading={loggingOut} onClick={onLogout}>
+    <AuthShell
+      title="Trocar senha"
+      footer={
+        <Button type="button" variant="ghost" size="sm" disabled={loggingOut} aria-busy={loggingOut} onClick={onLogout}>
+          {loggingOut ? <Loader2 className="animate-spin" aria-hidden="true" /> : <LogOut aria-hidden="true" />}
           Sair
         </Button>
+      }
+    >
+      <div className="space-y-4">
+        {mustChange && (
+          <Alert role="status" className="border-info/40 [&>svg]:text-info">
+            <Info aria-hidden="true" />
+            <AlertDescription>Sua senha é provisória. Defina uma senha nova para continuar.</AlertDescription>
+          </Alert>
+        )}
+        <ChangePasswordForm onSuccess={() => navigate("/app", { replace: true })} />
       </div>
-    </AuthLayout>
+    </AuthShell>
   );
 }

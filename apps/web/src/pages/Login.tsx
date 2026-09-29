@@ -1,11 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApiError } from "@sociman/contract";
-import { Lock, LogIn, Mail, Send } from "lucide-react";
+import { CircleAlert, CircleCheck, Loader2, LogIn, Send } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AuthLayout } from "../components/layout";
-import { Alert, Button, Field, Input } from "../components/ui";
+import { Field } from "@/components/ui/field";
+import { AuthShell } from "@/components/shell";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { api } from "../lib/api";
 import { login } from "../lib/authActions";
 import { loginForm, type LoginForm } from "../lib/forms";
@@ -55,18 +58,44 @@ export default function Login() {
   }
 
   return (
-    <AuthLayout title="Entrar">
+    <AuthShell
+      title="Entrar no SociMan"
+      description="Acesso da agência"
+      footer={
+        <Link className="font-semibold text-primary hover:underline" to="/forgot-password">
+          Esqueci a senha
+        </Link>
+      }
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         {passwordReset && !serverError && (
-          <Alert tone="success">Senha redefinida — entre com a nova senha.</Alert>
+          <Alert role="status" className="border-success/40 [&>svg]:text-success">
+            <CircleCheck aria-hidden="true" />
+            <AlertDescription>Senha redefinida — entre com a nova senha.</AlertDescription>
+          </Alert>
         )}
-        {serverError && <Alert tone="error">{serverError}</Alert>}
+        {serverError && (
+          <Alert variant="destructive">
+            <CircleAlert aria-hidden="true" />
+            <AlertDescription>{serverError}</AlertDescription>
+          </Alert>
+        )}
         {unverifiedEmail &&
           (resent ? (
-            <Alert tone="success">Se o e-mail estiver cadastrado, enviamos um novo link.</Alert>
+            <Alert role="status" className="border-success/40 [&>svg]:text-success">
+              <CircleCheck aria-hidden="true" />
+              <AlertDescription>Se o e-mail estiver cadastrado, enviamos um novo link.</AlertDescription>
+            </Alert>
           ) : (
-            <Button type="button" variant="ghost" loading={resending} onClick={onResend}>
-              {!resending && <Send className="size-4" aria-hidden="true" />}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={resending}
+              aria-busy={resending}
+              onClick={onResend}
+            >
+              {resending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Send aria-hidden="true" />}
               Reenviar link
             </Button>
           ))}
@@ -75,7 +104,6 @@ export default function Login() {
             <Input
               id={id}
               type="email"
-              icon={Mail}
               autoComplete="email"
               aria-invalid={invalid}
               aria-describedby={describedBy}
@@ -88,7 +116,6 @@ export default function Login() {
             <Input
               id={id}
               type="password"
-              icon={Lock}
               autoComplete="current-password"
               aria-invalid={invalid}
               aria-describedby={describedBy}
@@ -96,16 +123,16 @@ export default function Login() {
             />
           )}
         </Field>
-        <Button type="submit" loading={isSubmitting}>
-          {!isSubmitting && <LogIn className="size-4" aria-hidden="true" />}
+        <Button
+          type="submit"
+          className="tone-primary w-full text-xs font-bold tracking-wide uppercase"
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+        >
+          {isSubmitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <LogIn aria-hidden="true" />}
           Entrar
         </Button>
       </form>
-      <div className="mt-4 flex justify-end text-sm">
-        <Link className="text-text underline hover:text-muted" to="/forgot-password">
-          Esqueci a senha
-        </Link>
-      </div>
-    </AuthLayout>
+    </AuthShell>
   );
 }

@@ -1,5 +1,6 @@
 import type { Platform } from "@sociman/contract";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import { platformLabel } from "../lib/perfis";
 
 // Ícones das plataformas desenhados aqui (SVG em JSX, sem CDN nem fonte de ícones): a CSP
@@ -56,7 +57,7 @@ export function PlatformIcon({
       strokeLinejoin="round"
       role="img"
       aria-label={name}
-      className={`shrink-0 ${className}`}
+      className={cn("shrink-0", className)}
     >
       <title>{name}</title>
       {glyphs[platform]}

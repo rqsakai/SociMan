@@ -11,10 +11,13 @@ function tab(page: Page, name: string): Locator {
     .or(page.getByRole("link", { name, exact: true }));
 }
 
-// Ações destrutivas podem pedir confirmação num modal (role "dialog"); o
+// Ações destrutivas podem pedir confirmação num modal (role "dialog" ou "alertdialog"); o
 // `window.confirm` é aceito pelo handler registrado no início do teste.
 async function confirmIfAsked(page: Page, confirmLabel: string): Promise<void> {
-  const button = page.getByRole("dialog").getByRole("button", { name: confirmLabel });
+  const button = page
+    .getByRole("alertdialog")
+    .or(page.getByRole("dialog"))
+    .getByRole("button", { name: confirmLabel });
   try {
     await button.waitFor({ state: "visible", timeout: 2_000 });
   } catch {

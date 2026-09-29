@@ -29,7 +29,7 @@ docker compose exec api uv run pytest       # alternativa rápida no dev (banco 
 docker compose exec api uv run ruff check .
 npm run check:web                           # check:contract + typecheck + build + check:bundle/csp/secrets
 npm run gen:contract                        # OpenAPI do FastAPI → packages/contract (roda no host, sem Docker)
-npm run test:e2e                            # Playwright contra :8180 — ATENÇÃO: zera o banco de dev (reset-db)
+npm run test:e2e                            # Playwright contra :8180 — ATENÇÃO: zera o banco de dev (reset-db); o login dos testes zera os contadores de limite de tentativa
 docker compose exec api uv run sociman create-owner --email E --name N [--force]   # primeiro dono
 docker compose exec api uv run sociman set-password --email E                      # senha de emergência
 docker compose exec api uv run sociman reset-db --yes                              # zera banco+Redis (não roda em produção)
@@ -40,6 +40,13 @@ docker compose --profile prod stop web-prod && docker compose up -d edge   # vol
 ```
 **Modo casa:** use `https://192.168.86.47:8543` nos aparelhos (com a CA da casa instalada). `http://192.168.86.47:8180` redireciona para lá; a CA pública fica em `http://192.168.86.47:8180/sociman-ca.cer`.
 Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev**), Mailpit (e-mails de dev) em **127.0.0.1:8126**. Postgres, API, Redis, SMTP e imgproxy ficam só na rede interna. **Não use** 8000/5175 (OpenShorts), 18789 (OpenClaw) nem 6379/1025/8025 (arka-manager, já ocupadas no host).
+
+## Frontend (desde a spec 005)
+- UI com **shadcn/ui** (Radix) + Tailwind 4 + TanStack Query + **TanStack Table v9** (API nova: use `dataTableColumns<T>()` de `components/data-table`, não exemplos da v8).
+- Componentes do shadcn em `apps/web/src/components/ui/` (adicione com `npx shadcn@latest add <nome>` dentro de `apps/web`); painel em `components/shell/` (AppShell, Sidebar, Topbar, AuthShell, MetricCard, HeaderCard, `usePageMeta`); tabelas com `components/data-table/DataTable`.
+- Formulários: `components/ui/field.tsx` (`Field` + `NativeSelect`: `<select>` nativo, e os e2e dependem dele). Confirmações em AlertDialog (`role="alertdialog"`).
+- Referência visual: `docs/design/layout-referencia.md` (Material Dashboard React, só inspiração). CSP: `style-src 'unsafe-inline'` aceito, `script-src` estrito (ADR 0001).
+- Vitrine de componentes só em dev: `/app/_showcase`.
 
 ## Armadilhas
 1. **Containers rodam como UID 1000.** Se uma pasta de bind mount não existir, o Docker a cria como root (foi o que aconteceu com `docker/certs`). Crie antes.
@@ -58,6 +65,8 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 14. **Specs de domínio usam `history.py`** (princípio VII): toda mutação chama `history.record` na mesma transação (autor, antes/depois), cada entidade tem `version` (controle otimista → 409 `version_conflict`) e `__versioned_fields__`/`__immutable_fields__`. **Não existe DELETE no domínio**: arquivar/restaurar; reversão só pelo dono.
 15. **Imagens:** `storage.py` (MinIO, bucket privado, sem delete) + `imaging.py` (validação Pillow pelo conteúdo, URLs `/img` do imgproxy). `IMGPROXY_KEY`/`IMGPROXY_SALT` no `.env` da raiz assinam as URLs; sem eles é `unsafe` (só dev). O edge aceita até 8 MB em `/api/`; a API limita a 5 MB.
 16. **FastAPI 0.141 envolve rotas incluídas em `_IncludedRouter`**: procurar rota em `app.routes` não funciona (use `app.openapi()`).
+
+17. **Armazenamento NVMe × HD** (constitution 2.1.0): no NVMe ficam a aplicação, o PostgreSQL e o Redis (o que precisa ser rápido); o MinIO inteiro (imagens, fontes, vídeos), os temporários do ffmpeg, downloads e exportações vão para o HD em `/media/sakai/BACKUP/tiktok` (partição BACKUP, 2,1 TB). O uso do HD exige o arquivo marcador `.sociman-volume` (sem ele, recusa: HD desmontado encheria o NVMe) e um piso de espaço livre.
 
 ## Regras de negócio herdadas da agência (não mudam)
 - O SociMan **nunca publica** em rede social.

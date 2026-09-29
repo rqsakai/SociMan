@@ -1,16 +1,21 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ApiError } from "@sociman/contract";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import { AppLayout } from "../../components/AppLayout";
-import { Card, PageHeader } from "../../components/layout";
-import { Alert, Button, Field, Input, Select, Textarea } from "../../components/ui";
+import { toast } from "sonner";
+import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { PageHeading } from "@/components/PageHeading";
+import { HeaderCard, usePageMeta } from "@/components/shell";
+import { Button } from "@/components/ui/button";
+import { Field, NativeSelect } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { api } from "../../lib/api";
 import { createPerfilForm, type CreatePerfilForm } from "../../lib/forms";
-import { errorText, languageLabel, perfilStatusLabel } from "../../lib/perfis";
+import { languageLabel, perfilStatusLabel } from "../../lib/perfis";
 
 const SLUG_DEBOUNCE_MS = 300;
 
@@ -19,7 +24,8 @@ const SLUG_DEBOUNCE_MS = 300;
 export default function PerfilNovo() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  usePageMeta({ title: "Novo perfil", breadcrumbs: [{ label: "Perfis", to: "/app/perfis" }] });
   const slugEdited = useRef(false);
   const {
     register: field,
@@ -75,44 +81,46 @@ export default function PerfilNovo() {
     try {
       const { perfil } = await api.perfis.create(data);
       await queryClient.invalidateQueries({ queryKey: ["perfis"] });
+      toast.success(`Perfil ${perfil.name} criado.`);
       navigate(`/app/perfis/${perfil.id}`);
     } catch (err) {
       if (err instanceof ApiError && err.code === "slug_in_use") {
         setFieldError("slug", { message: err.message });
       } else {
-        setError(errorText(err));
+        setError(err);
       }
     }
   }
 
   return (
-    <AppLayout>
-      <PageHeader title="Novo perfil" description="Uma marca da agência; as contas nas plataformas entram depois." />
-      <Card className="max-w-xl">
+    <div className="max-w-2xl">
+      <PageHeading title="Novo perfil" description="Uma marca da agência; as contas nas plataformas entram depois." />
+      <HeaderCard title="Dados do perfil" description="Nome, nicho, descrição, idioma e status." className="mt-12">
         <form onSubmit={(e) => void onFormSubmit(e)} className="space-y-4" noValidate>
-          {error && <Alert tone="error">{error}</Alert>}
+          {error !== null && <ApiErrorAlert error={error} />}
           <Field label="Nome" error={errors.name?.message}>
             {({ id, describedBy, invalid }) => (
               <Input id={id} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} {...field("name")} />
             )}
           </Field>
-          <Field label="Identificador" error={errors.slug?.message}>
+          <Field
+            label="Identificador"
+            error={errors.slug?.message}
+            hint="Sugerido a partir do nome. Depois de criado, não muda."
+          >
             {({ id, describedBy, invalid }) => (
-              <>
-                <Input
-                  id={id}
-                  autoComplete="off"
-                  spellCheck={false}
-                  aria-invalid={invalid}
-                  aria-describedby={describedBy}
-                  {...slugField}
-                  onChange={(e) => {
-                    slugEdited.current = e.target.value !== "";
-                    void slugField.onChange(e);
-                  }}
-                />
-                <p className="text-xs text-muted">Sugerido a partir do nome. Depois de criado, não muda.</p>
-              </>
+              <Input
+                id={id}
+                autoComplete="off"
+                spellCheck={false}
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                {...slugField}
+                onChange={(e) => {
+                  slugEdited.current = e.target.value !== "";
+                  void slugField.onChange(e);
+                }}
+              />
             )}
           </Field>
           <Field label="Nicho" error={errors.niche?.message}>
@@ -128,30 +136,30 @@ export default function PerfilNovo() {
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Idioma" error={errors.language?.message}>
               {({ id, describedBy, invalid }) => (
-                <Select id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("language")}>
+                <NativeSelect id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("language")}>
                   {Object.entries(languageLabel).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
                     </option>
                   ))}
-                </Select>
+                </NativeSelect>
               )}
             </Field>
             <Field label="Status" error={errors.status?.message}>
               {({ id, describedBy, invalid }) => (
-                <Select id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("status")}>
+                <NativeSelect id={id} aria-invalid={invalid} aria-describedby={describedBy} {...field("status")}>
                   {Object.entries(perfilStatusLabel).map(([value, label]) => (
                     <option key={value} value={value}>
                       {label}
                     </option>
                   ))}
-                </Select>
+                </NativeSelect>
               )}
             </Field>
           </div>
           <div className="flex gap-2">
-            <Button type="submit" loading={isSubmitting}>
-              {!isSubmitting && <Plus className="size-4" aria-hidden="true" />}
+            <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+              {isSubmitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Plus aria-hidden="true" />}
               Criar perfil
             </Button>
             <Button type="button" variant="ghost" onClick={() => navigate("/app/perfis")}>
@@ -159,7 +167,7 @@ export default function PerfilNovo() {
             </Button>
           </div>
         </form>
-      </Card>
-    </AppLayout>
+      </HeaderCard>
+    </div>
   );
 }

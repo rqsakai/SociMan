@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import "@fontsource-variable/roboto";
 import "./index.css";
 
 // Identifica o build no <html> (US3): o e2e de atualização compara antes/depois.
