@@ -1,0 +1,9 @@
+{
+  "kind": "youtube#playlistItemListResponse",
+  "etag": "x",
+  "nextPageToken": "EAAaBlBUOkNESQ",
+  "items": [
+    {"kind": "youtube#playlistItem", "id": "pi1", "contentDetails": {"videoId": "vvvvvvvvvvv", "videoPublishedAt": "2026-09-20T15:00:00Z"}}
+  ],
+  "pageInfo": {"totalResults": 321, "resultsPerPage": 50}
+}

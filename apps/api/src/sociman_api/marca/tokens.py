@@ -306,9 +306,12 @@ class RefContext:
     conta_ids: frozenset[uuid.UUID] = frozenset()  # contas não arquivadas do perfil
     watermark_image_ids: frozenset[uuid.UUID] = frozenset()  # images.kind = watermark
     fundo_image_ids: frozenset[uuid.UUID] = frozenset()  # images.kind = fundo
+    # Imagens de arquivo ou asset arquivado na biblioteca (spec 007): o kit recusa.
+    archived_image_ids: frozenset[uuid.UUID] = frozenset()
 
 
 _TOKEN_SECTIONS = ("caption", "hook", "watermark", "end_card")
+ARCHIVED_IMAGE = "imagem arquivada; restaure-a na biblioteca"
 _FUNDO_SECTIONS = ("hook", "end_card")
 
 
@@ -347,6 +350,22 @@ def fundo_image_ids(kit: KitTokens) -> list[uuid.UUID]:
     return list(dict.fromkeys(i for i in ids if i is not None))
 
 
+def image_fields(kit: KitTokens) -> Iterator[tuple[str, uuid.UUID]]:
+    """(campo, id) das imagens referenciadas no kit, **não nulas**, mesmo com a seção
+    desligada ou `fundo_tipo = cor`: o `check_refs` valida esses ids sempre (spec 007, R5)."""
+    if kit.watermark.imagem_id is not None:
+        yield "watermark.imagem_id", kit.watermark.imagem_id
+    for section in _FUNDO_SECTIONS:
+        image_id = getattr(kit, section).fundo_imagem_id
+        if image_id is not None:
+            yield f"{_field_name(section)}.fundo_imagem_id", image_id
+
+
+def fields_using_image(kit: KitTokens, image_id: uuid.UUID) -> list[str]:
+    """Campos do kit que usam a imagem (409 `asset_in_use` ao arquivar, spec 007)."""
+    return [field for field, value in image_fields(kit) if value == image_id]
+
+
 def perfil_font_id(ref: str) -> uuid.UUID | None:
     """O id da `brand_fonts` de um `perfil:<uuid>`; None para fonte padrão."""
     if ref.startswith(PERFIL_PREFIX):
@@ -368,6 +387,8 @@ def check_refs(kit: KitTokens, ctx: RefContext) -> None:
             raise KitInvalid(field, "fonte não encontrada ou arquivada")
 
     wm = kit.watermark
+    if wm.imagem_id is not None and wm.imagem_id in ctx.archived_image_ids:
+        raise KitInvalid("watermark.imagem_id", ARCHIVED_IMAGE)
     if wm.imagem_id is not None and wm.imagem_id not in ctx.watermark_image_ids:
         raise KitInvalid("watermark.imagem_id", "imagem de marca d'água não encontrada")
     if wm.conta_id is not None and wm.conta_id not in ctx.conta_ids:
@@ -383,6 +404,8 @@ def check_refs(kit: KitTokens, ctx: RefContext) -> None:
         raise KitInvalid("endCard.mostrar_logo", "o perfil não tem logo")
     for section in _FUNDO_SECTIONS:
         sec, field = getattr(kit, section), f"{_field_name(section)}.fundo_imagem_id"
+        if sec.fundo_imagem_id is not None and sec.fundo_imagem_id in ctx.archived_image_ids:
+            raise KitInvalid(field, ARCHIVED_IMAGE)
         if sec.fundo_imagem_id is not None and sec.fundo_imagem_id not in ctx.fundo_image_ids:
             raise KitInvalid(field, "imagem de fundo não encontrada")
         if sec.ligado and sec.fundo_tipo == "imagem" and sec.fundo_imagem_id is None:

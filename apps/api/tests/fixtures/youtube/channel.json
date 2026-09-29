@@ -1,0 +1,18 @@
+{
+  "kind": "youtube#channel",
+  "etag": "x",
+  "id": "UCaaaaaaaaaaaaaaaaaaaaaa",
+  "snippet": {
+    "title": "The IT Nerd",
+    "description": "Canal de tecnologia",
+    "customUrl": "@theitnerd",
+    "publishedAt": "2015-03-01T12:00:00Z",
+    "thumbnails": {
+      "default": {"url": "https://yt3.ggpht.com/avatar=s88-c-k-c0x00ffffff-no-rj", "width": 88, "height": 88},
+      "medium": {"url": "https://yt3.ggpht.com/avatar=s240-c-k-c0x00ffffff-no-rj", "width": 240, "height": 240}
+    },
+    "country": "BR"
+  },
+  "contentDetails": {"relatedPlaylists": {"likes": "", "uploads": "UUaaaaaaaaaaaaaaaaaaaaaa"}},
+  "statistics": {"viewCount": "1234567", "subscriberCount": "45600", "hiddenSubscriberCount": false, "videoCount": "321"}
+}

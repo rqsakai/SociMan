@@ -19,6 +19,7 @@ from pydantic import Field
 from sqlalchemy.orm import Session
 
 from sociman_api import midia, storage
+from sociman_api.assets.service import asset_download_name
 from sociman_api.auth.deps import RequireUser
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.config import get_settings
@@ -107,6 +108,12 @@ def resolve(db: Session, kind: str, entity_id: uuid.UUID) -> Target:
         ext = PurePath(image.object_key).suffix
         return Target("imagens", image.object_key, image.content_type,
                       f"{prefix}-{image.id.hex[:8]}{ext}")
+    if kind == "imagem":
+        image = db.get(Image, entity_id)
+        if image is None:
+            raise _not_found()
+        return Target("imagens", image.object_key, image.content_type,
+                      asset_download_name(db, image))
     if kind in midia.VIDEO_KINDS:
         corte = db.get(Corte, entity_id)
         if corte is None:

@@ -1,0 +1,10 @@
+{
+  "kind": "youtube#searchListResponse",
+  "etag": "x",
+  "regionCode": "BR",
+  "pageInfo": {"totalResults": 1, "resultsPerPage": 1},
+  "items": [
+    {"kind": "youtube#searchResult", "id": {"kind": "youtube#channel", "channelId": "UCaaaaaaaaaaaaaaaaaaaaaa"},
+     "snippet": {"channelId": "UCaaaaaaaaaaaaaaaaaaaaaa", "title": "The IT Nerd", "channelTitle": "The IT Nerd"}}
+  ]
+}

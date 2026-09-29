@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from sociman_api import history, imaging, midia
+from sociman_api.assets.usos import archived_image_ids
 from sociman_api.auth.deps import Actor
 from sociman_api.errors import ApiError
 from sociman_api.marca import schemas
@@ -85,7 +86,10 @@ def ref_context(db: Session, perfil: Perfil) -> RefContext:
     images = db.execute(select(Image.id, Image.kind).where(
         Image.perfil_id == perfil.id, Image.kind.in_((ImageKind.watermark, ImageKind.fundo))
     )).all()
+    # Spec 007: a imagem precisa estar em arquivo ativo de asset ativo da biblioteca. Imagem sem
+    # asset (só por inserção direta; a migração 0005 pôs todas na biblioteca) segue valendo.
     return RefContext(
+        archived_image_ids=archived_image_ids(db, perfil.id),
         active_font_ids=frozenset(fonts), has_logo=perfil.logo_image_id is not None,
         conta_ids=frozenset(contas),
         watermark_image_ids=frozenset(i for i, k in images if k == ImageKind.watermark),

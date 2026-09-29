@@ -21,6 +21,177 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/assets/{asset_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["assets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update */
+        patch: operations["assets_update"];
+        trace?: never;
+    };
+    "/api/assets/{asset_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive */
+        post: operations["assets_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assets/{asset_id}/arquivos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload File */
+        post: operations["assets_file_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assets/{asset_id}/arquivos/{file_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update File */
+        patch: operations["assets_file_update"];
+        trace?: never;
+    };
+    "/api/assets/{asset_id}/arquivos/{file_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive File */
+        post: operations["assets_file_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assets/{asset_id}/arquivos/{file_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore File */
+        post: operations["assets_file_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assets/{asset_id}/ordem": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Reorder */
+        put: operations["assets_reorder"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assets/{asset_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore */
+        post: operations["assets_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assets/{asset_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revert */
+        post: operations["assets_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/assets/{asset_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versions */
+        get: operations["assets_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -174,6 +345,178 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/calendario": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calendario */
+        get: operations["postagens_calendario"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canais": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Canais */
+        get: operations["canais_list"];
+        put?: never;
+        /** Create Canal */
+        post: operations["canais_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canais/resolver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolver */
+        post: operations["canais_resolver"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canais/{canal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Canal */
+        get: operations["canais_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Canal */
+        patch: operations["canais_update"];
+        trace?: never;
+    };
+    "/api/canais/{canal_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Canal */
+        post: operations["canais_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canais/{canal_id}/direito": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Mudar Direito */
+        put: operations["canais_direito"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canais/{canal_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Canal */
+        post: operations["canais_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canais/{canal_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revert Canal */
+        post: operations["canais_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canais/{canal_id}/sincronizar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sincronizar */
+        post: operations["canais_sincronizar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/canais/{canal_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Versions */
+        get: operations["canais_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/config": {
         parameters: {
             query?: never;
@@ -276,6 +619,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cortes/aplicar-marca": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aplicar Marca
+         * @description `revisao` → `na_fila` com o kit atual (até 30, tudo ou nada).
+         */
+        post: operations["cortes_aplicar_marca"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cortes/{corte_id}": {
         parameters: {
             query?: never;
@@ -287,6 +650,62 @@ export interface paths {
         get: operations["cortes_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Hook
+         * @description Edita o gancho de um clipe em `revisao`.
+         */
+        patch: operations["cortes_update_hook"];
+        trace?: never;
+    };
+    "/api/cortes/{corte_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Corte */
+        post: operations["cortes_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cortes/{corte_id}/postagens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Postagens */
+        get: operations["postagens_list"];
+        put?: never;
+        /** Create Postagem */
+        post: operations["postagens_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cortes/{corte_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Corte */
+        post: operations["cortes_restore"];
         delete?: never;
         options?: never;
         head?: never;
@@ -310,6 +729,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cortes/{corte_id}/sugestoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Sugestoes */
+        get: operations["postagens_sugestoes"];
+        put?: never;
+        /** Sugerir */
+        post: operations["postagens_sugerir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cortes/{corte_id}/versions": {
         parameters: {
             query?: never;
@@ -319,6 +756,133 @@ export interface paths {
         };
         /** Corte Versions */
         get: operations["cortes_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/envios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Envios */
+        get: operations["envios_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/envios/enviar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enviar
+         * @description Envia ao OpenShorts (até 20, tudo ou nada). Canal `sem_acordo` ou avulso exige
+         *     `confirmarAviso` (409 `aviso_direito`, princípio II).
+         */
+        post: operations["envios_enviar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/envios/{envio_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Envio */
+        get: operations["envios_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/envios/{envio_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive
+         * @description Descarta (`descartado`, sem apagar): só em `selecionado`, `falhou`, `sem_clipes` e
+         *     `pronto`.
+         */
+        post: operations["envios_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/envios/{envio_id}/confirmar-qualidade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirmar Qualidade */
+        post: operations["envios_confirmar_qualidade"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/envios/{envio_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry */
+        post: operations["envios_retry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/envios/{envio_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Envio Versions */
+        get: operations["envios_versions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -446,6 +1010,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/integracoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Integracoes */
+        get: operations["integracoes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/midia/links": {
         parameters: {
             query?: never;
@@ -474,6 +1055,40 @@ export interface paths {
         get: operations["midia_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notificacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Notificacoes */
+        get: operations["notificacoes_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notificacoes/lidas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marcar Lidas */
+        post: operations["notificacoes_marcar_lidas"];
         delete?: never;
         options?: never;
         head?: never;
@@ -550,6 +1165,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/perfis/{perfil_id}/assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["assets_list"];
+        put?: never;
+        /** Create */
+        post: operations["assets_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/assets/arquivo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload */
+        post: operations["assets_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/assets/imagens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Images */
+        get: operations["assets_images"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/perfis/{perfil_id}/banner": {
         parameters: {
             query?: never;
@@ -619,6 +1286,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/perfis/{perfil_id}/envios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Selecionar
+         * @description Vídeo de canal (`videoFonteId`) ou avulso por link (`url`, `titulo?`) → `selecionado`.
+         */
+        post: operations["envios_selecionar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/envios/arquivo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enviar Arquivo
+         * @description Avulso por arquivo (até 2 GB, de 45 s a 3 h) → `selecionado`.
+         */
+        post: operations["envios_arquivo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/perfis/{perfil_id}/fontes": {
         parameters: {
             query?: never;
@@ -644,10 +1351,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List */
+        /**
+         * List
+         * @deprecated
+         */
         get: operations["fundos_list"];
         put?: never;
-        /** Upload */
+        /**
+         * Upload
+         * @deprecated
+         */
         post: operations["fundos_upload"];
         delete?: never;
         options?: never;
@@ -765,11 +1478,69 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List */
+        /**
+         * List
+         * @deprecated
+         */
         get: operations["marca_dagua_list"];
         put?: never;
-        /** Upload */
+        /**
+         * Upload
+         * @deprecated
+         */
         post: operations["marca_dagua_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/padroes-corte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Padroes */
+        get: operations["envios_padroes_get"];
+        /** Put Padroes */
+        put: operations["envios_padroes_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/padroes-corte/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revert Padroes */
+        post: operations["envios_padroes_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/padroes-corte/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Padroes Versions */
+        get: operations["envios_padroes_versions"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -819,6 +1590,109 @@ export interface paths {
         };
         /** Perfil Versions */
         get: operations["perfis_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/postagens/{postagem_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Postagem */
+        get: operations["postagens_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Postagem */
+        patch: operations["postagens_update"];
+        trace?: never;
+    };
+    "/api/postagens/{postagem_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Postagem */
+        post: operations["postagens_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/postagens/{postagem_id}/postado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marcar Postado */
+        post: operations["postagens_marcar_postado"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/postagens/{postagem_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Postagem */
+        post: operations["postagens_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/postagens/{postagem_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revert Postagem */
+        post: operations["postagens_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/postagens/{postagem_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Postagem Versions */
+        get: operations["postagens_versions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -913,10 +1787,59 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/videos-fonte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Videos */
+        get: operations["videos_fonte_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/videos-fonte/{video_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Video */
+        get: operations["videos_fonte_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AplicarMarcaIn */
+        AplicarMarcaIn: {
+            /** Items */
+            items: components["schemas"]["AplicarMarcaItem"][];
+        };
+        /** AplicarMarcaItem */
+        AplicarMarcaItem: {
+            /**
+             * Corteid
+             * Format: uuid
+             */
+            corteId: string;
+            /** Version */
+            version: number;
+        };
         /** AppConfig */
         AppConfig: {
             /** Passwordmaxlength */
@@ -945,11 +1868,236 @@ export interface components {
             /** Totalbytes */
             totalBytes: number | null;
         };
+        /** Asset */
+        Asset: {
+            /** Archived */
+            archived: boolean;
+            cover: components["schemas"]["ImageRef"] | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Description */
+            description: string;
+            /** Filecount */
+            fileCount: number;
+            /** Files */
+            files: components["schemas"]["AssetFile"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Imagerules */
+            imageRules: string | null;
+            /** Inuse */
+            inUse: boolean;
+            /** Name */
+            name: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Primaryfileid */
+            primaryFileId: string | null;
+            /** Prompt */
+            prompt: string | null;
+            /** Tags */
+            tags: string[];
+            tipo: components["schemas"]["AssetTipo"];
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Version */
+            version: number;
+            /** Voicetone */
+            voiceTone: string | null;
+        };
+        /** AssetCreate */
+        AssetCreate: {
+            /** Description */
+            description?: string;
+            /** Imagerules */
+            imageRules?: string | null;
+            /** Name */
+            name: string;
+            /** Prompt */
+            prompt?: string | null;
+            /** Tags */
+            tags?: string[];
+            tipo: components["schemas"]["AssetTipo"];
+            /** Voicetone */
+            voiceTone?: string | null;
+        };
+        /** AssetDetail */
+        AssetDetail: {
+            asset: components["schemas"]["Asset"];
+            /** Usos */
+            usos: components["schemas"]["Uso"][];
+        };
+        /** AssetFile */
+        AssetFile: {
+            /** Archived */
+            archived: boolean;
+            /** Bytes */
+            bytes: number;
+            /** Contenttype */
+            contentType: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Downloadurl */
+            downloadUrl: string;
+            /** Hasalpha */
+            hasAlpha: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            image: components["schemas"]["ImageRef"];
+            /** Label */
+            label: string | null;
+            /** Link */
+            link: string;
+            /** Look */
+            look: string | null;
+            /** Notes */
+            notes: string;
+            /** Position */
+            position: number;
+            /** Previewurl */
+            previewUrl: string;
+            /** Quandousar */
+            quandoUsar: string | null;
+            role: components["schemas"]["FileRole"];
+            /** Uso */
+            uso: string | null;
+        };
+        /** AssetFileOut */
+        AssetFileOut: {
+            asset: components["schemas"]["Asset"];
+            file: components["schemas"]["AssetFile"];
+        };
+        /** AssetOut */
+        AssetOut: {
+            asset: components["schemas"]["Asset"];
+        };
+        /** AssetPatch */
+        AssetPatch: {
+            /** Description */
+            description?: string | null;
+            /** Imagerules */
+            imageRules?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Primaryfileid */
+            primaryFileId?: string | null;
+            /** Prompt */
+            prompt?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Version */
+            version: number;
+            /** Voicetone */
+            voiceTone?: string | null;
+        };
+        /** AssetSummary */
+        AssetSummary: {
+            /** Archived */
+            archived: boolean;
+            cover: components["schemas"]["ImageRef"] | null;
+            /** Filecount */
+            fileCount: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Inuse */
+            inUse: boolean;
+            /** Name */
+            name: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Tags */
+            tags: string[];
+            tipo: components["schemas"]["AssetTipo"];
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * AssetTipo
+         * @enum {string}
+         */
+        AssetTipo: "avatar" | "cenario" | "fundo" | "sticker" | "marca_dagua" | "imagem";
+        /** AssetsList */
+        AssetsList: {
+            /** Items */
+            items: components["schemas"]["AssetSummary"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+            /** Tags */
+            tags: components["schemas"]["TagCount"][];
+        };
         /** AuthSession */
         AuthSession: {
             /** Accesstoken */
             accessToken: string;
             user: components["schemas"]["User"];
+        };
+        /** Body_assets_file_upload */
+        Body_assets_file_upload: {
+            /**
+             * File
+             * @description PNG, JPG ou WebP até 20 MB
+             */
+            file: string;
+            /** Label */
+            label?: string | null;
+            /** Look */
+            look?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Quandousar */
+            quandoUsar?: string | null;
+            role: components["schemas"]["FileRole"];
+            /** Uso */
+            uso?: string | null;
+        };
+        /** Body_assets_upload */
+        Body_assets_upload: {
+            /**
+             * File
+             * @description PNG, JPG ou WebP até 20 MB
+             */
+            file: string;
+            /** Name */
+            name?: string | null;
+            /**
+             * Tags
+             * @description Separadas por vírgula
+             */
+            tags?: string | null;
+            /** @description fundo, sticker, marca_dagua ou imagem */
+            tipo: components["schemas"]["AssetTipo"];
         };
         /** Body_fontes_upload */
         Body_fontes_upload: {
@@ -997,6 +2145,144 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** CalendarioItem */
+        CalendarioItem: {
+            /** Archived */
+            archived: boolean;
+            conta: components["schemas"]["ContaRef"];
+            corte: components["schemas"]["CorteCalendario"];
+            /**
+             * Corteid
+             * Format: uuid
+             */
+            corteId: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Descricao */
+            descricao: string;
+            estado: components["schemas"]["EstadoPostagem"];
+            /** Hashtags */
+            hashtags: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lembrado */
+            lembrado: boolean;
+            perfil: components["schemas"]["PerfilCalendario"];
+            /** Plannedat */
+            plannedAt: string | null;
+            /** Postedat */
+            postedAt: string | null;
+            /** Postedurl */
+            postedUrl: string | null;
+            /** Titulo */
+            titulo: string;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Version */
+            version: number;
+        };
+        /** CalendarioOut */
+        CalendarioOut: {
+            /** Items */
+            items: components["schemas"]["CalendarioItem"][];
+            /** Semdata */
+            semData: components["schemas"]["SemData"][];
+        };
+        /** CanaisList */
+        CanaisList: {
+            /** Items */
+            items: components["schemas"]["CanalFonte"][];
+        };
+        /** CanalCandidato */
+        CanalCandidato: {
+            /** Avatarurl */
+            avatarUrl: string | null;
+            /** Handle */
+            handle: string | null;
+            /** Subscribers */
+            subscribers: number | null;
+            /** Title */
+            title: string;
+            /** Videocount */
+            videoCount: number | null;
+            /** Youtubechannelid */
+            youtubeChannelId: string;
+        };
+        /**
+         * CanalDireito
+         * @enum {string}
+         */
+        CanalDireito: "proprio" | "parceiro" | "programa_de_cortes" | "sem_acordo";
+        /** CanalFonte */
+        CanalFonte: {
+            /** Archived */
+            archived: boolean;
+            /** Avatarurl */
+            avatarUrl: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            direito: components["schemas"]["CanalDireito"];
+            /** Direitoevidencianota */
+            direitoEvidenciaNota: string;
+            /** Direitoevidenciaurl */
+            direitoEvidenciaUrl: string | null;
+            /** Handle */
+            handle: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Perfis */
+            perfis: components["schemas"]["PerfilRef"][];
+            /** Subscribers */
+            subscribers: number | null;
+            sync: components["schemas"]["SyncInfo"];
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
+            /** Videocount */
+            videoCount: number | null;
+            /** Videosconhecidos */
+            videosConhecidos: number;
+            /** Youtubechannelid */
+            youtubeChannelId: string;
+        };
+        /** CanalOut */
+        CanalOut: {
+            canal: components["schemas"]["CanalFonte"];
+        };
+        /** CanalRef */
+        CanalRef: {
+            direito: components["schemas"]["CanalDireito"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+        };
+        /**
+         * CanalSync
+         * @enum {string}
+         */
+        CanalSync: "pendente" | "sincronizando" | "ok" | "pausado_cota" | "erro";
         /** CardFinal */
         CardFinal: {
             /**
@@ -1043,6 +2329,13 @@ export interface components {
             /** Newpassword */
             newPassword: string;
         };
+        /** ConfirmarQualidadeIn */
+        ConfirmarQualidadeIn: {
+            /** Enviar */
+            enviar: boolean;
+            /** Version */
+            version: number;
+        };
         /** Conta */
         Conta: {
             /** Archived */
@@ -1086,6 +2379,19 @@ export interface components {
         ContaOut: {
             conta: components["schemas"]["Conta"];
         };
+        /** ContaRef */
+        ContaRef: {
+            /** Handle */
+            handle: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            platform: components["schemas"]["Platform"];
+            /** Platformname */
+            platformName: string;
+        };
         /**
          * ContaStatus
          * @enum {string}
@@ -1102,18 +2408,26 @@ export interface components {
         };
         /** Corte */
         Corte: {
+            /** Archived */
+            archived: boolean;
             /** Attempts */
             attempts: number;
             /** Bytes */
             bytes: number;
+            canal: components["schemas"]["CorteCanal"] | null;
+            /** Clipindex */
+            clipIndex: number | null;
             /**
              * Createdat
              * Format: date-time
              */
             createdAt: string;
             createdBy: components["schemas"]["UserRef"] | null;
+            direitoNoEnvio: components["schemas"]["DireitoEnvio"] | null;
             /** Durationms */
             durationMs: number;
+            /** Envioid */
+            envioId: string | null;
             /** Errormessage */
             errorMessage: string | null;
             /** Finishedat */
@@ -1130,7 +2444,16 @@ export interface components {
              */
             id: string;
             /** Kitversion */
-            kitVersion: number;
+            kitVersion: number | null;
+            /** Legenda */
+            legenda: ("kit" | "gerador" | "nenhuma" | "sem_fala") | null;
+            /** Openshortsdescription */
+            openshortsDescription: string | null;
+            /** Openshortsscore */
+            openshortsScore: number | null;
+            /** Openshortstitle */
+            openshortsTitle: string | null;
+            origem: components["schemas"]["CorteOrigem"];
             /** Originalfilename */
             originalFilename: string;
             /**
@@ -1138,6 +2461,8 @@ export interface components {
              * Format: uuid
              */
             perfilId: string;
+            /** Postagens */
+            postagens: components["schemas"]["PostagemResumo"][];
             /** Posterurl */
             posterUrl: string | null;
             /** Processingms */
@@ -1148,12 +2473,49 @@ export interface components {
             queuePosition: number | null;
             /** Resultbytes */
             resultBytes: number | null;
+            /** Sourceendms */
+            sourceEndMs: number | null;
+            /** Sourcestartms */
+            sourceStartMs: number | null;
             status: components["schemas"]["CorteStatus"];
             /** Version */
             version: number;
             /** Width */
             width: number;
         };
+        /** CorteCalendario */
+        CorteCalendario: {
+            /** Durationms */
+            durationMs: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Posterurl */
+            posterUrl: string | null;
+            status: components["schemas"]["CorteStatus"];
+        };
+        /** CorteCanal */
+        CorteCanal: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+        };
+        /**
+         * CorteOrigem
+         * @enum {string}
+         */
+        CorteOrigem: "upload" | "openshorts";
         /** CorteOut */
         CorteOut: {
             corte: components["schemas"]["Corte"];
@@ -1162,11 +2524,30 @@ export interface components {
          * CorteStatus
          * @enum {string}
          */
-        CorteStatus: "na_fila" | "processando" | "pronto" | "falhou";
+        CorteStatus: "revisao" | "na_fila" | "processando" | "pronto" | "falhou";
         /** CortesList */
         CortesList: {
             /** Items */
             items: components["schemas"]["Corte"][];
+        };
+        /** CotaYoutube */
+        CotaYoutube: {
+            /** Limite */
+            limite: number;
+            /**
+             * Renovaem
+             * Format: date-time
+             */
+            renovaEm: string;
+            /** Usadas */
+            usadas: number;
+        };
+        /** CreateCanalIn */
+        CreateCanalIn: {
+            /** Perfilids */
+            perfilIds?: string[];
+            /** Youtubechannelid */
+            youtubeChannelId: string;
         };
         /** CreateContaIn */
         CreateContaIn: {
@@ -1212,6 +2593,30 @@ export interface components {
             /** @default em_preparacao */
             status: components["schemas"]["PerfilStatus"];
         };
+        /** CreatePostagemIn */
+        CreatePostagemIn: {
+            /**
+             * Contaid
+             * Format: uuid
+             */
+            contaId: string;
+            /**
+             * Descricao
+             * @default
+             */
+            descricao: string;
+            /** Hashtags */
+            hashtags?: string[];
+            /** Plannedat */
+            plannedAt?: string | null;
+            /** Sugestaoid */
+            sugestaoId?: string | null;
+            /**
+             * Titulo
+             * @default
+             */
+            titulo: string;
+        };
         /** CreateUserIn */
         CreateUserIn: {
             /** Email */
@@ -1226,10 +2631,183 @@ export interface components {
              */
             role: "dono" | "membro";
         };
+        /**
+         * DireitoEnvio
+         * @description O direito do canal no momento do envio, ou `avulso` (princípio II).
+         * @enum {string}
+         */
+        DireitoEnvio: "proprio" | "parceiro" | "programa_de_cortes" | "sem_acordo" | "avulso";
+        /**
+         * DireitoIn
+         * @description PUT: substitui direito e evidência (campo omitido = sem evidência).
+         */
+        DireitoIn: {
+            direito: components["schemas"]["CanalDireito"];
+            /**
+             * Evidencianota
+             * @default
+             */
+            evidenciaNota: string;
+            /** Evidenciaurl */
+            evidenciaUrl?: string | null;
+            /** Version */
+            version: number;
+        };
         /** EmailSentOut */
         EmailSentOut: {
             /** Emailsent */
             emailSent: boolean;
+        };
+        /** EnviarIn */
+        EnviarIn: {
+            config?: components["schemas"]["EnvioConfigIn"] | null;
+            /**
+             * Confirmaraviso
+             * @default false
+             */
+            confirmarAviso: boolean;
+            /**
+             * Confirmarduplicado
+             * @default false
+             */
+            confirmarDuplicado: boolean;
+            /** Items */
+            items: components["schemas"]["EnviarItem"][];
+        };
+        /** EnviarItem */
+        EnviarItem: {
+            /**
+             * Envioid
+             * Format: uuid
+             */
+            envioId: string;
+            /** Version */
+            version: number;
+        };
+        /** Envio */
+        Envio: {
+            /** Archived */
+            archived: boolean;
+            canal: components["schemas"]["CanalRef"] | null;
+            /** Clipsimportados */
+            clipsImportados: number;
+            /** Clipstotal */
+            clipsTotal: number | null;
+            config: components["schemas"]["EnvioConfig"] | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            direitoNoEnvio: components["schemas"]["DireitoEnvio"] | null;
+            /** Errormessage */
+            errorMessage: string | null;
+            /** Finishedat */
+            finishedAt: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            origem: components["schemas"]["EnvioOrigem"];
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Precisaaviso */
+            precisaAviso: boolean;
+            /** Progress */
+            progress: number;
+            /** Queueposition */
+            queuePosition: number | null;
+            /** Sentat */
+            sentAt: string | null;
+            /** Sourcetitle */
+            sourceTitle: string;
+            /** Sourceurl */
+            sourceUrl: string | null;
+            status: components["schemas"]["EnvioStatus"];
+            /** Version */
+            version: number;
+            video: components["schemas"]["VideoFonteRef"] | null;
+        };
+        /**
+         * EnvioConfig
+         * @description Os padrões resolvidos no envio. O `subtitle` do kit fica só no servidor.
+         */
+        EnvioConfig: {
+            /** Clipmaxs */
+            clipMaxS: number;
+            /** Clipmins */
+            clipMinS: number;
+            /**
+             * Formato
+             * @enum {string}
+             */
+            formato: "vertical" | "square";
+            /** Kitversion */
+            kitVersion: number | null;
+            /**
+             * Layout
+             * @enum {string}
+             */
+            layout: "auto" | "none" | "split" | "screencast" | "speaker_cut";
+            /**
+             * Legenda
+             * @enum {string}
+             */
+            legenda: "kit" | "gerador" | "nenhuma";
+            /** Marcaautomatica */
+            marcaAutomatica: boolean;
+            /** Quantidade */
+            quantidade: number | null;
+        };
+        /**
+         * EnvioConfigIn
+         * @description Sobrescreve os padrões do perfil no envio (tudo opcional).
+         */
+        EnvioConfigIn: {
+            /** Clipmaxs */
+            clipMaxS?: number | null;
+            /** Clipmins */
+            clipMinS?: number | null;
+            /** Formato */
+            formato?: string | null;
+            /** Layout */
+            layout?: string | null;
+            /** Legenda */
+            legenda?: string | null;
+            /** Marcaautomatica */
+            marcaAutomatica?: boolean | null;
+            /** Quantidade */
+            quantidade?: number | null;
+        };
+        /** EnvioDetalhe */
+        EnvioDetalhe: {
+            /** Cortes */
+            cortes: components["schemas"]["Corte"][];
+            envio: components["schemas"]["Envio"];
+        };
+        /**
+         * EnvioOrigem
+         * @enum {string}
+         */
+        EnvioOrigem: "canal" | "avulso_link" | "avulso_arquivo";
+        /** EnvioOut */
+        EnvioOut: {
+            envio: components["schemas"]["Envio"];
+        };
+        /**
+         * EnvioStatus
+         * @enum {string}
+         */
+        EnvioStatus: "selecionado" | "na_fila" | "aguardando_openshorts" | "confirmar_qualidade" | "processando" | "importando" | "pronto" | "sem_clipes" | "falhou" | "descartado";
+        /** EnviosList */
+        EnviosList: {
+            /** Items */
+            items: components["schemas"]["Envio"][];
         };
         /** ErrorBody */
         ErrorBody: {
@@ -1245,6 +2823,19 @@ export interface components {
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
+        };
+        /**
+         * EstadoPostagem
+         * @enum {string}
+         */
+        EstadoPostagem: "rascunho" | "agendado" | "postado";
+        /** Existente */
+        Existente: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
         };
         /** ExportAsset */
         ExportAsset: {
@@ -1286,6 +2877,26 @@ export interface components {
             /** Slug */
             slug: string;
         };
+        /** FilePatch */
+        FilePatch: {
+            /** Label */
+            label?: string | null;
+            /** Look */
+            look?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Quandousar */
+            quandoUsar?: string | null;
+            /** Uso */
+            uso?: string | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * FileRole
+         * @enum {string}
+         */
+        FileRole: "referencia" | "pose" | "arquivo";
         /** FontOption */
         FontOption: {
             /** Family */
@@ -1424,6 +3035,13 @@ export interface components {
              */
             tamanho: "P" | "M" | "G";
         };
+        /** HookIn */
+        HookIn: {
+            /** Hooktext */
+            hookText: string;
+            /** Version */
+            version: number;
+        };
         /** ImageRef */
         ImageRef: {
             /** Height */
@@ -1443,6 +3061,40 @@ export interface components {
             medium: string;
             /** Thumb */
             thumb: string;
+        };
+        /** Integracoes */
+        Integracoes: {
+            /**
+             * Claude
+             * @enum {string}
+             */
+            claude: "ok" | "ausente";
+            cotaYoutube: components["schemas"]["CotaYoutube"];
+            /**
+             * Openshorts
+             * @enum {string}
+             */
+            openshorts: "ok" | "fora";
+            /**
+             * Youtube
+             * @enum {string}
+             */
+            youtube: "ok" | "ausente" | "invalida";
+        };
+        /** JaCortado */
+        JaCortado: {
+            /**
+             * Envioid
+             * Format: uuid
+             */
+            envioId: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Status */
+            status: string;
         };
         /** Kit */
         Kit: {
@@ -1569,6 +3221,32 @@ export interface components {
             /** Tamanho */
             tamanho: number;
         };
+        /** LibraryImage */
+        LibraryImage: {
+            /**
+             * Assetid
+             * Format: uuid
+             */
+            assetId: string;
+            /** Assetname */
+            assetName: string;
+            assetTipo: components["schemas"]["AssetTipo"];
+            /**
+             * Fileid
+             * Format: uuid
+             */
+            fileId: string;
+            /** Hasalpha */
+            hasAlpha: boolean;
+            image: components["schemas"]["ImageRef"];
+            /** Label */
+            label: string | null;
+        };
+        /** LibraryImagesList */
+        LibraryImagesList: {
+            /** Items */
+            items: components["schemas"]["LibraryImage"][];
+        };
         /** LoginIn */
         LoginIn: {
             /** Email */
@@ -1611,6 +3289,33 @@ export interface components {
              */
             tipo: "logo" | "imagem" | "texto";
         };
+        /**
+         * MarcarLidasIn
+         * @description `{ids: [...]}` ou `{todas: true}`, nunca os dois.
+         */
+        MarcarLidasIn: {
+            /** Ids */
+            ids?: number[] | null;
+            /**
+             * Todas
+             * @default false
+             */
+            todas: boolean;
+        };
+        /** Metrica */
+        Metrica: {
+            /** Comments */
+            comments: number | null;
+            /** Likes */
+            likes: number | null;
+            /**
+             * Observedat
+             * Format: date-time
+             */
+            observedAt: string;
+            /** Views */
+            views: number | null;
+        };
         /** MidiaItem */
         MidiaItem: {
             /**
@@ -1622,7 +3327,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo";
+            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem";
         };
         /** MidiaLink */
         MidiaLink: {
@@ -1640,6 +3345,42 @@ export interface components {
         MidiaLinksOut: {
             /** Items */
             items: components["schemas"]["MidiaLink"][];
+        };
+        /** NaoLidasOut */
+        NaoLidasOut: {
+            /** Naolidas */
+            naoLidas: number;
+        };
+        /** Notificacao */
+        Notificacao: {
+            /** Corpo */
+            corpo: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Id */
+            id: number;
+            /** Lida */
+            lida: boolean;
+            /** Link */
+            link: string;
+            tipo: components["schemas"]["NotificacaoTipo"];
+            /** Titulo */
+            titulo: string;
+        };
+        /**
+         * NotificacaoTipo
+         * @enum {string}
+         */
+        NotificacaoTipo: "envio_pronto" | "envio_sem_clipes" | "envio_falhou" | "envio_confirmar_qualidade" | "openshorts_fora" | "hora_de_postar" | "cota_youtube" | "canal_erro";
+        /** NotificacoesList */
+        NotificacoesList: {
+            /** Items */
+            items: components["schemas"]["Notificacao"][];
+            /** Naolidas */
+            naoLidas: number;
         };
         /** Ok */
         Ok: {
@@ -1730,6 +3471,77 @@ export interface components {
             /** Uppercase */
             uppercase: boolean;
         };
+        /** Ordem */
+        Ordem: {
+            /** Fileids */
+            fileIds: string[];
+            role: components["schemas"]["FileRole"];
+            /** Version */
+            version: number;
+        };
+        /** PadroesCorte */
+        PadroesCorte: {
+            /** Clipmaxs */
+            clipMaxS: number;
+            /** Clipmins */
+            clipMinS: number;
+            /** Contapadraoid */
+            contaPadraoId: string | null;
+            /**
+             * Formato
+             * @enum {string}
+             */
+            formato: "vertical" | "square";
+            /**
+             * Layout
+             * @enum {string}
+             */
+            layout: "auto" | "none" | "split" | "screencast" | "speaker_cut";
+            /**
+             * Legenda
+             * @enum {string}
+             */
+            legenda: "kit" | "gerador" | "nenhuma";
+            /** Marcaautomatica */
+            marcaAutomatica: boolean;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Quantidade */
+            quantidade: number | null;
+            /** Updatedat */
+            updatedAt: string | null;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Version */
+            version: number;
+        };
+        /** PadroesCorteIn */
+        PadroesCorteIn: {
+            /** Clipmaxs */
+            clipMaxS: number;
+            /** Clipmins */
+            clipMinS: number;
+            /** Contapadraoid */
+            contaPadraoId?: string | null;
+            /** Formato */
+            formato: string;
+            /** Layout */
+            layout: string;
+            /** Legenda */
+            legenda: string;
+            /** Marcaautomatica */
+            marcaAutomatica: boolean;
+            /** Quantidade */
+            quantidade?: number | null;
+            /** Version */
+            version: number;
+        };
+        /** PadroesCorteOut */
+        PadroesCorteOut: {
+            padroes: components["schemas"]["PadroesCorte"];
+        };
         /** Perfil */
         Perfil: {
             /** Archived */
@@ -1771,6 +3583,20 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** PerfilCalendario */
+        PerfilCalendario: {
+            /** Cor */
+            cor?: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Slug */
+            slug: string;
+        };
         /** PerfilDetail */
         PerfilDetail: {
             /** Contas */
@@ -1780,6 +3606,18 @@ export interface components {
         /** PerfilOut */
         PerfilOut: {
             perfil: components["schemas"]["Perfil"];
+        };
+        /** PerfilRef */
+        PerfilRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Slug */
+            slug: string;
         };
         /**
          * PerfilStatus
@@ -1796,6 +3634,88 @@ export interface components {
          * @enum {string}
          */
         Platform: "tiktok" | "youtube" | "instagram" | "kwai" | "facebook" | "x" | "outra";
+        /** PostadoIn */
+        PostadoIn: {
+            /** Postedurl */
+            postedUrl?: string | null;
+            /** Version */
+            version: number;
+        };
+        /** Postagem */
+        Postagem: {
+            /** Archived */
+            archived: boolean;
+            conta: components["schemas"]["ContaRef"];
+            /**
+             * Corteid
+             * Format: uuid
+             */
+            corteId: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Descricao */
+            descricao: string;
+            estado: components["schemas"]["EstadoPostagem"];
+            /** Hashtags */
+            hashtags: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lembrado */
+            lembrado: boolean;
+            /** Plannedat */
+            plannedAt: string | null;
+            /** Postedat */
+            postedAt: string | null;
+            /** Postedurl */
+            postedUrl: string | null;
+            /** Titulo */
+            titulo: string;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Version */
+            version: number;
+        };
+        /** PostagemOut */
+        PostagemOut: {
+            postagem: components["schemas"]["Postagem"];
+        };
+        /**
+         * PostagemResumo
+         * @description O que o `Corte` mostra das postagens ativas dele (T057/T067).
+         */
+        PostagemResumo: {
+            /**
+             * Contaid
+             * Format: uuid
+             */
+            contaId: string;
+            estado: components["schemas"]["EstadoPostagem"];
+            /** Handle */
+            handle: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Plannedat */
+            plannedAt: string | null;
+            plataforma: components["schemas"]["Platform"];
+        };
+        /** PostagensList */
+        PostagensList: {
+            /** Items */
+            items: components["schemas"]["Postagem"][];
+        };
         /** RenameFonteIn */
         RenameFonteIn: {
             /** Name */
@@ -1815,12 +3735,56 @@ export interface components {
             /** Token */
             token: string;
         };
+        /** ResolverIn */
+        ResolverIn: {
+            /** Entrada */
+            entrada: string;
+        };
+        /** ResolverOut */
+        ResolverOut: {
+            candidato: components["schemas"]["CanalCandidato"];
+            /** Custo */
+            custo: number;
+            existente: components["schemas"]["Existente"] | null;
+        };
         /** RevertIn */
         RevertIn: {
             /** Toversion */
             toVersion: number;
             /** Version */
             version: number;
+        };
+        /** ScoreDetail */
+        ScoreDetail: {
+            /**
+             * Componente
+             * @default
+             */
+            componente: string;
+            /**
+             * D
+             * @default 0
+             */
+            d: number;
+            /**
+             * E
+             * @default 0
+             */
+            e: number;
+            /**
+             * R
+             * @default 0
+             */
+            r: number;
+            /**
+             * V
+             * @default 0
+             */
+            v: number;
+            /** Valores */
+            valores?: {
+                [key: string]: unknown;
+            };
         };
         /** SecurityEvent */
         SecurityEvent: {
@@ -1862,6 +3826,55 @@ export interface components {
             /** Nextcursor */
             nextCursor: string | null;
         };
+        /** Selecionado */
+        Selecionado: {
+            /**
+             * Envioid
+             * Format: uuid
+             */
+            envioId: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+        };
+        /**
+         * SelecionarIn
+         * @description `videoFonteId` (vídeo de canal) ou `url` (+ `titulo`) para o avulso por link.
+         */
+        SelecionarIn: {
+            /**
+             * Confirmarduplicado
+             * @default false
+             */
+            confirmarDuplicado: boolean;
+            /** Titulo */
+            titulo?: string | null;
+            /** Url */
+            url?: string | null;
+            /** Videofonteid */
+            videoFonteId?: string | null;
+        };
+        /** SemData */
+        SemData: {
+            /**
+             * Corteid
+             * Format: uuid
+             */
+            corteId: string;
+            /** Perfilcor */
+            perfilCor?: string | null;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Posterurl */
+            posterUrl: string | null;
+            /** Titulo */
+            titulo: string;
+        };
         /** SetPasswordIn */
         SetPasswordIn: {
             /** Provisionalpassword */
@@ -1871,6 +3884,83 @@ export interface components {
         SlugSuggestion: {
             /** Slug */
             slug: string;
+        };
+        /** Sugestao */
+        Sugestao: {
+            /** Ajustes */
+            ajustes: string[];
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Descricao */
+            descricao: string;
+            /** Hashtags */
+            hashtags: string[];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Model */
+            model: string;
+            plataforma: components["schemas"]["Platform"];
+            /** Titulo */
+            titulo: string;
+        };
+        /** SugestaoIn */
+        SugestaoIn: {
+            /**
+             * Contaid
+             * Format: uuid
+             */
+            contaId: string;
+            /**
+             * Outraversao
+             * @default false
+             */
+            outraVersao: boolean;
+        };
+        /** SugestaoOut */
+        SugestaoOut: {
+            sugestao: components["schemas"]["Sugestao"];
+        };
+        /** SugestoesList */
+        SugestoesList: {
+            /** Items */
+            items: components["schemas"]["Sugestao"][];
+        };
+        /** SyncInfo */
+        SyncInfo: {
+            /** Erro */
+            erro: string | null;
+            /** Lastsyncedat */
+            lastSyncedAt: string | null;
+            /** Lidos */
+            lidos: number | null;
+            /**
+             * Nextsyncat
+             * Format: date-time
+             */
+            nextSyncAt: string;
+            status: components["schemas"]["CanalSync"];
+            /** Total */
+            total: number | null;
+        };
+        /** TagCount */
+        TagCount: {
+            /** Count */
+            count: number;
+            /** Tag */
+            tag: string;
+        };
+        /** UpdateCanalIn */
+        UpdateCanalIn: {
+            /** Perfilids */
+            perfilIds?: string[] | null;
+            /** Version */
+            version: number;
         };
         /** UpdateContaIn */
         UpdateContaIn: {
@@ -1897,6 +3987,26 @@ export interface components {
             /** Niche */
             niche?: string | null;
             status?: components["schemas"]["PerfilStatus"] | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * UpdatePostagemIn
+         * @description `plannedAt` ausente não muda; `null` volta a `rascunho`; com data, `agendado`.
+         */
+        UpdatePostagemIn: {
+            /** Contaid */
+            contaId?: string | null;
+            /** Descricao */
+            descricao?: string | null;
+            /** Hashtags */
+            hashtags?: string[] | null;
+            /** Plannedat */
+            plannedAt?: string | null;
+            /** Sugestaoid */
+            sugestaoId?: string | null;
+            /** Titulo */
+            titulo?: string | null;
             /** Version */
             version: number;
         };
@@ -1969,6 +4079,24 @@ export interface components {
             /** Items */
             items: components["schemas"]["User"][];
         };
+        /** Uso */
+        Uso: {
+            /** Bloqueia */
+            bloqueia: boolean;
+            /** Campo */
+            campo: string | null;
+            /**
+             * Fileid
+             * Format: uuid
+             */
+            fileId: string;
+            /** Href */
+            href: string | null;
+            /** Origem */
+            origem: string;
+            /** Rotulo */
+            rotulo: string;
+        };
         /** VerifyIn */
         VerifyIn: {
             /** Token */
@@ -2015,6 +4143,92 @@ export interface components {
         VersionsList: {
             /** Items */
             items: components["schemas"]["Version"][];
+        };
+        /** VideoDetalheOut */
+        VideoDetalheOut: {
+            /** Metricas */
+            metricas: components["schemas"]["Metrica"][];
+            video: components["schemas"]["VideoFonte"];
+        };
+        /** VideoFonte */
+        VideoFonte: {
+            canal: components["schemas"]["CanalRef"];
+            /** Comments */
+            comments: number | null;
+            /** Disponivel */
+            disponivel: boolean;
+            /** Durations */
+            durationS: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Jacortado */
+            jaCortado: components["schemas"]["JaCortado"][];
+            /** Likes */
+            likes: number | null;
+            live: components["schemas"]["VideoLive"];
+            /**
+             * Publishedat
+             * Format: date-time
+             */
+            publishedAt: string;
+            /** Recomendavel */
+            recomendavel: boolean;
+            /** Score */
+            score: number;
+            scoreDetail: components["schemas"]["ScoreDetail"];
+            /** Scorereason */
+            scoreReason: string;
+            /** Selecionado */
+            selecionado: components["schemas"]["Selecionado"][];
+            /** Thumbnailurl */
+            thumbnailUrl: string | null;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+            /** Views */
+            views: number | null;
+            /** Vphrecente */
+            vphRecente: number | null;
+            /** Youtubevideoid */
+            youtubeVideoId: string;
+        };
+        /** VideoFonteRef */
+        VideoFonteRef: {
+            /** Disponivel */
+            disponivel: boolean;
+            /** Durations */
+            durationS: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Thumbnailurl */
+            thumbnailUrl: string | null;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+            /** Youtubevideoid */
+            youtubeVideoId: string;
+        };
+        /**
+         * VideoLive
+         * @enum {string}
+         */
+        VideoLive: "nenhum" | "ao_vivo" | "agendado";
+        /** VideosList */
+        VideosList: {
+            /** Items */
+            items: components["schemas"]["VideoFonte"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+            /** Total */
+            total: number;
         };
         /** WatermarkImageOut */
         WatermarkImageOut: {
@@ -2063,6 +4277,782 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetDetail"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_file_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_assets_file_upload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetFileOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_file_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FilePatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_file_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_file_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_reorder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Ordem"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2420,6 +5410,850 @@ export interface operations {
             };
             /** @description Too Many Requests */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_calendario: {
+        parameters: {
+            query: {
+                /** @description Primeiro dia (local, APP_TZ) */
+                de: string;
+                /** @description Último dia, inclusive (até 62 dias) */
+                ate: string;
+                perfilId?: string | null;
+                plataforma?: components["schemas"]["Platform"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalendarioOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_list: {
+        parameters: {
+            query?: {
+                archived?: boolean;
+                perfilId?: string | null;
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanaisList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCanalIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_resolver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResolverIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResolverOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCanalIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_direito: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DireitoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_sincronizar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CanalOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    canais_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                canal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2791,6 +6625,93 @@ export interface operations {
             };
         };
     };
+    cortes_aplicar_marca: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AplicarMarcaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CortesList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     cortes_get: {
         parameters: {
             query?: never;
@@ -2840,6 +6761,369 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cortes_update_hook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                corte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HookIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cortes_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                corte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_list: {
+        parameters: {
+            query?: {
+                /** @description Sem o filtro, todas */
+                archived?: boolean | null;
+            };
+            header?: never;
+            path: {
+                corte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostagensList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                corte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePostagemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostagemOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cortes_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                corte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2920,12 +7204,610 @@ export interface operations {
             };
         };
     };
+    postagens_sugestoes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                corte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SugestoesList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_sugerir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                corte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SugestaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SugestaoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Gateway Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     cortes_versions: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 corte_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_list: {
+        parameters: {
+            query?: {
+                perfilId?: string | null;
+                status?: components["schemas"]["EnvioStatus"][] | null;
+                limit?: number;
+                /** @description Cursor: createdAt do último item */
+                before?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnviosList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_enviar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnviarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnviosList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                envio_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvioDetalhe"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                envio_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvioOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_confirmar_qualidade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                envio_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmarQualidadeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvioOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_retry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                envio_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvioOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                envio_id: string;
             };
             cookie?: never;
         };
@@ -3329,6 +8211,44 @@ export interface operations {
             };
         };
     };
+    integracoes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Integracoes"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     midia_links: {
         parameters: {
             query?: never;
@@ -3479,6 +8399,108 @@ export interface operations {
             };
             /** @description Service Unavailable */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    notificacoes_list: {
+        parameters: {
+            query?: {
+                after?: number | null;
+                limit?: number;
+                naoLidas?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificacoesList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    notificacoes_marcar_lidas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarcarLidasIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NaoLidasOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3848,6 +8870,297 @@ export interface operations {
             };
         };
     };
+    assets_list: {
+        parameters: {
+            query?: {
+                /** @description Tipos (OU) */
+                tipo?: components["schemas"]["AssetTipo"][] | null;
+                /** @description Tags (E) */
+                tag?: string[] | null;
+                /** @description Nome contém ou tag igual */
+                q?: string | null;
+                archived?: "false" | "true" | "all";
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetsList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssetCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_assets_upload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetFileOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    assets_images: {
+        parameters: {
+            query: {
+                /** @description Tipos (OU), obrigatório */
+                tipo: components["schemas"]["AssetTipo"][];
+                q?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LibraryImagesList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     perfis_upload_banner: {
         parameters: {
             query?: never;
@@ -4068,6 +9381,10 @@ export interface operations {
                 limit?: number;
                 /** @description Cursor: createdAt do último item */
                 before?: string | null;
+                origem?: components["schemas"]["CorteOrigem"] | null;
+                envioId?: string | null;
+                /** @description true: só os arquivados */
+                archived?: boolean;
             };
             header?: never;
             path: {
@@ -4154,6 +9471,183 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CorteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_selecionar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SelecionarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvioOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_arquivo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description MP4, MOV ou WebM, de 45 s a 3 h, até 2 GB
+                     */
+                    file: string;
+                    /** @description Título do vídeo (padrão: o nome do arquivo) */
+                    titulo?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvioOut"];
                 };
             };
             /** @description Bad Request */
@@ -5117,6 +10611,264 @@ export interface operations {
             };
         };
     };
+    envios_padroes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PadroesCorteOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_padroes_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PadroesCorteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PadroesCorteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_padroes_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PadroesCorteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    envios_padroes_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     perfis_restore: {
         parameters: {
             query?: never;
@@ -5265,6 +11017,477 @@ export interface operations {
             header?: never;
             path: {
                 perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postagem_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostagemOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postagem_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePostagemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostagemOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postagem_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostagemOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_marcar_postado: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postagem_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostadoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostagemOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postagem_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostagemOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postagem_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PostagemOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    postagens_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                postagem_id: string;
             };
             cookie?: never;
         };
@@ -5660,6 +11883,133 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    videos_fonte_list: {
+        parameters: {
+            query?: {
+                perfilId?: string | null;
+                canalId?: string[] | null;
+                q?: string | null;
+                publicadoDesde?: string | null;
+                publicadoAte?: string | null;
+                duracaoMin?: number | null;
+                duracaoMax?: number | null;
+                naoCortados?: boolean;
+                recomendaveis?: boolean;
+                ordem?: "score" | "views" | "vph" | "data";
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideosList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    videos_fonte_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                video_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoDetalheOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -93,3 +93,12 @@ def test_domain_separates_from_other_hmacs():
     body = midia.sign("fonte", ID).split(".")[0]
     raw = hmac.new(get_settings().jwt_secret.encode(), body.encode(), hashlib.sha256).digest()
     _rejects(f"{body}.{_b64(raw)}")
+
+
+def test_imagem_link_sem_validade_e_estavel():
+    # Spec 007 (R7): o token sem `exp` é determinístico, então o "Copiar link" é estável.
+    a = midia.link("imagem", ID, ttl=None)
+    assert a.expires_at is None and a.url == midia.link("imagem", ID, ttl=None).url
+    assert midia.verify(a.url.removeprefix(midia.PATH_PREFIX),
+                        now=time.time() + 10 * 365 * 86400).kind == "imagem"
+    assert midia.link("imagem", ID).expires_at is not None

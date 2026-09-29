@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { corteStatusLabel, type Corte } from "../../lib/marca";
 
 const tone: Record<Corte["status"], string> = {
+  revisao: "bg-secondary text-secondary-foreground", // clipe do OpenShorts sem a marca (spec 006)
   na_fila: "bg-info text-info-foreground",
   processando: "bg-warning text-warning-foreground",
   pronto: "bg-success text-success-foreground",

@@ -1,21 +1,19 @@
-import { fundosKey } from "../../lib/marca";
-import { api } from "../../lib/api";
 import { ProfileImagePicker, type ProfileImagePickerProps } from "./ProfileImagePicker";
 
-// Imagem de fundo do gancho e do card final (FR-005b, T033): PNG, JPG ou WebP, até 5 MB, mínimo
-// 540×540. As duas seções escolhem da mesma lista do perfil.
+const TIPOS = ["fundo", "cenario"] as const;
+
+// Imagem de fundo do gancho e do card final (FR-005b da 004; FR-006 da 007): escolhe entre os
+// fundos e os cenários da biblioteca do perfil (Q2 = A). Enviar cria um "Fundo" na biblioteca.
 export function FundoImagePicker({ perfilId, ...props }: ProfileImagePickerProps & { perfilId: string }) {
   return (
     <ProfileImagePicker
       {...props}
-      queryKey={fundosKey(perfilId)}
-      list={() => api.fundos.list(perfilId)}
-      upload={(file) => api.fundos.upload(perfilId, file)}
+      perfilId={perfilId}
+      tipos={TIPOS}
+      uploadTipo="fundo"
       label="Imagem de fundo"
       uploadLabel="Enviar imagem de fundo"
-      hint="PNG, JPG ou WebP, até 5 MB, mínimo 540×540 px. A imagem é recortada para preencher a área."
-      accepted={["image/png", "image/jpeg", "image/webp"]}
-      minSize={540}
+      hint="Fundos e cenários da biblioteca. PNG, JPG ou WebP, até 20 MB, mínimo 540×540 px. A imagem é recortada para preencher a área."
     />
   );
 }

@@ -7,6 +7,8 @@ payload é `{k: tipo, id, v?: variante, exp?: epoch}`:
 - fonte, imagem de marca d'água e imagem de fundo podem sair **sem `exp`** na exportação do kit (FR-011,
   decisão do dono em 2026-09-29): valem enquanto o arquivo existir, e arquivos nunca são
   apagados.
+- `imagem` (spec 007, R7): o original de qualquer imagem da biblioteca, sem `exp` no
+  "Copiar link" e no "Baixar original" do asset (token determinístico, portanto estável).
 
 Streaming (T010): `stream_object` serve o objeto do MinIO com `Range` (206/416) e 503 com o HD
 fora. As rotas (`GET /api/midia/{token}`, sem login, e `POST /api/midia/links`) ficam em
@@ -35,7 +37,8 @@ from sociman_api import datadir, storage
 from sociman_api.config import get_settings
 from sociman_api.errors import ApiError
 
-MidiaKind = Literal["corte_original", "corte_marcado", "fonte", "marca_dagua", "fundo"]
+MidiaKind = Literal["corte_original", "corte_marcado", "fonte", "marca_dagua", "fundo",
+                    "imagem"]  # imagem: qualquer `images.id` (biblioteca da 007)
 KINDS: frozenset[str] = frozenset(get_args(MidiaKind))
 VIDEO_KINDS: frozenset[str] = frozenset({"corte_original", "corte_marcado"})
 LINK_TTL = 60 * 60  # 1 h (interface)

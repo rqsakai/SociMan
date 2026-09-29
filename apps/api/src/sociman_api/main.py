@@ -5,19 +5,26 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from sociman_api import datadir
+from sociman_api.assets.router import router as assets_router
+from sociman_api.assets.router_perfil import router as assets_perfil_router
 from sociman_api.auth.router_auth import router as auth_router
 from sociman_api.auth.router_events import router as events_router
 from sociman_api.auth.router_users import router as users_router
+from sociman_api.canais.router import router as canais_router
 from sociman_api.cortes.router import router as cortes_router
 from sociman_api.db import get_engine
+from sociman_api.envios.router import router as envios_router
 from sociman_api.errors import install_openapi_error_contract, register_error_handlers
+from sociman_api.integracoes import router as integracoes_router
 from sociman_api.marca.router import router as kit_router
 from sociman_api.marca.router_fontes import router as fontes_router
 from sociman_api.marca.router_fundos import router as fundos_router
 from sociman_api.marca.router_marca_dagua import router as marca_dagua_router
+from sociman_api.notificacoes.router import router as notificacoes_router
 from sociman_api.perfis.router_contas import router as contas_router
 from sociman_api.perfis.router_imagens import router as imagens_router
 from sociman_api.perfis.router_perfis import router as perfis_router
+from sociman_api.postagem.router import router as postagem_router
 from sociman_api.redis import get_redis
 from sociman_api.router_midia import router as midia_router
 
@@ -37,6 +44,13 @@ app.include_router(fontes_router)
 app.include_router(marca_dagua_router)
 app.include_router(fundos_router)
 app.include_router(midia_router)
+app.include_router(assets_perfil_router)
+app.include_router(assets_router)
+app.include_router(canais_router)
+app.include_router(envios_router)
+app.include_router(postagem_router)
+app.include_router(notificacoes_router)
+app.include_router(integracoes_router)
 install_openapi_error_contract(app)
 
 

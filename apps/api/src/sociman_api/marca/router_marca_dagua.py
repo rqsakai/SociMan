@@ -5,6 +5,9 @@ O envio só guarda a imagem (`images.kind = watermark`, bucket `imagens`, que o 
 não altera o kit: o usuário escolhe a imagem na seção Marca d'água e salva o kit. Nada é
 apagado (FR-016). `upload_image` e `list_images` servem também às imagens de fundo
 (`router_fundos.py`), que só mudam o `kind`.
+
+Spec 007: as rotas ficam `deprecated` (o SPA usa a biblioteca de assets); o envio também cria
+o asset, e a lista omite as imagens de assets ou arquivos arquivados.
 """
 
 import uuid
@@ -16,6 +19,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from sociman_api import datadir, imaging, storage
+from sociman_api.assets.service import asset_for_legacy_image
+from sociman_api.assets.usos import archived_image_ids
 from sociman_api.auth.deps import Actor, RequireUser
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.db import DbSession
@@ -63,26 +68,30 @@ def upload_image(db: Session, actor: Actor, perfil_id: uuid.UUID, stream,
     )
     db.add(image)
     db.flush()
+    # Spec 007: a imagem entra na biblioteca como asset (`marca_dagua` ou `fundo`).
+    asset_for_legacy_image(db, actor, image)
     return image
 
 
 def list_images(db: Session, perfil_id: uuid.UUID, kind: ImageKind) -> list[ImageRef]:
     get_perfil_or_404(db, perfil_id)
-    rows = db.scalars(
+    archived = archived_image_ids(db, perfil_id)  # spec 007: sem as arquivadas
+    rows = [img for img in db.scalars(
         select(Image).where(Image.perfil_id == perfil_id, Image.kind == kind)
         .order_by(Image.created_at.desc(), Image.id)
-    )
+    ) if img.id not in archived]
     return [image_ref(img) for img in rows]
 
 
 @router.post("/{perfil_id}/marca-dagua", operation_id="marca_dagua_upload", status_code=201,
+             deprecated=True,
              response_model=WatermarkImageOut, responses=_errors(400, 401, 403, 404, 503, 507))
 def upload(perfil_id: UUID, file: Upload, actor: RequireUser, db: Db) -> WatermarkImageOut:
     image = upload_image(db, actor, perfil_id, file.file, ImageKind.watermark)
     return WatermarkImageOut(image=image_ref(image))
 
 
-@router.get("/{perfil_id}/marca-dagua", operation_id="marca_dagua_list",
+@router.get("/{perfil_id}/marca-dagua", operation_id="marca_dagua_list", deprecated=True,
             response_model=WatermarkImagesList, responses=_errors(401, 403, 404))
 def list_(perfil_id: UUID, actor: RequireUser, db: Db) -> WatermarkImagesList:
     return WatermarkImagesList(items=list_images(db, perfil_id, ImageKind.watermark))

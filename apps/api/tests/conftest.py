@@ -63,7 +63,10 @@ def _migrated() -> None:
 
 # Ordem irrelevante (CASCADE); as da 003 e da 004 só entram se a migration já existir.
 _TABLES = ("users", "one_time_tokens", "security_events", "entity_versions", "images", "contas",
-           "perfis", "brand_kits", "brand_fonts", "cortes")
+           "perfis", "brand_kits", "brand_fonts", "cortes", "assets", "asset_files")
+# Spec 006 (a mesma regra: só entram as que já existem).
+_TABLES += ("canais_fonte", "canal_perfis", "videos_fonte", "video_metricas", "youtube_cota",
+            "padroes_corte", "envios", "postagens", "sugestoes_texto", "notificacoes")
 
 
 @pytest.fixture(autouse=True)

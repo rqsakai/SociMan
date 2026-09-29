@@ -265,3 +265,66 @@ export function syntheticMp4(outPath: string, seconds = 6, size = "540x960"): vo
   compose(["cp", `api:${tmp}`, outPath]);
   compose(["exec", "-T", "api", "rm", "-f", tmp]);
 }
+
+// --- biblioteca de assets (spec 007) ---
+
+// PNG RGBA de `width`×`height` com transparência de verdade (metade esquerda opaca, metade
+// direita transparente): o que o sticker e a marca d'água exigem. `pngBuffer` é RGB (opaco).
+export function pngAlphaBuffer(width: number, height: number): Buffer {
+  const chunk = (type: string, data: Buffer): Buffer => {
+    const typeAndData = Buffer.concat([Buffer.from(type, "ascii"), data]);
+    const len = Buffer.alloc(4);
+    len.writeUInt32BE(data.length);
+    const crc = Buffer.alloc(4);
+    crc.writeUInt32BE(crc32(typeAndData));
+    return Buffer.concat([len, typeAndData, crc]);
+  };
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(width, 0);
+  ihdr.writeUInt32BE(height, 4);
+  ihdr[8] = 8; // bits por canal
+  ihdr[9] = 6; // RGBA
+  const row = Buffer.alloc(1 + width * 4);
+  for (let x = 0; x < width; x++) row.set([40, 160, 90, x < width / 2 ? 255 : 0], 1 + x * 4);
+  const raw = Buffer.concat(Array.from({ length: height }, () => row));
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk("IHDR", ihdr),
+    chunk("IDAT", deflateSync(raw)),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
+}
+
+export interface SeedAsset {
+  tipo: "avatar" | "cenario" | "fundo" | "sticker" | "marca_dagua" | "imagem";
+  name: string;
+  tags: string[];
+}
+
+// Cria assets pela API: avatar e cenário sem arquivo (POST …/assets), os demais com uma imagem
+// pequena (POST …/assets/arquivo). Um por vez e com pausa: o edge limita /api/ a 20 req/s.
+export async function seedAssets(request: APIRequestContext, token: string, perfilId: string, assets: SeedAsset[]): Promise<void> {
+  const headers = { Authorization: `Bearer ${token}` };
+  const opaque = pngBuffer(540, 540);
+  const alpha = pngAlphaBuffer(64, 64);
+  for (const a of assets) {
+    const res =
+      a.tipo === "avatar" || a.tipo === "cenario"
+        ? await request.post(`/api/perfis/${perfilId}/assets`, { headers, data: { tipo: a.tipo, name: a.name, tags: a.tags } })
+        : await request.post(`/api/perfis/${perfilId}/assets/arquivo`, {
+            headers,
+            multipart: {
+              tipo: a.tipo,
+              name: a.name,
+              tags: a.tags.join(","),
+              file: {
+                name: `${a.name}.png`,
+                mimeType: "image/png",
+                buffer: a.tipo === "sticker" || a.tipo === "marca_dagua" ? alpha : opaque,
+              },
+            },
+          });
+    expect(res.status(), `seed ${a.tipo} "${a.name}": ${await res.text()}`).toBe(201);
+    await new Promise((r) => setTimeout(r, 60));
+  }
+}

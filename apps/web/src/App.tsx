@@ -16,6 +16,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import CorteDetalhe from "./pages/cortes/CorteDetalhe";
+import AssetDetalhe from "./pages/assets/AssetDetalhe";
+import AssetHistorico from "./pages/assets/AssetHistorico";
 import ContaHistorico from "./pages/perfis/ContaHistorico";
 import KitHistorico from "./pages/perfis/KitHistorico";
 import PerfilDetalhe from "./pages/perfis/PerfilDetalhe";
@@ -25,6 +27,13 @@ import ResetPassword from "./pages/ResetPassword";
 import SecurityEvents from "./pages/SecurityEvents";
 import Users from "./pages/Users";
 import VerifyEmail from "./pages/VerifyEmail";
+// 006-cortes-openshorts
+import Calendario from "./pages/calendario/Calendario";
+import CanalDetalhe from "./pages/canais/CanalDetalhe";
+import CanaisList from "./pages/canais/CanaisList";
+import Descobrir from "./pages/descobrir/Descobrir";
+import EnvioDetalhe from "./pages/envios/EnvioDetalhe";
+import EnviosList from "./pages/envios/EnviosList";
 
 // Vitrine dos componentes da spec 005 (só em dev; o build de produção descarta o import).
 const Showcase = import.meta.env.DEV ? lazy(() => import("./pages/_Showcase")) : null;
@@ -86,6 +95,14 @@ export default function App() {
                 <Route path="/app/perfis/:id/kit/historico" element={<KitHistorico />} />
                 <Route path="/app/contas/:id/historico" element={<ContaHistorico />} />
                 <Route path="/app/cortes/:id" element={<CorteDetalhe />} />
+                <Route path="/app/assets/:id" element={<AssetDetalhe />} />
+                <Route path="/app/assets/:id/historico" element={<AssetHistorico />} />
+                <Route path="/app/fontes" element={<CanaisList />} />
+                <Route path="/app/fontes/:id" element={<CanalDetalhe />} />
+                <Route path="/app/descobrir" element={<Descobrir />} />
+                <Route path="/app/envios" element={<EnviosList />} />
+                <Route path="/app/envios/:id" element={<EnvioDetalhe />} />
+                <Route path="/app/calendario" element={<Calendario />} />
                 <Route
                   path="/app/usuarios"
                   element={

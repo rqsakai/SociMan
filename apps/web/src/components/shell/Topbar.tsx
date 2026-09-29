@@ -9,7 +9,7 @@
  * À esquerda: trilha (Início › … › página) e o título da página, vindos de usePageMeta
  * (./page-meta.tsx) ou, sem ele, do item do menu que casa com a URL. O título NÃO é heading:
  * o <h1> continua na página.
- * À direita: busca, menu de conta ("Minha conta" e "Sair") e o botão "Sair" (o e2e usa
+ * À direita: busca, sino de notificações (spec 006), menu de conta ("Minha conta" e "Sair") e o botão "Sair" (o e2e usa
  * getByRole("button", { name: "Sair" })).
  */
 import { CircleUser, LogOut, Menu, Search } from "lucide-react";
@@ -35,6 +35,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { logout } from "@/lib/authActions";
 import { useAuth } from "@/lib/authStore";
+import { Sino } from "../notificacoes/Sino";
 import { navItemFor } from "./nav";
 import { useCurrentPageMeta, type Crumb } from "./page-meta";
 
@@ -122,6 +123,7 @@ export function Topbar({ onOpenMenu, search }: TopbarProps) {
               />
             </div>
           )}
+          <Sino />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Conta">

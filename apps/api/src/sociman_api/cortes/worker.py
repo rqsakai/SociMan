@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from sociman_api import datadir, storage
+from sociman_api.canais import models as _canais_models  # noqa: F401 (FKs, ver abaixo)
 from sociman_api.config import get_settings
 from sociman_api.cortes import compose, queue
 from sociman_api.cortes.compose import ComposeError
@@ -37,11 +38,13 @@ from sociman_api.cortes.render import (
     WatermarkStyle,
     render_layers,
 )
+from sociman_api.envios import models as _envios_models  # noqa: F401 (FKs, ver abaixo)
 from sociman_api.errors import ApiError
 from sociman_api.marca.tokens import DEFAULT_FONTS
 
-# Fora da API, nada mais registra as tabelas referenciadas por `cortes` (perfis, users): sem
-# estes imports o SQLAlchemy não resolve as FKs no primeiro UPDATE.
+# Fora da API, nada mais registra as tabelas referenciadas por `cortes` (perfis, users e, desde
+# a spec 006, envios → canais_fonte e videos_fonte): sem estes imports o SQLAlchemy não resolve
+# as FKs no primeiro UPDATE.
 from sociman_api.perfis import models as _perfis_models  # noqa: F401
 
 log = logging.getLogger("sociman.worker")

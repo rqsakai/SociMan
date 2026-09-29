@@ -22,13 +22,14 @@ _CHUNK = 64 * 1024
 _FIELD = {ImageKind.logo: "logo_image_id", ImageKind.banner: "banner_image_id"}
 
 
-def read_limited(stream: BinaryIO) -> bytes:
-    """Lê em blocos e para ao passar de MAX_BYTES, sem carregar o resto do arquivo."""
+def read_limited(stream: BinaryIO, max_bytes: int = imaging.MAX_BYTES) -> bytes:
+    """Lê em blocos e para ao passar de `max_bytes`, sem carregar o resto do arquivo."""
     data = bytearray()
     while chunk := stream.read(_CHUNK):
         data += chunk
-        if len(data) > imaging.MAX_BYTES:
-            raise ApiError(400, "invalid_image", "Arquivo maior que 5 MB")
+        if len(data) > max_bytes:
+            raise ApiError(400, "invalid_image",
+                           f"Arquivo maior que {max_bytes // (1024 * 1024)} MB")
     return bytes(data)
 
 

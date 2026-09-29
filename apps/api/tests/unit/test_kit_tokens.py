@@ -311,3 +311,30 @@ def test_resolve_tokens_with_fundos():
     kit = KitTokens.model_validate(_kit(hook__fundo_imagem_id=str(FUNDO)))
     assert fundo_image_ids(kit) == []
     assert "fundo_imagem_url" not in resolve_tokens(kit, fonts, {})["hook"]
+
+
+# ---- imagens usadas no kit (spec 007, R5) ----
+
+def test_fields_using_image_mesmo_com_secao_desligada():
+    from sociman_api.marca.tokens import fields_using_image, image_fields
+
+    img, outra = uuid.uuid4(), uuid.uuid4()
+    kit = KitTokens.model_validate(_kit(
+        watermark__imagem_id=str(img), watermark__ligado=False,
+        hook__fundo_imagem_id=str(img), hook__fundo_tipo="cor",
+        endCard__fundo_imagem_id=str(outra)))
+    assert fields_using_image(kit, img) == ["watermark.imagem_id", "hook.fundo_imagem_id"]
+    assert fields_using_image(kit, outra) == ["endCard.fundo_imagem_id"]
+    assert fields_using_image(kit, uuid.uuid4()) == []
+    assert list(image_fields(KitTokens.model_validate(_kit()))) == []
+
+
+def test_check_refs_recusa_imagem_arquivada():
+    img = uuid.uuid4()
+    kit = KitTokens.model_validate(_kit(endCard__fundo_imagem_id=str(img)))
+    ctx = RefContext(conta_ids=frozenset({CONTA}), fundo_image_ids=frozenset({img}),
+                     archived_image_ids=frozenset({img}))
+    with pytest.raises(KitInvalid) as exc:
+        check_refs(kit, ctx)
+    assert (exc.value.field, exc.value.message) == (
+        "endCard.fundo_imagem_id", "imagem arquivada; restaure-a na biblioteca")

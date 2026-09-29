@@ -15,9 +15,15 @@ from starlette.concurrency import run_in_threadpool
 
 from sociman_api.auth.deps import RequireUser
 from sociman_api.cortes import service
-from sociman_api.cortes.models import CorteStatus
+from sociman_api.cortes.models import CorteOrigem, CorteStatus
 from sociman_api.cortes.render import HOOK_MAX_CHARS
-from sociman_api.cortes.schemas import Armazenamento, CorteOut, CortesList
+from sociman_api.cortes.schemas import (
+    AplicarMarcaIn,
+    Armazenamento,
+    CorteOut,
+    CortesList,
+    HookIn,
+)
 from sociman_api.db import DbSession
 from sociman_api.errors import ErrorEnvelope
 from sociman_api.perfis.schemas import VersionIn, VersionsList
@@ -70,8 +76,12 @@ def list_cortes(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     before: Annotated[datetime | None, Query(description="Cursor: createdAt do último item")]
     = None,
+    origem: Annotated[CorteOrigem | None, Query()] = None,
+    envio_id: Annotated[UUID | None, Query(alias="envioId")] = None,
+    archived: Annotated[bool, Query(description="true: só os arquivados")] = False,
 ) -> CortesList:
-    return CortesList(items=service.list_cortes(db, perfil_id, status, limit, before))
+    return CortesList(items=service.list_cortes(db, perfil_id, status, limit, before, origem,
+                                                envio_id, archived))
 
 
 @router.get("/api/armazenamento", operation_id="armazenamento_get",
@@ -97,3 +107,34 @@ def retry_corte(corte_id: UUID, body: VersionIn, actor: RequireUser, db: Db) -> 
             response_model=VersionsList, responses=_errors(401, 403, 404))
 def corte_versions(corte_id: UUID, actor: RequireUser, db: Db) -> VersionsList:
     return service.corte_versions(db, corte_id)
+
+
+# ---- revisão dos clipes do OpenShorts (spec 006, T057) ----
+
+@router.post("/api/cortes/aplicar-marca", operation_id="cortes_aplicar_marca",
+             response_model=CortesList, responses=_errors(400, 401, 403, 404, 409, 503, 507))
+def aplicar_marca(body: AplicarMarcaIn, actor: RequireUser, db: Db) -> CortesList:
+    """`revisao` → `na_fila` com o kit atual (até 30, tudo ou nada)."""
+    return CortesList(items=service.cortes_out(db, service.aplicar_marca(db, actor, body.items)))
+
+
+@router.patch("/api/cortes/{corte_id}", operation_id="cortes_update_hook",
+              response_model=CorteOut, responses=_errors(400, 401, 403, 404, 409, 503, 507))
+def update_hook(corte_id: UUID, body: HookIn, actor: RequireUser, db: Db) -> CorteOut:
+    """Edita o gancho de um clipe em `revisao`."""
+    corte = service.editar_gancho(db, actor, corte_id, body.version, body.hook_text)
+    return CorteOut(corte=service.corte_out(db, corte))
+
+
+@router.post("/api/cortes/{corte_id}/archive", operation_id="cortes_archive",
+             response_model=CorteOut, responses=_errors(400, 401, 403, 404, 409))
+def archive_corte(corte_id: UUID, body: VersionIn, actor: RequireUser, db: Db) -> CorteOut:
+    return CorteOut(corte=service.corte_out(db, service.arquivar(db, actor, corte_id,
+                                                                 body.version)))
+
+
+@router.post("/api/cortes/{corte_id}/restore", operation_id="cortes_restore",
+             response_model=CorteOut, responses=_errors(400, 401, 403, 404, 409))
+def restore_corte(corte_id: UUID, body: VersionIn, actor: RequireUser, db: Db) -> CorteOut:
+    return CorteOut(corte=service.corte_out(db, service.restaurar(db, actor, corte_id,
+                                                                  body.version)))

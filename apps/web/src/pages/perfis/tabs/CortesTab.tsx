@@ -9,7 +9,8 @@ import { DataTable, dataTableColumns } from "@/components/data-table";
 import { HeaderCard } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Field } from "@/components/ui/field";
+import { Badge } from "@/components/ui/badge";
+import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { CorteStatusBadge, ProgressBar } from "../../../components/marca/CorteStatusBadge";
@@ -30,13 +31,29 @@ const columns = col.columns([
     cell: (c) => <time dateTime={c.getValue()}>{dateFormat.format(new Date(c.getValue()))}</time>,
     meta: { className: "whitespace-nowrap" },
   }),
-  col.accessor("hookText", {
+  col.accessor((c) => c.hookText || c.openshortsTitle || "Clipe sem gancho", {
+    id: "hookText",
     header: "Gancho",
     cell: (c) => (
       <Link to={`/app/cortes/${c.row.original.id}`} className="line-clamp-2 font-semibold hover:underline">
         {c.getValue()}
       </Link>
     ),
+  }),
+  // spec 006: clipes do OpenShorts mostram a origem e o canal
+  col.accessor((c) => (c.origem === "openshorts" ? `OpenShorts${c.canal ? ` · ${c.canal.title}` : ""}` : "Upload"), {
+    id: "origem",
+    header: "Origem",
+    cell: (c) =>
+      c.row.original.origem === "openshorts" ? (
+        <span className="text-sm">
+          <Badge variant="outline">OpenShorts</Badge>
+          {c.row.original.canal && <span className="mt-0.5 block max-w-40 truncate text-xs text-muted-foreground">{c.row.original.canal.title}</span>}
+        </span>
+      ) : (
+        <span className="text-sm text-muted-foreground">Upload</span>
+      ),
+    meta: { className: "hidden md:table-cell", headerClassName: "hidden md:table-cell" },
   }),
   col.accessor((c) => c.createdBy?.name ?? "—", {
     id: "autor",
@@ -45,12 +62,12 @@ const columns = col.columns([
   }),
   col.accessor("kitVersion", {
     header: "Kit",
-    cell: (c) => (c.getValue() === 0 ? "padrão" : `v${c.getValue()}`),
+    cell: (c) => (c.getValue() === null || c.getValue() === undefined ? "—" : c.getValue() === 0 ? "padrão" : `v${c.getValue()}`),
     meta: { className: "hidden sm:table-cell", headerClassName: "hidden sm:table-cell" },
   }),
   col.accessor("status", {
     header: "Status",
-    cell: (c) => <CorteStatusBadge corte={c.row.original} />,
+    cell: (c) => (c.row.original.archived ? <Badge className="bg-dark text-dark-foreground">Arquivado</Badge> : <CorteStatusBadge corte={c.row.original} />),
   }),
 ]);
 
@@ -61,9 +78,13 @@ const busyStatus = (c: Corte) => c.status === "na_fila" || c.status === "process
 // atualiza a cada 2 s enquanto houver corte na fila ou processando.
 export function CortesTab({ perfil }: { perfil: Perfil }) {
   const storage = useQuery({ queryKey: armazenamentoKey, queryFn: () => api.armazenamento(), refetchInterval: 30_000 });
+  // spec 006: filtro de origem e "mostrar arquivados" (clipes descartados na revisão)
+  const [origem, setOrigem] = useState<"" | "upload" | "openshorts">("");
+  const [archived, setArchived] = useState(false);
   const cortes = useInfiniteQuery({
-    queryKey: cortesKey(perfil.id),
-    queryFn: ({ pageParam }) => api.cortes.list(perfil.id, { limit: PAGE, before: pageParam }),
+    queryKey: [...cortesKey(perfil.id), { origem, archived }],
+    queryFn: ({ pageParam }) =>
+      api.cortes.list(perfil.id, { limit: PAGE, before: pageParam, archived, ...(origem ? { origem } : {}) }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => (last.items.length === PAGE ? last.items[last.items.length - 1]?.createdAt : undefined),
     refetchInterval: (query) => (query.state.data?.pages.some((p) => p.items.some(busyStatus)) ? 2000 : false),
@@ -87,7 +108,20 @@ export function CortesTab({ perfil }: { perfil: Perfil }) {
             loading={cortes.isPending}
             getRowId={(c) => c.id}
             initialSorting={[{ id: "createdAt", desc: true }]}
-            emptyMessage="Nenhum corte enviado ainda."
+            emptyMessage={archived ? "Nenhum corte arquivado." : "Nenhum corte enviado ainda."}
+            toolbar={
+              <>
+                <NativeSelect aria-label="Origem" value={origem} onChange={(e) => setOrigem(e.target.value as typeof origem)} className="w-44">
+                  <option value="">Todas as origens</option>
+                  <option value="openshorts">OpenShorts</option>
+                  <option value="upload">Upload</option>
+                </NativeSelect>
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" className="size-4 accent-primary" checked={archived} onChange={(e) => setArchived(e.target.checked)} />
+                  Só arquivados
+                </label>
+              </>
+            }
             pagination={{
               hasMore: Boolean(cortes.hasNextPage),
               onLoadMore: () => void cortes.fetchNextPage(),

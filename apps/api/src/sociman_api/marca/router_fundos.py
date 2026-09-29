@@ -33,13 +33,14 @@ class FundoImagesList(CamelModel):
 
 
 @router.post("/{perfil_id}/fundos", operation_id="fundos_upload", status_code=201,
+             deprecated=True,
              response_model=FundoImageOut, responses=_errors(400, 401, 403, 404, 503, 507))
 def upload(perfil_id: UUID, file: Upload, actor: RequireUser, db: Db) -> FundoImageOut:
     return FundoImageOut(image=image_ref(upload_image(db, actor, perfil_id, file.file,
                                                       ImageKind.fundo)))
 
 
-@router.get("/{perfil_id}/fundos", operation_id="fundos_list",
+@router.get("/{perfil_id}/fundos", operation_id="fundos_list", deprecated=True,
             response_model=FundoImagesList, responses=_errors(401, 403, 404))
 def list_(perfil_id: UUID, actor: RequireUser, db: Db) -> FundoImagesList:
     return FundoImagesList(items=list_images(db, perfil_id, ImageKind.fundo))

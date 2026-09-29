@@ -44,8 +44,57 @@ export type Corte = components["schemas"]["Corte"];
 export type CorteStatus = components["schemas"]["CorteStatus"];
 export type Armazenamento = components["schemas"]["Armazenamento"];
 export type MidiaLink = components["schemas"]["MidiaLink"];
-export type MidiaKind = "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo";
+export type MidiaKind = "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem";
 export type CorteFilters = NonNullable<paths["/api/perfis/{perfil_id}/cortes"]["get"]["parameters"]["query"]>;
+// 007-assets-do-perfil
+export type Asset = components["schemas"]["Asset"];
+export type AssetSummary = components["schemas"]["AssetSummary"];
+export type AssetFile = components["schemas"]["AssetFile"];
+export type AssetTipo = components["schemas"]["AssetTipo"];
+export type FileRole = components["schemas"]["FileRole"];
+export type Uso = components["schemas"]["Uso"];
+export type LibraryImage = components["schemas"]["LibraryImage"];
+export type TagCount = components["schemas"]["TagCount"];
+export type AssetCreateRequest = components["schemas"]["AssetCreate"];
+export type AssetPatchRequest = components["schemas"]["AssetPatch"];
+export type FilePatchRequest = components["schemas"]["FilePatch"];
+export type OrdemRequest = components["schemas"]["Ordem"];
+export type AssetFilters = NonNullable<paths["/api/perfis/{perfil_id}/assets"]["get"]["parameters"]["query"]>;
+export type LibraryImageFilters = paths["/api/perfis/{perfil_id}/assets/imagens"]["get"]["parameters"]["query"];
+// 006-cortes-openshorts
+export type Notificacao = components["schemas"]["Notificacao"];
+export type NotificacaoTipo = components["schemas"]["NotificacaoTipo"];
+export type NotificacaoFilters = NonNullable<paths["/api/notificacoes"]["get"]["parameters"]["query"]>;
+export type CanalFonte = components["schemas"]["CanalFonte"];
+export type CanalCandidato = components["schemas"]["CanalCandidato"];
+export type CanalSyncStatus = components["schemas"]["CanalSync"];
+export type Direito = components["schemas"]["CanalDireito"];
+export type DireitoEnvio = components["schemas"]["DireitoEnvio"];
+export type CreateCanalRequest = components["schemas"]["CreateCanalIn"];
+export type UpdateCanalRequest = components["schemas"]["UpdateCanalIn"];
+export type DireitoRequest = components["schemas"]["DireitoIn"];
+export type CanalFilters = NonNullable<paths["/api/canais"]["get"]["parameters"]["query"]>;
+export type VideoFonte = components["schemas"]["VideoFonte"];
+export type VideoFonteFilters = NonNullable<paths["/api/videos-fonte"]["get"]["parameters"]["query"]>;
+export type PadroesCorte = components["schemas"]["PadroesCorte"];
+export type PadroesCorteRequest = components["schemas"]["PadroesCorteIn"];
+export type Envio = components["schemas"]["Envio"];
+export type EnvioStatus = components["schemas"]["EnvioStatus"];
+export type EnvioConfig = components["schemas"]["EnvioConfig"];
+// Campos com default no servidor saem obrigatórios no tipo gerado; aqui ficam opcionais.
+type Defaulted<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type SelecionarRequest = Defaulted<components["schemas"]["SelecionarIn"], "confirmarDuplicado">;
+export type EnviarRequest = Defaulted<components["schemas"]["EnviarIn"], "confirmarAviso" | "confirmarDuplicado">;
+export type EnvioFilters = NonNullable<paths["/api/envios"]["get"]["parameters"]["query"]>;
+export type Postagem = components["schemas"]["Postagem"];
+export type EstadoPostagem = components["schemas"]["EstadoPostagem"];
+export type Sugestao = components["schemas"]["Sugestao"];
+export type CreatePostagemRequest = Defaulted<components["schemas"]["CreatePostagemIn"], "titulo" | "descricao">;
+export type UpdatePostagemRequest = components["schemas"]["UpdatePostagemIn"];
+export type CalendarioItem = components["schemas"]["CalendarioItem"];
+export type CalendarioSemData = components["schemas"]["SemData"];
+export type CalendarioFilters = paths["/api/calendario"]["get"]["parameters"]["query"];
+export type Integracoes = components["schemas"]["Integracoes"];
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -279,6 +328,56 @@ export function createApiClient(options: ApiClientOptions = {}) {
         );
       },
     },
+    // Biblioteca de assets (spec 007). Os envios (POST multipart …/arquivos e …/assets/arquivo)
+    // ficam no app, por XHR, para ter o progresso do upload. Nenhuma rota DELETE.
+    assets: {
+      list: (perfilId: string, query: AssetFilters = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/assets", { params: { path: { perfil_id: perfilId }, query } })),
+      create: (perfilId: string, body: AssetCreateRequest) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/assets", { params: { path: { perfil_id: perfilId } }, body })),
+      images: (perfilId: string, query: LibraryImageFilters) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/assets/imagens", { params: { path: { perfil_id: perfilId }, query } })),
+      get: (assetId: string) =>
+        unwrap(client.GET("/api/assets/{asset_id}", { params: { path: { asset_id: assetId } } })),
+      update: (assetId: string, body: AssetPatchRequest) =>
+        unwrap(client.PATCH("/api/assets/{asset_id}", { params: { path: { asset_id: assetId } }, body })),
+      updateFile: (assetId: string, fileId: string, body: FilePatchRequest) =>
+        unwrap(
+          client.PATCH("/api/assets/{asset_id}/arquivos/{file_id}", {
+            params: { path: { asset_id: assetId, file_id: fileId } },
+            body,
+          }),
+        ),
+      reorder: (assetId: string, body: OrdemRequest) =>
+        unwrap(client.PUT("/api/assets/{asset_id}/ordem", { params: { path: { asset_id: assetId } }, body })),
+      archiveFile: (assetId: string, fileId: string, version: number) =>
+        unwrap(
+          client.POST("/api/assets/{asset_id}/arquivos/{file_id}/archive", {
+            params: { path: { asset_id: assetId, file_id: fileId } },
+            body: { version },
+          }),
+        ),
+      restoreFile: (assetId: string, fileId: string, version: number) =>
+        unwrap(
+          client.POST("/api/assets/{asset_id}/arquivos/{file_id}/restore", {
+            params: { path: { asset_id: assetId, file_id: fileId } },
+            body: { version },
+          }),
+        ),
+      archive: (assetId: string, version: number) =>
+        unwrap(client.POST("/api/assets/{asset_id}/archive", { params: { path: { asset_id: assetId } }, body: { version } })),
+      restore: (assetId: string, version: number) =>
+        unwrap(client.POST("/api/assets/{asset_id}/restore", { params: { path: { asset_id: assetId } }, body: { version } })),
+      versions: (assetId: string) =>
+        unwrap(client.GET("/api/assets/{asset_id}/versions", { params: { path: { asset_id: assetId } } })),
+      revert: (assetId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/assets/{asset_id}/revert", {
+            params: { path: { asset_id: assetId } },
+            body: { version, toVersion },
+          }),
+        ),
+    },
     // O envio (POST multipart) fica no app, por XHR, para ter o progresso do upload.
     cortes: {
       list: (perfilId: string, query: CorteFilters = {}) =>
@@ -289,6 +388,15 @@ export function createApiClient(options: ApiClientOptions = {}) {
         unwrap(client.POST("/api/cortes/{corte_id}/retry", { params: { path: { corte_id: corteId } }, body: { version } })),
       versions: (corteId: string) =>
         unwrap(client.GET("/api/cortes/{corte_id}/versions", { params: { path: { corte_id: corteId } } })),
+      // spec 006: gancho editável em revisão, "Aplicar marca" (lote até 30) e arquivar/restaurar
+      update: (corteId: string, body: { version: number; hookText: string }) =>
+        unwrap(client.PATCH("/api/cortes/{corte_id}", { params: { path: { corte_id: corteId } }, body })),
+      aplicarMarca: (items: { corteId: string; version: number }[]) =>
+        unwrap(client.POST("/api/cortes/aplicar-marca", { body: { items } })),
+      archive: (corteId: string, version: number) =>
+        unwrap(client.POST("/api/cortes/{corte_id}/archive", { params: { path: { corte_id: corteId } }, body: { version } })),
+      restore: (corteId: string, version: number) =>
+        unwrap(client.POST("/api/cortes/{corte_id}/restore", { params: { path: { corte_id: corteId } }, body: { version } })),
     },
     armazenamento: () => unwrap(client.GET("/api/armazenamento")),
     midia: {
@@ -324,6 +432,120 @@ export function createApiClient(options: ApiClientOptions = {}) {
         ),
       versions: (contaId: string) =>
         unwrap(client.GET("/api/contas/{conta_id}/versions", { params: { path: { conta_id: contaId } } })),
+    },
+    // Canais-fonte (spec 006, US1). O direito e o revert são só do dono. Nenhuma rota DELETE.
+    canais: {
+      resolver: (entrada: string) => unwrap(client.POST("/api/canais/resolver", { body: { entrada } })),
+      create: (body: CreateCanalRequest) => unwrap(client.POST("/api/canais", { body })),
+      list: (query: CanalFilters = {}) => unwrap(client.GET("/api/canais", { params: { query } })),
+      get: (canalId: string) => unwrap(client.GET("/api/canais/{canal_id}", { params: { path: { canal_id: canalId } } })),
+      update: (canalId: string, body: UpdateCanalRequest) =>
+        unwrap(client.PATCH("/api/canais/{canal_id}", { params: { path: { canal_id: canalId } }, body })),
+      direito: (canalId: string, body: DireitoRequest) =>
+        unwrap(client.PUT("/api/canais/{canal_id}/direito", { params: { path: { canal_id: canalId } }, body })),
+      sincronizar: (canalId: string) =>
+        unwrap(client.POST("/api/canais/{canal_id}/sincronizar", { params: { path: { canal_id: canalId } } })),
+      archive: (canalId: string, version: number) =>
+        unwrap(client.POST("/api/canais/{canal_id}/archive", { params: { path: { canal_id: canalId } }, body: { version } })),
+      restore: (canalId: string, version: number) =>
+        unwrap(client.POST("/api/canais/{canal_id}/restore", { params: { path: { canal_id: canalId } }, body: { version } })),
+      versions: (canalId: string) =>
+        unwrap(client.GET("/api/canais/{canal_id}/versions", { params: { path: { canal_id: canalId } } })),
+      revert: (canalId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/canais/{canal_id}/revert", { params: { path: { canal_id: canalId } }, body: { version, toVersion } }),
+        ),
+    },
+    // Descoberta (spec 006, US2): paginação por cursor opaco.
+    videosFonte: {
+      list: (query: VideoFonteFilters = {}) => unwrap(client.GET("/api/videos-fonte", { params: { query } })),
+      get: (videoId: string) => unwrap(client.GET("/api/videos-fonte/{video_id}", { params: { path: { video_id: videoId } } })),
+    },
+    // Padrões de corte do perfil (spec 006, FR-008); versão 0 = padrão nunca salvo.
+    padroesCorte: {
+      get: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/padroes-corte", { params: { path: { perfil_id: perfilId } } })),
+      put: (perfilId: string, body: PadroesCorteRequest) =>
+        unwrap(client.PUT("/api/perfis/{perfil_id}/padroes-corte", { params: { path: { perfil_id: perfilId } }, body })),
+      versions: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/padroes-corte/versions", { params: { path: { perfil_id: perfilId } } })),
+      revert: (perfilId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/perfis/{perfil_id}/padroes-corte/revert", {
+            params: { path: { perfil_id: perfilId } },
+            body: { version, toVersion },
+          }),
+        ),
+    },
+    // Seleção e envio ao OpenShorts (spec 006, US2–US4). O avulso por arquivo fica no app, por XHR.
+    envios: {
+      selecionar: (perfilId: string, body: SelecionarRequest) =>
+        unwrap(
+          client.POST("/api/perfis/{perfil_id}/envios", {
+            params: { path: { perfil_id: perfilId } },
+            body: { confirmarDuplicado: false, ...body },
+          }),
+        ),
+      list: (query: EnvioFilters = {}) => unwrap(client.GET("/api/envios", { params: { query } })),
+      get: (envioId: string) => unwrap(client.GET("/api/envios/{envio_id}", { params: { path: { envio_id: envioId } } })),
+      enviar: (body: EnviarRequest) =>
+        unwrap(client.POST("/api/envios/enviar", { body: { confirmarAviso: false, confirmarDuplicado: false, ...body } })),
+      confirmarQualidade: (envioId: string, body: { version: number; enviar: boolean }) =>
+        unwrap(client.POST("/api/envios/{envio_id}/confirmar-qualidade", { params: { path: { envio_id: envioId } }, body })),
+      retry: (envioId: string, version: number) =>
+        unwrap(client.POST("/api/envios/{envio_id}/retry", { params: { path: { envio_id: envioId } }, body: { version } })),
+      archive: (envioId: string, version: number) =>
+        unwrap(client.POST("/api/envios/{envio_id}/archive", { params: { path: { envio_id: envioId } }, body: { version } })),
+      versions: (envioId: string) =>
+        unwrap(client.GET("/api/envios/{envio_id}/versions", { params: { path: { envio_id: envioId } } })),
+    },
+    // Postagens (spec 006, US5): uma por conta de destino; o SociMan NÃO publica (princípio I).
+    postagens: {
+      sugerir: (corteId: string, body: { contaId: string; outraVersao?: boolean }) =>
+        unwrap(
+          client.POST("/api/cortes/{corte_id}/sugestoes", {
+            params: { path: { corte_id: corteId } },
+            body: { outraVersao: false, ...body },
+          }),
+        ),
+      sugestoes: (corteId: string) =>
+        unwrap(client.GET("/api/cortes/{corte_id}/sugestoes", { params: { path: { corte_id: corteId } } })),
+      listDoCorte: (corteId: string, archived = false) =>
+        unwrap(client.GET("/api/cortes/{corte_id}/postagens", { params: { path: { corte_id: corteId }, query: { archived } } })),
+      create: (corteId: string, body: CreatePostagemRequest) =>
+        unwrap(
+          client.POST("/api/cortes/{corte_id}/postagens", {
+            params: { path: { corte_id: corteId } },
+            body: { titulo: "", descricao: "", ...body },
+          }),
+        ),
+      get: (postagemId: string) =>
+        unwrap(client.GET("/api/postagens/{postagem_id}", { params: { path: { postagem_id: postagemId } } })),
+      update: (postagemId: string, body: UpdatePostagemRequest) =>
+        unwrap(client.PATCH("/api/postagens/{postagem_id}", { params: { path: { postagem_id: postagemId } }, body })),
+      postado: (postagemId: string, body: { version: number; postedUrl?: string | null }) =>
+        unwrap(client.POST("/api/postagens/{postagem_id}/postado", { params: { path: { postagem_id: postagemId } }, body })),
+      archive: (postagemId: string, version: number) =>
+        unwrap(client.POST("/api/postagens/{postagem_id}/archive", { params: { path: { postagem_id: postagemId } }, body: { version } })),
+      restore: (postagemId: string, version: number) =>
+        unwrap(client.POST("/api/postagens/{postagem_id}/restore", { params: { path: { postagem_id: postagemId } }, body: { version } })),
+      versions: (postagemId: string) =>
+        unwrap(client.GET("/api/postagens/{postagem_id}/versions", { params: { path: { postagem_id: postagemId } } })),
+      revert: (postagemId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/postagens/{postagem_id}/revert", {
+            params: { path: { postagem_id: postagemId } },
+            body: { version, toVersion },
+          }),
+        ),
+    },
+    calendario: (query: CalendarioFilters) => unwrap(client.GET("/api/calendario", { params: { query } })),
+    integracoes: () => unwrap(client.GET("/api/integracoes")),
+    // Sino do painel (spec 006, R11): polling com `after` (id); marcar lidas só preenche `lida_em`.
+    notificacoes: {
+      list: (query: NotificacaoFilters = {}) => unwrap(client.GET("/api/notificacoes", { params: { query } })),
+      marcarLidas: (body: { ids: number[] } | { todas: true }) =>
+        unwrap(client.POST("/api/notificacoes/lidas", { body: { todas: false, ...body } })),
     },
     config: () => unwrap(client.GET("/api/config")),
     health: () => unwrap(client.GET("/api/health")),

@@ -72,6 +72,8 @@ export default defineConfig({
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//, /^\/img\//, /^\/sociman-ca\./],
         cleanupOutdatedCaches: true,
+        // clique na notificação do navegador (spec 006, R11): foca o app e abre o link
+        importScripts: ["/sw-notificacoes.js"],
       },
     }),
   ],

@@ -60,6 +60,7 @@ export const marcaPosicaoLabel: Record<PosicaoMarca, string> = {
   centro_inf: "Centro inferior",
 };
 export const corteStatusLabel: Record<CorteStatus, string> = {
+  revisao: "Em revisão", // spec 006: clipe importado, esperando "Aplicar marca"
   na_fila: "Na fila",
   processando: "Processando",
   pronto: "Pronto",

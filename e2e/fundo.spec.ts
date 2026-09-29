@@ -69,7 +69,10 @@ test("dono usa uma imagem de fundo no card final e ela aparece no corte", async 
   await expect(card.getByRole("switch", { name: "Ligado" })).toBeChecked();
   await card.getByLabel("Tipo de fundo", { exact: true }).selectOption({ label: "Imagem" });
   await expect(card.getByLabel("Opacidade da camada")).toHaveValue("0.45");
-  await expect(card.getByText("Nenhuma imagem enviada ainda.")).toBeVisible();
+  // Seletor pela biblioteca do perfil (spec 007): vazia, com "Abrir biblioteca" e o envio
+  await expect(card.getByText("Nenhuma imagem na biblioteca ainda.")).toBeVisible();
+  await expect(card.getByRole("button", { name: "Abrir biblioteca" })).toBeVisible();
+  await expect(card.getByRole("button", { name: "Enviar imagem de fundo" })).toBeVisible();
 
   // Salvar sem imagem é recusado no navegador
   await page.getByRole("button", { name: "Salvar kit" }).click();
@@ -80,9 +83,10 @@ test("dono usa uma imagem de fundo no card final e ela aparece no corte", async 
   await input.setInputFiles({ name: "pequena.png", mimeType: "image/png", buffer: pngBuffer(300, 300) });
   await expect(card.getByText("Imagem pequena demais")).toBeVisible();
 
-  // Envio de verdade: 1080×1920 com degradê horizontal; fica escolhida no rascunho
+  // Envio de verdade: 1080×1920 com degradê horizontal; entra na biblioteca como o Fundo "fundo"
+  // (nome do arquivo) e fica escolhida no rascunho
   await input.setInputFiles({ name: "fundo.png", mimeType: "image/png", buffer: pngBuffer(1080, 1920) });
-  const escolhida = card.getByRole("radio", { name: "Imagem 1" });
+  const escolhida = card.getByRole("radio", { name: "fundo", exact: true });
   await expect(escolhida).toHaveAttribute("aria-checked", "true", { timeout: 15_000 });
   await expect(card.getByText("Imagem pequena demais")).toBeHidden();
   await expect(card.getByText("Escolha ou envie uma imagem de fundo")).toBeHidden();

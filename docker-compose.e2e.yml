@@ -44,6 +44,15 @@ x-data-entrypoint: &data-entrypoint
     exec "$$@"
   - sh
 
+# Spec 006: OpenShorts e YouTube apontam para o `openshorts-fake` (o e2e nunca chama o Google
+# nem o OpenShorts real). A chave do YouTube é fixa e de mentira (não casa com `AIza…`); sem
+# ANTHROPIC_API_KEY (a sugestão de textos é coberta pelo pytest). Só `api` e `agendador`.
+x-integracoes-env: &integracoes-env
+  OPENSHORTS_URL: http://openshorts-fake:8000
+  YOUTUBE_API_URL: http://openshorts-fake:8000/youtube/v3
+  YOUTUBE_API_KEY: chave-youtube-de-mentira-do-e2e
+  APP_TZ: America/Sao_Paulo
+
 services:
   edge:
     image: nginx:1.27-alpine
@@ -69,7 +78,8 @@ services:
     build: ./apps/api
     image: sociman-api-e2e:latest   # a mesma tag no worker: um build serve os dois
     user: "1000:1000"
-    environment: *api-env
+    environment:
+      <<: [*api-env, *integracoes-env]
     volumes:
       - sociman-data:/srv/sociman-data
     entrypoint: *data-entrypoint
@@ -102,6 +112,44 @@ services:
     depends_on:
       api:
         condition: service_healthy   # a API aplica as migrations
+
+  # Spec 006: OpenShorts falso que também responde /youtube/v3/* (e2e/fakes/server.py, só
+  # stdlib; a imagem da API já tem o ffmpeg para gerar os clipes sintéticos na subida).
+  openshorts-fake:
+    image: sociman-api-e2e:latest
+    user: "1000:1000"
+    entrypoint: ["python", "/fake/server.py"]
+    volumes:
+      - ./e2e/fakes:/fake:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      interval: 1s
+      timeout: 3s
+      retries: 60
+    depends_on:
+      api:
+        condition: service_started   # só para o build da imagem vir antes
+
+  # Spec 006: as trilhas do `sociman agendador` com intervalos curtos, no mesmo "HD" da API.
+  agendador:
+    image: sociman-api-e2e:latest
+    user: "1000:1000"
+    environment:
+      <<: [*api-env, *integracoes-env]
+      AGENDADOR_SYNC_S: "2"
+      AGENDADOR_OPENSHORTS_S: "1"
+      AGENDADOR_IMPORTACAO_S: "1"
+      AGENDADOR_LEMBRETES_S: "2"
+    volumes:
+      - sociman-data:/srv/sociman-data
+    entrypoint: *data-entrypoint
+    command: ["sociman", "agendador"]
+    stop_grace_period: 10s
+    depends_on:
+      api:
+        condition: service_healthy   # a API aplica as migrations
+      openshorts-fake:
+        condition: service_healthy
 
   web:
     image: node:22-bookworm
@@ -194,6 +242,7 @@ services:
       AWS_ACCESS_KEY_ID: sociman-e2e
       AWS_SECRET_ACCESS_KEY: sociman-e2e-secret
       IMGPROXY_ALLOWED_SOURCES: "s3://sociman/"
+      IMGPROXY_MAX_SRC_RESOLUTION: "40"   # spec 007, R3 (igual ao dev)
     depends_on:
       minio:
         condition: service_healthy

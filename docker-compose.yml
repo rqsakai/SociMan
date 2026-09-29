@@ -64,6 +64,12 @@ services:
       SOCIMAN_DATA_DIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}
       DATA_MIN_FREE_GB: ${DATA_MIN_FREE_GB:-20}
       TMPDIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}/work/tmp   # spool de upload
+      # Spec 006 (R15): chaves no .env da raiz (gitignored); vazias = integração não configurada.
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENSHORTS_URL: ${OPENSHORTS_URL:-http://host.docker.internal:8000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # OpenShorts roda no host (:8000)
     volumes:
       - ./apps/api:/app   # código ao vivo; o venv fica em /opt/venv na imagem
       # O pai do ponto de montagem, no mesmo caminho: a API sobe sem o HD (e nunca cria a pasta
@@ -114,6 +120,44 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # Tarefas periódicas (spec 006, R1): a mesma imagem da API rodando `sociman agendador`, com as
+  # trilhas sync (YouTube), openshorts, importacao e lembretes. Um advisory lock do Postgres
+  # garante uma instância ativa. Sem as chaves, sobe e fica ociosa (log claro). Sem porta.
+  agendador:
+    build: ./apps/api
+    image: sociman-api
+    user: "1000:1000"
+    command: ["sociman", "agendador"]
+    env_file: .env.docker
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_NO_SYNC: "1"
+      IMGPROXY_KEY: ${IMGPROXY_KEY:-}
+      IMGPROXY_SALT: ${IMGPROXY_SALT:-}
+      SOCIMAN_DATA_DIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}
+      DATA_MIN_FREE_GB: ${DATA_MIN_FREE_GB:-20}
+      TMPDIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}/work/tmp
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENSHORTS_URL: ${OPENSHORTS_URL:-http://host.docker.internal:8000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./apps/api:/app
+      - type: bind
+        source: /media/sakai
+        target: /media/sakai
+        bind:
+          create_host_path: false
+          propagation: rslave
+    stop_grace_period: 20s
+    depends_on:
+      postgres:
         condition: service_healthy
       minio:
         condition: service_healthy
@@ -228,7 +272,10 @@ services:
       IMGPROXY_S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
-      IMGPROXY_ALLOWED_SOURCES: "s3://sociman/"
+      # + miniaturas e avatares do YouTube (spec 006, R13): lista fechada, a CSP não muda.
+      IMGPROXY_ALLOWED_SOURCES: "s3://sociman/,https://i.ytimg.com/,https://yt3.ggpht.com/,https://yt3.googleusercontent.com/"
+      # Biblioteca de assets (spec 007, R3): até 20 MB por imagem; 40 MP cobre 2048×2048 com folga.
+      IMGPROXY_MAX_SRC_RESOLUTION: "40"
       IMGPROXY_KEY: ${IMGPROXY_KEY:-}
       IMGPROXY_SALT: ${IMGPROXY_SALT:-}
     depends_on:

@@ -3,7 +3,8 @@
 - `create-owner`: cria o primeiro dono, já verificado e sem troca obrigatória de senha;
 - `set-password`: redefine a senha de alguém e encerra as sessões dele;
 - `reset-db`: zera banco e Redis para o e2e (nunca em produção);
-- `worker`: processa a fila de cortes (spec 004, serviço `worker` do compose).
+- `worker`: processa a fila de cortes (spec 004, serviço `worker` do compose);
+- `agendador`: tarefas periódicas da spec 006 (serviço `agendador` do compose).
 
 Cada comando faz o próprio commit e grava o evento com o autor `system:cli`.
 """
@@ -150,6 +151,14 @@ def reset_db(
 def worker() -> None:
     """Processa a fila de cortes, um por vez, até receber SIGTERM ou SIGINT."""
     from sociman_api.cortes.worker import main
+
+    main()
+
+
+@app.command("agendador")
+def agendador() -> None:
+    """Roda as trilhas periódicas da spec 006 (sync, openshorts, importacao, lembretes)."""
+    from sociman_api.agendador import main
 
     main()
 

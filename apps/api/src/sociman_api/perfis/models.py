@@ -58,6 +58,8 @@ class ImageKind(enum.StrEnum):
     banner = "banner"
     watermark = "watermark"  # imagem própria de marca d'água (spec 004)
     fundo = "fundo"  # imagem de fundo do gancho e do card final (spec 004, FR-005b)
+    avatar = "avatar"  # referência e pose de avatar (spec 007)
+    imagem = "imagem"  # imagem genérica da biblioteca (spec 007)
 
 
 class _Versioned:

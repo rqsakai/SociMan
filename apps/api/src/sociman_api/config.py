@@ -4,7 +4,7 @@ import logging
 import secrets
 from functools import lru_cache
 
-from pydantic import AliasChoices, Field, model_validator
+from pydantic import AliasChoices, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)
@@ -53,6 +53,22 @@ class Settings(BaseSettings):
     s3_videos_bucket: str = "sociman-videos"
     worker_poll_s: float = 30  # espera do worker com a fila vazia ou sem o HD
     midia_link_ttl_s: int = Field(3600, gt=0)  # links de mídia da interface (R6)
+
+    # Canais-fonte, OpenShorts e textos (spec 006, R15). As chaves ficam só no `.env` da raiz
+    # (compose → api e agendador) e são SecretStr: nunca aparecem em repr nem em log.
+    youtube_api_key: SecretStr = SecretStr("")  # vazio = não configurada
+    youtube_api_url: str = "https://www.googleapis.com/youtube/v3"  # o e2e aponta para o fake
+    openshorts_url: str = "http://host.docker.internal:8000"
+    anthropic_api_key: SecretStr = SecretStr("")
+    textos_model: str = "claude-sonnet-5-5"
+    app_tz: str = "America/Sao_Paulo"  # exibição e agendamento; tudo guardado em timestamptz
+    yt_quota_daily: int = Field(10000, gt=0)
+    sync_novos_h: float = Field(1, gt=0)  # intervalo da sync incremental de cada canal
+    # Intervalos das trilhas do `sociman agendador` (R1), em segundos.
+    agendador_sync_s: float = Field(60, gt=0)
+    agendador_openshorts_s: float = Field(10, gt=0)
+    agendador_importacao_s: float = Field(5, gt=0)
+    agendador_lembretes_s: float = Field(30, gt=0)
 
     @model_validator(mode="after")
     def _jwt_secret(self) -> "Settings":

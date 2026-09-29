@@ -114,15 +114,24 @@ def _content_type(fmt: dict, video_codec: str, audio_codec: str | None) -> str:
     raise InvalidVideo(NOT_ACCEPTED)
 
 
-def probe(path: str | os.PathLike[str], *, timeout: float = PROBE_TIMEOUT_S) -> VideoInfo:
-    """Valida o arquivo pelo conteúdo real e devolve os metadados, ou levanta `InvalidVideo`."""
+def probe(path: str | os.PathLike[str], *, timeout: float = PROBE_TIMEOUT_S,
+          max_duration_s: float | None = None, min_duration_s: float = 0,
+          max_bytes: int | None = None, too_long: str | None = None,
+          too_short: str = NOT_ACCEPTED, too_big: str | None = None) -> VideoInfo:
+    """Valida o arquivo pelo conteúdo real e devolve os metadados, ou levanta `InvalidVideo`.
+
+    Os limites padrão são os do corte (3 min, 500 MB); o envio avulso da spec 006 passa os seus
+    (45 s a 3 h, 2 GB) e as mensagens correspondentes. None = o limite do corte, lido na hora.
+    """
+    max_duration_s = MAX_DURATION_S if max_duration_s is None else max_duration_s
+    max_bytes = MAX_BYTES if max_bytes is None else max_bytes
     path = Path(path).resolve()
     try:
         size = path.stat().st_size
     except OSError:
         raise InvalidVideo(NOT_ACCEPTED) from None
-    if size > MAX_BYTES:
-        raise InvalidVideo(TOO_BIG)
+    if size > max_bytes:
+        raise InvalidVideo(too_big or TOO_BIG)
 
     data = _run_ffprobe(path, timeout)
     fmt = data.get("format") or {}
@@ -141,8 +150,10 @@ def probe(path: str | os.PathLike[str], *, timeout: float = PROBE_TIMEOUT_S) -> 
     content_type = _content_type(fmt, video_codec, audio_codec)
 
     duration = _duration_s(fmt, video)
-    if duration > MAX_DURATION_S:
-        raise InvalidVideo(TOO_LONG)
+    if duration > max_duration_s:
+        raise InvalidVideo(too_long or TOO_LONG)
+    if duration < min_duration_s:
+        raise InvalidVideo(too_short)
 
     width, height = int(video.get("width") or 0), int(video.get("height") or 0)
     rotation = _rotation(video)
