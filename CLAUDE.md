@@ -103,5 +103,5 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 18. **e2e isolado do dev:** `npm run test:e2e` e `test:e2e:pwa` sobem o projeto compose `sociman-e2e` (outra rede, volumes em tmpfs, portas 8280/8643/8127 só em 127.0.0.1) e o derrubam com `down -v`; o banco de dev e o usuário do dono ficam intactos. **Nunca rode `npx playwright test` direto**: sem `E2E_BASE_URL`/`E2E_MAILPIT_URL`/`E2E_COMPOSE` ele falha de propósito, e o `compose()` dos helpers recusa qualquer projeto que não seja `sociman-e2e`. Os dois modos usam o mesmo nome de projeto: não rode dois e2e ao mesmo tempo.
 
 ## Regras de negócio herdadas da agência (não mudam)
-- O SociMan **nunca publica** em rede social.
+- **Publicação só com decisão humana** (constitution 4.0.0, princípio I): o SociMan só cria rascunho ou publica numa rede para uma postagem **aprovada e agendada por um dono**; nenhuma IA, agente ou MCP conecta conta, aprova, agenda ou publica. Só pelos módulos `publicacao/` de cada rede, com `PUBLICACAO_HABILITADA` como interruptor geral.
 - Direito autoral é responsabilidade do dono (constitution 3.0.0, princípio II): o SociMan não bloqueia. O canal-fonte tem status informativo (`proprio`, `parceiro`, `programa_de_cortes`, `sem_acordo`) que só o dono muda; `sem_acordo` ou envio avulso mostra aviso, e todo envio para corte fica no histórico.

@@ -26,7 +26,7 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 - **Agentes do OpenClaw:** passam a ler e escrever pelo MCP em vez de markdown solto (migração gradual).
 
 ## Princípios candidatos (para a constitution)
-1. **Nenhum agente publica.** O SociMan não posta em rede social; quem posta é o dono.
+1. **Publicação só com decisão humana** (constitution 4.0.0): o SociMan só envia rascunho ou publica para uma postagem aprovada e agendada por um dono; nenhum agente/IA/MCP publica.
 2. **Direito é responsabilidade do dono** (constitution 3.0.0): o sistema registra o status informativo do canal-fonte, avisa e guarda o histórico, mas não bloqueia.
 3. **Marca em tokens, não em texto livre.** Todo item de identidade visual precisa ser aplicável por máquina e verificável pelo revisor.
 4. **Segredos nunca no repositório** (`npm run check:secrets`). Nenhum segredo no bundle do SPA. CSP com `script-src` estrito; o `style-src` aceita `'unsafe-inline'` por causa dos componentes shadcn/Radix (ver `docs/adr/0001`, constitution 2.0.0).
@@ -93,7 +93,10 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 11. `011-scripts`: roteiros por cena e avatar.
 12. `012-produtos-shop`
 13. `013-importacao`: migrar `../shared/perfis/*` e `../shared/shop/*` para o banco.
-14. `014-publicacao-redes` 🔒 **futura, depende de emenda do princípio I** (pedido do dono em 2026-09-29):
-   enviar cortes finalizados (e depois vídeos de avatar/afiliado e vídeos próprios) como **rascunho**
-   para a conta, **agendar** e **publicar**, começando pelo app sandbox do TikTok (contas
-   @atavernanerd e @meusqueridinhos10 já liberadas). Pesquisa em `docs/pesquisa/publicacao-redes.md`.
+14. `014-central-de-conteudos` 📝 **especificada** (`specs/014-central-de-conteudos/`, 2026-09-29): tela
+   Conteúdos com todo vídeo publicável (cortes, vídeos próprios e, depois, avatar/afiliado), estado por
+   conta, aprovação (donos aprovam, membros pedem), agendamento com 4 modos (lembrete, criar rascunho,
+   publicar, rascunho e publicar; só o lembrete executa aqui) e agendamento em sequência.
+15. `015-tiktok-rascunho` 📝 **especificada** (`specs/015-tiktok-rascunho/`, 2026-09-29; constitution 4.0.0): conectar contas TikTok
+   (só donos; login pelo IP da casa com fallback localhost) e executar "criar rascunho" no horário.
+   Depois, YouTube/Instagram. Pesquisa em `docs/pesquisa/publicacao-redes.md`.

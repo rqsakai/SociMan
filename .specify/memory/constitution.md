@@ -2,13 +2,23 @@
 
 ## Core Principles
 
-### I. Nenhum agente publica (INEGOCIÁVEL)
-O SociMan, sua API e suas tools MCP NÃO DEVEM ter endpoint, integração, credencial nem job que
-publique conteúdo em rede social. O sistema prepara, organiza e registra; quem posta é o dono.
-Qualquer spec que proponha publicação automática é rejeitada.
+### I. Publicação só com decisão humana (INEGOCIÁVEL)
+- O SociMan só DEVE enviar conteúdo a uma rede social (criar rascunho ou publicar) para uma
+  postagem **aprovada e agendada por um dono**, na conta e no modo que esse dono escolheu.
+- Nenhuma IA, agente ou cliente MCP DEVE conectar contas, aprovar, agendar, reagendar para envio
+  automático ou publicar. Esses atos são exclusivos de um humano com papel de dono.
+- O envio só DEVE acontecer pelos módulos de integração autorizados por uma spec (um módulo
+  `publicacao/` por rede). Fora deles, nenhum código DEVE falar com APIs de publicação; o
+  teste-guarda do princípio I verifica isso.
+- Cada envio DEVE ficar no histórico (quem aprovou, quem agendou, quando, resultado), e o dono DEVE
+  poder cancelar qualquer envio a qualquer momento antes do horário.
+- Um interruptor geral (`PUBLICACAO_HABILITADA`) DEVE desligar todos os envios automáticos de uma
+  vez; desligado, os agendamentos ficam parados e visíveis, sem enviar nada.
 
-**Por quê:** é uma regra de negócio da agência, e publicar sem revisão humana expõe as contas a
-banimento e a problemas de direito autoral.
+**Por quê:** o dono pediu rascunho e publicação agendados (TikTok via app sandbox; pesquisa em
+`docs/pesquisa/publicacao-redes.md`). A regra da agência continua no espírito: o dono decide cada
+post e nenhum agente publica. Publicar sem decisão humana expõe as contas a banimento e a problemas
+de direito autoral.
 
 ### II. Direito é responsabilidade do dono (INEGOCIÁVEL)
 - O SociMan NÃO bloqueia cortes por direito autoral: a responsabilidade é do dono.
@@ -137,4 +147,4 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 - **Conformidade:** toda spec, plano e revisão de código verifica a aderência aos princípios.
   Uma violação dos princípios I, II ou VII bloqueia a entrega.
 
-**Version**: 3.0.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-29
+**Version**: 4.0.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-29
