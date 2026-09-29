@@ -17,4 +17,7 @@ else
   export WEB_CSP="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'"
 fi
 
-echo "[edge] EDGE_MODE=${EDGE_MODE:-dev} → upstream $WEB_UPSTREAM"
+# IP da casa (spec 002-pwa, R8): HTTP por esse host redireciona para HTTPS.
+export LAN_HOST="${LAN_HOST:-192.168.86.47}"
+
+echo "[edge] EDGE_MODE=${EDGE_MODE:-dev} → upstream $WEB_UPSTREAM, LAN_HOST=$LAN_HOST"

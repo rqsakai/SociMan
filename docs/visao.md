@@ -43,7 +43,13 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    - **Log de eventos de segurança** com tela só para o dono. Todo registro guarda o autor.
    - **Contrato do SPA gerado do OpenAPI do FastAPI** (`npm run gen:contract`).
    - Pendência: o e2e ainda zera o banco de dev; separar num banco e numa API próprios.
-2. `002-pwa`: modo PWA (manifest, ícones, service worker compatível com a CSP estrita).
+2. `002-pwa` ✅ **implementada** (`specs/002-pwa/`, 2026-09-29). Decisões:
+   - **HTTPS por CA própria da casa** (`scripts/certs-casa.sh`), instalada em cada aparelho.
+   - **Endereço fixo** `https://192.168.86.47:8543`. O HTTP pelo IP redireciona para o HTTPS.
+   - **Modo casa = build de produção** (`npm run casa:up`); não há service worker em dev.
+   - **O service worker guarda só os arquivos da interface** (sem `/api`, sem tokens). Tem a tela
+     "Sem conexão" e o aviso de versão nova.
+   - **iPhone:** melhor esforço.
 3. `003-contas-sociais`: CRUD de contas, com upload de logo e banner (MinIO + imgproxy).
 4. `004-kit-de-marca`: tokens visuais por conta.
 5. `005-avatares-e-poses`

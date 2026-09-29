@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 // CSP estrita usada em produção (o pipeline de deploy serve estes headers; aqui
 // ela é aplicada no `vite preview` para validar que o app funciona sob ela).
@@ -34,7 +35,45 @@ const securityHeaders = (csp: string) => ({
 });
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  // identifica o build no <html data-build> (VITE_BUILD_ID tem prioridade; senão a data do build)
+  define: { __BUILD_DATE__: JSON.stringify(new Date().toISOString()) },
+  plugins: [
+    react(),
+    tailwindcss(),
+    // PWA (spec 002): SW gerado pelo Workbox que só precacheia o build. /api e
+    // /img nunca passam pelo cache (sem runtimeCaching + denylist de navegação).
+    // O registro vem de `virtual:pwa-register/react` (sem script inline, CSP intacta).
+    VitePWA({
+      registerType: "prompt",
+      injectRegister: null,
+      includeManifestIcons: false, // os ícones já entram pelo globPatterns (evita duplicata no precache)
+      devOptions: { enabled: false },
+      manifest: {
+        name: "SociMan",
+        short_name: "SociMan",
+        description: "Gestão das contas de mídia social da agência",
+        lang: "pt-BR",
+        start_url: "/app",
+        scope: "/",
+        id: "/",
+        display: "standalone",
+        theme_color: "#0f172a",
+        background_color: "#0f172a",
+        icons: [
+          { src: "pwa-64x64.png", sizes: "64x64", type: "image/png", purpose: "any" },
+          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "maskable-icon-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api\//, /^\/img\//, /^\/sociman-ca\./],
+        cleanupOutdatedCaches: true,
+      },
+    }),
+  ],
   // cache separado quando rodando no docker-compose (repo bind-mount; o cache
   // do host em node_modules/.vite não pode ser compartilhado entre processos)
   cacheDir: process.env.VITE_CACHE_DIR || "node_modules/.vite",

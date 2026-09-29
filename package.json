@@ -21,7 +21,11 @@
     "check:secrets": "node scripts/check-secrets.mjs",
     "gen:contract": "uv run --directory apps/api python scripts/export_openapi.py && openapi-typescript packages/contract/openapi.json -o packages/contract/src/generated/schema.d.ts",
     "check:contract": "node scripts/check-contract.mjs",
-    "check:web": "npm run check:contract && npm run typecheck && npm run build && npm run check:bundle && npm run check:csp && npm run check:secrets"
+    "check:web": "npm run check:contract && npm run typecheck && npm run build && npm run check:pwa && npm run check:bundle && npm run check:csp && npm run check:secrets",
+    "casa:up": "npm run build -w @sociman/web && EDGE_MODE=prod docker compose --profile prod up -d",
+    "check:pwa": "node scripts/check-pwa.mjs",
+    "test:e2e:pwa": "playwright test -c playwright.pwa.config.ts",
+    "icons": "npm run icons -w @sociman/web"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

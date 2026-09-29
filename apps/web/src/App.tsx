@@ -1,8 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { Offline } from "./components/Offline";
 import { CHANGE_PASSWORD_PATH, RequireAuth } from "./components/RequireAuth";
 import { RequireOwner } from "./components/RequireOwner";
+import { UpdatePrompt } from "./components/UpdatePrompt";
 import { bootstrapSession } from "./lib/authActions";
 import { useAuth } from "./lib/authStore";
 import Account from "./pages/Account";
@@ -28,6 +30,7 @@ function RootRedirect() {
 }
 
 export default function App() {
+  const offline = useAuth((s) => s.status === "offline");
   // Restaura a sessão no reload via cookie de refresh (access token é só memória).
   useEffect(() => {
     void bootstrapSession();
@@ -36,59 +39,66 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<RootRedirect />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route
-            path={CHANGE_PASSWORD_PATH}
-            element={
-              <RequireAuth>
-                <ChangePassword />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/app"
-            element={
-              <RequireAuth>
-                <AppHome />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/app/conta"
-            element={
-              <RequireAuth>
-                <Account />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/app/usuarios"
-            element={
-              <RequireAuth>
-                <RequireOwner>
-                  <Users />
-                </RequireOwner>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/app/seguranca"
-            element={
-              <RequireAuth>
-                <RequireOwner>
-                  <SecurityEvents />
-                </RequireOwner>
-              </RequireAuth>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        {/* Boot sem rede: "Sem conexão" no lugar de qualquer rota (US2). */}
+        {offline ? (
+          <Offline />
+        ) : (
+          <Routes>
+            <Route path="/" element={<RootRedirect />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route
+              path={CHANGE_PASSWORD_PATH}
+              element={
+                <RequireAuth>
+                  <ChangePassword />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app"
+              element={
+                <RequireAuth>
+                  <AppHome />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app/conta"
+              element={
+                <RequireAuth>
+                  <Account />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app/usuarios"
+              element={
+                <RequireAuth>
+                  <RequireOwner>
+                    <Users />
+                  </RequireOwner>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/app/seguranca"
+              element={
+                <RequireAuth>
+                  <RequireOwner>
+                    <SecurityEvents />
+                  </RequireOwner>
+                </RequireAuth>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        )}
       </BrowserRouter>
+      {/* Fora das rotas: o aviso de versão nova aparece em qualquer tela (US3). */}
+      <UpdatePrompt />
     </QueryClientProvider>
   );
 }

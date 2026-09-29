@@ -32,7 +32,12 @@ npm run test:e2e                            # Playwright contra :8180 — ATENÇ
 docker compose exec api uv run sociman create-owner --email E --name N [--force]   # primeiro dono
 docker compose exec api uv run sociman set-password --email E                      # senha de emergência
 docker compose exec api uv run sociman reset-db --yes                              # zera banco+Redis (não roda em produção)
+./scripts/certs-casa.sh [IP]                # CA da casa + certificado do edge (IP padrão 192.168.86.47); guia: docs/guia-certificado-casa.md
+npm run casa:up                             # MODO CASA: build de produção + EDGE_MODE=prod + perfil prod (PWA instalável)
+npm run test:e2e:pwa                        # e2e do PWA — exige modo casa (prod); zera o banco de dev
+docker compose --profile prod stop web-prod && docker compose up -d edge   # volta ao modo dev
 ```
+**Modo casa:** use `https://192.168.86.47:8543` nos aparelhos (com a CA da casa instalada). `http://192.168.86.47:8180` redireciona para lá; a CA pública fica em `http://192.168.86.47:8180/sociman-ca.cer`.
 Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev**), Mailpit (e-mails de dev) em **127.0.0.1:8126**. Postgres, API, Redis, SMTP e imgproxy ficam só na rede interna. **Não use** 8000/5175 (OpenShorts), 18789 (OpenClaw) nem 6379/1025/8025 (arka-manager, já ocupadas no host).
 
 ## Armadilhas
@@ -46,6 +51,8 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 8. **Negação que precisa ficar registrada** (ex.: `login_failed`) é commitada antes do erro (`_deny` em `auth/service.py`), porque o `get_db` faz rollback quando a rota levanta exceção. Revogação de sessões no Redis só **depois** do commit.
 9. **E-mail que não pode revelar se a conta existe** (reenvio de verificação, esqueci a senha) sai em BackgroundTask, para o tempo de resposta ser igual.
 10. **`JWT_SECRET`** fica em `apps/api/.env` (gitignored). Sem ele a API usa um segredo efêmero e toda sessão cai a cada reload.
+11. **Service worker só no build de produção** (modo casa). Em dev (Vite) não há SW. `test:e2e` exige modo dev e `test:e2e:pwa` exige modo prod — não rode os dois ao mesmo tempo. O e2e do PWA usa `http://localhost:8180` porque o Chromium de teste não tem a CA e recusa SW com certificado inválido.
+12. **Chaves da CA** ficam em `docker/certs/ca/` (gitignored, 600). Nunca compartilhe `sociman-ca.key`; só `sociman-ca.crt/.cer` são públicos.
 
 ## Regras de negócio herdadas da agência (não mudam)
 - O SociMan **nunca publica** em rede social.

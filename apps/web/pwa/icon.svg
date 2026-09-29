@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fundo na cor do tema; o "S" fica dentro do círculo seguro do maskable (raio 40%). -->
+  <rect width="512" height="512" fill="#0f172a"/>
+  <path d="M318 153 A70 70 0 1 0 256 256 A70 70 0 1 1 194 359"
+        fill="none" stroke="#ffffff" stroke-width="56" stroke-linecap="round"/>
+</svg>

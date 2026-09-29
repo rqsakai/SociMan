@@ -5,11 +5,19 @@ import { useAuth } from "./authStore";
 // authFetch causaria recursão no 401.
 const bareApi = createApiClient();
 
+// Resultado do refresh. "offline" = o fetch nem chegou ao servidor (TypeError
+// de rede); "failed" = o servidor respondeu erro (401, sem cookie etc.) ou a
+// resposta foi descartada pelo epoch. Só o boot distingue os dois (US2).
+export type RefreshResult =
+  | { status: "ok"; token: string }
+  | { status: "failed" }
+  | { status: "offline" };
+
 // Refresh concorrente deduplicado: várias requisições que tomam 401 ao mesmo
 // tempo compartilham UMA promessa de refresh (§7 do brief).
-let refreshPromise: Promise<string | null> | null = null;
+let refreshPromise: Promise<RefreshResult> | null = null;
 
-export function refreshSession(): Promise<string | null> {
+export function refreshSessionResult(): Promise<RefreshResult> {
   if (!refreshPromise) {
     refreshPromise = doRefresh().finally(() => {
       refreshPromise = null;
@@ -18,18 +26,25 @@ export function refreshSession(): Promise<string | null> {
   return refreshPromise;
 }
 
-async function doRefresh(): Promise<string | null> {
+export async function refreshSession(): Promise<string | null> {
+  const result = await refreshSessionResult();
+  return result.status === "ok" ? result.token : null;
+}
+
+async function doRefresh(): Promise<RefreshResult> {
   const epochAtStart = useAuth.getState().sessionEpoch;
   try {
     const data = await bareApi.auth.refresh();
     // Logout durante o refresh em voo: o epoch mudou → esta resposta pertence
     // a uma sessão que o usuário já encerrou. Aplicá-la "des-desfaria" o
     // logout na UI (até o próximo 401). Descarta.
-    if (useAuth.getState().sessionEpoch !== epochAtStart) return null;
+    if (useAuth.getState().sessionEpoch !== epochAtStart) return { status: "failed" };
     useAuth.getState().setSession(data.accessToken, data.user);
-    return data.accessToken;
-  } catch {
-    return null;
+    return { status: "ok", token: data.accessToken };
+  } catch (err) {
+    // fetch rejeita com TypeError quando não há rede (servidor desligado, fora
+    // da rede de casa). Resposta de erro do servidor vira ApiError, não TypeError.
+    return { status: err instanceof TypeError ? "offline" : "failed" };
   }
 }
 

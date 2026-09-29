@@ -18,10 +18,16 @@ services:
       - "${EDGE_TLS_PORT:-8543}:8443"
     environment:
       EDGE_MODE: ${EDGE_MODE:-dev}
+      LAN_HOST: ${LAN_HOST:-192.168.86.47}   # HTTP por esse IP → HTTPS (spec 002-pwa)
     volumes:
       - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
       - ./docker/nginx/05-edge-mode.envsh:/docker-entrypoint.d/05-edge-mode.envsh:ro
       - ./docker/certs:/etc/nginx/certs:ro
+      # SÓ a parte pública da CA da casa (./scripts/certs-casa.sh), servida por HTTP.
+      # Sem o script, o Docker cria estes caminhos como pastas vazias; o script
+      # as remove antes de gerar os arquivos.
+      - ./docker/certs/ca/sociman-ca.crt:/usr/share/nginx/ca/sociman-ca.crt:ro
+      - ./docker/certs/ca/sociman-ca.cer:/usr/share/nginx/ca/sociman-ca.cer:ro
     depends_on:
       api:
         condition: service_started

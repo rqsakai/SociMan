@@ -21,3 +21,5 @@ data/
 .remember/
 .claude/settings.local.json
 *.egg-info/
+docker/certs/ca/*
+!docker/certs/ca/.gitkeep
