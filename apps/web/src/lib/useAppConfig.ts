@@ -1,24 +1,27 @@
+import type { AppConfig } from "@sociman/contract";
 import { useQuery } from "@tanstack/react-query";
-import type { ConfigResponse } from "@sociman/contract";
 import { api } from "./api";
-import { FALLBACK_POLICY_VERSION } from "./consent";
+import { PASSWORD_MAX_LENGTH_DEFAULT, PASSWORD_MIN_LENGTH_DEFAULT } from "./forms";
 
 // Fallback = defaults do backend. O app NUNCA quebra sem o endpoint de config:
 // enquanto carrega (ou se falhar), o front valida com os mesmos defaults que o
 // servidor usa quando nada foi configurado.
-export const fallbackAppConfig: ConfigResponse = {
-  passwordMinLength: 8,
-  consentPolicyVersion: FALLBACK_POLICY_VERSION,
+export const fallbackAppConfig: AppConfig = {
+  passwordMinLength: PASSWORD_MIN_LENGTH_DEFAULT,
+  passwordMaxLength: PASSWORD_MAX_LENGTH_DEFAULT,
 };
 
 // Config pública do app (GET /api/config) — fecha o drift entre a validação do
-// browser e a do servidor quando [config] como PASSWORD_MIN_LENGTH mudam.
-export function useAppConfig(): ConfigResponse {
+// browser e a do servidor quando PASSWORD_MIN_LENGTH/PASSWORD_MAX_LENGTH mudam.
+export function useAppConfig(): AppConfig {
   const { data } = useQuery({
     queryKey: ["app-config"],
     queryFn: () => api.config(),
     staleTime: Infinity,
     retry: 1,
   });
-  return data ?? fallbackAppConfig;
+  return {
+    passwordMinLength: data?.passwordMinLength ?? fallbackAppConfig.passwordMinLength,
+    passwordMaxLength: data?.passwordMaxLength ?? fallbackAppConfig.passwordMaxLength,
+  };
 }

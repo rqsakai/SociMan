@@ -19,7 +19,9 @@
     "check:bundle": "node scripts/check-bundle.mjs",
     "check:csp": "tsx scripts/check-csp-sync.ts",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "check:web": "npm run typecheck && npm run build && npm run check:bundle && npm run check:csp && npm run check:secrets"
+    "gen:contract": "uv run --directory apps/api python scripts/export_openapi.py && openapi-typescript packages/contract/openapi.json -o packages/contract/src/generated/schema.d.ts",
+    "check:contract": "node scripts/check-contract.mjs",
+    "check:web": "npm run check:contract && npm run typecheck && npm run build && npm run check:bundle && npm run check:csp && npm run check:secrets"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

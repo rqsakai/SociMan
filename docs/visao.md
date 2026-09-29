@@ -35,7 +35,14 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 7. **Humano no controle:** o que a IA grava via MCP fica rastreável (autor, data) e reversível.
 
 ## Backlog de specs (ordem sugerida)
-1. `001-auth`: portar a autenticação do volans para o FastAPI (JWT só em memória + refresh em cookie httpOnly, Argon2id). Decidir: login só com os usuários da casa? verificação por e-mail?
+1. `001-auth` ✅ **especificada e implementada** (`specs/001-auth/`, 2026-09-29). Decisões:
+   - **Sem cadastro público:** só o dono cria usuários, com senha provisória que precisa ser trocada no primeiro login.
+   - **Verificação de e-mail obrigatória** antes do primeiro login. Os e-mails de dev são capturados pelo Mailpit.
+   - **Papéis `dono` e `membro`:** o membro faz tudo, menos o que for reservado ao dono.
+   - **Sessões e limites de tentativa no Redis** (constitution 1.1.0). Usuários e eventos ficam no Postgres.
+   - **Log de eventos de segurança** com tela só para o dono. Todo registro guarda o autor.
+   - **Contrato do SPA gerado do OpenAPI do FastAPI** (`npm run gen:contract`).
+   - Pendência: o e2e ainda zera o banco de dev; separar num banco e numa API próprios.
 2. `002-pwa`: modo PWA (manifest, ícones, service worker compatível com a CSP estrita).
 3. `003-contas-sociais`: CRUD de contas, com upload de logo e banner (MinIO + imgproxy).
 4. `004-kit-de-marca`: tokens visuais por conta.

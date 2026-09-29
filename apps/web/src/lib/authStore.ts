@@ -15,6 +15,9 @@ interface AuthState {
   sessionEpoch: number;
   setSession(accessToken: string, user: User): void;
   clearSession(): void;
+  // A API respondeu 403 password_change_required: o RequireAuth passa a
+  // mandar para /trocar-senha.
+  requirePasswordChange(): void;
 }
 
 export const useAuth = create<AuthState>()((set) => ({
@@ -30,4 +33,6 @@ export const useAuth = create<AuthState>()((set) => ({
       status: "guest",
       sessionEpoch: state.sessionEpoch + 1,
     })),
+  requirePasswordChange: () =>
+    set((state) => (state.user ? { user: { ...state.user, mustChangePassword: true } } : {})),
 }));

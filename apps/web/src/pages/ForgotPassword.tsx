@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { forgotPasswordRequestSchema, type ForgotPasswordRequest } from "@sociman/contract";
 import { Mail, Send } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -7,6 +6,7 @@ import { Link } from "react-router-dom";
 import { AuthLayout } from "../components/layout";
 import { Alert, Button, Field, Input } from "../components/ui";
 import { api } from "../lib/api";
+import { forgotForm, type ForgotForm } from "../lib/forms";
 
 export default function ForgotPassword() {
   const [sent, setSent] = useState(false);
@@ -14,9 +14,9 @@ export default function ForgotPassword() {
     register: field,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<ForgotPasswordRequest>({ resolver: zodResolver(forgotPasswordRequestSchema) });
+  } = useForm<ForgotForm>({ resolver: zodResolver(forgotForm) });
 
-  async function onSubmit(data: ForgotPasswordRequest) {
+  async function onSubmit(data: ForgotForm) {
     // A API sempre responde 200 (sem enumeração) — a UI reflete isso.
     await api.auth.forgotPassword(data).catch(() => {});
     setSent(true);

@@ -50,11 +50,17 @@ services:
     environment:
       SOCIMAN_RELOAD: "1"
       PYTHONDONTWRITEBYTECODE: "1"
+      UV_CACHE_DIR: /tmp/uv-cache   # UID 1000 não tem HOME gravável no container
+      UV_NO_SYNC: "1"               # o venv (/opt/venv) já vem pronto da imagem
     volumes:
       - ./apps/api:/app   # código ao vivo; o venv fica em /opt/venv na imagem
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
 
   web:
     image: node:22-bookworm
@@ -82,11 +88,31 @@ services:
       POSTGRES_DB: sociman
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro   # cria sociman_test (só em volume novo)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sociman -d sociman"]
       interval: 2s
       timeout: 3s
       retries: 20
+
+  # Sessões de login e limites de tentativa (efêmero; AOF para sobreviver a restart). Sem porta no host.
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  # E-mail SÓ de dev: captura tudo que a API envia. UI em http://127.0.0.1:8126
+  # (8025/1025 do host são do arka-manager). SMTP 1025 só na rede interna.
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8126}:8025"
 
   # Mídia (logos, banners, avatares, poses, cenas) — S3-compatível
   minio:
@@ -132,3 +158,4 @@ services:
 volumes:
   postgres-data:
   minio-data:
+  redis-data:

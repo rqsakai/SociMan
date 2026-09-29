@@ -37,7 +37,7 @@ export default function VerifyEmail() {
       )}
       {status === "success" && (
         <div className="space-y-4">
-          <Alert tone="success">E-mail confirmado! Sua conta está ativa.</Alert>
+          <Alert tone="success">E-mail confirmado, faça login.</Alert>
           <Link className="text-sm text-text underline hover:text-muted" to="/login">
             Ir para o login
           </Link>

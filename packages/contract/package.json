@@ -6,13 +6,10 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "scripts": {
-    "gen:openapi": "tsx scripts/gen-openapi.ts"
-  },
   "dependencies": {
-    "zod": "^4.4.3"
+    "openapi-fetch": "^0.17.0"
   },
   "devDependencies": {
-    "@asteasolutions/zod-to-openapi": "^9.1.0"
+    "openapi-typescript": "^7.13.0"
   }
 }

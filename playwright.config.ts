@@ -1,32 +1,15 @@
 import { defineConfig } from "@playwright/test";
 
-// e2e sobe os dois apps de verdade (api 3001 + web 5173 com proxy) e roda os
-// fluxos no navegador. A API usa EMAIL_PROVIDER=file para os testes lerem os
-// links de verificação/reset de apps/api/data/outbox.jsonl.
+// e2e roda contra a stack do docker compose (edge em :8180 servindo SPA + API).
+// Suba antes com `docker compose up -d`; o Playwright não sobe servidor nenhum.
+// O global setup espera o /api/health, zera o banco pela CLI, cria o dono de
+// teste e limpa o Mailpit.
 export default defineConfig({
   testDir: "e2e",
   globalSetup: "./e2e/global-setup.ts",
   timeout: 60_000,
-  workers: 1, // fluxos compartilham o mesmo banco de dev — serializa
+  workers: 1, // fluxos compartilham o mesmo banco e o mesmo Mailpit — serializa
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: "http://localhost:8180",
   },
-  webServer: [
-    {
-      command: "npm run dev -w @sociman/api",
-      url: "http://localhost:3001/api/health",
-      reuseExistingServer: false,
-      timeout: 60_000,
-      env: {
-        EMAIL_PROVIDER: "file",
-        EMAIL_FILE: "./data/outbox.jsonl",
-      },
-    },
-    {
-      command: "npm run dev -w @sociman/web",
-      url: "http://localhost:5173",
-      reuseExistingServer: false,
-      timeout: 60_000,
-    },
-  ],
 });

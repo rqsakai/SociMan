@@ -4,7 +4,6 @@ dist/
 *.tsbuildinfo
 test-results/
 playwright-report/
-packages/contract/openapi.json
 # python
 __pycache__/
 *.pyc
@@ -21,3 +20,4 @@ data/
 # ferramentas
 .remember/
 .claude/settings.local.json
+*.egg-info/

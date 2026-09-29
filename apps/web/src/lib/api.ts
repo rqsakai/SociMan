@@ -1,5 +1,9 @@
-import { authSessionResponseSchema, createApiClient } from "@sociman/contract";
+import { createApiClient, toApiError } from "@sociman/contract";
 import { useAuth } from "./authStore";
+
+// Cliente sem interceptor: refresh autentica pelo cookie, e passar pelo
+// authFetch causaria recursão no 401.
+const bareApi = createApiClient();
 
 // Refresh concorrente deduplicado: várias requisições que tomam 401 ao mesmo
 // tempo compartilham UMA promessa de refresh (§7 do brief).
@@ -17,11 +21,7 @@ export function refreshSession(): Promise<string | null> {
 async function doRefresh(): Promise<string | null> {
   const epochAtStart = useAuth.getState().sessionEpoch;
   try {
-    // fetch direto (não authFetch): refresh autentica pelo cookie, e passar
-    // pelo interceptor causaria recursão no 401.
-    const res = await fetch("/api/auth/refresh", { method: "POST" });
-    if (!res.ok) return null;
-    const data = authSessionResponseSchema.parse(await res.json());
+    const data = await bareApi.auth.refresh();
     // Logout durante o refresh em voo: o epoch mudou → esta resposta pertence
     // a uma sessão que o usuário já encerrou. Aplicá-la "des-desfaria" o
     // logout na UI (até o próximo 401). Descarta.
@@ -37,24 +37,36 @@ async function doRefresh(): Promise<string | null> {
 // UMA vez e repete UMA vez; se o refresh falhar, derruba a sessão local.
 const authFetch: typeof fetch = async (input, init) => {
   const token = useAuth.getState().accessToken;
-  const headers = new Headers(init?.headers);
-  if (token && !headers.has("authorization")) {
-    headers.set("Authorization", `Bearer ${token}`);
+  // O cliente gerado passa um Request pronto; o corpo só pode ser lido uma
+  // vez, então guarda uma cópia para o retry.
+  const request = new Request(input, init);
+  const retry = token ? request.clone() : null;
+  if (token && !request.headers.has("authorization")) {
+    request.headers.set("Authorization", `Bearer ${token}`);
   }
-  const res = await fetch(input, { ...init, headers });
+  const res = await fetch(request);
 
-  if (res.status === 401 && token) {
+  if (res.status === 401 && retry) {
     const newToken = await refreshSession();
     if (!newToken) {
       useAuth.getState().clearSession();
       return res;
     }
-    const retryHeaders = new Headers(init?.headers);
-    retryHeaders.set("Authorization", `Bearer ${newToken}`);
-    return fetch(input, { ...init, headers: retryHeaders });
+    retry.headers.set("Authorization", `Bearer ${newToken}`);
+    return fetch(retry);
+  }
+
+  if (res.status === 403) {
+    // Troca de senha pendente: o servidor recusa tudo exceto me, change e
+    // logout. Marca o usuário e o RequireAuth redireciona.
+    const body = await res.clone().json().catch(() => null);
+    if (toApiError(403, body).code === "password_change_required") {
+      useAuth.getState().requirePasswordChange();
+    }
   }
 
   return res;
 };
 
 export const api = createApiClient({ fetchFn: authFetch });
+

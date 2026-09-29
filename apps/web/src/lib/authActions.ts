@@ -1,14 +1,9 @@
-import type { LoginRequest, RegisterRequest } from "@sociman/contract";
+import type { LoginRequest } from "@sociman/contract";
 import { api, refreshSession } from "./api";
 import { useAuth } from "./authStore";
 
 export async function login(body: LoginRequest): Promise<void> {
   const session = await api.auth.login(body);
-  useAuth.getState().setSession(session.accessToken, session.user);
-}
-
-export async function register(body: RegisterRequest): Promise<void> {
-  const session = await api.auth.register(body);
   useAuth.getState().setSession(session.accessToken, session.user);
 }
 

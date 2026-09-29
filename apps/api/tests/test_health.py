@@ -12,7 +12,19 @@ def test_health_reports_db_unavailable(monkeypatch):
     monkeypatch.setattr("sociman_api.main.get_engine", lambda: Broken())
     r = TestClient(app).get("/api/health")
     assert r.status_code == 503
-    assert r.json() == {"status": "degraded", "db": "unavailable"}
+    assert r.json()["status"] == "degraded"
+    assert r.json()["db"] == "unavailable"
+
+
+def test_health_reports_redis_unavailable(monkeypatch):
+    class BrokenRedis:
+        def ping(self):
+            raise RuntimeError("sem redis")
+
+    monkeypatch.setattr("sociman_api.main.get_redis", lambda: BrokenRedis())
+    r = TestClient(app).get("/api/health")
+    assert r.status_code == 503
+    assert r.json()["redis"] == "unavailable"
 
 
 def test_openapi_is_served_under_api():

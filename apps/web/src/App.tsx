@@ -1,15 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { ConsentBanner } from "./components/ConsentBanner";
-import { RequireAuth } from "./components/RequireAuth";
+import { CHANGE_PASSWORD_PATH, RequireAuth } from "./components/RequireAuth";
+import { RequireOwner } from "./components/RequireOwner";
 import { bootstrapSession } from "./lib/authActions";
 import { useAuth } from "./lib/authStore";
+import Account from "./pages/Account";
 import AppHome from "./pages/AppHome";
+import ChangePassword from "./pages/ChangePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
+import SecurityEvents from "./pages/SecurityEvents";
+import Users from "./pages/Users";
 import VerifyEmail from "./pages/VerifyEmail";
 
 const queryClient = new QueryClient({
@@ -36,10 +39,17 @@ export default function App() {
         <Routes>
           <Route path="/" element={<RootRedirect />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route
+            path={CHANGE_PASSWORD_PATH}
+            element={
+              <RequireAuth>
+                <ChangePassword />
+              </RequireAuth>
+            }
+          />
           <Route
             path="/app"
             element={
@@ -48,9 +58,36 @@ export default function App() {
               </RequireAuth>
             }
           />
+          <Route
+            path="/app/conta"
+            element={
+              <RequireAuth>
+                <Account />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/app/usuarios"
+            element={
+              <RequireAuth>
+                <RequireOwner>
+                  <Users />
+                </RequireOwner>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/app/seguranca"
+            element={
+              <RequireAuth>
+                <RequireOwner>
+                  <SecurityEvents />
+                </RequireOwner>
+              </RequireAuth>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        <ConsentBanner />
       </BrowserRouter>
     </QueryClientProvider>
   );

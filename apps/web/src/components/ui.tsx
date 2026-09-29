@@ -1,5 +1,5 @@
 import { CircleAlert, CircleCheck, Info, Loader2, type LucideIcon } from "lucide-react";
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
 import { useId } from "react";
 
 // Componentes base minimalistas do starter. Estilo vem dos tokens de tema
@@ -44,6 +44,15 @@ export function Input({ icon: Icon, className = "", ...props }: InputProps) {
       />
       <input {...props} className={`${base} pl-9 ${className}`} />
     </div>
+  );
+}
+
+export function Select({ className = "", ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      {...props}
+      className={`w-full rounded-field border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/25 aria-invalid:border-danger ${className}`}
+    />
   );
 }
 
