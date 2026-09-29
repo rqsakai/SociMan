@@ -29,13 +29,13 @@ docker compose exec api uv run pytest       # alternativa rápida no dev (banco 
 docker compose exec api uv run ruff check .
 npm run check:web                           # check:contract + typecheck + build + check:bundle/csp/secrets
 npm run gen:contract                        # OpenAPI do FastAPI → packages/contract (roda no host, sem Docker)
-npm run test:e2e                            # Playwright contra :8180 — ATENÇÃO: zera o banco de dev (reset-db); o login dos testes zera os contadores de limite de tentativa
+npm run test:e2e [-- args do playwright]  # Playwright em stack EFÊMERA (docker-compose.e2e.yml, projeto sociman-e2e, edge :8280/:8643, Mailpit :8127): sobe tudo, roda e faz down -v sempre; NUNCA toca o dev
 docker compose exec api uv run sociman create-owner --email E --name N [--force]   # primeiro dono
 docker compose exec api uv run sociman set-password --email E                      # senha de emergência
 docker compose exec api uv run sociman reset-db --yes                              # zera banco+Redis (não roda em produção)
 ./scripts/certs-casa.sh [IP]                # CA da casa + certificado do edge (IP padrão 192.168.86.47); guia: docs/guia-certificado-casa.md
 npm run casa:up                             # MODO CASA: build de produção + EDGE_MODE=prod + perfil prod (PWA instalável)
-npm run test:e2e:pwa                        # e2e do PWA — exige modo casa (prod); zera o banco de dev
+npm run test:e2e:pwa                        # e2e do PWA na stack efêmera (perfil pwa: build em .e2e/pwa-dist + EDGE_MODE=prod); não precisa do modo casa
 docker compose --profile prod stop web-prod && docker compose up -d edge   # volta ao modo dev
 ./scripts/data-setup.sh check|init|count|migrate|compare|verify   # HD de dados (MinIO + work) — ver spec 004 quickstart §0
 docker compose logs -f worker               # worker de vídeo (`sociman worker`): fila de cortes, ffmpeg
@@ -67,7 +67,7 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 8. **Negação que precisa ficar registrada** (ex.: `login_failed`) é commitada antes do erro (`_deny` em `auth/service.py`), porque o `get_db` faz rollback quando a rota levanta exceção. Revogação de sessões no Redis só **depois** do commit.
 9. **E-mail que não pode revelar se a conta existe** (reenvio de verificação, esqueci a senha) sai em BackgroundTask, para o tempo de resposta ser igual.
 10. **`JWT_SECRET`** fica em `apps/api/.env` (gitignored). Sem ele a API usa um segredo efêmero e toda sessão cai a cada reload.
-11. **Service worker só no build de produção** (modo casa). Em dev (Vite) não há SW. `test:e2e` exige modo dev e `test:e2e:pwa` exige modo prod — não rode os dois ao mesmo tempo. O e2e do PWA usa `http://localhost:8180` porque o Chromium de teste não tem a CA e recusa SW com certificado inválido.
+11. **Service worker só no build de produção** (modo casa). Em dev (Vite) não há SW. O e2e do PWA usa o HTTP de localhost porque o Chromium de teste não tem a CA e recusa SW com certificado inválido.
 12. **Chaves da CA** ficam em `docker/certs/ca/` (gitignored, 600). Nunca compartilhe `sociman-ca.key`; só `sociman-ca.crt/.cer` são públicos.
 13. **Mudou `docker/nginx/*`?** Rode `docker compose restart edge`. O template é montado como arquivo, e `up -d` não recria o container.
 14. **Specs de domínio usam `history.py`** (princípio VII): toda mutação chama `history.record` na mesma transação (autor, antes/depois), cada entidade tem `version` (controle otimista → 409 `version_conflict`) e `__versioned_fields__`/`__immutable_fields__`. **Não existe DELETE no domínio**: arquivar/restaurar; reversão só pelo dono.
@@ -75,7 +75,8 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 16. **FastAPI 0.141 envolve rotas incluídas em `_IncludedRouter`**: procurar rota em `app.routes` não funciona (use `app.openapi()`).
 
 17. **Armazenamento NVMe × HD** (constitution 2.1.0): no NVMe ficam a aplicação, o PostgreSQL e o Redis (o que precisa ser rápido); o MinIO inteiro (imagens, fontes, vídeos), os temporários do ffmpeg, downloads e exportações vão para o HD em `/media/sakai/BACKUP/tiktok` (partição BACKUP, 2,1 TB). O uso do HD exige o arquivo marcador `.sociman-volume` (sem ele, recusa: HD desmontado encheria o NVMe) e um piso de espaço livre.
+18. **e2e isolado do dev:** `npm run test:e2e` e `test:e2e:pwa` sobem o projeto compose `sociman-e2e` (outra rede, volumes em tmpfs, portas 8280/8643/8127 só em 127.0.0.1) e o derrubam com `down -v`; o banco de dev e o usuário do dono ficam intactos. **Nunca rode `npx playwright test` direto**: sem `E2E_BASE_URL`/`E2E_MAILPIT_URL`/`E2E_COMPOSE` ele falha de propósito, e o `compose()` dos helpers recusa qualquer projeto que não seja `sociman-e2e`. Os dois modos usam o mesmo nome de projeto: não rode dois e2e ao mesmo tempo.
 
 ## Regras de negócio herdadas da agência (não mudam)
 - O SociMan **nunca publica** em rede social.
-- Corte só de canal `autorizado` ou `programa-de-cortes`, e só o dono muda esse status.
+- Direito autoral é responsabilidade do dono (constitution 3.0.0, princípio II): o SociMan não bloqueia. O canal-fonte tem status informativo (`proprio`, `parceiro`, `programa_de_cortes`, `sem_acordo`) que só o dono muda; `sem_acordo` ou envio avulso mostra aviso, e todo envio para corte fica no histórico.

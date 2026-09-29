@@ -27,7 +27,7 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 
 ## Princípios candidatos (para a constitution)
 1. **Nenhum agente publica.** O SociMan não posta em rede social; quem posta é o dono.
-2. **Direito primeiro.** Só vira corte o vídeo de um canal com status `autorizado` ou `programa-de-cortes`, e só o dono muda esse status.
+2. **Direito é responsabilidade do dono** (constitution 3.0.0): o sistema registra o status informativo do canal-fonte, avisa e guarda o histórico, mas não bloqueia.
 3. **Marca em tokens, não em texto livre.** Todo item de identidade visual precisa ser aplicável por máquina e verificável pelo revisor.
 4. **Segredos nunca no repositório** (`npm run check:secrets`). Nenhum segredo no bundle do SPA. CSP com `script-src` estrito; o `style-src` aceita `'unsafe-inline'` por causa dos componentes shadcn/Radix (ver `docs/adr/0001`, constitution 2.0.0).
 5. **O contrato é a fonte única.** O OpenAPI do FastAPI gera o cliente tipado do SPA e as tools do MCP.
@@ -42,7 +42,7 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    - **Sessões e limites de tentativa no Redis** (constitution 1.1.0). Usuários e eventos ficam no Postgres.
    - **Log de eventos de segurança** com tela só para o dono. Todo registro guarda o autor.
    - **Contrato do SPA gerado do OpenAPI do FastAPI** (`npm run gen:contract`).
-   - Pendência: o e2e ainda zera o banco de dev; separar num banco e numa API próprios.
+   - Resolvido (2026-09-29): o e2e roda numa stack efêmera própria (`docker-compose.e2e.yml`) e não toca mais o banco de dev.
 2. `002-pwa` ✅ **implementada** (`specs/002-pwa/`, 2026-09-29). Decisões:
    - **HTTPS por CA própria da casa** (`scripts/certs-casa.sh`), instalada em cada aparelho.
    - **Endereço fixo** `https://192.168.86.47:8543`. O HTTP pelo IP redireciona para o HTTPS.

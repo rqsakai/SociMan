@@ -10,14 +10,20 @@ Qualquer spec que proponha publicação automática é rejeitada.
 **Por quê:** é uma regra de negócio da agência, e publicar sem revisão humana expõe as contas a
 banimento e a problemas de direito autoral.
 
-### II. Direito primeiro (INEGOCIÁVEL)
-Só pode virar corte um vídeo de canal-fonte com status `autorizado` ou `programa-de-cortes`.
-A regra DEVE ser aplicada no backend (API e MCP), não só na UI. Só um usuário humano com papel de
-dono pode mudar o status de direito de um canal; um cliente MCP NÃO DEVE conseguir fazer isso.
-Toda mudança de status DEVE registrar a evidência (link, print ou nota) e o autor.
+### II. Direito é responsabilidade do dono (INEGOCIÁVEL)
+- O SociMan NÃO bloqueia cortes por direito autoral: a responsabilidade é do dono.
+- Cada canal-fonte guarda um status **informativo**, que pode ser `proprio`, `parceiro`,
+  `programa_de_cortes` ou `sem_acordo`, com evidência opcional (link, print ou nota).
+- Só um usuário humano com papel de dono pode mudar esse status; um cliente MCP NÃO DEVE
+  conseguir fazer isso. Toda mudança registra o autor.
+- Vídeo de canal `sem_acordo` ou envio avulso (sem canal) DEVE mostrar um **aviso** visível antes
+  do envio para corte.
+- Todo envio para corte DEVE ficar no histórico, com autor, data, fonte e o status de direito no
+  momento.
 
-**Por quê:** cortes de fonte não autorizada põem a agência em risco jurídico, e a decisão é
-exclusiva do dono.
+**Por quê:** o dono assume o risco jurídico e decide caso a caso (canais próprios, parceiros e
+programas de cortes). O sistema não pode impedir o trabalho, mas também não pode deixar a decisão
+passar despercebida nem sem rastro.
 
 ### III. Marca em tokens
 A identidade visual de cada conta (paleta, fontes, legenda, cartão de gancho, marca d'água,
@@ -131,4 +137,4 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 - **Conformidade:** toda spec, plano e revisão de código verifica a aderência aos princípios.
   Uma violação dos princípios I, II ou VII bloqueia a entrega.
 
-**Version**: 2.1.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-29
+**Version**: 3.0.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-29
