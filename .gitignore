@@ -1,0 +1,23 @@
+# node
+node_modules/
+dist/
+*.tsbuildinfo
+test-results/
+playwright-report/
+packages/contract/openapi.json
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+# segredos e dados locais
+.env
+.env.local
+docker/certs/*.pem
+data/
+# ferramentas
+.remember/
+.claude/settings.local.json

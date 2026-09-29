@@ -1,0 +1,83 @@
+# "Edge" local — espelha a TOPOLOGIA da Azion (não o runtime): um único domínio
+# em :8080 (http) e :8443 (https, cert local), Rules Engine → locations,
+# headers de segurança servidos pela borda, rate limit de borda (análogo do
+# Edge Firewall) e Image Processor em /img/*.
+# ${WEB_UPSTREAM} e ${WEB_CSP} vêm de 05-edge-mode.envsh conforme EDGE_MODE.
+
+map $http_upgrade $connection_upgrade {
+  default upgrade;
+  "" close;
+}
+
+# Análogo do Edge Firewall: teto de requisições POR IP na borda. É proteção
+# volumétrica — o rate limit fino por conta/ação continua no app (regra de
+# portabilidade: o app é seguro sozinho).
+limit_req_zone $binary_remote_addr zone=edge_api:10m rate=20r/s;
+limit_req_zone $binary_remote_addr zone=edge_img:10m rate=30r/s;
+
+server {
+  listen 8080;
+  listen 8443 ssl;
+  http2 on;
+  server_name _;
+
+  # cert local: mkcert (confiável no browser) ou o autogerado do certgen
+  ssl_certificate /etc/nginx/certs/localhost.pem;
+  ssl_certificate_key /etc/nginx/certs/localhost-key.pem;
+
+  # DNS do Docker: upstreams em variável resolvem em runtime, então o nginx
+  # sobe mesmo se um serviço ainda não estiver de pé
+  resolver 127.0.0.11 valid=10s ipv6=off;
+  set $api_upstream "api:3001";
+  set $web_upstream "${WEB_UPSTREAM}";
+  set $imgproxy_upstream "imgproxy:8080";
+
+  # ------------------------------------------------------------------ /api/*
+  location /api/ {
+    limit_req zone=edge_api burst=40 nodelay;
+    proxy_pass http://$api_upstream;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    # Mirror do edge (fecha o spoof de XFF): o X-Forwarded-For que o cliente
+    # mandou é DESCARTADO e reescrito com o IP que o edge enxerga; o app só
+    # confia no X-Real-IP daqui (TRUSTED_PROXY=1).
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  # ------------------------------------------------------------------ /img/*
+  # Image Processor (imgproxy) — URLs montadas pelo adapter do app
+  # (IMGPROXY_PUBLIC_PATH=/img). O prefixo /img é removido antes do proxy.
+  location /img/ {
+    limit_req zone=edge_img burst=60 nodelay;
+    rewrite ^/img(/.*)$ $1 break;
+    proxy_pass http://$imgproxy_upstream;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  # --------------------------------------------------------------------- /*
+  location / {
+    proxy_pass http://$web_upstream;
+    proxy_http_version 1.1;
+    # websocket do HMR do Vite (modo dev)
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+
+    # Headers que a Azion (Rules Engine) serve em produção — a borda é a ÚNICA
+    # dona deles; o que o upstream mandar é descartado (evita duplicatas).
+    proxy_hide_header Content-Security-Policy;
+    proxy_hide_header Strict-Transport-Security;
+    proxy_hide_header X-Content-Type-Options;
+    proxy_hide_header Referrer-Policy;
+    add_header Content-Security-Policy "${WEB_CSP}" always;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+  }
+}

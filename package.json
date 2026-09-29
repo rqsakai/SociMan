@@ -1,0 +1,30 @@
+{
+  "name": "sociman",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/web",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:web": "npm run dev -w @sociman/web",
+    "build": "npm run build -w @sociman/web",
+    "typecheck": "tsc -p packages/contract && tsc -p apps/web",
+    "test:e2e": "playwright test",
+    "preview:csp": "npm run build -w @sociman/web && npm run preview -w @sociman/web",
+    "check:bundle": "node scripts/check-bundle.mjs",
+    "check:csp": "tsx scripts/check-csp-sync.ts",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:web": "npm run typecheck && npm run build && npm run check:bundle && npm run check:csp && npm run check:secrets"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^24.19.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0"
+  }
+}
