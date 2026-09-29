@@ -17,6 +17,7 @@ import { AssetFileCard, type RunAction } from "../../components/assets/AssetFile
 import { AssetThumb } from "../../components/assets/AssetThumb";
 import { AssetUpload } from "../../components/assets/AssetUpload";
 import { AvatarCampos, PROMPT_MAX, type PromptFields } from "../../components/assets/AvatarCampos";
+import { IaAssist } from "../../components/ia/IaAssist";
 import { LooksSection } from "../../components/assets/LooksSection";
 import { PosesGrid } from "../../components/assets/PosesGrid";
 import { UsosList, usosText } from "../../components/assets/UsosList";
@@ -32,6 +33,7 @@ import {
   usosFromError,
   type Asset,
 } from "../../lib/assets";
+import type { IaOnSave } from "../../lib/ia";
 import { perfilKey } from "../../lib/perfis";
 
 // /app/assets/:id: detalhe de um asset (spec 007, R9). Cabeçalho com miniatura (ou iniciais),
@@ -177,7 +179,7 @@ export default function AssetDetalhe() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <DadosCard key={asset.id} asset={asset} run={run} />
+        <DadosCard key={asset.id} asset={asset} run={run} refresh={refresh} />
         <div className="flex flex-col gap-6">
           <Card className="shadow-card">
             <CardHeader>
@@ -282,7 +284,7 @@ const sameForm = (a: DadosForm, b: DadosForm) =>
 
 // Dados do asset: nome, tags, descrição e, no avatar e no cenário, os textos de prompt. Manda só o
 // que mudou, com a versão atual do asset. O prompt vai exatamente como digitado (sem trim, FR-009).
-function DadosCard({ asset, run }: { asset: Asset; run: RunAction }) {
+function DadosCard({ asset, run, refresh }: { asset: Asset; run: RunAction; refresh: () => Promise<void> }) {
   const withPrompt = asset.tipo === "avatar" || asset.tipo === "cenario";
   const [form, setForm] = useState<DadosForm>(() => formFromAsset(asset));
   // O que veio do servidor quando o formulário foi (re)carregado: base para saber se está sujo.
@@ -305,6 +307,19 @@ function DadosCard({ asset, run }: { asset: Asset; run: RunAction }) {
     }
     setBase({ version: asset.version, form: fresh });
   }
+  // "Melhorar com IA" (spec 008): o Aplicar salva só aquele campo, com a versão atual, e põe o valor
+  // salvo no formulário sem mexer nos outros campos (o bloco acima mantém o que estiver sujo).
+  const iaSave =
+    (campo: "name" | "description" | keyof PromptFields): IaOnSave<string> =>
+    async (valor, ia) => {
+      const body: Parameters<typeof api.assets.update>[1] = { version: asset.version, ia };
+      body[campo] = valor;
+      const { asset: salvo } = await api.assets.update(asset.id, body);
+      if (campo === "name" || campo === "description") setForm((f) => ({ ...f, [campo]: salvo[campo] }));
+      else setForm((f) => ({ ...f, texts: { ...f.texts, [campo]: salvo[campo] ?? "" } }));
+      await refresh();
+    };
+  const iaProps = { perfilId: asset.perfilId, alvo: { entityType: "asset" as const, entityId: asset.id }, onReload: () => void refresh() };
   const [nameError, setNameError] = useState<string | null>(null);
   const [tagsError, setTagsError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -353,20 +368,24 @@ function DadosCard({ asset, run }: { asset: Asset; run: RunAction }) {
       <CardContent>
         <form onSubmit={(e) => void submit(e)} className="space-y-4" noValidate>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nome" error={nameError ?? undefined}>
-              {({ id, describedBy, invalid }) => (
-                <Input
-                  id={id}
-                  value={name}
-                  maxLength={80}
-                  autoComplete="off"
-                  disabled={disabled}
-                  aria-invalid={invalid}
-                  aria-describedby={describedBy}
-                  onChange={(e) => setName(e.target.value)}
-                />
+            <IaAssist tipo="asset.nome" {...iaProps} value={name} onSave={iaSave("name")} campo="Nome" disabled={disabled}>
+              {(botao) => (
+                <Field label="Nome" action={botao} error={nameError ?? undefined}>
+                  {({ id, describedBy, invalid }) => (
+                    <Input
+                      id={id}
+                      value={name}
+                      maxLength={80}
+                      autoComplete="off"
+                      disabled={disabled}
+                      aria-invalid={invalid}
+                      aria-describedby={describedBy}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  )}
+                </Field>
               )}
-            </Field>
+            </IaAssist>
             <Field label="Tags" error={tagsError ?? undefined} hint="Separadas por vírgula. Ex.: reação, promo">
               {({ id, describedBy, invalid }) => (
                 <Input
@@ -388,21 +407,26 @@ function DadosCard({ asset, run }: { asset: Asset; run: RunAction }) {
               savedPrompt={asset.prompt}
               disabled={disabled}
               onChange={setTexts}
+              ia={{ ...iaProps, onSave: iaSave }}
             />
           )}
-          <Field label="Notas" error={description.length > 2000 ? "Até 2.000 caracteres" : undefined}>
-            {({ id, describedBy, invalid }) => (
-              <Textarea
-                id={id}
-                rows={3}
-                value={description}
-                disabled={disabled}
-                aria-invalid={invalid}
-                aria-describedby={describedBy}
-                onChange={(e) => setDescription(e.target.value)}
-              />
+          <IaAssist tipo="asset.descricao" {...iaProps} value={description} onSave={iaSave("description")} campo="Notas" disabled={disabled}>
+            {(botao) => (
+              <Field label="Notas" action={botao} error={description.length > 2000 ? "Até 2.000 caracteres" : undefined}>
+                {({ id, describedBy, invalid }) => (
+                  <Textarea
+                    id={id}
+                    rows={3}
+                    value={description}
+                    disabled={disabled}
+                    aria-invalid={invalid}
+                    aria-describedby={describedBy}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                )}
+              </Field>
             )}
-          </Field>
+          </IaAssist>
           <Button type="submit" disabled={busy || disabled} aria-busy={busy}>
             {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
             Salvar

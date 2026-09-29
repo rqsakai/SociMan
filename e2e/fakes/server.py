@@ -10,12 +10,20 @@ tem o ffmpeg) e atende, na porta 8000:
   poucos, para a tela mostrar as etapas. Os clipes são MP4 sintéticos gerados
   com o ffmpeg na subida. Uma fonte com `sem-clipes` na URL ou no título termina em "No clips";
 - `GET /youtube/v3/{channels,playlistItems,videos,search}`: dois canais e seus vídeos, sem
-  miniaturas externas (`thumbnails` vazio, e a API devolve `null`). O e2e nunca chama o Google.
+  miniaturas externas (`thumbnails` vazio, e a API devolve `null`). O e2e nunca chama o Google;
+- `POST /v1/messages` (spec 008, T015): um Claude de mentira para o assistente de IA, apontado
+  por `ANTHROPIC_BASE_URL`. Lê o schema pedido (`output_config.format`) e o tipo de campo do
+  prompt e devolve um JSON válido e determinístico. Palavras na instrução: "lento" dorme além do
+  timeout do cliente; "fora do limite" devolve um texto acima de qualquer limite. Nas sugestões,
+  os itens nunca repetem um texto que já esteja no pedido (lista, aceitos e rejeitados). O e2e
+  nunca chama a Anthropic.
 
 Nada aqui publica: não existe `/api/social` (princípio I).
 """
 
+import itertools
 import json
+import re
 import subprocess
 import tempfile
 import threading
@@ -249,6 +257,145 @@ def transcript(job_id: str, idx: int) -> tuple[int, dict]:
                  "durationSec": 3.0, "language": "pt"}
 
 
+# ---- Claude (spec 008, T015) ----
+
+TIPOS_IA = (
+    "avatar.descricao_prompt", "avatar.tom_de_voz", "avatar.regras_imagem",
+    "cenario.prompt_ambiente", "asset.nome", "asset.descricao", "perfil.bio", "kit.bordoes",
+    "kit.series", "postagem.titulo", "postagem.descricao", "postagem.hashtags", "postagem.textos",
+)
+CLAUDE_LENTO_S = 25.0  # o `IaClient` desiste em 20 s
+REGRA_EMOJI = "termine com um emoji"
+EMOJI = " \U0001F525"
+N_SUGESTOES = 5
+_VERSAO = itertools.count(1)  # "Outra versão" nunca devolve o mesmo texto
+
+# Um texto por tipo, dentro dos limites (≤ 80, o menor deles); `{n}` distingue as versões.
+TEXTOS_IA = {
+    "avatar.descricao_prompt": "Vintage 1950s shop girl, round face, red curls, pink apron "
+                               "(version {n})",
+    "cenario.prompt_ambiente": "Retro 1950s kitchen, soft window light, pastel palette "
+                               "(version {n})",
+    "avatar.tom_de_voz": "Animada e próxima, como amiga que achou uma pechincha (versão {n})",
+    "avatar.regras_imagem": "Sempre com o avental rosa. Nunca mostrar outras marcas "
+                            "(versão {n}).",
+    "asset.nome": "Nome sugerido pela IA {n}",
+    "asset.descricao": "Notas sugeridas pela IA, versão {n}.",
+    "perfil.bio": "Bio sugerida pela IA, versão {n}: achadinhos baratos todo dia.",
+    "postagem.titulo": "Título sugerido pela IA {n}",
+    "postagem.descricao": "Descrição sugerida pela IA, versão {n}.",
+}
+SUGESTOES_IA = {
+    "kit.bordoes": "Achado bom é achado dividido nº {k}",
+    "kit.series": "Achado do dia {k}",
+}
+
+
+def _textos(valor: object) -> list[str]:
+    """Todo texto de `system` e `messages` (string ou blocos)."""
+    if isinstance(valor, str):
+        return [valor]
+    if isinstance(valor, list):
+        return [t for v in valor for t in _textos(v)]
+    if isinstance(valor, dict):
+        return _textos(valor.get("text")) + _textos(valor.get("content"))
+    return []
+
+
+def _tag(texto: str, nome: str) -> str:
+    achou = re.search(rf"<{nome}>(.*?)</{nome}>", texto, re.DOTALL)
+    return achou.group(1).strip() if achou else ""
+
+
+# O prompt diz "Campo: <rótulo> (<onde>)." (ia/prompt.py); o rótulo até o primeiro " (".
+ROTULOS_IA = {
+    "Descrição para prompts do avatar": "avatar.descricao_prompt",
+    "Tom de voz do avatar": "avatar.tom_de_voz",
+    "Regras de imagem do avatar": "avatar.regras_imagem",
+    "Prompt do ambiente do cenário": "cenario.prompt_ambiente",
+    "Nome do asset": "asset.nome",
+    "Notas do asset": "asset.descricao",
+    "Descrição do perfil": "perfil.bio",
+    "Bordões": "kit.bordoes",
+    "Séries": "kit.series",
+    "Título da postagem": "postagem.titulo",
+    "Descrição da postagem": "postagem.descricao",
+    "Hashtags da postagem": "postagem.hashtags",
+    "Textos da postagem": "postagem.textos",
+}
+
+
+def _tipo_ia(texto: str) -> str:
+    achou = re.search(r"^Campo: (.+?) \(", texto, re.MULTILINE)
+    if achou and achou.group(1) in ROTULOS_IA:
+        return ROTULOS_IA[achou.group(1)]
+    achou = re.search(r"[Tt]ipo de campo:\s*([a-z_]+\.[a-z_]+)", texto)
+    if achou and achou.group(1) in TIPOS_IA:
+        return achou.group(1)
+    posicoes = [(texto.find(t), t) for t in TIPOS_IA if t in texto]
+    return min(posicoes)[1] if posicoes else ""
+
+
+def _ja_no_pedido(item: str, texto: str) -> bool:
+    return re.search(rf"(?<!\w){re.escape(item.casefold())}(?!\w)", texto.casefold()) is not None
+
+
+def claude(body: dict) -> tuple[int, dict]:
+    system = "\n".join(_textos(body.get("system")))
+    user = "\n".join(_textos(body.get("messages")))
+    texto = f"{system}\n{user}"
+    fmt = (body.get("output_config") or {}).get("format") or {}
+    props = list((fmt.get("schema") or {}).get("properties") or {})
+    tipo = _tipo_ia(texto)
+    instrucao = _tag(user, "instrucao")
+    if instrucao.startswith("(sem instrução"):  # o texto padrão do prompt quando vem vazia
+        instrucao = ""
+    if "lento" in instrucao.lower():
+        time.sleep(CLAUDE_LENTO_S)
+    n = next(_VERSAO)
+    emoji = EMOJI if REGRA_EMOJI in system else ""
+    explicacao = f"Proposta {n} do Claude falso do e2e."
+    if instrucao:
+        explicacao += f" Segui a instrução: {instrucao[:80]}."
+    avisos = ["Mantive as regras do campo."] if "system prompt" in instrucao.lower() else []
+    if "titulo" in props:  # textos_postagem
+        dados = {"titulo": f"Título sugerido pela IA {n}{emoji}",
+                 "descricao": f"Descrição sugerida pela IA, versão {n}.",
+                 "hashtags": ["#achadinhos", "#promo", f"#dica{n}"]}
+    elif "itens" in props and (tipo == "postagem.hashtags"
+                               or (not tipo and "hashtag" in texto.lower())):
+        dados = {"itens": ["#achadinhos", "#promo", f"#dica{n}", "#compras"]}
+    elif "itens" in props:  # sugestões (bordões e séries): nunca repete o que está no pedido
+        modelo = SUGESTOES_IA.get(tipo, "Sugestão {k}")
+        itens: list[str] = []
+        k = 0
+        while len(itens) < N_SUGESTOES:
+            k += 1
+            item = modelo.format(k=k)
+            if not _ja_no_pedido(item, texto):
+                itens.append(item)
+        dados = {"itens": itens}
+    else:
+        campo = next((p for p in props if p not in ("explicacao", "avisos")), "proposta")
+        if "fora do limite" in instrucao.lower():
+            proposta = "Texto longo demais para caber no limite do campo. " * 60
+        else:
+            proposta = TEXTOS_IA.get(tipo, "Texto sugerido pela IA, versão {n}.").format(n=n)
+            if instrucao and "system prompt" not in instrucao.lower():
+                proposta += f" ({instrucao[:30]})"
+            proposta += emoji
+        dados = {campo: proposta}
+    dados |= {"explicacao": explicacao, "avisos": avisos}
+    return 200, {
+        "id": f"msg_fake_{n}", "type": "message", "role": "assistant",
+        "model": body.get("model") or "claude-sonnet-5-5",
+        "content": [{"type": "text", "text": json.dumps(dados, ensure_ascii=False)}],
+        "stop_reason": "end_turn", "stop_sequence": None,
+        "usage": {"input_tokens": 1200, "output_tokens": 150, "cache_read_input_tokens": 800,
+                  "cache_creation_input_tokens": 0},
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "openshorts-fake/1"
 
@@ -296,6 +443,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(*process(json.loads(corpo or b"{}")))
         if path == "/api/subtitle":
             return self._json(*subtitle(json.loads(corpo or b"{}")))
+        if path == "/v1/messages":
+            try:
+                return self._json(*claude(json.loads(corpo or b"{}")))
+            except (BrokenPipeError, ConnectionResetError):  # o cliente desistiu ("lento")
+                return None
         return self._json(404, {"detail": "Not Found"})
 
     def do_PUT(self) -> None:  # noqa: N802

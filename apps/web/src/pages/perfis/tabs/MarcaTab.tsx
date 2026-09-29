@@ -1,7 +1,7 @@
 import type { Conta, Perfil } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, History, Loader2, Save } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { IaSugestoes } from "../../../components/ia/IaSugestoes";
 import { ColorTokenInput } from "../../../components/marca/ColorTokenInput";
 import { FontSelect } from "../../../components/marca/FontSelect";
 import { FundoImagePicker } from "../../../components/marca/FundoImagePicker";
@@ -48,6 +49,7 @@ import {
   type KitTokens,
 } from "../../../lib/marca";
 import { api } from "../../../lib/api";
+import { comRebase, useFormRebase, type IaOnSave } from "../../../lib/ia";
 import { contaPlatformText } from "../../../lib/perfis";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
@@ -97,7 +99,10 @@ function KitEditor({
 }) {
   const queryClient = useQueryClient();
   const initial = useMemo(() => kitTokens(kit), [kit]);
-  const [draft, setDraft] = useState<KitTokens>(initial);
+  // O Aplicar da IA (bordões e séries) salva o kit e remonta o editor pela `key`; o rascunho das
+  // outras seções volta por cima do kit novo (spec 008, R-9).
+  const rebase = useFormRebase<KitTokens>(`kit:${perfil.id}`);
+  const [draft, setDraft] = useState<KitTokens>(() => rebase.retomado ?? initial);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<unknown>(null);
   const [saving, setSaving] = useState(false);
@@ -178,6 +183,22 @@ function KitEditor({
       setSaving(false);
     }
   }
+
+  // Aplicar das sugestões: os tokens SALVOS com só aquela lista trocada (nunca o rascunho, R-10); a
+  // lista aplicada também entra no rascunho guardado.
+  const iaSaveLista =
+    (campo: "catchphrases" | "series"): IaOnSave<string[]> =>
+    async (lista, ia) => {
+      setApiError(null);
+      await comRebase(rebase, dirty ? { ...draft, [campo]: lista } : null, async () => {
+        await api.kit.put(perfil.id, { version: kit.version, ...kitTokens(kit), [campo]: lista, ia });
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: kitKey(perfil.id) }),
+        queryClient.invalidateQueries({ queryKey: kitVersionsKey(perfil.id) }),
+      ]);
+    };
+  const iaLista = { perfilId: perfil.id, alvo: { entityType: "kit" as const, entityId: null }, onReload };
 
   async function exportKit() {
     setExporting(true);
@@ -415,8 +436,16 @@ function KitEditor({
 
         <SectionCard title="Bordões e séries" description="Textos de referência para roteiros e títulos; um por linha.">
           <div className="grid gap-4 sm:grid-cols-2">
-            <LinesField label="Bordões" value={draft.catchphrases} max={120} onChange={(catchphrases) => setDraft((d) => ({ ...d, catchphrases }))} error={err("catchphrases")} />
-            <LinesField label="Séries" value={draft.series} max={60} onChange={(series) => setDraft((d) => ({ ...d, series }))} error={err("series")} />
+            <IaSugestoes tipo="kit.bordoes" {...iaLista} value={draft.catchphrases} onSave={iaSaveLista("catchphrases")} campo="Bordões">
+              {(botao) => (
+                <LinesField label="Bordões" action={botao} value={draft.catchphrases} max={120} onChange={(catchphrases) => setDraft((d) => ({ ...d, catchphrases }))} error={err("catchphrases")} />
+              )}
+            </IaSugestoes>
+            <IaSugestoes tipo="kit.series" {...iaLista} value={draft.series} onSave={iaSaveLista("series")} campo="Séries">
+              {(botao) => (
+                <LinesField label="Séries" action={botao} value={draft.series} max={60} onChange={(series) => setDraft((d) => ({ ...d, series }))} error={err("series")} />
+              )}
+            </IaSugestoes>
           </div>
         </SectionCard>
       </div>
@@ -516,16 +545,18 @@ function LinesField({
   max,
   onChange,
   error,
+  action,
 }: {
   label: string;
   value: string[];
   max: number;
   onChange: (value: string[]) => void;
   error?: string;
+  action?: ReactNode;
 }) {
   const [text, setText] = useState(value.join("\n"));
   return (
-    <Field label={label} error={error} hint={`Um por linha; até 20, com até ${max} caracteres cada.`}>
+    <Field label={label} action={action} error={error} hint={`Um por linha; até 20, com até ${max} caracteres cada.`}>
       {({ id, describedBy, invalid }) => (
         <Textarea
           id={id}

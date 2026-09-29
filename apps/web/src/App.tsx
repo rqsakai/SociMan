@@ -34,6 +34,9 @@ import CanaisList from "./pages/canais/CanaisList";
 import Descobrir from "./pages/descobrir/Descobrir";
 import EnvioDetalhe from "./pages/envios/EnvioDetalhe";
 import EnviosList from "./pages/envios/EnviosList";
+// 008-assistente-ia
+import AssistenteIa from "./pages/ia/AssistenteIa";
+import RegraDetalhe from "./pages/ia/RegraDetalhe";
 
 // Vitrine dos componentes da spec 005 (só em dev; o build de produção descarta o import).
 const Showcase = import.meta.env.DEV ? lazy(() => import("./pages/_Showcase")) : null;
@@ -103,6 +106,8 @@ export default function App() {
                 <Route path="/app/envios" element={<EnviosList />} />
                 <Route path="/app/envios/:id" element={<EnvioDetalhe />} />
                 <Route path="/app/calendario" element={<Calendario />} />
+                <Route path="/app/assistente-ia" element={<AssistenteIa />} />
+                <Route path="/app/assistente-ia/regras/:tipo" element={<RegraDetalhe />} />
                 <Route
                   path="/app/usuarios"
                   element={

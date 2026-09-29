@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "../lib/authStore";
 import { ApiErrorAlert } from "./ApiErrorAlert";
+import { iaDaVersao, IaSelo } from "./ia/IaSelo";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "medium" });
 
@@ -100,6 +101,7 @@ export function VersionHistory({ versions, labels, formatValue, onRevert, onRelo
       <ol className="relative space-y-6 border-l-2 border-border pl-6 sm:ml-2">
         {versions.map((v) => {
           const fromVersion = typeof v.details.from_version === "number" ? v.details.from_version : null;
+          const ia = iaDaVersao(v.details);
           // "archived" também está no snapshot, mas a ação já diz isso; a tabela fica para os dados.
           const fields = v.changedFields.filter((f) => v.action === "updated" || v.action === "reverted" || f !== "archived");
           return (
@@ -114,6 +116,7 @@ export function VersionHistory({ versions, labels, formatValue, onRevert, onRelo
                   <span className="text-muted-foreground">versão {v.version}</span>
                   {fromVersion !== null && <span className="text-muted-foreground">(para a versão {fromVersion})</span>}
                   {v.version === current && <Badge variant="secondary">atual</Badge>}
+                  {ia && <IaSelo chamadaId={ia[0]?.chamadaId} />}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {actorText(v)} · <time dateTime={v.occurredAt}>{dateFormat.format(new Date(v.occurredAt))}</time>

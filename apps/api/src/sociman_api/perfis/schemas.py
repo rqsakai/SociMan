@@ -11,6 +11,7 @@ from uuid import UUID
 from pydantic import ConfigDict, Field, StringConstraints, model_validator
 
 from sociman_api.auth.schemas import CamelModel
+from sociman_api.ia.aplicacao import IaAplicacoes
 from sociman_api.perfis.models import ContaStatus, PerfilStatus, Platform
 
 __all__ = [
@@ -152,6 +153,8 @@ class UpdatePerfilIn(CamelModel):
     bio: Bio | None = None
     language: Language | None = None
     status: PerfilStatus | None = None
+    # Spec 008: campos aplicados de uma chamada da IA (marca "com ajuda da IA" na versão).
+    ia: IaAplicacoes | None = None
 
 
 class VersionIn(CamelModel):

@@ -15,7 +15,7 @@ API_DIR = Path(__file__).resolve().parents[2]
 
 ANTERIOR = "0005_assets"
 TABELAS_006 = ("canais_fonte", "canal_perfis", "videos_fonte", "video_metricas", "youtube_cota",
-               "padroes_corte", "envios", "postagens", "sugestoes_texto", "notificacoes")
+               "padroes_corte", "envios", "postagens", "ia_chamadas", "notificacoes")  # 0008 renomeou
 
 
 def _cfg() -> Config:

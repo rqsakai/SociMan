@@ -1,6 +1,50 @@
 {
   "components": {
     "schemas": {
+      "Alvo": {
+        "properties": {
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "entityId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entityid"
+          },
+          "entityType": {
+            "enum": [
+              "asset",
+              "perfil",
+              "kit",
+              "postagem",
+              "corte"
+            ],
+            "title": "Entitytype",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entityType"
+        ],
+        "title": "Alvo",
+        "type": "object"
+      },
       "AplicarMarcaIn": {
         "properties": {
           "items": {
@@ -541,6 +585,21 @@
               }
             ],
             "title": "Description"
+          },
+          "ia": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IaAplicacao"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ia"
           },
           "imageRules": {
             "anyOf": [
@@ -1497,6 +1556,46 @@
         "title": "CardFinal",
         "type": "object"
       },
+      "ChamadaOut": {
+        "properties": {
+          "chamada": {
+            "$ref": "#/components/schemas/IaChamada"
+          }
+        },
+        "required": [
+          "chamada"
+        ],
+        "title": "ChamadaOut",
+        "type": "object"
+      },
+      "ChamadasList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IaChamada"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "ChamadasList",
+        "type": "object"
+      },
       "ChangePasswordIn": {
         "properties": {
           "currentPassword": {
@@ -2304,6 +2403,21 @@
             "title": "Hashtags",
             "type": "array"
           },
+          "ia": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IaAplicacao"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ia"
+          },
           "plannedAt": {
             "anyOf": [
               {
@@ -2326,6 +2440,7 @@
                 "type": "null"
               }
             ],
+            "deprecated": true,
             "title": "Sugestaoid"
           },
           "titulo": {
@@ -3627,6 +3742,78 @@
         "title": "Gancho",
         "type": "object"
       },
+      "GerarIn": {
+        "properties": {
+          "alvo": {
+            "$ref": "#/components/schemas/Alvo"
+          },
+          "anteriores": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Anteriores",
+            "type": "array"
+          },
+          "instrucao": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Instrucao",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "selecao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Selecao"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sessaoId": {
+            "format": "uuid",
+            "title": "Sessaoid",
+            "type": "string"
+          },
+          "tipoCampo": {
+            "enum": [
+              "avatar.descricao_prompt",
+              "avatar.tom_de_voz",
+              "avatar.regras_imagem",
+              "cenario.prompt_ambiente",
+              "asset.nome",
+              "asset.descricao",
+              "perfil.bio",
+              "kit.bordoes",
+              "kit.series",
+              "postagem.titulo",
+              "postagem.descricao",
+              "postagem.hashtags",
+              "postagem.textos"
+            ],
+            "title": "Tipocampo",
+            "type": "string"
+          },
+          "valorAtual": {
+            "$ref": "#/components/schemas/Valor"
+          }
+        },
+        "required": [
+          "tipoCampo",
+          "perfilId",
+          "alvo",
+          "sessaoId"
+        ],
+        "title": "GerarIn",
+        "type": "object"
+      },
       "HookIn": {
         "properties": {
           "hookText": {
@@ -3645,6 +3832,426 @@
           "hookText"
         ],
         "title": "HookIn",
+        "type": "object"
+      },
+      "IaAplicacao": {
+        "description": "Um campo salvo a partir de uma chamada. `itens` só vale nos tipos `sugestoes`: o texto\nfinal dos itens daquela chamada que entraram na lista (nos outros, é ignorado).",
+        "properties": {
+          "chamadaId": {
+            "format": "uuid",
+            "title": "Chamadaid",
+            "type": "string"
+          },
+          "itens": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 120,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itens"
+          },
+          "tipoCampo": {
+            "enum": [
+              "avatar.descricao_prompt",
+              "avatar.tom_de_voz",
+              "avatar.regras_imagem",
+              "cenario.prompt_ambiente",
+              "asset.nome",
+              "asset.descricao",
+              "perfil.bio",
+              "kit.bordoes",
+              "kit.series",
+              "postagem.titulo",
+              "postagem.descricao",
+              "postagem.hashtags",
+              "postagem.textos"
+            ],
+            "title": "Tipocampo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipoCampo",
+          "chamadaId"
+        ],
+        "title": "IaAplicacao",
+        "type": "object"
+      },
+      "IaChamada": {
+        "properties": {
+          "aceitos": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Aceitos",
+            "type": "array"
+          },
+          "alvo": {
+            "$ref": "#/components/schemas/Alvo"
+          },
+          "aplicadaVersao": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aplicadaversao"
+          },
+          "avisos": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Avisos",
+            "type": "array"
+          },
+          "cacheCreationTokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cachecreationtokens"
+          },
+          "cacheReadTokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cachereadtokens"
+          },
+          "contextoFaltante": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Contextofaltante",
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "custoUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custousd"
+          },
+          "desfecho": {
+            "$ref": "#/components/schemas/IaDesfecho"
+          },
+          "desfechoEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desfechoem"
+          },
+          "desfechoPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "durationMs": {
+            "title": "Durationms",
+            "type": "integer"
+          },
+          "entrada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "erroCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errocode"
+          },
+          "excede": {
+            "title": "Excede",
+            "type": "boolean"
+          },
+          "explicacao": {
+            "title": "Explicacao",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "inputTokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inputtokens"
+          },
+          "instrucao": {
+            "title": "Instrucao",
+            "type": "string"
+          },
+          "itensAplicados": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itensaplicados"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "modelServido": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelservido"
+          },
+          "outputTokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outputtokens"
+          },
+          "perfil": {
+            "$ref": "#/components/schemas/PerfilRef"
+          },
+          "proposta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Valor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "regrasVersion": {
+            "title": "Regrasversion",
+            "type": "integer"
+          },
+          "rejeitados": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rejeitados",
+            "type": "array"
+          },
+          "sessaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sessaoid"
+          },
+          "tipoCampo": {
+            "title": "Tipocampo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tipoCampo",
+          "perfil",
+          "alvo",
+          "sessaoId",
+          "instrucao",
+          "aceitos",
+          "rejeitados",
+          "itensAplicados",
+          "entrada",
+          "proposta",
+          "explicacao",
+          "avisos",
+          "excede",
+          "contextoFaltante",
+          "desfecho",
+          "desfechoEm",
+          "desfechoPor",
+          "aplicadaVersao",
+          "model",
+          "modelServido",
+          "regrasVersion",
+          "erroCode",
+          "inputTokens",
+          "outputTokens",
+          "cacheReadTokens",
+          "cacheCreationTokens",
+          "custoUsd",
+          "durationMs",
+          "createdAt",
+          "createdBy"
+        ],
+        "title": "IaChamada",
+        "type": "object"
+      },
+      "IaDesfecho": {
+        "enum": [
+          "sem_acao",
+          "aplicada",
+          "editada",
+          "descartada",
+          "erro"
+        ],
+        "title": "IaDesfecho",
+        "type": "string"
+      },
+      "IaResumo": {
+        "properties": {
+          "aplicadas": {
+            "title": "Aplicadas",
+            "type": "integer"
+          },
+          "ate": {
+            "format": "date",
+            "title": "Ate",
+            "type": "string"
+          },
+          "chamadas": {
+            "title": "Chamadas",
+            "type": "integer"
+          },
+          "custoUsd": {
+            "title": "Custousd",
+            "type": "number"
+          },
+          "de": {
+            "format": "date",
+            "title": "De",
+            "type": "string"
+          },
+          "descartadas": {
+            "title": "Descartadas",
+            "type": "integer"
+          },
+          "editadas": {
+            "title": "Editadas",
+            "type": "integer"
+          },
+          "erros": {
+            "title": "Erros",
+            "type": "integer"
+          },
+          "mes": {
+            "title": "Mes",
+            "type": "string"
+          },
+          "porPerfil": {
+            "items": {
+              "$ref": "#/components/schemas/ResumoPerfil"
+            },
+            "title": "Porperfil",
+            "type": "array"
+          },
+          "porTipo": {
+            "items": {
+              "$ref": "#/components/schemas/ResumoTipo"
+            },
+            "title": "Portipo",
+            "type": "array"
+          },
+          "precosVersao": {
+            "title": "Precosversao",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mes",
+          "de",
+          "ate",
+          "chamadas",
+          "erros",
+          "aplicadas",
+          "editadas",
+          "descartadas",
+          "custoUsd",
+          "porTipo",
+          "porPerfil",
+          "precosVersao"
+        ],
+        "title": "IaResumo",
         "type": "object"
       },
       "ImageRef": {
@@ -3938,6 +4545,21 @@
           "hook": {
             "$ref": "#/components/schemas/Gancho"
           },
+          "ia": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IaAplicacao"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ia"
+          },
           "palette": {
             "items": {
               "$ref": "#/components/schemas/Cor"
@@ -4153,6 +4775,91 @@
           "items"
         ],
         "title": "LibraryImagesList",
+        "type": "object"
+      },
+      "Limites": {
+        "properties": {
+          "maxChars": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxchars"
+          },
+          "maxCharsItem": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxcharsitem"
+          },
+          "maxItens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxitens"
+          },
+          "maxSugestoes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxsugestoes"
+          },
+          "minChars": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minchars"
+          },
+          "minItens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minitens"
+          },
+          "umaLinha": {
+            "title": "Umalinha",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "maxChars",
+          "minChars",
+          "umaLinha",
+          "maxItens",
+          "minItens",
+          "maxCharsItem",
+          "maxSugestoes"
+        ],
+        "title": "Limites",
         "type": "object"
       },
       "LoginIn": {
@@ -4744,6 +5451,20 @@
           "fileIds"
         ],
         "title": "Ordem",
+        "type": "object"
+      },
+      "PadraoIn": {
+        "properties": {
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "PadraoIn",
         "type": "object"
       },
       "PadroesCorte": {
@@ -5422,6 +6143,84 @@
         "title": "PostagensList",
         "type": "object"
       },
+      "Regras": {
+        "properties": {
+          "padrao": {
+            "title": "Padrao",
+            "type": "string"
+          },
+          "padraoAtualizado": {
+            "title": "Padraoatualizado",
+            "type": "boolean"
+          },
+          "personalizada": {
+            "title": "Personalizada",
+            "type": "boolean"
+          },
+          "texto": {
+            "title": "Texto",
+            "type": "string"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "texto",
+          "padrao",
+          "personalizada",
+          "padraoAtualizado",
+          "version",
+          "updatedAt",
+          "updatedBy"
+        ],
+        "title": "Regras",
+        "type": "object"
+      },
+      "RegrasIn": {
+        "properties": {
+          "texto": {
+            "maxLength": 8000,
+            "minLength": 1,
+            "title": "Texto",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "texto"
+        ],
+        "title": "RegrasIn",
+        "type": "object"
+      },
       "RenameFonteIn": {
         "properties": {
           "name": {
@@ -5520,6 +6319,51 @@
           "existente"
         ],
         "title": "ResolverOut",
+        "type": "object"
+      },
+      "ResumoPerfil": {
+        "properties": {
+          "chamadas": {
+            "title": "Chamadas",
+            "type": "integer"
+          },
+          "custoUsd": {
+            "title": "Custousd",
+            "type": "number"
+          },
+          "perfil": {
+            "$ref": "#/components/schemas/PerfilRef"
+          }
+        },
+        "required": [
+          "perfil",
+          "chamadas",
+          "custoUsd"
+        ],
+        "title": "ResumoPerfil",
+        "type": "object"
+      },
+      "ResumoTipo": {
+        "properties": {
+          "chamadas": {
+            "title": "Chamadas",
+            "type": "integer"
+          },
+          "custoUsd": {
+            "title": "Custousd",
+            "type": "number"
+          },
+          "tipoCampo": {
+            "title": "Tipocampo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipoCampo",
+          "chamadas",
+          "custoUsd"
+        ],
+        "title": "ResumoTipo",
         "type": "object"
       },
       "RevertIn": {
@@ -5710,6 +6554,31 @@
           "nextCursor"
         ],
         "title": "SecurityEventPage",
+        "type": "object"
+      },
+      "Selecao": {
+        "description": "Só nas `sugestoes`: marcados e ainda não aplicados, e os mostrados e não marcados.",
+        "properties": {
+          "aceitos": {
+            "items": {
+              "maxLength": 400,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Aceitos",
+            "type": "array"
+          },
+          "rejeitados": {
+            "items": {
+              "maxLength": 400,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Rejeitados",
+            "type": "array"
+          }
+        },
+        "title": "Selecao",
         "type": "object"
       },
       "Selecionado": {
@@ -6041,6 +6910,111 @@
         "title": "TagCount",
         "type": "object"
       },
+      "TipoCampo": {
+        "properties": {
+          "entidade": {
+            "enum": [
+              "asset",
+              "perfil",
+              "kit",
+              "postagem"
+            ],
+            "title": "Entidade",
+            "type": "string"
+          },
+          "formato": {
+            "enum": [
+              "texto",
+              "lista",
+              "sugestoes",
+              "textos_postagem"
+            ],
+            "title": "Formato",
+            "type": "string"
+          },
+          "id": {
+            "enum": [
+              "avatar.descricao_prompt",
+              "avatar.tom_de_voz",
+              "avatar.regras_imagem",
+              "cenario.prompt_ambiente",
+              "asset.nome",
+              "asset.descricao",
+              "perfil.bio",
+              "kit.bordoes",
+              "kit.series",
+              "postagem.titulo",
+              "postagem.descricao",
+              "postagem.hashtags",
+              "postagem.textos"
+            ],
+            "title": "Id",
+            "type": "string"
+          },
+          "idioma": {
+            "enum": [
+              "en",
+              "perfil"
+            ],
+            "title": "Idioma",
+            "type": "string"
+          },
+          "limites": {
+            "$ref": "#/components/schemas/Limites"
+          },
+          "onde": {
+            "title": "Onde",
+            "type": "string"
+          },
+          "regras": {
+            "$ref": "#/components/schemas/Regras"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rotulo",
+          "onde",
+          "entidade",
+          "idioma",
+          "formato",
+          "limites",
+          "regras"
+        ],
+        "title": "TipoCampo",
+        "type": "object"
+      },
+      "TipoOut": {
+        "properties": {
+          "tipo": {
+            "$ref": "#/components/schemas/TipoCampo"
+          }
+        },
+        "required": [
+          "tipo"
+        ],
+        "title": "TipoOut",
+        "type": "object"
+      },
+      "TiposList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TipoCampo"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "TiposList",
+        "type": "object"
+      },
       "UpdateCanalIn": {
         "additionalProperties": false,
         "properties": {
@@ -6162,6 +7136,21 @@
             ],
             "title": "Bio"
           },
+          "ia": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IaAplicacao"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ia"
+          },
           "language": {
             "anyOf": [
               {
@@ -6265,6 +7254,21 @@
             ],
             "title": "Hashtags"
           },
+          "ia": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IaAplicacao"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ia"
+          },
           "plannedAt": {
             "anyOf": [
               {
@@ -6287,6 +7291,7 @@
                 "type": "null"
               }
             ],
+            "deprecated": true,
             "title": "Sugestaoid"
           },
           "titulo": {
@@ -6552,6 +7557,81 @@
           "href"
         ],
         "title": "Uso",
+        "type": "object"
+      },
+      "Valor": {
+        "description": "Um formato por tipo: `texto`, `itens` ou os três da postagem.",
+        "properties": {
+          "descricao": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "hashtags": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 400,
+                  "type": "string"
+                },
+                "maxItems": 40,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hashtags"
+          },
+          "itens": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 400,
+                  "type": "string"
+                },
+                "maxItems": 40,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itens"
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          },
+          "titulo": {
+            "anyOf": [
+              {
+                "maxLength": 400,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Titulo"
+          }
+        },
+        "title": "Valor",
         "type": "object"
       },
       "VerifyIn": {
@@ -10685,6 +11765,7 @@
     },
     "/api/cortes/{corte_id}/sugestoes": {
       "get": {
+        "deprecated": true,
         "operationId": "postagens_sugestoes",
         "parameters": [
           {
@@ -10753,6 +11834,7 @@
         "summary": "List Sugestoes"
       },
       "post": {
+        "deprecated": true,
         "operationId": "postagens_sugerir",
         "parameters": [
           {
@@ -11955,6 +13037,935 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/api/ia/chamadas": {
+      "get": {
+        "operationId": "ia_chamadas_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipoCampo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipocampo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "desfecho",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/IaDesfecho"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Desfecho"
+            }
+          },
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sessaoId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sessaoid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChamadasList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Chamadas List"
+      }
+    },
+    "/api/ia/chamadas/{chamada_id}": {
+      "get": {
+        "operationId": "ia_chamadas_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chamada_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chamada Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChamadaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Chamadas Get"
+      }
+    },
+    "/api/ia/chamadas/{chamada_id}/descartar": {
+      "post": {
+        "operationId": "ia_chamadas_descartar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "chamada_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Chamada Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Descartar"
+      }
+    },
+    "/api/ia/gerar": {
+      "post": {
+        "operationId": "ia_gerar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GerarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChamadaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        },
+        "summary": "Gerar"
+      }
+    },
+    "/api/ia/resumo": {
+      "get": {
+        "operationId": "ia_resumo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mes",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^\\d{4}-\\d{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mes"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IaResumo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Resumo"
+      }
+    },
+    "/api/ia/tipos": {
+      "get": {
+        "operationId": "ia_tipos_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TiposList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Tipos List"
+      }
+    },
+    "/api/ia/tipos/{tipo}": {
+      "get": {
+        "operationId": "ia_tipos_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tipo",
+            "required": true,
+            "schema": {
+              "title": "Tipo",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TipoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Tipos Get"
+      }
+    },
+    "/api/ia/tipos/{tipo}/padrao": {
+      "post": {
+        "operationId": "ia_regras_padrao",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tipo",
+            "required": true,
+            "schema": {
+              "title": "Tipo",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PadraoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TipoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Regras Padrao"
+      }
+    },
+    "/api/ia/tipos/{tipo}/regras": {
+      "put": {
+        "operationId": "ia_regras_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tipo",
+            "required": true,
+            "schema": {
+              "title": "Tipo",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegrasIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TipoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Regras Update"
+      }
+    },
+    "/api/ia/tipos/{tipo}/revert": {
+      "post": {
+        "operationId": "ia_regras_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tipo",
+            "required": true,
+            "schema": {
+              "title": "Tipo",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TipoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Regras Revert"
+      }
+    },
+    "/api/ia/tipos/{tipo}/versions": {
+      "get": {
+        "operationId": "ia_regras_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tipo",
+            "required": true,
+            "schema": {
+              "title": "Tipo",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Regras Versions"
       }
     },
     "/api/integracoes": {

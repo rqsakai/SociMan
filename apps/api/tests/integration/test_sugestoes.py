@@ -1,8 +1,13 @@
 """Sugestão de textos pela API (T063, R9): plataforma da conta, erros em pt-BR, registro de
-cada chamada em `sugestoes_texto`, e a sugestão não altera a postagem. Claude falso."""
+cada chamada em `ia_chamadas`, e a sugestão não altera a postagem. Claude falso.
+
+Spec 008 (T043): as rotas da 006 continuam respondendo `{ sugestao }`, agora pelo assistente
+(`postagem.textos`), com os códigos de erro novos (`ia_timeout`…)."""
+
+import json
 
 import pytest
-from fakes.anthropic_fake import anthropic_fake  # noqa: F401
+from fakes.anthropic_fake import anthropic_fake, fixture, mensagem  # noqa: F401
 
 from integration.postagem_helpers import (  # noqa: F401
     criar_conta,
@@ -10,9 +15,9 @@ from integration.postagem_helpers import (  # noqa: F401
     criar_perfil,
     dono,
 )
+from sociman_api.ia.cliente import get_ia_client
+from sociman_api.ia.models import IaChamada
 from sociman_api.main import app
-from sociman_api.postagem.models import SugestaoTexto
-from sociman_api.postagem.textos import get_textos_client
 
 
 @pytest.fixture
@@ -22,8 +27,13 @@ def cenario(client, db, dono, anthropic_fake):  # noqa: F811
     conta = criar_conta(client, h, perfil["id"], "youtube", "tavernanerd")
     corte = criar_corte(db, perfil["id"], transcript="hoje o atalho é ctrl+shift+t",
                         openshorts_title="Atalho secreto")
-    app.dependency_overrides[get_textos_client] = lambda: anthropic_fake.client()
+    app.dependency_overrides[get_ia_client] = lambda: anthropic_fake.ia_client()
     return {"h": h, "perfil": perfil, "conta": conta, "corte": corte}
+
+
+def textos_validos() -> dict:
+    dados = json.loads(fixture("valida")["content"][0]["text"])
+    return mensagem(dados | {"explicacao": "Textos para o clipe.", "avisos": []})
 
 
 def _sugerir(client, c, **extra):
@@ -40,10 +50,13 @@ def test_sugere_para_a_plataforma_da_conta_e_registra(client, db, cenario, anthr
     assert 3 <= len(s["hashtags"]) <= 8 and len(s["titulo"]) <= 100
     texto = anthropic_fake.bodies[0]["messages"][0]["content"]
     assert "YouTube Shorts" in texto and "ctrl+shift+t" in texto and "Atalho secreto" in texto
-    assert "A Taverna Nerd" in anthropic_fake.bodies[0]["system"][1]["text"]
-    [row] = db.query(SugestaoTexto).all()
-    assert row.prompt_version == "textos/1" and row.erro_code is None
-    assert row.resultado["titulo"] == s["titulo"]
+    # base → regras → perfil (spec 008, R5): o perfil fica no último bloco, o do cache
+    assert "A Taverna Nerd" in anthropic_fake.bodies[0]["system"][-1]["text"]
+    [row] = db.query(IaChamada).all()
+    assert row.prompt_version == "ia/1" and row.erro_code is None
+    assert row.tipo_campo == "postagem.textos" and row.entity_type == "corte"
+    assert row.conta_id is not None and row.sessao_id is None
+    assert row.proposta["titulo"] == s["titulo"]
     assert (row.input_tokens, row.output_tokens, row.cache_read_tokens) == (1800, 220, 1200)
     assert row.duration_ms >= 0 and row.created_by is not None
 
@@ -67,19 +80,19 @@ def test_outra_versao_manda_as_anteriores(client, cenario, anthropic_fake):  # n
 
 def test_lista_mais_recentes_primeiro_so_com_resultado(client, db, cenario, anthropic_fake):  # noqa: F811
     c = cenario
-    anthropic_fake.responder("valida", "timeout", "valida")
+    anthropic_fake.responder(textos_validos(), "timeout", textos_validos())
     a = _sugerir(client, c).json()["sugestao"]
     assert _sugerir(client, c).status_code == 504
     b = _sugerir(client, c).json()["sugestao"]
     r = client.get(f"/api/cortes/{c['corte'].id}/sugestoes", headers=c["h"])
     assert [s["id"] for s in r.json()["items"]] == [b["id"], a["id"]]
-    assert db.query(SugestaoTexto).count() == 3  # o erro também ficou registrado
+    assert db.query(IaChamada).count() == 3  # o erro também ficou registrado
 
 
 @pytest.mark.parametrize(("itens", "status", "code", "erro", "trecho"), [
-    (["timeout"], 504, "textos_timeout", "timeout", "demorou demais"),
-    (["recusa"], 502, "claude_error", "refusal", "escreva à mão"),
-    (["poucas_hashtags", "poucas_hashtags"], 502, "textos_invalidos", "invalid", "limites"),
+    (["timeout"], 504, "ia_timeout", "timeout", "demorou demais"),
+    (["recusa"], 502, "ia_recusa", "refusal", "escreva à mão"),
+    (["poucas_hashtags", "poucas_hashtags"], 502, "ia_invalida", "invalid", "fora do formato"),
     ([(500, "erro_api")], 502, "claude_error", "api_error", "não respondeu"),
     ([(401, {"type": "error", "error": {"type": "authentication_error", "message": "x"}})],
      502, "claude_error", "api_error", "ANTHROPIC_API_KEY"),
@@ -91,15 +104,16 @@ def test_erros_em_pt_br_e_registrados(client, db, cenario, anthropic_fake,  # no
     assert r.status_code == status, r.text
     body = r.json()["error"]
     assert body["code"] == code and trecho in body["message"]
-    [row] = db.query(SugestaoTexto).all()  # commitado antes do erro
-    assert row.erro_code == erro and row.resultado is None
+    [row] = db.query(IaChamada).all()  # commitado antes do erro
+    assert row.erro_code == erro and row.proposta is None
 
 
 def test_sem_chave_claude_unconfigured(client, db, cenario):
-    app.dependency_overrides[get_textos_client] = lambda: None
+    app.dependency_overrides[get_ia_client] = lambda: None
     r = _sugerir(client, cenario)
     assert r.status_code == 503 and r.json()["error"]["code"] == "claude_unconfigured"
-    assert db.query(SugestaoTexto).count() == 0
+    [row] = db.query(IaChamada).all()  # spec 008: grava sempre, inclusive sem chave
+    assert row.erro_code == "unconfigured" and row.proposta is None
 
 
 def test_conta_de_outro_perfil_e_corte_inexistente(client, cenario):

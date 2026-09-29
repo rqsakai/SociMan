@@ -21,6 +21,7 @@ from sociman_api import history, imaging
 from sociman_api.auth.deps import Actor
 from sociman_api.auth.models import User
 from sociman_api.errors import ApiError
+from sociman_api.ia import aplicacao
 from sociman_api.perfis import schemas
 from sociman_api.perfis.models import (
     Conta,
@@ -247,7 +248,7 @@ def update_perfil(
     perfil = get_perfil_or_404(db, perfil_id, lock=True)
     history.check_version(perfil, data.version, LABEL)
     before = history.snapshot(perfil)
-    changes = data.model_dump(exclude_unset=True, exclude={"version"})
+    changes = data.model_dump(exclude_unset=True, exclude={"version", "ia"})
     for field, value in changes.items():
         if value is not None:
             setattr(perfil, field, value)
@@ -255,7 +256,8 @@ def update_perfil(
     if after == before:
         return perfil
     perfil.updated_by = actor.user_id
-    history.record(db, actor, ENTITY, perfil, "updated", before, after)
+    details = aplicacao.marcar(db, actor, ENTITY, perfil, before, after, data.ia)
+    history.record(db, actor, ENTITY, perfil, "updated", before, after, details)
     return perfil
 
 

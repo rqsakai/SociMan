@@ -6,15 +6,14 @@
   arquivado (inclusive em `revisao`).
 - **`postado` só por ação humana**, em `marcar_postado` (princípio I; o guarda da T074 confere por
   AST que nenhum outro lugar atribui `EstadoPostagem.postado`). Nada aqui publica.
-- A sugestão do Claude é gravada em `sugestoes_texto` (sucesso ou erro) e **não altera** a
-  postagem: a tela preenche os campos, e o usuário salva.
+- A sugestão do Claude é gravada em `ia_chamadas` (spec 008; `tipo_campo = "postagem.textos"`,
+  sucesso ou erro) e **não altera** a postagem: a tela preenche os campos, e o usuário salva.
 """
 
 import re
 import uuid
 from collections.abc import Iterable, Sequence
 from datetime import UTC, date, datetime, time, timedelta
-from typing import Any
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import and_, exists, select
@@ -26,9 +25,13 @@ from sociman_api.auth.deps import Actor
 from sociman_api.config import get_settings
 from sociman_api.cortes.models import Corte, CorteStatus
 from sociman_api.errors import ApiError
+from sociman_api.ia import aplicacao
+from sociman_api.ia import service as ia_service
+from sociman_api.ia.cliente import IaClient
+from sociman_api.ia.models import IaChamada
+from sociman_api.ia.tipos import TIPOS
 from sociman_api.marca.models import BrandKit
-from sociman_api.perfis.models import Conta, ContaStatus, Perfil, Platform
-from sociman_api.perfis.platforms import PLATFORMS
+from sociman_api.perfis.models import Conta, Perfil, Platform
 from sociman_api.perfis.schemas import VersionsList
 from sociman_api.perfis.service_perfis import (
     apply_archived,
@@ -37,7 +40,7 @@ from sociman_api.perfis.service_perfis import (
     versions_out,
 )
 from sociman_api.postagem import schemas, textos
-from sociman_api.postagem.models import EstadoPostagem, Postagem, SugestaoTexto
+from sociman_api.postagem.models import EstadoPostagem, Postagem
 
 ENTITY = "postagem"
 LABEL = "Esta postagem"
@@ -48,6 +51,7 @@ TOLERANCIA_PASSADO = timedelta(minutes=1)
 CALENDARIO_MAX_DIAS = 62
 SEM_DATA_MAX = 200
 ANTERIORES_MAX = 3
+TIPO_TEXTOS = "postagem.textos"  # tipo de campo das sugestões da 006 em `ia_chamadas`
 HASHTAG_RE = re.compile(r"^#\w{1,50}$", re.UNICODE)  # \w = [\p{L}\p{N}_]
 
 
@@ -174,7 +178,7 @@ def _agendar(postagem: Postagem, corte: Corte, planned_at: datetime | None) -> N
 def _check_sugestao(db: Session, corte: Corte, sugestao_id: uuid.UUID | None) -> None:
     if sugestao_id is None:
         return
-    sugestao = db.get(SugestaoTexto, sugestao_id)
+    sugestao = db.get(IaChamada, sugestao_id)
     if sugestao is None or sugestao.corte_id != corte.id:
         raise _invalid("Sugestão não encontrada para este corte")
 
@@ -251,6 +255,21 @@ def list_versions(db: Session, postagem_id: uuid.UUID) -> VersionsList:
 
 # ---- mutações ----
 
+def _marcar_ia(db: Session, actor: Actor, postagem: Postagem, corte: Corte, conta: Conta | None,
+               before: dict | None, after: dict,
+               ia: list[aplicacao.IaAplicacao] | None) -> dict | None:
+    """Spec 008 (R10): marca as chamadas aplicadas e, sem `sugestaoId` no corpo, grava o
+    `sugestao_id` a partir do item `postagem.textos` (ou do primeiro) por compatibilidade."""
+    plataforma = conta.platform.value if conta is not None else None
+    details = aplicacao.marcar(db, actor, ENTITY, postagem, before, after, ia,
+                               perfil_id=corte.perfil_id, plataforma=plataforma)
+    if details is not None:
+        itens = details["ia"]
+        item = next((i for i in itens if i["tipoCampo"] == TIPO_TEXTOS), itens[0])
+        postagem.sugestao_id = uuid.UUID(item["chamadaId"])
+    return details
+
+
 def create_postagem(db: Session, actor: Actor, corte_id: uuid.UUID,
                     body: schemas.CreatePostagemIn) -> Postagem:
     corte = _corte_or_404(db, corte_id)
@@ -268,7 +287,9 @@ def create_postagem(db: Session, actor: Actor, corte_id: uuid.UUID,
         _agendar(postagem, corte, body.planned_at)
     _check_unica(db, postagem)
     db.add(postagem)
-    history.record(db, actor, ENTITY, postagem, "created", None, history.snapshot(postagem))
+    after = history.snapshot(postagem)
+    details = _marcar_ia(db, actor, postagem, corte, conta, None, after, body.ia)
+    history.record(db, actor, ENTITY, postagem, "created", None, after, details)
     _flush_unica(db)
     return postagem
 
@@ -300,7 +321,9 @@ def update_postagem(db: Session, actor: Actor, postagem_id: uuid.UUID,
         return postagem
     _check_unica(db, postagem)
     postagem.updated_by = actor.user_id
-    history.record(db, actor, ENTITY, postagem, "updated", before, after)
+    conta = db.get(Conta, postagem.conta_id)
+    details = _marcar_ia(db, actor, postagem, corte, conta, before, after, body.ia)
+    history.record(db, actor, ENTITY, postagem, "updated", before, after, details)
     _flush_unica(db)
     return postagem
 
@@ -389,8 +412,8 @@ def revert_postagem(db: Session, actor: Actor, postagem_id: uuid.UUID, version: 
 
 # ---- sugestões (Claude) ----
 
-def _sugestao_out(s: SugestaoTexto) -> schemas.Sugestao:
-    r = s.resultado or {}
+def _sugestao_out(s: IaChamada) -> schemas.Sugestao:
+    r = s.proposta or {}
     return schemas.Sugestao(id=s.id, plataforma=s.plataforma, titulo=r.get("titulo", ""),
                             descricao=r.get("descricao", ""), hashtags=r.get("hashtags", []),
                             ajustes=list(s.ajustes), model=s.model, created_at=s.created_at)
@@ -399,123 +422,39 @@ def _sugestao_out(s: SugestaoTexto) -> schemas.Sugestao:
 def list_sugestoes(db: Session, corte_id: uuid.UUID) -> list[schemas.Sugestao]:
     _corte_or_404(db, corte_id)
     rows = db.scalars(
-        select(SugestaoTexto)
-        .where(SugestaoTexto.corte_id == corte_id, SugestaoTexto.resultado.is_not(None))
-        .order_by(SugestaoTexto.created_at.desc(), SugestaoTexto.id)
+        select(IaChamada)
+        .where(IaChamada.corte_id == corte_id, IaChamada.tipo_campo == TIPO_TEXTOS,
+               IaChamada.proposta.is_not(None))
+        .order_by(IaChamada.created_at.desc(), IaChamada.id)
     )
     return [_sugestao_out(s) for s in rows]
 
 
-def _perfil_contexto(db: Session, perfil: Perfil) -> textos.PerfilContexto:
-    from sociman_api.marca.service_kit import current_tokens  # import tardio (ciclo)
-
-    tokens, _ = current_tokens(db, perfil.id)
-    contas = db.scalars(
-        select(Conta).where(Conta.perfil_id == perfil.id, Conta.archived_at.is_(None),
-                            Conta.status != ContaStatus.encerrada)
-        .order_by(Conta.created_at, Conta.id)
-    )
-    return textos.PerfilContexto(
-        nome=perfil.name, nicho=perfil.niche, bio=perfil.bio, idioma=perfil.language,
-        bordoes=tuple(tokens.catchphrases), series=tuple(tokens.series),
-        cta=tokens.end_card.cta if tokens.end_card.ligado else "",
-        contas=tuple(f"{_plataforma_label(c.platform, c.platform_name)} @{c.handle}"
-                     for c in contas),
-    )
-
-
-def _plataforma_label(platform: Platform, platform_name: str = "") -> str:
-    return platform_name if platform == Platform.outra and platform_name \
-        else PLATFORMS[platform].label
-
-
-def _origem(db: Session, corte: Corte) -> tuple[str, str]:
-    """(título do vídeo de origem, canal), quando o corte veio de um envio."""
-    if corte.envio_id is None:
-        return corte.original_filename, ""
-    from sociman_api.canais.models import CanalFonte
-    from sociman_api.envios.models import Envio
-
-    envio = db.get(Envio, corte.envio_id)
-    if envio is None:
-        return "", ""
-    canal = db.get(CanalFonte, envio.canal_fonte_id) if envio.canal_fonte_id else None
-    return envio.source_title, canal.title if canal else ""
-
-
-def _anteriores(db: Session, corte_id: uuid.UUID, plataforma: Platform
-                ) -> tuple[dict[str, Any], ...]:
-    rows = db.scalars(
-        select(SugestaoTexto.resultado)
-        .where(SugestaoTexto.corte_id == corte_id, SugestaoTexto.plataforma == plataforma,
-               SugestaoTexto.resultado.is_not(None))
-        .order_by(SugestaoTexto.created_at.desc()).limit(ANTERIORES_MAX)
-    )
-    return tuple(r for r in rows if r)
-
-
-_ERROS: dict[str, tuple[int, str, str]] = {
-    "timeout": (504, "textos_timeout", "O Claude demorou demais; tente de novo"),
-    "refusal": (502, "claude_error",
-                "O Claude não sugeriu textos para este clipe; escreva à mão"),
-    "invalid": (502, "textos_invalidos",
-                "O Claude devolveu textos fora dos limites; tente de novo ou escreva à mão"),
-}
-
-
-def _erro_api(status: int | None) -> ApiError:
-    if status in (401, 403):
-        msg = "A chave do Claude foi recusada; confira a ANTHROPIC_API_KEY"
-    elif status == 429:
-        msg = "O Claude está com muitas chamadas agora; tente em instantes"
-    else:
-        msg = "O Claude não respondeu; tente de novo"
-    return ApiError(502, "claude_error", msg)
+def _anteriores(db: Session, corte_id: uuid.UUID, plataforma: Platform) -> list[IaChamada]:
+    """"Outra versão" da 006: as últimas propostas deste corte na plataforma."""
+    return list(db.scalars(
+        select(IaChamada)
+        .where(IaChamada.corte_id == corte_id, IaChamada.tipo_campo == TIPO_TEXTOS,
+               IaChamada.plataforma == plataforma, IaChamada.proposta.is_not(None))
+        .order_by(IaChamada.created_at.desc()).limit(ANTERIORES_MAX)
+    ))
 
 
 def sugerir(db: Session, actor: Actor, corte_id: uuid.UUID, body: schemas.SugestaoIn,
-            client: textos.TextosClient | None) -> SugestaoTexto:
-    """Uma sugestão para a plataforma da conta. Grava a chamada sempre (commit antes do erro,
-    porque o `get_db` faz rollback quando a rota levanta)."""
+            client: IaClient | None) -> IaChamada:
+    """Rota da 006 (deprecated): delega ao assistente (`postagem.textos`, alvo corte + conta,
+    sem sessão). O `ia.service.executar` grava a chamada sempre (commit antes do erro)."""
     corte = _corte_or_404(db, corte_id)
     conta = _conta_do_perfil(db, corte, body.conta_id)
-    if client is None:
-        raise ApiError(503, "claude_unconfigured",
-                       "O Claude não está configurado (ANTHROPIC_API_KEY); escreva os textos à "
-                       "mão")
     perfil = db.get(Perfil, corte.perfil_id)
     assert perfil is not None
-    video_titulo, canal = _origem(db, corte)
-    clipe = textos.ClipeContexto(
-        plataforma=conta.platform.value, video_titulo=video_titulo, canal=canal,
-        openshorts_titulo=corte.openshorts_title or "",
-        openshorts_descricao=corte.openshorts_description or "",
-        gancho=corte.hook_text, transcricao=corte.transcript or "",
-        anteriores=_anteriores(db, corte.id, conta.platform) if body.outra_versao else (),
-    )
-    res = client.sugerir(_perfil_contexto(db, perfil), clipe)
-    row = SugestaoTexto(
-        id=uuid.uuid4(), corte_id=corte.id, plataforma=conta.platform, model=res.model,
-        prompt_version=textos.PROMPT_VERSION, ajustes=res.ajustes,
-        erro_code=res.erro_code, input_tokens=res.input_tokens,
-        output_tokens=res.output_tokens, cache_read_tokens=res.cache_read_tokens,
-        duration_ms=res.duration_ms, created_by=actor.user_id,
-    )
-    if res.resultado is not None:  # None fica SQL NULL (atribuir None gravaria JSON null)
-        row.resultado = res.resultado
-    db.add(row)
-    if res.erro_code is not None:
-        db.commit()
-        if res.erro_code in _ERROS:
-            status, code, msg = _ERROS[res.erro_code]
-            raise ApiError(status, code, msg)
-        raise _erro_api(res.erro_status)
-    db.flush()
-    db.refresh(row)
-    return row
+    alvo = ia_service.AlvoResolvido("corte", corte.id, corte=corte, conta=conta)
+    anteriores = _anteriores(db, corte.id, conta.platform) if body.outra_versao else []
+    return ia_service.executar(db, actor, TIPOS[TIPO_TEXTOS], perfil, alvo, {}, "", client,
+                               anteriores=anteriores)
 
 
-def sugestao_out(s: SugestaoTexto) -> schemas.Sugestao:
+def sugestao_out(s: IaChamada) -> schemas.Sugestao:
     return _sugestao_out(s)
 
 

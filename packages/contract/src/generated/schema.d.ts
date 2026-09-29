@@ -736,10 +736,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Sugestoes */
+        /**
+         * List Sugestoes
+         * @deprecated
+         */
         get: operations["postagens_sugestoes"];
         put?: never;
-        /** Sugerir */
+        /**
+         * Sugerir
+         * @deprecated
+         */
         post: operations["postagens_sugerir"];
         delete?: never;
         options?: never;
@@ -1002,6 +1008,193 @@ export interface paths {
         };
         /** Health */
         get: operations["health_api_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/chamadas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chamadas List */
+        get: operations["ia_chamadas_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/chamadas/{chamada_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Chamadas Get */
+        get: operations["ia_chamadas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/chamadas/{chamada_id}/descartar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Descartar */
+        post: operations["ia_chamadas_descartar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/gerar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gerar */
+        post: operations["ia_gerar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/resumo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resumo */
+        get: operations["ia_resumo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/tipos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tipos List */
+        get: operations["ia_tipos_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/tipos/{tipo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tipos Get */
+        get: operations["ia_tipos_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/tipos/{tipo}/padrao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Regras Padrao */
+        post: operations["ia_regras_padrao"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/tipos/{tipo}/regras": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Regras Update */
+        put: operations["ia_regras_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/tipos/{tipo}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Regras Revert */
+        post: operations["ia_regras_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/tipos/{tipo}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Regras Versions */
+        get: operations["ia_regras_versions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1825,6 +2018,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Alvo */
+        Alvo: {
+            /** Contaid */
+            contaId?: string | null;
+            /** Entityid */
+            entityId?: string | null;
+            /**
+             * Entitytype
+             * @enum {string}
+             */
+            entityType: "asset" | "perfil" | "kit" | "postagem" | "corte";
+        };
         /** AplicarMarcaIn */
         AplicarMarcaIn: {
             /** Items */
@@ -1996,6 +2201,8 @@ export interface components {
         AssetPatch: {
             /** Description */
             description?: string | null;
+            /** Ia */
+            ia?: components["schemas"]["IaAplicacao"][] | null;
             /** Imagerules */
             imageRules?: string | null;
             /** Name */
@@ -2322,6 +2529,17 @@ export interface components {
              */
             opacidade_fundo: number;
         };
+        /** ChamadaOut */
+        ChamadaOut: {
+            chamada: components["schemas"]["IaChamada"];
+        };
+        /** ChamadasList */
+        ChamadasList: {
+            /** Items */
+            items: components["schemas"]["IaChamada"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+        };
         /** ChangePasswordIn */
         ChangePasswordIn: {
             /** Currentpassword */
@@ -2607,9 +2825,14 @@ export interface components {
             descricao: string;
             /** Hashtags */
             hashtags?: string[];
+            /** Ia */
+            ia?: components["schemas"]["IaAplicacao"][] | null;
             /** Plannedat */
             plannedAt?: string | null;
-            /** Sugestaoid */
+            /**
+             * Sugestaoid
+             * @deprecated
+             */
             sugestaoId?: string | null;
             /**
              * Titulo
@@ -3049,12 +3272,161 @@ export interface components {
              */
             tamanho: "P" | "M" | "G";
         };
+        /** GerarIn */
+        GerarIn: {
+            alvo: components["schemas"]["Alvo"];
+            /** Anteriores */
+            anteriores?: string[];
+            /**
+             * Instrucao
+             * @default
+             */
+            instrucao: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            selecao?: components["schemas"]["Selecao"] | null;
+            /**
+             * Sessaoid
+             * Format: uuid
+             */
+            sessaoId: string;
+            /**
+             * Tipocampo
+             * @enum {string}
+             */
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos";
+            valorAtual?: components["schemas"]["Valor"];
+        };
         /** HookIn */
         HookIn: {
             /** Hooktext */
             hookText: string;
             /** Version */
             version: number;
+        };
+        /**
+         * IaAplicacao
+         * @description Um campo salvo a partir de uma chamada. `itens` só vale nos tipos `sugestoes`: o texto
+         *     final dos itens daquela chamada que entraram na lista (nos outros, é ignorado).
+         */
+        IaAplicacao: {
+            /**
+             * Chamadaid
+             * Format: uuid
+             */
+            chamadaId: string;
+            /** Itens */
+            itens?: string[] | null;
+            /**
+             * Tipocampo
+             * @enum {string}
+             */
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos";
+        };
+        /** IaChamada */
+        IaChamada: {
+            /** Aceitos */
+            aceitos: string[];
+            alvo: components["schemas"]["Alvo"];
+            /** Aplicadaversao */
+            aplicadaVersao: number | null;
+            /** Avisos */
+            avisos: string[];
+            /** Cachecreationtokens */
+            cacheCreationTokens: number | null;
+            /** Cachereadtokens */
+            cacheReadTokens: number | null;
+            /** Contextofaltante */
+            contextoFaltante: string[];
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Custousd */
+            custoUsd: number | null;
+            desfecho: components["schemas"]["IaDesfecho"];
+            /** Desfechoem */
+            desfechoEm: string | null;
+            desfechoPor: components["schemas"]["UserRef"] | null;
+            /** Durationms */
+            durationMs: number;
+            entrada: components["schemas"]["Valor"] | null;
+            /** Errocode */
+            erroCode: string | null;
+            /** Excede */
+            excede: boolean;
+            /** Explicacao */
+            explicacao: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Inputtokens */
+            inputTokens: number | null;
+            /** Instrucao */
+            instrucao: string;
+            /** Itensaplicados */
+            itensAplicados: string[] | null;
+            /** Model */
+            model: string;
+            /** Modelservido */
+            modelServido: string | null;
+            /** Outputtokens */
+            outputTokens: number | null;
+            perfil: components["schemas"]["PerfilRef"];
+            proposta: components["schemas"]["Valor"] | null;
+            /** Regrasversion */
+            regrasVersion: number;
+            /** Rejeitados */
+            rejeitados: string[];
+            /** Sessaoid */
+            sessaoId: string | null;
+            /** Tipocampo */
+            tipoCampo: string;
+        };
+        /**
+         * IaDesfecho
+         * @enum {string}
+         */
+        IaDesfecho: "sem_acao" | "aplicada" | "editada" | "descartada" | "erro";
+        /** IaResumo */
+        IaResumo: {
+            /** Aplicadas */
+            aplicadas: number;
+            /**
+             * Ate
+             * Format: date
+             */
+            ate: string;
+            /** Chamadas */
+            chamadas: number;
+            /** Custousd */
+            custoUsd: number;
+            /**
+             * De
+             * Format: date
+             */
+            de: string;
+            /** Descartadas */
+            descartadas: number;
+            /** Editadas */
+            editadas: number;
+            /** Erros */
+            erros: number;
+            /** Mes */
+            mes: string;
+            /** Porperfil */
+            porPerfil: components["schemas"]["ResumoPerfil"][];
+            /** Portipo */
+            porTipo: components["schemas"]["ResumoTipo"][];
+            /** Precosversao */
+            precosVersao: string;
         };
         /** ImageRef */
         ImageRef: {
@@ -3172,6 +3544,8 @@ export interface components {
             catchphrases?: string[];
             endCard: components["schemas"]["CardFinal"];
             hook: components["schemas"]["Gancho"];
+            /** Ia */
+            ia?: components["schemas"]["IaAplicacao"][] | null;
             /** Palette */
             palette: components["schemas"]["Cor"][];
             /** Series */
@@ -3260,6 +3634,23 @@ export interface components {
         LibraryImagesList: {
             /** Items */
             items: components["schemas"]["LibraryImage"][];
+        };
+        /** Limites */
+        Limites: {
+            /** Maxchars */
+            maxChars: number | null;
+            /** Maxcharsitem */
+            maxCharsItem: number | null;
+            /** Maxitens */
+            maxItens: number | null;
+            /** Maxsugestoes */
+            maxSugestoes: number | null;
+            /** Minchars */
+            minChars: number | null;
+            /** Minitens */
+            minItens: number | null;
+            /** Umalinha */
+            umaLinha: boolean;
         };
         /** LoginIn */
         LoginIn: {
@@ -3490,6 +3881,11 @@ export interface components {
             /** Fileids */
             fileIds: string[];
             role: components["schemas"]["FileRole"];
+            /** Version */
+            version: number;
+        };
+        /** PadraoIn */
+        PadraoIn: {
             /** Version */
             version: number;
         };
@@ -3730,6 +4126,29 @@ export interface components {
             /** Items */
             items: components["schemas"]["Postagem"][];
         };
+        /** Regras */
+        Regras: {
+            /** Padrao */
+            padrao: string;
+            /** Padraoatualizado */
+            padraoAtualizado: boolean;
+            /** Personalizada */
+            personalizada: boolean;
+            /** Texto */
+            texto: string;
+            /** Updatedat */
+            updatedAt: string | null;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Version */
+            version: number;
+        };
+        /** RegrasIn */
+        RegrasIn: {
+            /** Texto */
+            texto: string;
+            /** Version */
+            version: number;
+        };
         /** RenameFonteIn */
         RenameFonteIn: {
             /** Name */
@@ -3760,6 +4179,23 @@ export interface components {
             /** Custo */
             custo: number;
             existente: components["schemas"]["Existente"] | null;
+        };
+        /** ResumoPerfil */
+        ResumoPerfil: {
+            /** Chamadas */
+            chamadas: number;
+            /** Custousd */
+            custoUsd: number;
+            perfil: components["schemas"]["PerfilRef"];
+        };
+        /** ResumoTipo */
+        ResumoTipo: {
+            /** Chamadas */
+            chamadas: number;
+            /** Custousd */
+            custoUsd: number;
+            /** Tipocampo */
+            tipoCampo: string;
         };
         /** RevertIn */
         RevertIn: {
@@ -3839,6 +4275,16 @@ export interface components {
             items: components["schemas"]["SecurityEvent"][];
             /** Nextcursor */
             nextCursor: string | null;
+        };
+        /**
+         * Selecao
+         * @description Só nas `sugestoes`: marcados e ainda não aplicados, e os mostrados e não marcados.
+         */
+        Selecao: {
+            /** Aceitos */
+            aceitos?: string[];
+            /** Rejeitados */
+            rejeitados?: string[];
         };
         /** Selecionado */
         Selecionado: {
@@ -3969,6 +4415,44 @@ export interface components {
             /** Tag */
             tag: string;
         };
+        /** TipoCampo */
+        TipoCampo: {
+            /**
+             * Entidade
+             * @enum {string}
+             */
+            entidade: "asset" | "perfil" | "kit" | "postagem";
+            /**
+             * Formato
+             * @enum {string}
+             */
+            formato: "texto" | "lista" | "sugestoes" | "textos_postagem";
+            /**
+             * Id
+             * @enum {string}
+             */
+            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos";
+            /**
+             * Idioma
+             * @enum {string}
+             */
+            idioma: "en" | "perfil";
+            limites: components["schemas"]["Limites"];
+            /** Onde */
+            onde: string;
+            regras: components["schemas"]["Regras"];
+            /** Rotulo */
+            rotulo: string;
+        };
+        /** TipoOut */
+        TipoOut: {
+            tipo: components["schemas"]["TipoCampo"];
+        };
+        /** TiposList */
+        TiposList: {
+            /** Items */
+            items: components["schemas"]["TipoCampo"][];
+        };
         /** UpdateCanalIn */
         UpdateCanalIn: {
             /** Perfilids */
@@ -3994,6 +4478,8 @@ export interface components {
         UpdatePerfilIn: {
             /** Bio */
             bio?: string | null;
+            /** Ia */
+            ia?: components["schemas"]["IaAplicacao"][] | null;
             /** Language */
             language?: string | null;
             /** Name */
@@ -4015,9 +4501,14 @@ export interface components {
             descricao?: string | null;
             /** Hashtags */
             hashtags?: string[] | null;
+            /** Ia */
+            ia?: components["schemas"]["IaAplicacao"][] | null;
             /** Plannedat */
             plannedAt?: string | null;
-            /** Sugestaoid */
+            /**
+             * Sugestaoid
+             * @deprecated
+             */
             sugestaoId?: string | null;
             /** Titulo */
             titulo?: string | null;
@@ -4110,6 +4601,22 @@ export interface components {
             origem: string;
             /** Rotulo */
             rotulo: string;
+        };
+        /**
+         * Valor
+         * @description Um formato por tipo: `texto`, `itens` ou os três da postagem.
+         */
+        Valor: {
+            /** Descricao */
+            descricao?: string | null;
+            /** Hashtags */
+            hashtags?: string[] | null;
+            /** Itens */
+            itens?: string[] | null;
+            /** Texto */
+            texto?: string | null;
+            /** Titulo */
+            titulo?: string | null;
         };
         /** VerifyIn */
         VerifyIn: {
@@ -8221,6 +8728,688 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    ia_chamadas_list: {
+        parameters: {
+            query?: {
+                perfilId?: string | null;
+                tipoCampo?: string | null;
+                desfecho?: components["schemas"]["IaDesfecho"] | null;
+                de?: string | null;
+                ate?: string | null;
+                sessaoId?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChamadasList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_chamadas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chamada_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChamadaOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_chamadas_descartar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                chamada_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_gerar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GerarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChamadaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Gateway Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_resumo: {
+        parameters: {
+            query?: {
+                mes?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IaResumo"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_tipos_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TiposList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_tipos_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tipo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TipoOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_regras_padrao: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tipo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PadraoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TipoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_regras_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tipo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegrasIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TipoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_regras_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tipo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TipoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_regras_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tipo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };

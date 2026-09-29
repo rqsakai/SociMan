@@ -11,6 +11,7 @@ from sociman_api.config import get_settings
 from sociman_api.cortes import models as _cortes_models  # noqa: F401
 from sociman_api.db import Base
 from sociman_api.envios import models as _envios_models  # noqa: F401
+from sociman_api.ia import models as _ia_models  # noqa: F401
 from sociman_api.marca import models as _marca_models  # noqa: F401
 from sociman_api.notificacoes import models as _notificacoes_models  # noqa: F401
 from sociman_api.perfis import models as _perfis_models  # noqa: F401

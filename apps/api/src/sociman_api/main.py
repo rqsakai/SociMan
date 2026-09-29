@@ -15,6 +15,7 @@ from sociman_api.cortes.router import router as cortes_router
 from sociman_api.db import get_engine
 from sociman_api.envios.router import router as envios_router
 from sociman_api.errors import install_openapi_error_contract, register_error_handlers
+from sociman_api.ia.router import router as ia_router
 from sociman_api.integracoes import router as integracoes_router
 from sociman_api.marca.router import router as kit_router
 from sociman_api.marca.router_fontes import router as fontes_router
@@ -51,6 +52,7 @@ app.include_router(envios_router)
 app.include_router(postagem_router)
 app.include_router(notificacoes_router)
 app.include_router(integracoes_router)
+app.include_router(ia_router)
 install_openapi_error_contract(app)
 
 

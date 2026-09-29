@@ -6,7 +6,8 @@
  * </Field>
  *
  * - label ligada ao controle por htmlFor; erro anunciado com role="alert";
- * - describedBy junta a dica e o erro (quando houver).
+ * - describedBy junta a dica e o erro (quando houver);
+ * - action: botão pequeno à direita do rótulo (ex.: "Melhorar com IA", spec 008).
  *
  * <NativeSelect> é o <select> nativo com o visual do <Input> (os e2e usam selectOption).
  */
@@ -19,18 +20,26 @@ interface FieldProps {
   label: string;
   error?: string;
   hint?: ReactNode;
+  action?: ReactNode;
   className?: string;
   children: (ids: { id: string; describedBy?: string; invalid: boolean }) => ReactNode;
 }
 
-export function Field({ label, error, hint, className, children }: FieldProps) {
+export function Field({ label, error, hint, action, className, children }: FieldProps) {
   const id = useId();
   const hintId = `${id}-hint`;
   const errorId = `${id}-error`;
   const describedBy = [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(" ") || undefined;
   return (
     <div className={cn("space-y-1.5", className)}>
-      <Label htmlFor={id}>{label}</Label>
+      {action ? (
+        <div className="flex min-h-7 flex-wrap items-center justify-between gap-x-2">
+          <Label htmlFor={id}>{label}</Label>
+          {action}
+        </div>
+      ) : (
+        <Label htmlFor={id}>{label}</Label>
+      )}
       {children({ id, describedBy, invalid: Boolean(error) })}
       {hint && (
         <p id={hintId} className="text-xs text-muted-foreground">

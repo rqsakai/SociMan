@@ -66,7 +66,9 @@ _TABLES = ("users", "one_time_tokens", "security_events", "entity_versions", "im
            "perfis", "brand_kits", "brand_fonts", "cortes", "assets", "asset_files")
 # Spec 006 (a mesma regra: só entram as que já existem).
 _TABLES += ("canais_fonte", "canal_perfis", "videos_fonte", "video_metricas", "youtube_cota",
-            "padroes_corte", "envios", "postagens", "sugestoes_texto", "notificacoes")
+            "padroes_corte", "envios", "postagens", "ia_chamadas", "notificacoes")
+# Spec 008.
+_TABLES += ("ia_regras",)
 
 
 @pytest.fixture(autouse=True)

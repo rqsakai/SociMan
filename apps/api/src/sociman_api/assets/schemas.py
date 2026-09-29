@@ -15,6 +15,7 @@ from sociman_api.assets import tipos
 from sociman_api.assets.models import AssetTipo, FileRole
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.errors import ApiError
+from sociman_api.ia.aplicacao import IaAplicacoes
 from sociman_api.perfis.schemas import ImageRef, UserRef, VersionNumber
 
 MAX_TAGS = 20
@@ -103,6 +104,8 @@ class AssetPatch(CamelModel):
     voice_tone: VoiceTone | None = None
     image_rules: ImageRules | None = None
     primary_file_id: UUID | None = None
+    # Spec 008: campos aplicados de uma chamada da IA (marca "com ajuda da IA" na versão).
+    ia: IaAplicacoes | None = None
 
 
 class FilePatch(CamelModel):

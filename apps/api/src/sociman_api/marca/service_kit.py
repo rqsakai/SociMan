@@ -18,6 +18,7 @@ from sociman_api import history, imaging, midia
 from sociman_api.assets.usos import archived_image_ids
 from sociman_api.auth.deps import Actor
 from sociman_api.errors import ApiError
+from sociman_api.ia import aplicacao
 from sociman_api.marca import schemas
 from sociman_api.marca.models import KIT_SECTIONS, BrandFont, BrandKit
 from sociman_api.marca.openshorts import openshorts_section
@@ -164,7 +165,7 @@ def put_kit(db: Session, actor: Actor, perfil_id: uuid.UUID, data: schemas.KitIn
     """Cria (versão 0 → 1) ou troca o kit inteiro. Sem mudança real, não grava versão."""
     # A trava do perfil serializa o primeiro salvamento (sem linha para travar ainda).
     perfil = get_perfil_or_404(db, perfil_id, lock=True)
-    tokens = KitTokens.model_validate(data.model_dump(exclude={"version"}))
+    tokens = KitTokens.model_validate(data.model_dump(exclude={"version", "ia"}))
     row = _row(db, perfil_id, lock=True)
     if row is None:
         if data.version != 0:
@@ -182,7 +183,9 @@ def put_kit(db: Session, actor: Actor, perfil_id: uuid.UUID, data: schemas.KitIn
                        updated_by=actor.user_id, **sections)
         db.add(row)
         db.flush()
-        history.record(db, actor, ENTITY, row, "created", None, history.snapshot(row))
+        after = history.snapshot(row)
+        details = aplicacao.marcar(db, actor, ENTITY, row, None, after, data.ia)
+        history.record(db, actor, ENTITY, row, "created", None, after, details)
         return _saved_out(db, row)
 
     before = history.snapshot(row)
@@ -192,7 +195,8 @@ def put_kit(db: Session, actor: Actor, perfil_id: uuid.UUID, data: schemas.KitIn
     if after == before:
         return _saved_out(db, row)
     row.updated_by = actor.user_id
-    history.record(db, actor, ENTITY, row, "updated", before, after)
+    details = aplicacao.marcar(db, actor, ENTITY, row, before, after, data.ia)
+    history.record(db, actor, ENTITY, row, "updated", before, after, details)
     return _saved_out(db, row)
 
 

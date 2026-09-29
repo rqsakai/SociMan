@@ -201,3 +201,41 @@ def test_listas_do_guarda_nao_encolheram():
                                   "youtube", "instagram"}
     assert set(SOCIAL_SDKS) >= {"tiktok", "google-api-python-client", "instagrapi", "facebook",
                                 "tweepy"}
+
+
+# ---- spec 008 (assistente de IA) ----
+
+def _rotas_ia() -> list[tuple[str, str, str]]:
+    return [(method.upper(), path, op.get("operationId", ""))
+            for path, ops in app.openapi()["paths"].items() if path.startswith("/api/ia/")
+            for method, op in ops.items()]
+
+
+def test_rotas_da_ia_sem_termos_de_publicacao_e_com_operation_id_ia():
+    rotas = _rotas_ia()
+    assert rotas, "nenhuma rota /api/ia/* no OpenAPI"
+    for method, path, op_id in rotas:
+        assert op_id.startswith("ia_"), f"{method} {path}: operationId {op_id!r}"
+        texto = f"{_norm(path)} {_norm(op_id)}"
+        assert not [t for t in PUBLISH_TERMS if t in texto], f"{method} {path} ({op_id})"
+
+
+def test_rotas_da_ia_sem_delete():
+    assert not [r for r in _rotas_ia() if r[0] == "DELETE"]
+
+
+def test_cliente_da_ia_nao_envia_tools():
+    """O assistente só devolve texto: a chamada ao Claude nunca leva `tools` (princípio I)."""
+    from fakes.anthropic_fake import AnthropicFake
+
+    from sociman_api.ia.contexto import Contexto, PerfilBloco
+    from sociman_api.ia.prompt import montar_system, montar_user
+    from sociman_api.ia.tipos import TIPOS
+
+    fake = AnthropicFake()
+    ctx = Contexto(perfil=PerfilBloco(nome="Perfil"))
+    for tipo in TIPOS.values():
+        fake.ia_client().gerar(tipo, montar_system(tipo, tipo.padrao, ctx),
+                               lambda erro, t=tipo: montar_user(t, ctx, {}, "", erro_anterior=erro))
+    assert len(fake.bodies) >= len(TIPOS)
+    assert all("tools" not in b and "tool_choice" not in b for b in fake.bodies)

@@ -27,6 +27,7 @@ from sociman_api.assets.models import Asset, AssetFile, AssetTipo, FileRole, sor
 from sociman_api.assets.usos import UsoImagem, usos_do_perfil
 from sociman_api.auth.deps import Actor
 from sociman_api.errors import ApiError
+from sociman_api.ia import aplicacao
 from sociman_api.perfis.models import Image, ImageKind, Perfil
 from sociman_api.perfis.platforms import suggest_slug
 from sociman_api.perfis.schemas import ImageRef, ImageUrls, VersionsList
@@ -82,12 +83,17 @@ def _file_or_404(asset: Asset, file_id: uuid.UUID) -> AssetFile:
 
 
 def _record(db: Session, actor: Actor, asset: Asset, action: str, before: dict[str, Any] | None,
-            details: dict[str, Any] | None = None) -> bool:
-    """Grava a versão se algo mudou (criação sempre grava). Devolve se gravou."""
+            details: dict[str, Any] | None = None,
+            ia: list[aplicacao.IaAplicacao] | None = None) -> bool:
+    """Grava a versão se algo mudou (criação sempre grava). Devolve se gravou. Com `ia`, marca
+    as chamadas aplicadas (spec 008) na mesma transação e leva `details.ia` na versão."""
     db.flush()
     after = history.snapshot(asset)
     if before is not None and after == before:
         return False
+    marca = aplicacao.marcar(db, actor, ENTITY, asset, before, after, ia)
+    if marca is not None:
+        details = {**(details or {}), **marca}
     asset.updated_by = actor.user_id
     history.record(db, actor, ENTITY, asset, action, before, after, details)
     return True
@@ -397,7 +403,7 @@ def update_asset(db: Session, actor: Actor, asset_id: uuid.UUID,
     """Só os campos enviados. Nulo em `prompt`, `voiceTone` e `imageRules` limpa o campo; nos
     demais, é ignorado. Sem mudança real, não grava versão."""
     asset = _editavel(db, asset_id, data.version)
-    changes = data.model_dump(exclude_unset=True, exclude={"version"})
+    changes = data.model_dump(exclude_unset=True, exclude={"version", "ia"})
     schemas.check_campos(asset.tipo, changes)
     before = history.snapshot(asset)
     for field in _TEXT_FIELDS:
@@ -412,7 +418,7 @@ def update_asset(db: Session, actor: Actor, asset_id: uuid.UUID,
         if primary not in {f.id for f in asset.active_files()}:
             raise schemas.invalid("primaryFileId", "escolha um arquivo ativo deste asset")
         asset.primary_file_id = primary
-    _record(db, actor, asset, "updated", before)
+    _record(db, actor, asset, "updated", before, ia=data.ia)
     return asset
 
 

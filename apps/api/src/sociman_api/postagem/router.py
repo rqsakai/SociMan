@@ -13,14 +13,14 @@ from fastapi import APIRouter, Depends, Query
 from sociman_api.auth.deps import RequireOwner, RequireUser
 from sociman_api.db import DbSession
 from sociman_api.errors import ErrorEnvelope
+from sociman_api.ia.cliente import IaClient, get_ia_client
 from sociman_api.perfis.models import Platform
 from sociman_api.perfis.schemas import RevertIn, VersionIn, VersionsList
 from sociman_api.postagem import schemas, service
-from sociman_api.postagem.textos import TextosClient, get_textos_client
 
 router = APIRouter(prefix="/api")
 
-Textos = Annotated[TextosClient | None, Depends(get_textos_client)]
+Textos = Annotated[IaClient | None, Depends(get_ia_client)]
 
 
 def _errors(*statuses: int) -> dict[int | str, dict]:
@@ -33,8 +33,9 @@ def _out(db: DbSession, postagem) -> schemas.PostagemOut:
 
 # ---- sugestões ----
 
+# Deprecated desde a spec 008: o painel usa `POST /api/ia/gerar` (`postagem.textos`).
 @router.post("/cortes/{corte_id}/sugestoes", operation_id="postagens_sugerir",
-             response_model=schemas.SugestaoOut,
+             response_model=schemas.SugestaoOut, deprecated=True,
              responses=_errors(400, 401, 403, 404, 502, 503, 504))
 def sugerir(corte_id: UUID, body: schemas.SugestaoIn, actor: RequireUser, db: DbSession,
             client: Textos) -> schemas.SugestaoOut:
@@ -43,7 +44,8 @@ def sugerir(corte_id: UUID, body: schemas.SugestaoIn, actor: RequireUser, db: Db
 
 
 @router.get("/cortes/{corte_id}/sugestoes", operation_id="postagens_sugestoes",
-            response_model=schemas.SugestoesList, responses=_errors(401, 403, 404))
+            response_model=schemas.SugestoesList, responses=_errors(401, 403, 404),
+            deprecated=True)
 def list_sugestoes(corte_id: UUID, actor: RequireUser, db: DbSession) -> schemas.SugestoesList:
     return schemas.SugestoesList(items=service.list_sugestoes(db, corte_id))
 

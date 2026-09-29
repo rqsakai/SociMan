@@ -52,6 +52,10 @@ x-integracoes-env: &integracoes-env
   YOUTUBE_API_URL: http://openshorts-fake:8000/youtube/v3
   YOUTUBE_API_KEY: chave-youtube-de-mentira-do-e2e
   APP_TZ: America/Sao_Paulo
+  # Spec 008 (T015): o Claude também é o `openshorts-fake` (`POST /v1/messages`). A chave é fixa
+  # e de mentira (não casa com `sk-ant-…`); o e2e nunca chama a Anthropic.
+  ANTHROPIC_API_KEY: chave-claude-de-mentira-do-e2e
+  ANTHROPIC_BASE_URL: http://openshorts-fake:8000
 
 services:
   edge:

@@ -62,6 +62,13 @@ export const errorCodes = [
   "claude_error",
   "textos_timeout",
   "textos_invalidos",
+  // 008-assistente-ia
+  "invalid_ia",
+  "ia_anteriores_invalidas",
+  "ia_tipo_not_found",
+  "ia_timeout",
+  "ia_recusa",
+  "ia_invalida",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

@@ -2,13 +2,13 @@
 
 O SociMan nunca publica (princípio I): `postado` só é marcado pela rota humana. Uma postagem
 por corte e conta de destino (a conta dá a plataforma). O snapshot versionado é o histórico dos
-textos (US5-2). `sugestoes_texto` é o log imutável de cada chamada ao Claude (só INSERT).
+textos (US5-2). As chamadas ao Claude ficam em `ia_chamadas` (spec 008, `ia/models.py`), a
+`sugestoes_texto` da 006 renomeada: `sugestao_id` continua apontando para os mesmos ids.
 """
 
 import enum
 import uuid
 from datetime import datetime
-from typing import Any
 
 from sqlalchemy import (
     CheckConstraint,
@@ -16,51 +16,23 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Index,
-    Integer,
     Text,
     Uuid,
-    func,
     text,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from sociman_api.auth.models import AuditMixin
 from sociman_api.db import Base
-from sociman_api.perfis.models import Platform, _Versioned
+from sociman_api.ia import models as _ia_models  # noqa: F401 — FK para ia_chamadas
+from sociman_api.perfis.models import _Versioned
 
 
 class EstadoPostagem(enum.StrEnum):
     rascunho = "rascunho"
     agendado = "agendado"
     postado = "postado"
-
-
-class SugestaoTexto(Base):
-    """Só INSERT: o que o Claude devolveu (validado), com custo e duração."""
-
-    __tablename__ = "sugestoes_texto"
-
-    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    corte_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("cortes.id"), nullable=False)
-    plataforma: Mapped[Platform] = mapped_column(
-        Enum(Platform, name="platform"), nullable=False
-    )
-    model: Mapped[str] = mapped_column(Text, nullable=False)
-    prompt_version: Mapped[str] = mapped_column(Text, nullable=False)  # ex.: textos/1
-    resultado: Mapped[dict[str, Any] | None] = mapped_column(JSONB)  # {titulo, descricao, hashtags}
-    ajustes: Mapped[list[str]] = mapped_column(
-        ARRAY(Text), nullable=False, default=list, server_default=text("'{}'")
-    )
-    erro_code: Mapped[str | None] = mapped_column(Text)  # timeout|refusal|invalid|api_error
-    input_tokens: Mapped[int | None] = mapped_column(Integer)
-    output_tokens: Mapped[int | None] = mapped_column(Integer)
-    cache_read_tokens: Mapped[int | None] = mapped_column(Integer)
-    duration_ms: Mapped[int] = mapped_column(Integer, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now()
-    )
-    created_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
 
 
 class Postagem(_Versioned, AuditMixin, Base):
@@ -99,7 +71,7 @@ class Postagem(_Versioned, AuditMixin, Base):
     posted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     posted_url: Mapped[str | None] = mapped_column(Text)
     sugestao_id: Mapped[uuid.UUID | None] = mapped_column(
-        Uuid, ForeignKey("sugestoes_texto.id")
+        Uuid, ForeignKey("ia_chamadas.id")
     )
 
 

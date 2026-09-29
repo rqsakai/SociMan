@@ -14,6 +14,7 @@ from pydantic import Field, StringConstraints
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.canais.schemas import PerfilRef  # o mesmo nome no OpenAPI (trilha A)
 from sociman_api.cortes.models import CorteStatus
+from sociman_api.ia.aplicacao import IaAplicacoes
 from sociman_api.perfis.models import Platform
 from sociman_api.perfis.schemas import UserRef, VersionNumber
 from sociman_api.postagem.models import EstadoPostagem
@@ -138,7 +139,9 @@ class CreatePostagemIn(CamelModel):
     descricao: Descricao = ""
     hashtags: Hashtags = Field(default_factory=list)
     planned_at: datetime | None = None  # com data → `agendado` (corte pronto)
-    sugestao_id: UUID | None = None
+    # Spec 008: `ia` substitui o `sugestaoId` (o servidor o grava a partir do item da IA).
+    sugestao_id: UUID | None = Field(default=None, json_schema_extra={"deprecated": True})
+    ia: IaAplicacoes | None = None
 
 
 class UpdatePostagemIn(CamelModel):
@@ -150,7 +153,8 @@ class UpdatePostagemIn(CamelModel):
     descricao: Descricao | None = None
     hashtags: Hashtags | None = None
     planned_at: datetime | None = None
-    sugestao_id: UUID | None = None
+    sugestao_id: UUID | None = Field(default=None, json_schema_extra={"deprecated": True})
+    ia: IaAplicacoes | None = None
 
 
 class PostadoIn(CamelModel):

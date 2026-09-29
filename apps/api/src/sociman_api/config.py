@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     openshorts_url: str = "http://host.docker.internal:8000"
     anthropic_api_key: SecretStr = SecretStr("")
     textos_model: str = "claude-sonnet-5-5"
+    anthropic_base_url: str = ""  # spec 008: vazio = padrão do SDK; só o e2e aponta para o fake
     app_tz: str = "America/Sao_Paulo"  # exibição e agendamento; tudo guardado em timestamptz
     yt_quota_daily: int = Field(10000, gt=0)
     sync_novos_h: float = Field(1, gt=0)  # intervalo da sync incremental de cada canal

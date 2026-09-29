@@ -20,8 +20,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "../../components/ImageUpload";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { HistoryHeading, VersionHistory } from "../../components/VersionHistory";
+import { IaAssist } from "../../components/ia/IaAssist";
 import { api } from "../../lib/api";
 import { editPerfilForm, type EditPerfilForm } from "../../lib/forms";
+import { comRebase, useFormRebase, type IaOnSave } from "../../lib/ia";
 import {
   formatPerfilValue,
   languageLabel,
@@ -174,6 +176,7 @@ export default function PerfilDetalhe() {
             }}
             onError={setError}
             onSubmitStart={() => setError(null)}
+            onRefresh={refresh}
           />
         </TabsContent>
         <TabsContent value="contas">
@@ -243,31 +246,51 @@ function PerfilHeader({ perfil, tabs, actions }: { perfil: Perfil; tabs: ReactNo
   );
 }
 
+const perfilValues = (perfil: Perfil): EditPerfilForm => ({
+  name: perfil.name,
+  niche: perfil.niche,
+  bio: perfil.bio,
+  language: perfil.language,
+  status: perfil.status,
+});
+
 function DadosTab({
   perfil,
   onSaved,
   onError,
   onSubmitStart,
+  onRefresh,
 }: {
   perfil: Perfil;
   onSaved: (text: string) => Promise<void>;
   onError: (err: unknown) => void;
   onSubmitStart: () => void;
+  onRefresh: () => Promise<void>;
 }) {
+  // O formulário remonta pela `key` com a versão; o Aplicar da IA salva só a descrição e guarda o
+  // que estava sujo nos outros campos para voltar por cima dos dados novos (spec 008, R-9).
+  const rebase = useFormRebase<Partial<EditPerfilForm>>(`perfil:${perfil.id}`);
   const {
     register: field,
     handleSubmit,
+    getValues,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<EditPerfilForm>({
     resolver: zodResolver(editPerfilForm),
-    defaultValues: {
-      name: perfil.name,
-      niche: perfil.niche,
-      bio: perfil.bio,
-      language: perfil.language,
-      status: perfil.status,
-    },
+    defaultValues: { ...perfilValues(perfil), ...rebase.retomado },
   });
+
+  const iaSaveBio: IaOnSave<string> = async (valor, ia) => {
+    const salvos = perfilValues(perfil);
+    const sujos = Object.fromEntries(
+      Object.entries(getValues()).filter(([k, v]) => k !== "bio" && v !== salvos[k as keyof EditPerfilForm]),
+    ) as Partial<EditPerfilForm>;
+    await comRebase(rebase, Object.keys(sujos).length > 0 ? sujos : null, async () => {
+      await api.perfis.update(perfil.id, { version: perfil.version, bio: valor, ia });
+    });
+    await onRefresh();
+  };
 
   async function onSubmit(data: EditPerfilForm) {
     onSubmitStart();
@@ -325,11 +348,24 @@ function DadosTab({
                 <Input id={id} autoComplete="off" aria-invalid={invalid} aria-describedby={describedBy} {...field("niche")} />
               )}
             </Field>
-            <Field label="Descrição" error={errors.bio?.message}>
-              {({ id, describedBy, invalid }) => (
-                <Textarea id={id} rows={5} aria-invalid={invalid} aria-describedby={describedBy} {...field("bio")} />
+            <IaAssist
+              tipo="perfil.bio"
+              perfilId={perfil.id}
+              alvo={{ entityType: "perfil", entityId: perfil.id }}
+              value={watch("bio")}
+              onSave={iaSaveBio}
+              campo="Descrição"
+              disabled={perfil.archived}
+              onReload={() => void onRefresh()}
+            >
+              {(botao) => (
+                <Field label="Descrição" action={botao} error={errors.bio?.message}>
+                  {({ id, describedBy, invalid }) => (
+                    <Textarea id={id} rows={5} aria-invalid={invalid} aria-describedby={describedBy} {...field("bio")} />
+                  )}
+                </Field>
               )}
-            </Field>
+            </IaAssist>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Idioma" error={errors.language?.message}>
                 {({ id, describedBy, invalid }) => (

@@ -8,6 +8,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from sociman_api.auth.schemas import CamelModel
+from sociman_api.ia.aplicacao import IaAplicacoes
 from sociman_api.marca.tokens import KitTokens
 from sociman_api.perfis.schemas import UserRef
 
@@ -22,6 +23,9 @@ class KitIn(KitTokens):
     """PUT do kit inteiro. `version: 0` cria a v1 (o kit nunca foi salvo)."""
 
     version: int = Field(ge=0)
+    # Spec 008: bordões/séries aplicados de uma chamada da IA. Fora de `sections()`: nunca
+    # chega aos tokens gravados.
+    ia: IaAplicacoes | None = None
 
 
 class Kit(KitTokens):

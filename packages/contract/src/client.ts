@@ -96,6 +96,20 @@ export type CalendarioItem = components["schemas"]["CalendarioItem"];
 export type CalendarioSemData = components["schemas"]["SemData"];
 export type CalendarioFilters = paths["/api/calendario"]["get"]["parameters"]["query"];
 export type Integracoes = components["schemas"]["Integracoes"];
+// 008-assistente-ia
+export type TipoCampo = components["schemas"]["TipoCampo"];
+export type TipoCampoId = TipoCampo["id"];
+export type IaLimites = components["schemas"]["Limites"];
+export type IaRegras = components["schemas"]["Regras"];
+export type IaAlvo = components["schemas"]["Alvo"];
+export type IaValor = components["schemas"]["Valor"];
+export type IaSelecao = components["schemas"]["Selecao"];
+export type IaChamada = components["schemas"]["IaChamada"];
+export type IaDesfecho = IaChamada["desfecho"];
+export type IaAplicacao = components["schemas"]["IaAplicacao"];
+export type IaGerarRequest = components["schemas"]["GerarIn"];
+export type IaResumo = components["schemas"]["IaResumo"];
+export type IaChamadaFilters = NonNullable<paths["/api/ia/chamadas"]["get"]["parameters"]["query"]>;
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -539,6 +553,26 @@ export function createApiClient(options: ApiClientOptions = {}) {
             body: { version, toVersion },
           }),
         ),
+    },
+    // Assistente de IA (spec 008): gerar nunca salva; o Aplicar é o save de cada tela com `ia`.
+    // Regras (mutações), registro e resumo são só do dono. Nenhuma rota DELETE.
+    ia: {
+      tipos: () => unwrap(client.GET("/api/ia/tipos")),
+      tipo: (tipo: TipoCampoId) => unwrap(client.GET("/api/ia/tipos/{tipo}", { params: { path: { tipo } } })),
+      updateRegras: (tipo: TipoCampoId, body: { version: number; texto: string }) =>
+        unwrap(client.PUT("/api/ia/tipos/{tipo}/regras", { params: { path: { tipo } }, body })),
+      padrao: (tipo: TipoCampoId, version: number) =>
+        unwrap(client.POST("/api/ia/tipos/{tipo}/padrao", { params: { path: { tipo } }, body: { version } })),
+      versions: (tipo: TipoCampoId) => unwrap(client.GET("/api/ia/tipos/{tipo}/versions", { params: { path: { tipo } } })),
+      revert: (tipo: TipoCampoId, version: number, toVersion: number) =>
+        unwrap(client.POST("/api/ia/tipos/{tipo}/revert", { params: { path: { tipo } }, body: { version, toVersion } })),
+      gerar: (body: IaGerarRequest) => unwrap(client.POST("/api/ia/gerar", { body })),
+      descartar: (chamadaId: string) =>
+        unwrap(client.POST("/api/ia/chamadas/{chamada_id}/descartar", { params: { path: { chamada_id: chamadaId } } })),
+      chamadas: (query: IaChamadaFilters = {}) => unwrap(client.GET("/api/ia/chamadas", { params: { query } })),
+      chamada: (chamadaId: string) =>
+        unwrap(client.GET("/api/ia/chamadas/{chamada_id}", { params: { path: { chamada_id: chamadaId } } })),
+      resumo: (mes?: string) => unwrap(client.GET("/api/ia/resumo", { params: { query: mes ? { mes } : {} } })),
     },
     calendario: (query: CalendarioFilters) => unwrap(client.GET("/api/calendario", { params: { query } })),
     integracoes: () => unwrap(client.GET("/api/integracoes")),

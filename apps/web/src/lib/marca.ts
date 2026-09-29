@@ -28,7 +28,7 @@ export type FonteRef = string;
 export type PosicaoMarca = MarcaDagua["posicao"];
 
 // O corpo do PUT sem a versão; bordões e séries sempre presentes no rascunho.
-export type KitTokens = Omit<KitIn, "version" | "catchphrases" | "series"> & { catchphrases: string[]; series: string[] };
+export type KitTokens = Omit<KitIn, "version" | "catchphrases" | "series" | "ia"> & { catchphrases: string[]; series: string[] };
 
 export type Version = EntityVersion;
 
