@@ -1,6 +1,7 @@
+import pytest
 from fastapi.testclient import TestClient
 
-from sociman_api import db
+from sociman_api import datadir, db
 from sociman_api.main import app
 
 
@@ -25,6 +26,23 @@ def test_health_reports_redis_unavailable(monkeypatch):
     r = TestClient(app).get("/api/health")
     assert r.status_code == 503
     assert r.json()["redis"] == "unavailable"
+
+
+def test_health_ok_com_o_hd_de_dados():
+    r = TestClient(app).get("/api/health")
+    assert r.status_code == 200
+    assert r.json() == {"status": "ok", "db": "ok", "redis": "ok", "storage": "ok"}
+
+
+@pytest.mark.parametrize(("reason", "storage"), [
+    ("sem_sentinela", "unavailable"), ("pouco_espaco", "low_space"),
+])
+def test_health_hd_fora_degrada_sem_derrubar_a_api(monkeypatch, reason, storage):
+    fake = datadir.DataDirStatus(False, reason, None, None, 0)
+    monkeypatch.setattr("sociman_api.main.datadir.status", lambda: fake)
+    r = TestClient(app).get("/api/health")
+    assert r.status_code == 200
+    assert r.json() == {"status": "degraded", "db": "ok", "redis": "ok", "storage": storage}
 
 
 def test_openapi_is_served_under_api():

@@ -37,6 +37,8 @@ docker compose exec api uv run sociman reset-db --yes                           
 npm run casa:up                             # MODO CASA: build de produção + EDGE_MODE=prod + perfil prod (PWA instalável)
 npm run test:e2e:pwa                        # e2e do PWA — exige modo casa (prod); zera o banco de dev
 docker compose --profile prod stop web-prod && docker compose up -d edge   # volta ao modo dev
+./scripts/data-setup.sh check|init|count|migrate|compare|verify   # HD de dados (MinIO + work) — ver spec 004 quickstart §0
+docker compose logs -f worker               # worker de vídeo (`sociman worker`): fila de cortes, ffmpeg
 ```
 **Modo casa:** use `https://192.168.86.47:8543` nos aparelhos (com a CA da casa instalada). `http://192.168.86.47:8180` redireciona para lá; a CA pública fica em `http://192.168.86.47:8180/sociman-ca.cer`.
 Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev**), Mailpit (e-mails de dev) em **127.0.0.1:8126**. Postgres, API, Redis, SMTP e imgproxy ficam só na rede interna. **Não use** 8000/5175 (OpenShorts), 18789 (OpenClaw) nem 6379/1025/8025 (arka-manager, já ocupadas no host).
@@ -47,6 +49,12 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 - Formulários: `components/ui/field.tsx` (`Field` + `NativeSelect`: `<select>` nativo, e os e2e dependem dele). Confirmações em AlertDialog (`role="alertdialog"`).
 - Referência visual: `docs/design/layout-referencia.md` (Material Dashboard React, só inspiração). CSP: `style-src 'unsafe-inline'` aceito, `script-src` estrito (ADR 0001).
 - Vitrine de componentes só em dev: `/app/_showcase`.
+
+## Kit de marca e cortes (desde a spec 004)
+- **MinIO no HD:** `${SOCIMAN_DATA_DIR}` (padrão `/media/sakai/BACKUP/tiktok/sociman`) tem `minio/`, `work/` e o sentinela `.sociman-volume`. Buckets: `sociman` (imagens), `sociman-fonts` e `sociman-videos`. O volume antigo `sociman_minio-data` ficou como cópia de segurança, sem uso.
+- **Código:** `datadir.py` (sentinela, espaço livre, 503/507), `storage.py` (`bucket="imagens"|"fontes"|"videos"`, sem delete), `midia.py` + `router_midia.py` (links HMAC `/api/midia/{token}` com Range; vídeo com validade, fonte e marca d'água sem validade), `marca/` (tokens, kit, exportação para o OpenShorts, fontes, marca d'água) e `cortes/` (probe, render com Pillow, compose com ffmpeg, fila com SKIP LOCKED, worker).
+- **Edge:** as rotas de upload grande têm `location` própria no `default.conf.template`: cortes com 520m e sem buffering, fontes com 11m. `/api/midia/` sem buffering.
+- **Gancho:** quem queima é o SociMan. Ao gerar cortes no OpenShorts, **não** use `auto_hook` (a exportação traz `openshorts.hook.enabled=false`).
 
 ## Armadilhas
 1. **Containers rodam como UID 1000.** Se uma pasta de bind mount não existir, o Docker a cria como root (foi o que aconteceu com `docker/certs`). Crie antes.

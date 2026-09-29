@@ -27,6 +27,25 @@ export type CreateContaRequest = components["schemas"]["CreateContaIn"];
 export type UpdateContaRequest = components["schemas"]["UpdateContaIn"];
 export type PerfilFilters = NonNullable<paths["/api/perfis"]["get"]["parameters"]["query"]>;
 export type ImageKind = "logo" | "banner";
+// 004-kit-de-marca
+export type Kit = components["schemas"]["Kit"];
+export type KitIn = components["schemas"]["KitIn"];
+export type KitExport = components["schemas"]["KitExport"];
+export type FontOption = components["schemas"]["FontOption"];
+export type Cor = components["schemas"]["Cor"];
+export type Legenda = components["schemas"]["Legenda"];
+export type Gancho = components["schemas"]["Gancho"];
+export type MarcaDagua = components["schemas"]["MarcaDagua"];
+export type CardFinal = components["schemas"]["CardFinal"];
+export type UserRef = components["schemas"]["UserRef"];
+export type Fonte = components["schemas"]["Fonte"];
+export type FontePadrao = components["schemas"]["FontePadrao"];
+export type Corte = components["schemas"]["Corte"];
+export type CorteStatus = components["schemas"]["CorteStatus"];
+export type Armazenamento = components["schemas"]["Armazenamento"];
+export type MidiaLink = components["schemas"]["MidiaLink"];
+export type MidiaKind = "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo";
+export type CorteFilters = NonNullable<paths["/api/perfis/{perfil_id}/cortes"]["get"]["parameters"]["query"]>;
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -36,6 +55,10 @@ export class ApiError extends Error {
     public readonly status: number,
     public readonly code: ErrorCode,
     message: string,
+    // Campo recusado (ex.: `hook.cor_fundo` no 400 `invalid_kit`) e detalhes extras
+    // (ex.: `details.fields` no 409 `font_in_use`), quando a API manda.
+    public readonly field: string | null = null,
+    public readonly details: Record<string, unknown> = {},
   ) {
     super(message);
     this.name = "ApiError";
@@ -44,9 +67,15 @@ export class ApiError extends Error {
 
 // Monta o ApiError a partir do corpo de erro já lido (JSON ou texto).
 export function toApiError(status: number, body: unknown): ApiError {
-  const error = (body as { error?: { code?: unknown; message?: unknown } } | null)?.error;
+  const error = (
+    body as { error?: { code?: unknown; message?: unknown; field?: unknown; details?: unknown } } | null
+  )?.error;
   if (isErrorCode(error?.code) && typeof error.message === "string") {
-    return new ApiError(status, error.code, error.message);
+    const details =
+      error.details && typeof error.details === "object" ? (error.details as Record<string, unknown>) : {};
+    const field =
+      typeof error.field === "string" ? error.field : typeof details.field === "string" ? details.field : null;
+    return new ApiError(status, error.code, error.message, field, details);
   }
   // corpo não segue o contrato de erro — mantém o genérico
   return new ApiError(status, "internal_error", `HTTP ${status}`);
@@ -164,6 +193,106 @@ export function createApiClient(options: ApiClientOptions = {}) {
             : client.POST("/api/perfis/{perfil_id}/banner/clear", init),
         );
       },
+    },
+    kit: {
+      get: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/kit", { params: { path: { perfil_id: perfilId } } })),
+      put: (perfilId: string, body: KitIn) =>
+        unwrap(client.PUT("/api/perfis/{perfil_id}/kit", { params: { path: { perfil_id: perfilId } }, body })),
+      versions: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/kit/versions", { params: { path: { perfil_id: perfilId } } })),
+      revert: (perfilId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/perfis/{perfil_id}/kit/revert", {
+            params: { path: { perfil_id: perfilId } },
+            body: { version, toVersion },
+          }),
+        ),
+      export: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/kit/export", { params: { path: { perfil_id: perfilId } } })),
+      // O arquivo com o nome que a API manda (Content-Disposition: kit-<slug>-v<n>.json).
+      exportFile: async (perfilId: string): Promise<{ blob: Blob; filename: string }> => {
+        const { data, error, response } = await client.GET("/api/perfis/{perfil_id}/kit/export", {
+          params: { path: { perfil_id: perfilId }, query: { download: true } },
+          parseAs: "blob",
+        });
+        if (!response.ok || !data) throw toApiError(response.status, error);
+        const disposition = response.headers.get("content-disposition") ?? "";
+        const filename = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? "kit.json";
+        return { blob: data, filename };
+      },
+    },
+    fontes: {
+      padrao: () => unwrap(client.GET("/api/fontes-padrao")),
+      list: (perfilId: string, archived = false) =>
+        unwrap(
+          client.GET("/api/perfis/{perfil_id}/fontes", {
+            params: { path: { perfil_id: perfilId }, query: { archived } },
+          }),
+        ),
+      upload: (perfilId: string, file: Blob, name: string) => {
+        const form = new FormData();
+        form.append("file", file);
+        form.append("name", name);
+        return unwrap(
+          client.POST("/api/perfis/{perfil_id}/fontes", {
+            params: { path: { perfil_id: perfilId } },
+            body: form as never,
+          }),
+        );
+      },
+      rename: (fontId: string, version: number, name: string) =>
+        unwrap(client.PATCH("/api/fontes/{font_id}", { params: { path: { font_id: fontId } }, body: { version, name } })),
+      archive: (fontId: string, version: number) =>
+        unwrap(client.POST("/api/fontes/{font_id}/archive", { params: { path: { font_id: fontId } }, body: { version } })),
+      restore: (fontId: string, version: number) =>
+        unwrap(client.POST("/api/fontes/{font_id}/restore", { params: { path: { font_id: fontId } }, body: { version } })),
+      versions: (fontId: string) =>
+        unwrap(client.GET("/api/fontes/{font_id}/versions", { params: { path: { font_id: fontId } } })),
+    },
+    marcaDagua: {
+      list: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/marca-dagua", { params: { path: { perfil_id: perfilId } } })),
+      upload: (perfilId: string, file: Blob) => {
+        const form = new FormData();
+        form.append("file", file);
+        return unwrap(
+          client.POST("/api/perfis/{perfil_id}/marca-dagua", {
+            params: { path: { perfil_id: perfilId } },
+            body: form as never,
+          }),
+        );
+      },
+    },
+    // Imagens de fundo do gancho e do card final (FR-005b); enviar não altera o kit.
+    fundos: {
+      list: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/fundos", { params: { path: { perfil_id: perfilId } } })),
+      upload: (perfilId: string, file: Blob) => {
+        const form = new FormData();
+        form.append("file", file);
+        return unwrap(
+          client.POST("/api/perfis/{perfil_id}/fundos", {
+            params: { path: { perfil_id: perfilId } },
+            body: form as never,
+          }),
+        );
+      },
+    },
+    // O envio (POST multipart) fica no app, por XHR, para ter o progresso do upload.
+    cortes: {
+      list: (perfilId: string, query: CorteFilters = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/cortes", { params: { path: { perfil_id: perfilId }, query } })),
+      get: (corteId: string) =>
+        unwrap(client.GET("/api/cortes/{corte_id}", { params: { path: { corte_id: corteId } } })),
+      retry: (corteId: string, version: number) =>
+        unwrap(client.POST("/api/cortes/{corte_id}/retry", { params: { path: { corte_id: corteId } }, body: { version } })),
+      versions: (corteId: string) =>
+        unwrap(client.GET("/api/cortes/{corte_id}/versions", { params: { path: { corte_id: corteId } } })),
+    },
+    armazenamento: () => unwrap(client.GET("/api/armazenamento")),
+    midia: {
+      links: (items: { kind: MidiaKind; id: string }[]) => unwrap(client.POST("/api/midia/links", { body: { items } })),
     },
     contas: {
       create: (perfilId: string, body: CreateContaRequest) =>

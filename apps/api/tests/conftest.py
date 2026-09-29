@@ -61,9 +61,9 @@ def _migrated() -> None:
     command.upgrade(cfg, "head")
 
 
-# Ordem irrelevante (CASCADE); as da 003 só entram se a migration já existir.
+# Ordem irrelevante (CASCADE); as da 003 e da 004 só entram se a migration já existir.
 _TABLES = ("users", "one_time_tokens", "security_events", "entity_versions", "images", "contas",
-           "perfis")
+           "perfis", "brand_kits", "brand_fonts", "cortes")
 
 
 @pytest.fixture(autouse=True)

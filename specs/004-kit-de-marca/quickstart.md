@@ -25,12 +25,12 @@ O contrato está em [contracts/http-api.md](contracts/http-api.md) e o modelo de
 Um passo por vez, conferindo cada saída:
 ```bash
 findmnt -no SOURCE,FSTYPE -T /media/sakai/BACKUP     # /dev/sda1 ext4 (se mostrar a raiz, PARE)
-./scripts/hd-setup.sh check                          # HD montado, dono 1000:1000, espaço livre
-./scripts/hd-setup.sh init                           # cria minio/, work/tmp, work/cortes e .sociman-volume
-./scripts/hd-setup.sh count                          # objetos e bytes do bucket sociman (volume antigo)
-./scripts/hd-setup.sh migrate                        # para edge/imgproxy/api/minio, copia minio-data → HD, chown 1000
+./scripts/data-setup.sh check                          # HD montado, dono 1000:1000, espaço livre
+./scripts/data-setup.sh init                           # cria minio/, work/tmp, work/cortes e .sociman-volume
+./scripts/data-setup.sh count                          # objetos e bytes do bucket sociman (volume antigo)
+./scripts/data-setup.sh migrate                        # para edge/imgproxy/api/minio, copia minio-data → HD, chown 1000
 docker compose up -d                                 # compose novo: minio no bind do HD
-./scripts/hd-setup.sh verify                         # compara a contagem, confere os 3 buckets e o sentinela
+./scripts/data-setup.sh verify                         # compara a contagem, confere os 3 buckets e o sentinela
 ```
 Verificar:
 - a contagem e os bytes do bucket `sociman` são iguais antes e depois (SC-008);
@@ -38,7 +38,7 @@ Verificar:
 - o logo de "Queridinhos" abre: pegue a URL `/img/...` em `GET /api/perfis` e rode
   `curl -sI http://localhost:8180<url>` (200); a lista de perfis mostra as miniaturas;
 - `du -sh /media/sakai/BACKUP/tiktok/sociman/minio` tem o tamanho do volume antigo, e
-  `docker compose exec api sh -c 'echo $TMPDIR'` mostra `/hd/work/tmp`;
+  `docker compose exec api sh -c 'echo $TMPDIR'` mostra `/media/sakai/BACKUP/tiktok/sociman/work/tmp`;
 - `npm run test:api` e `npm run test:e2e` verdes.
 
 Remover o volume `minio-data` fica para depois, à mão, pelo dono.
@@ -106,13 +106,14 @@ Em "Queridinhos", aba Cortes:
    cortes e o espaço livre do HD (~2,1 TB).
 2. Sem o sentinela: `mv .sociman-volume .sociman-volume.off` na pasta do HD. Um envio de corte,
    de fonte ou de logo recebe 503 "O HD de dados não está disponível", o health mostra
-   `storage: unavailable`, e a aba Cortes avisa e desabilita o envio. `docker compose restart
+   `status: degraded` e `storage: unavailable`, e a aba Cortes avisa e desabilita o envio. Login,
+   lista de perfis e edição do kit continuam funcionando. `docker compose restart
    minio`: o `minio` sai com a mensagem do sentinela no log. Nada foi gravado no NVMe (`df` da
    raiz antes e depois). Volte o sentinela e suba o `minio` de novo.
-3. Pasta ausente (simula o HD desmontado): com `SOCIMAN_HD_DIR=/nao-existe docker compose up -d
+3. Pasta ausente (simula o HD desmontado): com `SOCIMAN_DATA_DIR=/nao-existe docker compose up -d
    minio`, o container não sobe (o Docker não cria a pasta: `create_host_path: false`). Volte ao
-   `.env` normal.
-4. Pouco espaço: com `HD_MIN_FREE_GB=999999` no `.env` e `docker compose up -d api worker`, um
+   `.env` normal. A `api` e o `worker` continuam no ar nesse caso (montam `/media/sakai`).
+4. Pouco espaço: com `DATA_MIN_FREE_GB=999999` no `.env` e `docker compose up -d api worker`, um
    envio recebe 507 "Pouco espaço no HD de dados". Volte o valor para 20.
 5. Temporários no HD: durante um processamento, `ls /media/sakai/BACKUP/tiktok/sociman/work/cortes/`
    mostra a pasta do corte; depois de "Pronto", ela sumiu. `docker compose exec worker du -sh /tmp`
@@ -145,3 +146,74 @@ SC-001 (kit a partir do padrão em menos de 5 min, pela interface), SC-003 (60 s
 - **A Taverna Nerd:** paleta nogueira/âmbar/pergaminho/cinza-ferro; legenda com fundo pergaminho
   (`opacidade_fundo > 0`); marca d'água texto `@atavernanerd`, depois imagem `watermark.png` com
   transparência; CTA "Segue a taverna".
+
+## Resultado §0 (2026-09-29, host `sakai-desktop`)
+HD: `findmnt -T /media/sakai/BACKUP/tiktok` → `/media/sakai/BACKUP /dev/sda1 ext4`, 2.127 GB livres.
+Imagem do MinIO fixada: `minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493…936e` (a que
+gravou o volume; a mesma na stack de teste).
+
+```text
+$ ./scripts/data-setup.sh check          # antes do init: sai com 1
+FALHA: /media/sakai/BACKUP/tiktok/sociman não existe (rode init)
+FALHA: sentinela …/.sociman-volume não existe (rode init)
+ERRO: o HD de dados não está pronto
+$ ./scripts/data-setup.sh init           # cria minio/, work/tmp, work/cortes e o sentinela (1000:1000)
+$ ./scripts/data-setup.sh count volume   # antes, offline (um xl.meta por objeto)
+sociman-test objetos=1 bytes_disco=17565
+sociman objetos=32 bytes_disco=5556980
+$ ./scripts/data-setup.sh count s3       # antes, MinIO antigo no ar
+sociman objetos=32 bytes=5293563
+sociman-test objetos=1 bytes=760
+$ docker compose stop edge imgproxy api minio
+$ ./scripts/data-setup.sh migrate        # cp -a + chown 1000 num alpine; o volume é montado :ro
+ok: a cópia no HD tem os mesmos objetos e bytes do volume (SC-008)
+$ docker compose up -d                   # minio-init: sociman, sociman-fonts, sociman-videos
+$ ./scripts/data-setup.sh count s3       # depois, MinIO novo no HD
+sociman objetos=32 bytes=5293563
+sociman-fonts objetos=0 bytes=0
+sociman-test objetos=1 bytes=760
+sociman-videos objetos=0 bytes=0
+$ ./scripts/data-setup.sh verify
+ok: volume antigo sociman_minio-data continua lá
+ok: o minio usa /media/sakai/BACKUP/tiktok/sociman/minio
+ok: bucket sociman: mesma contagem (32) no MinIO novo (SC-008)
+ok: bucket sociman / sociman-fonts / sociman-videos
+ok: /img de perfis/0c442e37-…/0798f182-….png: 200
+5.6M	/media/sakai/BACKUP/tiktok/sociman/minio
+```
+- **SC-008:** bucket `sociman` com 32 objetos e 5.293.563 bytes antes e depois; em disco,
+  5.556.980 bytes nos dois lados. Nenhum arquivo do HD com dono diferente de 1000.
+- `curl /api/health` → `{"status":"ok","db":"ok","redis":"ok","storage":"ok"}`; na API,
+  `TMPDIR=/media/sakai/BACKUP/tiktok/sociman/work/tmp`.
+- `./scripts/test-api.sh -q` → 382 passed; `npm run test:e2e` → 13 passed.
+- Logo enviado pelo e2e **depois** da migração: `curl -sI http://localhost:8180/img/unsafe/rs:fit:96:96/…`
+  → 200, e o objeto está em
+  `/media/sakai/BACKUP/tiktok/sociman/minio/sociman/perfis/4ea2582e-…/e496f762-….png/xl.meta`.
+- **Montagens finais (R5):** `minio` monta `${SOCIMAN_DATA_DIR}/minio → /data` e
+  `${SOCIMAN_DATA_DIR}/.sociman-volume → /sentinela/.sociman-volume` (somente leitura), ambos com
+  `create_host_path: false`, `user: 1000:1000`, e o entrypoint confere o sentinela antes de
+  `minio server /data`. A `api` monta `/media/sakai` no mesmo caminho com `rslave`.
+- **Sentinela (FR-018):** com `.sociman-volume` renomeado, `docker compose restart minio` falha
+  (`failed to fulfil mount request: open …/.sociman-volume: no such file or directory`, container
+  `Exited`) e `up -d --force-recreate --wait minio` falha (`bind source path does not exist`);
+  `/api/health` → 200 `{"status":"degraded",…,"storage":"unavailable"}`; `PUT /api/perfis/{id}/logo`
+  → 503 `storage_unavailable` ("O HD de dados não está disponível"). Com o sentinela restaurado e
+  `docker compose up -d --wait minio imgproxy`: health `ok` e o logo volta a dar 200. Depois da
+  troca das montagens: `verify` ok (os 32 objetos do volume continuam no MinIO novo, mais os
+  enviados depois), `test-api.sh -q` → 493 passed, `test:e2e` → 13 passed.
+- Obs.: `verify` aceita objetos enviados depois da migração (confere chave por chave que os do
+  volume continuam lá); `compare` só vale logo depois do `migrate`.
+- O volume `sociman_minio-data` continua existindo e passou a `external: true` no compose, então
+  `docker compose down -v` não o apaga. Só o dono o remove, à mão.
+
+## Resultado final (T030, 2026-09-29)
+- `./scripts/test-api.sh -q`: 616 passed (duas vezes). `ruff`: limpo. `npm run check:web`: verde.
+- `npm run test:e2e`: 14/14 (duas vezes). `npm run test:e2e:pwa` (modo casa): 10/10.
+- **SC-003:** corte de 60 s 1080×1920 processado em 6,4 s; de 30 s em 3,8 s (arquivos no HD).
+- **SC-004:** os quadros do início, do meio e do fim dos dois perfis reais conferem o gancho, a
+  marca d'água e o card final nos tempos do kit.
+- **SC-006:** os dois perfis reais (Queridinhos e A Taverna Nerd) expressos no kit a partir do
+  "Estilo visual" do `perfil.md`, sem texto livre; a Taverna usa o logo aprovado no card final.
+- **SC-008:** 32 de 32 objetos migrados; volume antigo mantido.
+- **SC-001:** preencher o kit pela tela em menos de 5 min ainda não foi medido.
+- Resumo para o dono: `docs/poc-004.md`.

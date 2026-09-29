@@ -50,7 +50,7 @@ async function doRefresh(): Promise<RefreshResult> {
 
 // Interceptor: anexa o Bearer; num 401 de requisição autenticada, tenta refresh
 // UMA vez e repete UMA vez; se o refresh falhar, derruba a sessão local.
-const authFetch: typeof fetch = async (input, init) => {
+export const authFetch: typeof fetch = async (input, init) => {
   const token = useAuth.getState().accessToken;
   // O cliente gerado passa um Request pronto; o corpo só pode ser lido uma
   // vez, então guarda uma cópia para o retry.

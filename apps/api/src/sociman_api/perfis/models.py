@@ -56,6 +56,8 @@ class ContaStatus(enum.StrEnum):
 class ImageKind(enum.StrEnum):
     logo = "logo"
     banner = "banner"
+    watermark = "watermark"  # imagem própria de marca d'água (spec 004)
+    fundo = "fundo"  # imagem de fundo do gancho e do card final (spec 004, FR-005b)
 
 
 class _Versioned:

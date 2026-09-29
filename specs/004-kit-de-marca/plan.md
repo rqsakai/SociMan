@@ -14,7 +14,7 @@ Segunda spec de domínio, precedida de uma tarefa de infra e dividida em duas me
   - temporários de upload e do worker/ffmpeg em `…/sociman/work`; no NVMe ficam só código,
     containers, PostgreSQL e Redis;
   - sentinela `.sociman-volume` e piso de espaço livre para toda gravação no HD;
-  - `scripts/hd-setup.sh` cria a estrutura, migra os objetos da 003 e verifica (R12).
+  - `scripts/data-setup.sh` cria a estrutura, migra os objetos da 003 e verifica (R12).
 - **Kit de marca em tokens** (US1–US3, P1):
   - um kit por perfil (paleta, legenda, gancho, marca d'água, card final, bordões e séries),
     validado por schema Pydantic e guardado em JSONB por seção;
@@ -52,7 +52,7 @@ perguntas ao dono foram respondidas em 2026-09-29 e estão nas Clarifications da
   navegador).
 
 **Storage**: PostgreSQL (`brand_kits`, `brand_fonts`, `cortes`, `images` com o novo kind
-`watermark`, `entity_versions`), no NVMe; **MinIO único com os dados no HD** (`SOCIMAN_HD_DIR` =
+`watermark`, `entity_versions`), no NVMe; **MinIO único com os dados no HD** (`SOCIMAN_DATA_DIR` =
 `/media/sakai/BACKUP/tiktok/sociman`, pasta `minio/`), com os buckets `sociman` (logos, banners,
 marca d'água, pôsteres), `sociman-fonts` e `sociman-videos`; temporários em `work/` no mesmo HD
 (R5)
@@ -82,9 +82,12 @@ marca d'água, pôsteres), `sociman-fonts` e `sociman-videos`; temporários em `
 - **disco (regra da constitution 2.1.0):** tudo o que é pesado ou cresce sem parar fica no HD
   (2,1 TB livres); o NVMe (101 GB livres) fica só com código, containers, PostgreSQL e Redis.
   Nada de vídeo no `/tmp` dos containers. Sem o sentinela `.sociman-volume`, nada é gravado, e
-  gravações são recusadas com menos de `HD_MIN_FREE_GB` (20) livres (FR-018);
-- **HD fora = mídia fora:** sem o HD, `minio`, `api` e `worker` não sobem (`create_host_path:
-  false`); risco aceito pelo dono ao ficar com um MinIO só;
+  gravações são recusadas com menos de `DATA_MIN_FREE_GB` (20) livres (FR-018);
+- **HD fora = MinIO inteiro fora (imagens também):** o `minio` não sobe sem o HD
+  (`create_host_path: false` + sentinela); `api` e `worker` seguem no ar (montam `/media/sakai`
+  com `rslave`), o `/api/health` fica `degraded`, o que não depende de arquivo segue
+  respondendo, e o que lê ou grava arquivo dá 503. Risco aceito pelo dono ao ficar com um MinIO
+  só;
 - nada publica em rede social (princípio I).
 
 **Scale/Scope**: 2 perfis hoje (até ~10); ~15 cortes por dia; 23 endpoints; 3 abas novas no
@@ -135,11 +138,11 @@ apps/api/
 ├── Dockerfile                             # + apt-get install --no-install-recommends ffmpeg
 ├── migrations/versions/0003_kit_de_marca.py
 ├── src/sociman_api/
-│   ├── config.py                          # + S3_FONTS_BUCKET, S3_VIDEOS_BUCKET, HD_PATH (/hd), HD_MIN_FREE_GB, WORKER_POLL_S, MIDIA_LINK_TTL_S
-│   ├── storage.py                         # bucket por tipo (imagens | fontes | videos) + put_file, get_to_file, stat, get_range; toda escrita passa por hd.ensure_writable (sem delete)
+│   ├── config.py                          # + S3_FONTS_BUCKET, S3_VIDEOS_BUCKET, SOCIMAN_DATA_DIR, DATA_MIN_FREE_GB, WORKER_POLL_S, MIDIA_LINK_TTL_S
+│   ├── storage.py                         # bucket por tipo (imagens | fontes | videos) + put_file, get_to_file, stat, get_range; toda escrita passa por datadir.ensure_writable (sem delete)
 │   ├── imaging.py                         # + kind "watermark" (exige alfa, mínimo 64×64)
 │   ├── midia.py                           # links assinados (HMAC) + streaming com Range (R6)
-│   ├── hd.py                              # sentinela + os.statvfs + piso; usado pelo storage, pelo envio, pelo worker e pelo /api/health
+│   ├── datadir.py                         # sentinela + os.statvfs + piso; usado pelo storage, pelo envio, pelo worker e pelo /api/health
 │   ├── cli.py                             # + comando `worker`
 │   ├── marca/
 │   │   ├── fonts/                         # Anton, NotoSerif-Bold, LiberationSans/Serif-Bold + licenças OFL
@@ -173,13 +176,13 @@ apps/web/src/
 └── lib/{marca,cortes,fontFaces}.ts        # rótulos, formulários, registro de FontFace, upload com XHR
 
 docker/nginx/default.conf.template         # location da rota de cortes (520m, sem buffering) e /api/midia/ (streaming)
-docker-compose.yml                         # minio: sai o volume minio-data; bind SOCIMAN_HD_DIR → /vol (create_host_path: false),
-                                           #   user 1000, entrypoint confere o sentinela e roda `minio server /vol/minio`;
+docker-compose.yml                         # minio: sai o volume minio-data; binds ${SOCIMAN_DATA_DIR}/minio → /data e do sentinela (create_host_path: false),
+                                           #   user 1000, entrypoint confere o sentinela e roda `minio server /data`;
                                            #   minio-init cria sociman, sociman-fonts e sociman-videos;
-                                           #   api e worker: bind SOCIMAN_HD_DIR → /hd (create_host_path: false), TMPDIR=/hd/work/tmp;
+                                           #   api e worker: bind /media/sakai → /media/sakai (rslave), TMPDIR=${SOCIMAN_DATA_DIR}/work/tmp;
                                            #   worker novo (mesma imagem, `sociman worker`)
-docker-compose.test.yml                    # MinIO em tmpfs com os 3 buckets de teste + tmpfs em /hd no pytest
-scripts/hd-setup.sh                        # R12: confere o HD, cria minio/ work/ e o sentinela, migra minio-data, verifica
+docker-compose.test.yml                    # MinIO em tmpfs com os 3 buckets de teste + tmpfs em SOCIMAN_DATA_DIR no pytest
+scripts/data-setup.sh                        # R12: confere o HD, cria minio/ work/ e o sentinela, migra minio-data, verifica
 e2e/marca.spec.ts
 ```
 
@@ -190,8 +193,8 @@ porque vídeos, fontes e, no futuro, avatares e cenas (specs futuras) usam os me
 assinados. O SPA segue a estrutura da 005 (`components/ui` do shadcn, DataTable para a lista de
 cortes); as abas novas entram no detalhe do perfil da 003.
 
-**Ordem sugerida para o `/speckit-tasks`:** (0) **infra, antes de tudo:** `hd-setup.sh`,
-migração do `minio-data` para o HD, troca do compose, `hd.py` no `storage.py` e verificação
+**Ordem sugerida para o `/speckit-tasks`:** (0) **infra, antes de tudo:** `data-setup.sh`,
+migração do `minio-data` para o HD, troca do compose, `datadir.py` no `storage.py` e verificação
 (imagens da 003 abrindo em `/img`, contagem de objetos igual, `test:api` e `test:e2e` verdes,
 R12); (1) tokens, kit e histórico; (2) fontes; (3) exportação; (4) prévia no SPA; (5) ffmpeg na
 imagem, worker e fila; (6) render e compose com
@@ -208,4 +211,4 @@ amostragem de quadros; (7) upload no edge e links de mídia; (8) telas de cortes
 | Links de mídia assinados (`midia.py`) | `<video>`, download e `@font-face` não mandam o Bearer | cookie de sessão: quebra o padrão cookieless; `blob:`: 500 MB em memória e muda a CSP |
 | `location` própria no edge (520m, sem buffering) | aceitar 500 MB só onde precisa | limite alto em toda a `/api/`: aumenta a superfície de todas as rotas |
 | Dados do `minio` no HD (bind mount) + migração | FR-016 proíbe apagar; o NVMe tem 101 GB livres e ~1,5 GB/dia de vídeo o encheria em ~2 meses (decisão do dono) | segundo MinIO só para vídeos: duas instâncias e dois clientes; cota no NVMe: rejeitada pelo dono |
-| Sentinela + piso de espaço (`hd.py`) | com o HD desmontado, o Docker criaria a pasta no NVMe e encheria o disco do sistema (FR-018, SC-007) | só `create_host_path: false`: não cobre uma pasta vazia deixada no ponto de montagem |
+| Sentinela + piso de espaço (`datadir.py`) | com o HD desmontado, o Docker criaria a pasta no NVMe e encheria o disco do sistema (FR-018, SC-007) | só `create_host_path: false`: não cobre uma pasta vazia deixada no ponto de montagem |

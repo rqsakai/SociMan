@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
-// Botão com confirmação em AlertDialog (role "dialog"); o botão de confirmar repete o rótulo.
+// Botão com confirmação em AlertDialog (role "alertdialog"); o botão de confirmar repete o rótulo.
 export function ConfirmButton({
   label,
   icon: Icon,
@@ -43,7 +43,7 @@ export function ConfirmButton({
           {label}
         </Button>
       </AlertDialogTrigger>
-      {/* role "dialog" em vez de "alertdialog": contrato de UI dos e2e (getByRole("dialog")) */}
+      {/* role "dialog" em vez de "alertdialog": contrato de UI dos e2e (getByRole("alertdialog")) */}
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

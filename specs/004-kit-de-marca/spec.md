@@ -19,6 +19,7 @@
 - Q: O card final entra por cima do fim do corte ou depois dele? → A: Por cima dos últimos N segundos; a duração do corte não muda.
 - Q: Quem queima o gancho, se o OpenShorts já queima um automático? → A: Só o SociMan. A exportação manda `openshorts.hook.enabled = false` (o preset mais próximo fica só como referência), e o produtor gera os cortes sem o gancho automático do OpenShorts.
 - Q: Qual a validade dos links de fonte e marca d'água na exportação? → A: Links assinados sem validade; valem enquanto o arquivo existir.
+- Q (dono, 2026-09-29, depois da POC): o gancho e o card final podem ter imagem de fundo? → A: Sim. Os dois ganham tipo de fundo "cor" ou "imagem"; com imagem, ela preenche a área (recorte sem distorção) e a cor do kit vira uma camada por cima com opacidade ajustável.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -182,6 +183,12 @@ segundos, a marca d'água o tempo todo e o card final nos últimos segundos.
   largura), opacidade (10–100%), margem e ligado/desligado.
 - **FR-005**: Card final DEVE conter: texto de CTA (até 80 caracteres), fonte, cor do texto, cor de
   fundo, mostrar logo (sim/não), duração (1–5 s) e ligado/desligado.
+- **FR-005a**: O cartão de gancho e o card final DEVEM ter tipo de fundo "cor" ou "imagem". Com
+  imagem: a imagem de fundo do perfil preenche a área (caixa do gancho ou quadro inteiro do card),
+  recortada sem distorção, e a cor de fundo do kit é aplicada por cima como camada com opacidade
+  (0–1). O padrão é "cor", e os kits já salvos continuam iguais.
+- **FR-005b**: O perfil DEVE poder enviar imagens de fundo (PNG, JPG ou WebP, até 5 MB, mínimo
+  540×540 px), listadas para escolha. Imagens nunca são apagadas.
 - **FR-006**: Todo valor do kit DEVE ser validado (cores hexadecimais, faixas, opções fechadas);
   cores podem referenciar a paleta por nome. Texto livre só em bordões, séries e CTA.
 - **FR-007**: O kit DEVE ter histórico, reversão pelo dono e controle de edição concorrente, como os

@@ -57,7 +57,12 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
      antes/depois em toda mutação, arquivar em vez de apagar, e reversão só pelo dono.
    - **Logo e banner** no MinIO, validados pelo conteúdo, públicos na rede de casa via `/img`.
    - **Testes da API numa stack efêmera** (`npm run test:api`).
-4. `004-kit-de-marca`: tokens visuais por conta.
+4. `004-kit-de-marca` ✅ **implementada** (`specs/004-kit-de-marca/`, 2026-09-29). Decisões:
+   - **Kit em tokens** por perfil (paleta, legenda, gancho, marca d'água, card final, bordões, séries), versionado.
+   - **Fontes próprias** e fontes padrão com licença OFL.
+   - **Exportação** para o gerador de cortes (legenda e preset de gancho mais próximo).
+   - **Aplicação da marca** por um worker com ffmpeg: gancho, marca d'água e card final por cima dos últimos segundos.
+   - **O MinIO inteiro fica no HD**, com sentinela.
 5. `005-avatares-e-poses`
 6. `006-cenas`
 7. `007-scripts`: roteiros por cena e avatar.

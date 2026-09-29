@@ -2,7 +2,8 @@
 
 - `create-owner`: cria o primeiro dono, já verificado e sem troca obrigatória de senha;
 - `set-password`: redefine a senha de alguém e encerra as sessões dele;
-- `reset-db`: zera banco e Redis para o e2e (nunca em produção).
+- `reset-db`: zera banco e Redis para o e2e (nunca em produção);
+- `worker`: processa a fila de cortes (spec 004, serviço `worker` do compose).
 
 Cada comando faz o próprio commit e grava o evento com o autor `system:cli`.
 """
@@ -143,6 +144,14 @@ def reset_db(
         )
     get_redis().flushdb()
     typer.echo("Banco e Redis zerados.")
+
+
+@app.command("worker")
+def worker() -> None:
+    """Processa a fila de cortes, um por vez, até receber SIGTERM ou SIGINT."""
+    from sociman_api.cortes.worker import main
+
+    main()
 
 
 if __name__ == "__main__":

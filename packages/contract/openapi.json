@@ -19,6 +19,64 @@
         "title": "AppConfig",
         "type": "object"
       },
+      "Armazenamento": {
+        "description": "O HD de dados (R5): a aba Cortes mostra uso e espaço livre e desabilita o envio.",
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "cortesBytes": {
+            "title": "Cortesbytes",
+            "type": "integer"
+          },
+          "freeBytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freebytes"
+          },
+          "minFreeBytes": {
+            "title": "Minfreebytes",
+            "type": "integer"
+          },
+          "reason": {
+            "enum": [
+              "ok",
+              "sem_sentinela",
+              "pouco_espaco"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "totalBytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Totalbytes"
+          }
+        },
+        "required": [
+          "available",
+          "reason",
+          "freeBytes",
+          "totalBytes",
+          "minFreeBytes",
+          "cortesBytes"
+        ],
+        "title": "Armazenamento",
+        "type": "object"
+      },
       "AuthSession": {
         "properties": {
           "accessToken": {
@@ -34,6 +92,58 @@
           "user"
         ],
         "title": "AuthSession",
+        "type": "object"
+      },
+      "Body_fontes_upload": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "TTF ou OTF até 10 MB",
+            "title": "File",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "name"
+        ],
+        "title": "Body_fontes_upload",
+        "type": "object"
+      },
+      "Body_fundos_upload": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "PNG, JPG ou WebP, até 5 MB, mínimo 540×540",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_fundos_upload",
+        "type": "object"
+      },
+      "Body_marca_dagua_upload": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "description": "PNG ou WebP com transparência, até 5 MB",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_marca_dagua_upload",
         "type": "object"
       },
       "Body_perfis_upload_banner": {
@@ -76,6 +186,88 @@
           "version"
         ],
         "title": "Body_perfis_upload_logo",
+        "type": "object"
+      },
+      "CardFinal": {
+        "additionalProperties": false,
+        "properties": {
+          "cor_fundo": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Fundo",
+            "type": "string"
+          },
+          "cor_texto": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Texto",
+            "type": "string"
+          },
+          "cta": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Cta",
+            "type": "string"
+          },
+          "duracao_s": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Duracao S",
+            "type": "number"
+          },
+          "fonte": {
+            "description": "padrao:<chave> ou perfil:<uuid da fonte>",
+            "pattern": "^(padrao:(anton|noto-serif-bold|liberation-sans|liberation-serif)|perfil:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+            "title": "Fonte",
+            "type": "string"
+          },
+          "fundo_imagem_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fundo Imagem Id"
+          },
+          "fundo_tipo": {
+            "default": "cor",
+            "enum": [
+              "cor",
+              "imagem"
+            ],
+            "title": "Fundo Tipo",
+            "type": "string"
+          },
+          "ligado": {
+            "title": "Ligado",
+            "type": "boolean"
+          },
+          "mostrar_logo": {
+            "title": "Mostrar Logo",
+            "type": "boolean"
+          },
+          "opacidade_fundo": {
+            "default": 0.45,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Opacidade Fundo",
+            "type": "number"
+          }
+        },
+        "required": [
+          "ligado",
+          "cta",
+          "fonte",
+          "cor_texto",
+          "cor_fundo",
+          "mostrar_logo",
+          "duracao_s"
+        ],
+        "title": "CardFinal",
         "type": "object"
       },
       "ChangePasswordIn": {
@@ -213,6 +405,243 @@
         ],
         "title": "ContaStatus",
         "type": "string"
+      },
+      "Cor": {
+        "additionalProperties": false,
+        "properties": {
+          "chave": {
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "title": "Chave",
+            "type": "string"
+          },
+          "nome": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Nome",
+            "type": "string"
+          },
+          "valor": {
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "title": "Valor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "chave",
+          "nome",
+          "valor"
+        ],
+        "title": "Cor",
+        "type": "object"
+      },
+      "Corte": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "durationMs": {
+            "title": "Durationms",
+            "type": "integer"
+          },
+          "errorMessage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errormessage"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finishedat"
+          },
+          "hasAudio": {
+            "title": "Hasaudio",
+            "type": "boolean"
+          },
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "hookText": {
+            "title": "Hooktext",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kitVersion": {
+            "title": "Kitversion",
+            "type": "integer"
+          },
+          "originalFilename": {
+            "title": "Originalfilename",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "posterUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Posterurl"
+          },
+          "processingMs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processingms"
+          },
+          "progress": {
+            "title": "Progress",
+            "type": "integer"
+          },
+          "queuePosition": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queueposition"
+          },
+          "resultBytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultbytes"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CorteStatus"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "hookText",
+          "kitVersion",
+          "status",
+          "progress",
+          "queuePosition",
+          "attempts",
+          "errorMessage",
+          "originalFilename",
+          "bytes",
+          "durationMs",
+          "width",
+          "height",
+          "hasAudio",
+          "resultBytes",
+          "processingMs",
+          "posterUrl",
+          "version",
+          "createdAt",
+          "createdBy",
+          "finishedAt"
+        ],
+        "title": "Corte",
+        "type": "object"
+      },
+      "CorteOut": {
+        "properties": {
+          "corte": {
+            "$ref": "#/components/schemas/Corte"
+          }
+        },
+        "required": [
+          "corte"
+        ],
+        "title": "CorteOut",
+        "type": "object"
+      },
+      "CorteStatus": {
+        "enum": [
+          "na_fila",
+          "processando",
+          "pronto",
+          "falhou"
+        ],
+        "title": "CorteStatus",
+        "type": "string"
+      },
+      "CortesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Corte"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "CortesList",
+        "type": "object"
       },
       "CreateContaIn": {
         "properties": {
@@ -369,6 +798,18 @@
             "title": "Code",
             "type": "string"
           },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
           "message": {
             "title": "Message",
             "type": "string"
@@ -393,6 +834,333 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "ExportAsset": {
+        "properties": {
+          "expiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiresat"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
+        ],
+        "title": "ExportAsset",
+        "type": "object"
+      },
+      "ExportAssets": {
+        "properties": {
+          "backgroundImages": {
+            "items": {
+              "$ref": "#/components/schemas/ExportAsset"
+            },
+            "title": "Backgroundimages",
+            "type": "array"
+          },
+          "fonts": {
+            "items": {
+              "$ref": "#/components/schemas/ExportAsset"
+            },
+            "title": "Fonts",
+            "type": "array"
+          },
+          "watermarkImage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExportAsset"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "fonts",
+          "watermarkImage",
+          "backgroundImages"
+        ],
+        "title": "ExportAssets",
+        "type": "object"
+      },
+      "ExportKitMeta": {
+        "properties": {
+          "updatedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "updatedAt"
+        ],
+        "title": "ExportKitMeta",
+        "type": "object"
+      },
+      "ExportPerfil": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name"
+        ],
+        "title": "ExportPerfil",
+        "type": "object"
+      },
+      "FontOption": {
+        "properties": {
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ref",
+          "name",
+          "family",
+          "url"
+        ],
+        "title": "FontOption",
+        "type": "object"
+      },
+      "Fonte": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "ttf",
+              "otf"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "style": {
+            "title": "Style",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "name",
+          "family",
+          "style",
+          "format",
+          "bytes",
+          "archived",
+          "version",
+          "createdAt",
+          "createdBy"
+        ],
+        "title": "Fonte",
+        "type": "object"
+      },
+      "FonteOut": {
+        "properties": {
+          "fonte": {
+            "$ref": "#/components/schemas/Fonte"
+          }
+        },
+        "required": [
+          "fonte"
+        ],
+        "title": "FonteOut",
+        "type": "object"
+      },
+      "FontePadrao": {
+        "properties": {
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "key": {
+            "enum": [
+              "anton",
+              "noto-serif-bold",
+              "liberation-sans",
+              "liberation-serif"
+            ],
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "family",
+          "url"
+        ],
+        "title": "FontePadrao",
+        "type": "object"
+      },
+      "FontesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Fonte"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "FontesList",
+        "type": "object"
+      },
+      "FontesPadraoList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FontePadrao"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "FontesPadraoList",
+        "type": "object"
+      },
       "ForgotIn": {
         "properties": {
           "email": {
@@ -405,6 +1173,138 @@
           "email"
         ],
         "title": "ForgotIn",
+        "type": "object"
+      },
+      "FundoImageOut": {
+        "properties": {
+          "image": {
+            "$ref": "#/components/schemas/ImageRef"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "title": "FundoImageOut",
+        "type": "object"
+      },
+      "FundoImagesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImageRef"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "FundoImagesList",
+        "type": "object"
+      },
+      "Gancho": {
+        "additionalProperties": false,
+        "properties": {
+          "cor_contorno": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Contorno",
+            "type": "string"
+          },
+          "cor_fundo": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Fundo",
+            "type": "string"
+          },
+          "cor_texto": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Texto",
+            "type": "string"
+          },
+          "duracao_s": {
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Duracao S",
+            "type": "number"
+          },
+          "espessura_contorno": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Espessura Contorno",
+            "type": "integer"
+          },
+          "fonte": {
+            "description": "padrao:<chave> ou perfil:<uuid da fonte>",
+            "pattern": "^(padrao:(anton|noto-serif-bold|liberation-sans|liberation-serif)|perfil:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+            "title": "Fonte",
+            "type": "string"
+          },
+          "fundo_imagem_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fundo Imagem Id"
+          },
+          "fundo_tipo": {
+            "default": "cor",
+            "enum": [
+              "cor",
+              "imagem"
+            ],
+            "title": "Fundo Tipo",
+            "type": "string"
+          },
+          "ligado": {
+            "title": "Ligado",
+            "type": "boolean"
+          },
+          "opacidade_fundo": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Opacidade Fundo",
+            "type": "number"
+          },
+          "posicao": {
+            "enum": [
+              "topo",
+              "centro",
+              "base"
+            ],
+            "title": "Posicao",
+            "type": "string"
+          },
+          "tamanho": {
+            "enum": [
+              "P",
+              "M",
+              "G"
+            ],
+            "title": "Tamanho",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ligado",
+          "fonte",
+          "cor_texto",
+          "cor_fundo",
+          "opacidade_fundo",
+          "cor_contorno",
+          "espessura_contorno",
+          "posicao",
+          "tamanho",
+          "duracao_s"
+        ],
+        "title": "Gancho",
         "type": "object"
       },
       "ImageRef": {
@@ -453,6 +1353,337 @@
         "title": "ImageUrls",
         "type": "object"
       },
+      "Kit": {
+        "additionalProperties": false,
+        "properties": {
+          "caption": {
+            "$ref": "#/components/schemas/Legenda"
+          },
+          "catchphrases": {
+            "items": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Catchphrases",
+            "type": "array"
+          },
+          "endCard": {
+            "$ref": "#/components/schemas/CardFinal"
+          },
+          "hook": {
+            "$ref": "#/components/schemas/Gancho"
+          },
+          "palette": {
+            "items": {
+              "$ref": "#/components/schemas/Cor"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "Palette",
+            "type": "array"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "persisted": {
+            "title": "Persisted",
+            "type": "boolean"
+          },
+          "series": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Series",
+            "type": "array"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "watermark": {
+            "$ref": "#/components/schemas/MarcaDagua"
+          }
+        },
+        "required": [
+          "palette",
+          "caption",
+          "hook",
+          "watermark",
+          "endCard",
+          "perfilId",
+          "version",
+          "persisted",
+          "updatedAt",
+          "updatedBy"
+        ],
+        "title": "Kit",
+        "type": "object"
+      },
+      "KitExport": {
+        "properties": {
+          "assets": {
+            "$ref": "#/components/schemas/ExportAssets"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "title": "Generatedat",
+            "type": "string"
+          },
+          "kit": {
+            "$ref": "#/components/schemas/ExportKitMeta"
+          },
+          "openshorts": {
+            "$ref": "#/components/schemas/OpenShorts"
+          },
+          "perfil": {
+            "$ref": "#/components/schemas/ExportPerfil"
+          },
+          "schema": {
+            "const": "sociman.kit/1",
+            "title": "Schema",
+            "type": "string"
+          },
+          "tokens": {
+            "additionalProperties": true,
+            "title": "Tokens",
+            "type": "object"
+          }
+        },
+        "required": [
+          "schema",
+          "generatedAt",
+          "perfil",
+          "kit",
+          "tokens",
+          "openshorts",
+          "assets"
+        ],
+        "title": "KitExport",
+        "type": "object"
+      },
+      "KitGet": {
+        "properties": {
+          "fontOptions": {
+            "items": {
+              "$ref": "#/components/schemas/FontOption"
+            },
+            "title": "Fontoptions",
+            "type": "array"
+          },
+          "kit": {
+            "$ref": "#/components/schemas/Kit"
+          }
+        },
+        "required": [
+          "kit",
+          "fontOptions"
+        ],
+        "title": "KitGet",
+        "type": "object"
+      },
+      "KitIn": {
+        "additionalProperties": false,
+        "description": "PUT do kit inteiro. `version: 0` cria a v1 (o kit nunca foi salvo).",
+        "properties": {
+          "caption": {
+            "$ref": "#/components/schemas/Legenda"
+          },
+          "catchphrases": {
+            "items": {
+              "maxLength": 120,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Catchphrases",
+            "type": "array"
+          },
+          "endCard": {
+            "$ref": "#/components/schemas/CardFinal"
+          },
+          "hook": {
+            "$ref": "#/components/schemas/Gancho"
+          },
+          "palette": {
+            "items": {
+              "$ref": "#/components/schemas/Cor"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "Palette",
+            "type": "array"
+          },
+          "series": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Series",
+            "type": "array"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          },
+          "watermark": {
+            "$ref": "#/components/schemas/MarcaDagua"
+          }
+        },
+        "required": [
+          "palette",
+          "caption",
+          "hook",
+          "watermark",
+          "endCard",
+          "version"
+        ],
+        "title": "KitIn",
+        "type": "object"
+      },
+      "KitOut": {
+        "properties": {
+          "kit": {
+            "$ref": "#/components/schemas/Kit"
+          }
+        },
+        "required": [
+          "kit"
+        ],
+        "title": "KitOut",
+        "type": "object"
+      },
+      "Legenda": {
+        "additionalProperties": false,
+        "properties": {
+          "cor_contorno": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Contorno",
+            "type": "string"
+          },
+          "cor_destaque": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Destaque",
+            "type": "string"
+          },
+          "cor_fundo": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Fundo",
+            "type": "string"
+          },
+          "cor_texto": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Texto",
+            "type": "string"
+          },
+          "efeito": {
+            "enum": [
+              "nenhum",
+              "brilho",
+              "pop",
+              "caixa"
+            ],
+            "title": "Efeito",
+            "type": "string"
+          },
+          "espessura_contorno": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Espessura Contorno",
+            "type": "integer"
+          },
+          "estilo": {
+            "enum": [
+              "classico",
+              "karaoke"
+            ],
+            "title": "Estilo",
+            "type": "string"
+          },
+          "fonte": {
+            "description": "padrao:<chave> ou perfil:<uuid da fonte>",
+            "pattern": "^(padrao:(anton|noto-serif-bold|liberation-sans|liberation-serif)|perfil:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+            "title": "Fonte",
+            "type": "string"
+          },
+          "maiusculas": {
+            "title": "Maiusculas",
+            "type": "boolean"
+          },
+          "opacidade_fundo": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Opacidade Fundo",
+            "type": "number"
+          },
+          "posicao": {
+            "enum": [
+              "topo",
+              "meio",
+              "base"
+            ],
+            "title": "Posicao",
+            "type": "string"
+          },
+          "tamanho": {
+            "maximum": 200.0,
+            "minimum": 10.0,
+            "title": "Tamanho",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fonte",
+          "tamanho",
+          "cor_texto",
+          "cor_contorno",
+          "espessura_contorno",
+          "cor_fundo",
+          "opacidade_fundo",
+          "estilo",
+          "cor_destaque",
+          "efeito",
+          "posicao",
+          "maiusculas"
+        ],
+        "title": "Legenda",
+        "type": "object"
+      },
       "LoginIn": {
         "properties": {
           "email": {
@@ -474,6 +1705,188 @@
         "title": "LoginIn",
         "type": "object"
       },
+      "MarcaDagua": {
+        "additionalProperties": false,
+        "properties": {
+          "conta_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conta Id"
+          },
+          "cor_texto": {
+            "description": "#RRGGBB ou paleta:<chave>",
+            "pattern": "^(#[0-9A-Fa-f]{6}|paleta:[a-z0-9]+(-[a-z0-9]+)*)$",
+            "title": "Cor Texto",
+            "type": "string"
+          },
+          "escala_pct": {
+            "maximum": 40.0,
+            "minimum": 5.0,
+            "title": "Escala Pct",
+            "type": "integer"
+          },
+          "fonte": {
+            "description": "padrao:<chave> ou perfil:<uuid da fonte>",
+            "pattern": "^(padrao:(anton|noto-serif-bold|liberation-sans|liberation-serif)|perfil:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$",
+            "title": "Fonte",
+            "type": "string"
+          },
+          "imagem_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imagem Id"
+          },
+          "ligado": {
+            "title": "Ligado",
+            "type": "boolean"
+          },
+          "margem_pct": {
+            "maximum": 10.0,
+            "minimum": 0.0,
+            "title": "Margem Pct",
+            "type": "integer"
+          },
+          "opacidade_pct": {
+            "maximum": 100.0,
+            "minimum": 10.0,
+            "title": "Opacidade Pct",
+            "type": "integer"
+          },
+          "posicao": {
+            "enum": [
+              "sup_esq",
+              "sup_dir",
+              "inf_esq",
+              "inf_dir",
+              "centro_inf",
+              "centro_sup"
+            ],
+            "title": "Posicao",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "logo",
+              "imagem",
+              "texto"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ligado",
+          "tipo",
+          "posicao",
+          "escala_pct",
+          "opacidade_pct",
+          "margem_pct",
+          "fonte",
+          "cor_texto"
+        ],
+        "title": "MarcaDagua",
+        "type": "object"
+      },
+      "MidiaItem": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "corte_original",
+              "corte_marcado",
+              "fonte",
+              "marca_dagua",
+              "fundo"
+            ],
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "id"
+        ],
+        "title": "MidiaItem",
+        "type": "object"
+      },
+      "MidiaLink": {
+        "properties": {
+          "expiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiresat"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
+        ],
+        "title": "MidiaLink",
+        "type": "object"
+      },
+      "MidiaLinksIn": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MidiaItem"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "MidiaLinksIn",
+        "type": "object"
+      },
+      "MidiaLinksOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MidiaLink"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "MidiaLinksOut",
+        "type": "object"
+      },
       "Ok": {
         "properties": {
           "ok": {
@@ -484,6 +1897,182 @@
           }
         },
         "title": "Ok",
+        "type": "object"
+      },
+      "OpenShorts": {
+        "properties": {
+          "approximations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Approximations",
+            "type": "array"
+          },
+          "hook": {
+            "$ref": "#/components/schemas/OpenShortsHook"
+          },
+          "subtitle": {
+            "$ref": "#/components/schemas/OpenShortsSubtitle"
+          }
+        },
+        "required": [
+          "subtitle",
+          "hook",
+          "approximations"
+        ],
+        "title": "OpenShorts",
+        "type": "object"
+      },
+      "OpenShortsHook": {
+        "description": "Só referência: `enabled` é sempre false (quem queima o gancho é o SociMan).",
+        "properties": {
+          "distance": {
+            "title": "Distance",
+            "type": "number"
+          },
+          "duration_seconds": {
+            "title": "Duration Seconds",
+            "type": "number"
+          },
+          "enabled": {
+            "const": false,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "exact": {
+            "title": "Exact",
+            "type": "boolean"
+          },
+          "position": {
+            "enum": [
+              "top",
+              "center",
+              "bottom"
+            ],
+            "title": "Position",
+            "type": "string"
+          },
+          "size": {
+            "enum": [
+              "S",
+              "M",
+              "L"
+            ],
+            "title": "Size",
+            "type": "string"
+          },
+          "style": {
+            "enum": [
+              "classic",
+              "dark",
+              "yellow",
+              "red",
+              "outline",
+              "outline_yellow"
+            ],
+            "title": "Style",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "style",
+          "size",
+          "position",
+          "duration_seconds",
+          "exact",
+          "distance"
+        ],
+        "title": "OpenShortsHook",
+        "type": "object"
+      },
+      "OpenShortsSubtitle": {
+        "description": "Os campos do `SubtitleRequest` do gerador (sem `job_id` e `clip_index`).",
+        "properties": {
+          "base_opacity": {
+            "title": "Base Opacity",
+            "type": "number"
+          },
+          "bg_color": {
+            "title": "Bg Color",
+            "type": "string"
+          },
+          "bg_opacity": {
+            "title": "Bg Opacity",
+            "type": "number"
+          },
+          "border_color": {
+            "title": "Border Color",
+            "type": "string"
+          },
+          "border_width": {
+            "title": "Border Width",
+            "type": "integer"
+          },
+          "effect": {
+            "enum": [
+              "none",
+              "glow",
+              "pop",
+              "box"
+            ],
+            "title": "Effect",
+            "type": "string"
+          },
+          "font_color": {
+            "title": "Font Color",
+            "type": "string"
+          },
+          "font_name": {
+            "title": "Font Name",
+            "type": "string"
+          },
+          "font_size": {
+            "title": "Font Size",
+            "type": "integer"
+          },
+          "highlight_color": {
+            "title": "Highlight Color",
+            "type": "string"
+          },
+          "position": {
+            "enum": [
+              "top",
+              "middle",
+              "bottom"
+            ],
+            "title": "Position",
+            "type": "string"
+          },
+          "style": {
+            "enum": [
+              "classic",
+              "karaoke"
+            ],
+            "title": "Style",
+            "type": "string"
+          },
+          "uppercase": {
+            "title": "Uppercase",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "position",
+          "font_size",
+          "font_name",
+          "font_color",
+          "border_color",
+          "border_width",
+          "bg_color",
+          "bg_opacity",
+          "style",
+          "highlight_color",
+          "effect",
+          "base_opacity",
+          "uppercase"
+        ],
+        "title": "OpenShortsSubtitle",
         "type": "object"
       },
       "Perfil": {
@@ -685,6 +2274,27 @@
         ],
         "title": "Platform",
         "type": "string"
+      },
+      "RenameFonteIn": {
+        "properties": {
+          "name": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "name"
+        ],
+        "title": "RenameFonteIn",
+        "type": "object"
       },
       "ResendIn": {
         "properties": {
@@ -1365,6 +2975,34 @@
         ],
         "title": "VersionsList",
         "type": "object"
+      },
+      "WatermarkImageOut": {
+        "properties": {
+          "image": {
+            "$ref": "#/components/schemas/ImageRef"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "title": "WatermarkImageOut",
+        "type": "object"
+      },
+      "WatermarkImagesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImageRef"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "WatermarkImagesList",
+        "type": "object"
       }
     }
   },
@@ -1374,6 +3012,44 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/armazenamento": {
+      "get": {
+        "operationId": "armazenamento_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Armazenamento"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Get Armazenamento"
+      }
+    },
     "/api/auth/login": {
       "post": {
         "operationId": "auth_login",
@@ -2214,6 +3890,639 @@
         "summary": "List Versions"
       }
     },
+    "/api/cortes/{corte_id}": {
+      "get": {
+        "operationId": "cortes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "corte_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Corte Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Get Corte"
+      }
+    },
+    "/api/cortes/{corte_id}/retry": {
+      "post": {
+        "operationId": "cortes_retry",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "corte_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Corte Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Retry Corte"
+      }
+    },
+    "/api/cortes/{corte_id}/versions": {
+      "get": {
+        "operationId": "cortes_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "corte_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Corte Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Corte Versions"
+      }
+    },
+    "/api/fontes-padrao": {
+      "get": {
+        "operationId": "fontes_padrao_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FontesPadraoList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Default"
+      }
+    },
+    "/api/fontes-padrao/{key}": {
+      "get": {
+        "operationId": "fontes_padrao_file",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "font/ttf": {}
+            },
+            "description": "O arquivo da fonte"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Default File"
+      }
+    },
+    "/api/fontes/{font_id}": {
+      "patch": {
+        "operationId": "fontes_rename",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "font_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Font Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameFonteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FonteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Rename"
+      }
+    },
+    "/api/fontes/{font_id}/archive": {
+      "post": {
+        "operationId": "fontes_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "font_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Font Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FonteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Archive"
+      }
+    },
+    "/api/fontes/{font_id}/restore": {
+      "post": {
+        "operationId": "fontes_restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "font_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Font Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FonteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Restore"
+      }
+    },
+    "/api/fontes/{font_id}/versions": {
+      "get": {
+        "operationId": "fontes_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "font_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Font Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Versions"
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "health_api_health_get",
@@ -2228,6 +4537,203 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/api/midia/links": {
+      "post": {
+        "operationId": "midia_links",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MidiaLinksIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MidiaLinksOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Create Links"
+      }
+    },
+    "/api/midia/{token}": {
+      "get": {
+        "operationId": "midia_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Baixar como anexo",
+            "in": "query",
+            "name": "download",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Baixar como anexo",
+              "title": "Download",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Range",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Range"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/octet-stream": {}
+            },
+            "description": "O arquivo inteiro"
+          },
+          "206": {
+            "content": {
+              "application/octet-stream": {}
+            },
+            "description": "A faixa pedida em `Range`"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "416": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Requested Range Not Satisfiable"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Get Media"
       }
     },
     "/api/perfis": {
@@ -2967,6 +5473,1016 @@
         "summary": "Create Conta"
       }
     },
+    "/api/perfis/{perfil_id}/cortes": {
+      "get": {
+        "operationId": "cortes_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CorteStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Cursor: createdAt do último item",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Cursor: createdAt do último item",
+              "title": "Before"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CortesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "List Cortes"
+      },
+      "post": {
+        "operationId": "cortes_upload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "description": "MP4, MOV ou WebM, até 500 MB e 3 minutos",
+                    "format": "binary",
+                    "type": "string"
+                  },
+                  "hookText": {
+                    "description": "Texto do gancho (até 3 linhas no kit)",
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file",
+                  "hookText"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CorteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Upload Corte"
+      }
+    },
+    "/api/perfis/{perfil_id}/fontes": {
+      "get": {
+        "operationId": "fontes_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Listar as arquivadas",
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Listar as arquivadas",
+              "title": "Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FontesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "List Fontes"
+      },
+      "post": {
+        "operationId": "fontes_upload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_fontes_upload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FonteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Upload"
+      }
+    },
+    "/api/perfis/{perfil_id}/fundos": {
+      "get": {
+        "operationId": "fundos_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundoImagesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "List "
+      },
+      "post": {
+        "operationId": "fundos_upload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_fundos_upload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundoImageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Upload"
+      }
+    },
+    "/api/perfis/{perfil_id}/kit": {
+      "get": {
+        "operationId": "kit_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitGet"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Get Kit"
+      },
+      "put": {
+        "operationId": "kit_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KitIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Put Kit"
+      }
+    },
+    "/api/perfis/{perfil_id}/kit/export": {
+      "get": {
+        "operationId": "kit_export",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Baixar como arquivo .json",
+            "in": "query",
+            "name": "download",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "Baixar como arquivo .json",
+              "title": "Download",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitExport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Export Kit"
+      }
+    },
+    "/api/perfis/{perfil_id}/kit/revert": {
+      "post": {
+        "operationId": "kit_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Revert Kit"
+      }
+    },
+    "/api/perfis/{perfil_id}/kit/versions": {
+      "get": {
+        "operationId": "kit_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Kit Versions"
+      }
+    },
     "/api/perfis/{perfil_id}/logo": {
       "put": {
         "operationId": "perfis_upload_logo",
@@ -3145,6 +6661,174 @@
           }
         },
         "summary": "Clear Logo"
+      }
+    },
+    "/api/perfis/{perfil_id}/marca-dagua": {
+      "get": {
+        "operationId": "marca_dagua_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatermarkImagesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "List "
+      },
+      "post": {
+        "operationId": "marca_dagua_upload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_marca_dagua_upload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WatermarkImageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Upload"
       }
     },
     "/api/perfis/{perfil_id}/restore": {

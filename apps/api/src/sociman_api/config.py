@@ -4,7 +4,7 @@ import logging
 import secrets
 from functools import lru_cache
 
-from pydantic import model_validator
+from pydantic import AliasChoices, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger(__name__)
@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     imgproxy_key: str | None = None  # hex; sem key/salt as URLs são "unsafe" (só dev)
     imgproxy_salt: str | None = None
     img_public_path: str = "/img"
+
+    # HD de dados (spec 004, R5): MinIO, work/ e o sentinela `.sociman-volume`. Buckets por tipo.
+    data_dir: str = Field("/media/sakai/BACKUP/tiktok/sociman",
+                          validation_alias=AliasChoices("SOCIMAN_DATA_DIR", "data_dir"))
+    data_min_free_gb: float = 20
+    s3_fonts_bucket: str = "sociman-fonts"
+    s3_videos_bucket: str = "sociman-videos"
+    worker_poll_s: float = 30  # espera do worker com a fila vazia ou sem o HD
+    midia_link_ttl_s: int = Field(3600, gt=0)  # links de mídia da interface (R6)
 
     @model_validator(mode="after")
     def _jwt_secret(self) -> "Settings":

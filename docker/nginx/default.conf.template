@@ -60,6 +60,49 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
   }
 
+  # ------------------------------------------- envio de cortes (spec 004, R4)
+  # Só esta rota aceita até 520 MB (a API recusa > 500 MB pelo Content-Length antes de ler o
+  # corpo). Sem buffer no edge: o nginx repassa enquanto recebe, sem arquivo temporário aqui.
+  location ~ ^/api/perfis/[^/]+/cortes$ {
+    client_max_body_size 520m;
+    client_body_timeout 120s;
+    proxy_request_buffering off;
+    proxy_read_timeout 300s;
+    limit_req zone=edge_api burst=40 nodelay;
+    proxy_pass http://$api_upstream;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  # ------------------------------------------------ mídia assinada (spec 004, R6)
+  # Vídeo, fonte e marca d'água por `/api/midia/{token}` (sem login; o token é a
+  # autorização). Streaming: sem buffer no edge (o <video> pula com Range e recebe
+  # os bytes à medida que a API lê do MinIO).
+  location ^~ /api/midia/ {
+    limit_req zone=edge_api burst=40 nodelay;
+    proxy_buffering off;
+    proxy_read_timeout 300s;
+    proxy_pass http://$api_upstream;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  # ------------------------------------------ envio de fontes (spec 004, R3)
+  # A API recusa > 10 MB com `invalid_font`; o edge deixa folga (11m) para o multipart.
+  location ~ ^/api/perfis/[^/]+/fontes$ {
+    client_max_body_size 11m;
+    limit_req zone=edge_api burst=40 nodelay;
+    proxy_pass http://$api_upstream;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
   # ------------------------------------------------------------------ /api/*
   location /api/ {
     # uploads de imagem (spec 003): a API recusa > 5 MB com mensagem clara; o edge deixa folga (8m) para o multipart e para a API responder

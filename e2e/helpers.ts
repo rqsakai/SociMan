@@ -125,17 +125,18 @@ export async function apiToken(request: APIRequestContext, email: string, passwo
   return ((await res.json()) as { accessToken: string }).accessToken;
 }
 
-// Cria um perfil via POST /api/perfis (status padrão: Em preparação).
+// Cria um perfil via POST /api/perfis (status padrão: Em preparação) e devolve o id.
 export async function createPerfilViaApi(
   request: APIRequestContext,
   token: string,
   perfil: { name: string; slug: string; niche?: string },
-): Promise<void> {
+): Promise<string> {
   const res = await request.post("/api/perfis", {
     headers: { Authorization: `Bearer ${token}` },
     data: perfil,
   });
   expect(res.status(), `POST /api/perfis (${perfil.slug})`).toBe(201);
+  return ((await res.json()) as { perfil: { id: string } }).perfil.id;
 }
 
 // --- UI ---
@@ -239,4 +240,28 @@ export function pngBuffer(width: number, height: number): Buffer {
     chunk("IDAT", deflateSync(raw)),
     chunk("IEND", Buffer.alloc(0)),
   ]);
+}
+
+// --- vídeo ---
+
+// MP4 sintético (H.264 + AAC, 9:16) de `seconds` segundos em `outPath`, com o ffmpeg do host.
+// Sem ffmpeg no host, gera no container da API (que tem ffmpeg) e copia com `docker compose cp`.
+export function syntheticMp4(outPath: string, seconds = 6, size = "540x960"): void {
+  const args = [
+    "-v", "error", "-y",
+    "-f", "lavfi", "-i", `testsrc2=size=${size}:rate=30`,
+    "-f", "lavfi", "-i", "sine=frequency=440",
+    "-t", String(seconds),
+    "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-movflags", "+faststart",
+  ];
+  try {
+    execFileSync("ffmpeg", [...args, outPath], { stdio: ["ignore", "ignore", "inherit"] });
+    return;
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+  }
+  const tmp = `/tmp/e2e-${randomUUID()}.mp4`;
+  compose(["exec", "-T", "api", "ffmpeg", ...args, tmp]);
+  compose(["cp", `api:${tmp}`, outPath]);
+  compose(["exec", "-T", "api", "rm", "-f", tmp]);
 }

@@ -58,7 +58,7 @@ Version, UserRef   como na 003
 ## Cortes (`RequireUser`)
 | Método e rota | Corpo | 200 | Erros |
 |---|---|---|---|
-| `POST /api/perfis/{id}/cortes` | `multipart/form-data`: `file`, `hookText` | `{corte}` (201, status `na_fila`) | 413 `payload_too_large` ("Arquivo maior que 500 MB"); 400 `invalid_video` ("Não é um vídeo aceito" \| "Vídeo mais longo que 3 minutos" \| "Resolução não suportada"); 400 `invalid_hook` ("Gancho longo demais", mais de 120 caracteres ou mais de 3 linhas na fonte e no tamanho do kit); 503 `storage_unavailable` ("O HD de dados não está disponível", sem o sentinela); 507 `storage_full` ("Pouco espaço no HD de dados", livre − envio < `HD_MIN_FREE_GB`); 409 `perfil_archived`. O volume e o tamanho são conferidos **antes** de ler o corpo |
+| `POST /api/perfis/{id}/cortes` | `multipart/form-data`: `file`, `hookText` | `{corte}` (201, status `na_fila`) | 413 `payload_too_large` ("Arquivo maior que 500 MB"); 400 `invalid_video` ("Não é um vídeo aceito" \| "Vídeo mais longo que 3 minutos" \| "Resolução não suportada"); 400 `invalid_hook` ("Gancho longo demais", mais de 120 caracteres ou mais de 3 linhas na fonte e no tamanho do kit); 503 `storage_unavailable` ("O HD de dados não está disponível", sem o sentinela); 507 `storage_full` ("Pouco espaço no HD de dados", livre − envio < `DATA_MIN_FREE_GB`); 409 `perfil_archived`. O volume e o tamanho são conferidos **antes** de ler o corpo |
 | `GET /api/perfis/{id}/cortes` | query `status?`, `limit?` (50), `before?` (cursor por `createdAt`) | `{items: Corte[]}` | 404 |
 | `GET /api/armazenamento` | – | `Armazenamento` (a aba Cortes mostra uso e espaço livre, e desabilita o envio quando `available` é false) | |
 | `GET /api/cortes/{id}` | – | `{corte}` (o SPA faz polling a cada 2 s enquanto `na_fila` ou `processando`) | 404 |
@@ -119,7 +119,9 @@ Version, UserRef   como na 003
 
 **Rotas da 003 afetadas:** `PUT /api/perfis/{id}/logo` e `…/banner` passam a responder também
 503 `storage_unavailable` e 507 `storage_full` (toda gravação no MinIO confere o HD, R5). O
-`GET /api/health` ganha `storage: "ok"|"unavailable"|"low_space"`, sem mudar o `status`.
+`GET /api/health` ganha `storage: "ok"|"unavailable"|"low_space"`, e o `status` vira `"degraded"`
+(HTTP 200) quando o armazenamento não está `ok`. Com o HD fora, as rotas que não dependem de
+arquivo (login, perfis, contas, kit, lista e status de cortes) seguem respondendo normalmente.
 
 **Códigos de erro novos:** `invalid_kit`, `invalid_font`, `font_name_in_use`, `font_in_use`,
 `invalid_video`, `invalid_hook`, `payload_too_large`, `storage_unavailable`, `storage_full`,
@@ -134,3 +136,13 @@ Version, UserRef   como na 003
 | `/app/perfis/:id` aba **Cortes** | enviar (arquivo + gancho, com barra de upload), lista (data, autor, gancho, versão do kit, status com progresso e posição na fila), abrir; no topo, uso e espaço livre do HD de dados, com aviso e envio desabilitado quando o HD não está disponível ou está abaixo do mínimo |
 | `/app/cortes/:id` | player com o resultado (ou o original enquanto processa), "Baixar", "Baixar original", "Tentar de novo" quando `falhou`, detalhes (FR-017) |
 | `/app/perfis/:id/kit/historico` | histórico do kit com antes/depois por seção; "Reverter" só para dono (o `VersionHistory` da 003) |
+
+## Imagens de fundo (FR-005b)
+| Método e rota | Corpo | 200 | Erros |
+|---|---|---|---|
+| `POST /api/perfis/{id}/fundos` | `multipart/form-data` `file` | `{image: ImageRef}` (201); não altera o kit | 400 `invalid_image`; 503/507 |
+| `GET /api/perfis/{id}/fundos` | – | `{items: ImageRef[]}` (mais recentes primeiro) | 404 |
+
+Os tipos `Gancho` e `CardFinal` do `Kit` ganham `fundo_tipo` e `fundo_imagem_id`, e o
+`CardFinal` ganha também `opacidade_fundo` (ver data-model). A exportação lista a imagem de fundo
+em `assets`, com um link sem validade.

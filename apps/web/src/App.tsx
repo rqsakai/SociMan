@@ -15,7 +15,9 @@ import ChangePassword from "./pages/ChangePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import CorteDetalhe from "./pages/cortes/CorteDetalhe";
 import ContaHistorico from "./pages/perfis/ContaHistorico";
+import KitHistorico from "./pages/perfis/KitHistorico";
 import PerfilDetalhe from "./pages/perfis/PerfilDetalhe";
 import PerfilNovo from "./pages/perfis/PerfilNovo";
 import PerfisList from "./pages/perfis/PerfisList";
@@ -81,7 +83,9 @@ export default function App() {
                 <Route path="/app/perfis" element={<PerfisList />} />
                 <Route path="/app/perfis/novo" element={<PerfilNovo />} />
                 <Route path="/app/perfis/:id" element={<PerfilDetalhe />} />
+                <Route path="/app/perfis/:id/kit/historico" element={<KitHistorico />} />
                 <Route path="/app/contas/:id/historico" element={<ContaHistorico />} />
+                <Route path="/app/cortes/:id" element={<CorteDetalhe />} />
                 <Route
                   path="/app/usuarios"
                   element={

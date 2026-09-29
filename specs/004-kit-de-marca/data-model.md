@@ -154,10 +154,21 @@ novo.
 
 ## HD de dados (sem tabela)
 Não há cota nem tabela de uso. O estado vem do sistema de arquivos, lido pela API e pelo worker no
-bind mount `/hd` (R5):
-- `SOCIMAN_HD_DIR` (padrão `/media/sakai/BACKUP/tiktok/sociman`): `.sociman-volume` (sentinela,
-  criado por `scripts/hd-setup.sh`), `minio/` (dados do MinIO) e `work/` (`tmp/` para o spool de
+bind mount de `/media/sakai` com `rslave` (R5):
+- `SOCIMAN_DATA_DIR` (padrão `/media/sakai/BACKUP/tiktok/sociman`): `.sociman-volume` (sentinela,
+  criado por `scripts/data-setup.sh`), `minio/` (dados do MinIO) e `work/` (`tmp/` para o spool de
   upload da API e `cortes/{id}/` para o worker);
-- `HD_MIN_FREE_GB` (padrão 20): espaço livre mínimo para qualquer gravação (MinIO e `work/`);
+- `DATA_MIN_FREE_GB` (padrão 20): espaço livre mínimo para qualquer gravação (MinIO e `work/`);
 - `cortesBytes` na tela = `sum(original_bytes + coalesce(result_bytes, 0))` da tabela `cortes`;
-  livre e total = `os.statvfs('/hd')`.
+  livre e total = `os.statvfs(SOCIMAN_DATA_DIR)`.
+
+## Fundo com imagem (FR-005a e FR-005b, adicionado depois da POC)
+- `image_kind` ganha o valor `fundo`: imagens de fundo do perfil, em PNG, JPG ou WebP, com mínimo
+  de 540×540, no bucket `sociman` (HD).
+- `hook` e `end_card` ganham `fundo_tipo` (`cor` | `imagem`, padrão `cor`) e `fundo_imagem_id`
+  (uuid | null, obrigatório com `imagem` e a seção ligada; precisa ser do kind `fundo` e do
+  próprio perfil).
+- `end_card` ganha também `opacidade_fundo` (0–1, padrão 0.45), usado só com imagem: é a camada da
+  cor de fundo sobre a imagem.
+- Com imagem, a imagem é recortada em cover para a área (a caixa do gancho ou o quadro inteiro do
+  card), e a camada de cor com opacidade vai por cima. O texto e o logo ficam acima da camada.

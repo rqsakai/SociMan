@@ -31,16 +31,22 @@ import {
   perfilVersionsKey,
 } from "../../lib/perfis";
 import { ContasTab } from "./ContasTab";
+import { CortesTab } from "./tabs/CortesTab";
+import { FontesTab } from "./tabs/FontesTab";
+import { MarcaTab } from "./tabs/MarcaTab";
 
 const tabs = [
   { id: "dados", label: "Dados" },
   { id: "contas", label: "Contas" },
+  { id: "marca", label: "Marca" },
+  { id: "fontes", label: "Fontes" },
+  { id: "cortes", label: "Cortes" },
   { id: "historico", label: "Histórico" },
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
 
-// /app/perfis/:id: cabeçalho "profile" (banner, logo e abas em pílula), abas Dados, Contas e
-// Histórico, e as ações Arquivar/Restaurar. A aba fica na URL (?aba=contas) para o voltar do
+// /app/perfis/:id: cabeçalho "profile" (banner, logo e abas em pílula), abas Dados, Contas, Marca,
+// Fontes, Cortes e Histórico, e as ações Arquivar/Restaurar. A aba fica na URL (?aba=contas) para o voltar do
 // navegador e o link direto funcionarem. Sucesso vira toast; erro da API fica num Alert.
 export default function PerfilDetalhe() {
   const { id = "" } = useParams();
@@ -126,7 +132,7 @@ export default function PerfilDetalhe() {
         <PerfilHeader
           perfil={perfil}
           tabs={
-            <TabsList aria-label="Seções do perfil" className="h-10 rounded-full bg-muted p-1">
+            <TabsList aria-label="Seções do perfil" className="h-10 max-w-full justify-start overflow-x-auto rounded-full bg-muted p-1 [scrollbar-width:none]">
               {tabs.map((t) => (
                 <TabsTrigger key={t.id} value={t.id} className="rounded-full px-4 data-[state=active]:shadow-sm">
                   {t.label}
@@ -168,6 +174,15 @@ export default function PerfilDetalhe() {
         </TabsContent>
         <TabsContent value="contas">
           <ContasTab perfil={perfil} contas={contas} onChanged={refresh} onError={setError} onActionStart={() => setError(null)} />
+        </TabsContent>
+        <TabsContent value="marca">
+          <MarcaTab perfil={perfil} contas={contas} />
+        </TabsContent>
+        <TabsContent value="fontes">
+          <FontesTab perfil={perfil} />
+        </TabsContent>
+        <TabsContent value="cortes">
+          <CortesTab perfil={perfil} />
         </TabsContent>
         <TabsContent value="historico">
           <PerfilHistorico perfil={perfil} onReverted={refresh} />

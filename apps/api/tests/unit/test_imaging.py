@@ -118,3 +118,9 @@ def test_urls_assinadas(monkeypatch):
     urls = imaging.image_urls("perfis/p1/a.png")
     assert urls == {"thumb": expected(96, 96), "medium": expected(256, 256)}
     assert imaging.banner_url("perfis/p1/a.png") == expected(1200, 300)
+
+
+def test_poster_url_usa_tamanho_da_previa():
+    from sociman_api import imaging
+
+    assert "/rs:fit:540:960/" in imaging.poster_url("perfis/x/poster.jpg")

@@ -58,7 +58,7 @@ Fontes consultadas: a spec, a constitution 2.0.0, o código da 003 (`history.py`
     ffprobe. O percentual vai para o banco a cada 2 s, no máximo.
   - **Tempo limite:** o processo do ffmpeg é morto se passar de 10 min (falha "Tempo de
     processamento esgotado").
-  - **Pasta de trabalho:** `/hd/work/cortes/{corte_id}/` no HD (R5): o original baixado do
+  - **Pasta de trabalho:** `${SOCIMAN_DATA_DIR}/work/cortes/{corte_id}/` no HD (R5): o original baixado do
     MinIO, os PNGs das camadas e o `marcado.mp4` temporário. O ffmpeg roda com `cwd` e `TMPDIR`
     nela, e a pasta é removida no `finally`.
 - **Medição (2026-09-29, host `sakai-desktop`, 16 threads, ffmpeg 6.1):** vídeo sintético de
@@ -112,7 +112,7 @@ Fontes consultadas: a spec, a constitution 2.0.0, o código da 003 (`history.py`
     `payload_too_large` com "Arquivo maior que 500 MB"), antes de ler o corpo. Também antes de
     ler o corpo, confere o sentinela e o piso de espaço livre do HD (R5: 503 ou 507);
   - o `UploadFile` do Starlette já faz spool em disco (`SpooledTemporaryFile`, 1 MB em memória);
-    o arquivo nunca fica inteiro na RAM. O spool vai para `/hd/work/tmp` (`TMPDIR` da API, no HD,
+    o arquivo nunca fica inteiro na RAM. O spool vai para `${SOCIMAN_DATA_DIR}/work/tmp` (`TMPDIR` da API, no HD,
     R5), nunca para o `/tmp` do container, e é removido no `finally`;
   - depois do ffprobe (R3), o arquivo vai ao bucket `sociman-videos` com `put_object(…, length=-1,
     part_size=16 MiB)` a partir do arquivo em disco (upload multipart do minio-py). O
@@ -131,8 +131,8 @@ Fontes consultadas: a spec, a constitution 2.0.0, o código da 003 (`history.py`
   ou cresce sem parar fica no **HD de 4 TB** (`/dev/sda1`, ext4, rótulo `BACKUP`, montado em
   `/media/sakai/BACKUP`, 2,1 TB livres, dono `sakai` 1000:1000). No NVMe ficam só o código, os
   containers, o PostgreSQL e o Redis. Não há segundo MinIO nem cota por soma de bytes.
-- **Layout no HD:** `SOCIMAN_HD_DIR` (padrão `/media/sakai/BACKUP/tiktok/sociman`) contém:
-  - `.sociman-volume`: o **sentinela**, criado só por `scripts/hd-setup.sh` (R12);
+- **Layout no HD:** `SOCIMAN_DATA_DIR` (padrão `/media/sakai/BACKUP/tiktok/sociman`) contém:
+  - `.sociman-volume`: o **sentinela**, criado só por `scripts/data-setup.sh` (R12);
   - `minio/`: os dados do **serviço `minio` existente**, que deixa o volume nomeado
     `minio-data` (hoje no NVMe) e passa a usar este bind mount;
   - `work/`: temporários grandes (spool de upload da API e pasta de trabalho do worker e do
@@ -146,45 +146,64 @@ Fontes consultadas: a spec, a constitution 2.0.0, o código da 003 (`history.py`
   - O `minio-init` passa a criar os três. O `IMGPROXY_ALLOWED_SOURCES` continua
     `s3://sociman/`, então fontes e vídeos nunca passam pelo imgproxy.
 - **Compose:**
-  - `minio`: `user: "1000:1000"` (hoje roda como root), bind mount em sintaxe longa
-    `SOCIMAN_HD_DIR → /vol` com `bind.create_host_path: false` (se a pasta não existir, o
-    container **não sobe**, em vez de o Docker criá-la no NVMe), e `entrypoint` que confere
-    `test -f /vol/.sociman-volume` antes de `minio server /vol/minio`. Sem o sentinela, sai com
-    uma mensagem clara no log. O console continua em 9101 (só dev); a porta S3 continua fechada;
-  - `api` e `worker`: bind de `SOCIMAN_HD_DIR` em `/hd`, também com `create_host_path: false`.
-    Usam `/hd/.sociman-volume` (sentinela), `os.statvfs('/hd')` (espaço livre) e
-    `/hd/work` (`TMPDIR=/hd/work/tmp` na API, para o spool do Starlette; `/hd/work/cortes/{id}/`
-    no worker). Os bytes de imagens, fontes e vídeos passam sempre pelo S3 do MinIO;
+  - `minio`: `user: "1000:1000"` (hoje roda como root) e dois binds em sintaxe longa, ambos com
+    `bind.create_host_path: false`: `${SOCIMAN_DATA_DIR}/minio → /data` (substitui o volume
+    nomeado `minio-data`) e `${SOCIMAN_DATA_DIR}/.sociman-volume → /sentinela/.sociman-volume`
+    (somente leitura). Se o HD não estiver montado, o container **não sobe**, em vez de o Docker
+    criar as pastas no NVMe. O `entrypoint` ainda confere `test -f /sentinela/.sociman-volume`
+    antes de `minio server /data` e sai com mensagem clara se faltar. O console continua em 9101
+    (só dev); a porta S3 continua fechada;
+  - `api` e `worker` **não** usam `create_host_path: false` no HD, porque precisam continuar no ar
+    sem ele (comportamento abaixo). Eles montam o **pai do ponto de montagem**,
+    `/media/sakai → /media/sakai` (mesmo caminho dentro e fora, `create_host_path: false`, que
+    existe sempre no NVMe), com `bind.propagation: rslave`: quando o HD é montado ou desmontado
+    no host, a mudança aparece dentro do container sem reiniciar. Assim `SOCIMAN_DATA_DIR` tem o
+    mesmo valor no host e nos containers. A aplicação **nunca cria** `SOCIMAN_DATA_DIR` nem
+    pastas acima dele: só grava em `work/` depois de conferir o sentinela, então com o HD fora
+    nada cai no NVMe;
+  - `TMPDIR=${SOCIMAN_DATA_DIR}/work/tmp` na API (spool do Starlette) e
+    `${SOCIMAN_DATA_DIR}/work/cortes/{id}/` no worker. Os bytes de imagens, fontes e vídeos
+    passam sempre pelo S3 do MinIO;
   - o volume nomeado `minio-data` sai do compose, mas **não é apagado** pela migração (R12): o
     dono o remove à mão depois de verificar.
 - **`storage.py`:** funções recebem o bucket (`"imagens" | "fontes" | "videos"`, mapeados em
   `S3_BUCKET`, `S3_FONTS_BUCKET` e `S3_VIDEOS_BUCKET`), com `put`, `put_file` (multipart, sem
   ler em memória), `get`, `get_to_file`, `stat` e `get_range(key, offset, length)` (R6).
-  Continua **sem delete**. Toda escrita passa antes por `hd.ensure_writable(n_bytes)`.
+  Continua **sem delete**. Toda escrita passa antes por `datadir.ensure_writable(n_bytes)`.
 - **Proteções obrigatórias (FR-018), para o MinIO e para o `work/`:**
-  1. **sentinela:** sem `/hd/.sociman-volume`, o `minio` não sobe, e a API e o worker recusam
-     gravar. Envio de corte, de fonte e de imagem (inclusive o logo e o banner da 003): 503
+  1. **sentinela:** sem `${SOCIMAN_DATA_DIR}/.sociman-volume`, o `minio` não sobe, e a API e o
+     worker recusam gravar (se o `TMPDIR` não existir, o upload também é recusado, nunca
+     redirecionado para o `/tmp`). Envio de corte, de fonte e de imagem (inclusive o logo e o banner da 003): 503
      `storage_unavailable` ("O HD de dados não está disponível"). O worker confere antes de
      pegar um corte e, sem o sentinela, não pega nada e espera 30 s; se o HD sumir no meio, o
      corte volta para a fila sem contar tentativa;
   2. **piso de espaço livre:** qualquer escrita é recusada quando o espaço livre do HD,
-     descontado o tamanho da escrita, fica abaixo de `HD_MIN_FREE_GB` (padrão 20): 507
+     descontado o tamanho da escrita, fica abaixo de `DATA_MIN_FREE_GB` (padrão 20): 507
      `storage_full` ("Pouco espaço no HD de dados"). O envio de corte confere antes de ler o
      corpo (pelo `Content-Length`). O worker confere, antes de processar, que sobram pelo menos
      3× o tamanho do original (cópia de trabalho, resultado temporário e resultado no MinIO);
      senão, marca `falhou` com "Pouco espaço no HD de dados" (dá para tentar de novo);
   3. `GET /api/armazenamento` devolve `{available, reason, freeBytes, totalBytes, minFreeBytes,
      cortesBytes}`, e a aba Cortes mostra uso e espaço livre. O `/api/health` ganha
-     `storage: ok | unavailable | low_space`, sem mudar o `status` geral (login e kit continuam
-     respondendo).
+     `storage: ok | unavailable | low_space`, e o `status` passa a `degraded` (ainda HTTP 200)
+     quando o armazenamento não está `ok`; banco fora continua sendo erro, como hoje.
   - **Nada é apagado** (FR-016). A única limpeza é do `work/`: o worker remove a própria pasta
     de trabalho no `finally` e, ao subir, as pastas de `work/cortes/` que sobraram de um
     processo morto. São temporários, nunca vídeos guardados.
 - **Riscos (registrados):**
-  - **HD fora do ar = SociMan sem mídia:** sem o HD, `minio`, `api` e `worker` não sobem
-    (`create_host_path: false`); se o HD sumir com a stack no ar, logos, fontes e vídeos param
-    de abrir e as escritas são recusadas. Nada vai para o NVMe. É o custo aceito de ter um MinIO
-    só;
+  - **HD fora do ar = MinIO inteiro fora (imagens também):** sem o HD, o `minio` não sobe (ou
+    falha, se o HD sumir com ele no ar). O comportamento esperado:
+    - `/api/health` responde `status: degraded` e `storage: unavailable`;
+    - a API **segue respondendo** o que não depende de arquivo: login, usuários, perfis, contas,
+      kit (editar, histórico, exportar tokens), lista e status dos cortes;
+    - tudo o que lê ou grava arquivo responde 503 `storage_unavailable`: upload de logo, banner,
+      fonte, marca d'água e corte, e o `/api/midia`. As miniaturas em `/img` falham (o imgproxy
+      não alcança o MinIO), e o SPA mostra o avatar padrão;
+    - o worker não pega cortes e espera; o `minio` precisa ser reiniciado depois que o HD voltar
+      (`docker compose up -d minio`);
+    - nada vai para o NVMe. É o custo aceito de ter um MinIO só;
+  - `api` e `worker` enxergam `/media/sakai` inteiro (outros discos USB montados ali também).
+    Aceito numa ferramenta interna; a aplicação só toca em `SOCIMAN_DATA_DIR`;
   - o HD se chama `BACKUP`, mas **não é backup**: é o único lugar dos arquivos de mídia. Backup
     fica fora desta spec;
   - HD mecânico/USB é mais lento que o NVMe: o upload e o streaming ficam limitados pela rede de
@@ -197,6 +216,8 @@ Fontes consultadas: a spec, a constitution 2.0.0, o código da 003 (`history.py`
 - **Alternativas:**
   - segundo MinIO só no HD para vídeos (e depois fontes): duas instâncias, duas credenciais e
     dois clientes, para o mesmo ganho (rejeitada pelo dono ao simplificar);
+  - `create_host_path: false` direto em `SOCIMAN_DATA_DIR` também na API e no worker: sem o HD,
+    a API não subiria, e o login cairia junto (contra o comportamento pedido);
   - bind mount direto do HD na API e no worker, sem MinIO para vídeos: dois jeitos de guardar
     arquivo e streaming com `Range` escrito à mão;
   - cota por soma de bytes no NVMe (proposta original): rejeitada pelo dono.
@@ -350,22 +371,23 @@ Fontes consultadas: a spec, a constitution 2.0.0, o código da 003 (`history.py`
     - **HD (FR-018, SC-007):** sem o sentinela, o envio de corte, de fonte e de logo dá 503 e
       nenhum objeto é gravado; com o piso configurado acima do livre real do tmpfs, dá 507; o
       worker sem sentinela não pega corte; o worker remove a própria pasta de `work/` no fim e
-      as sobras ao subir; `/api/armazenamento` e o `/api/health` refletem cada caso;
+      as sobras ao subir; `/api/armazenamento` e o `/api/health` (`status: degraded`) refletem cada caso; com o
+      armazenamento fora, login, perfis e kit seguem respondendo e o `/api/midia` dá 503;
     - nenhuma rota DELETE (SC-005) e o teste-guarda da 001 (princípio I) cobrindo `cortes`.
   - **e2e (Playwright, dev):** editar o kit de um perfil e ver a prévia mudar; enviar fonte;
     exportar o JSON; enviar um MP4 pequeno (gerado no setup do e2e), esperar "Pronto" e tocar o
     vídeo. O e2e precisa do serviço `worker` no compose de dev.
   - A imagem de teste (`sociman-api-test`) é a mesma da API, então já terá `ffmpeg`.
   - A stack efêmera continua com o MinIO em tmpfs, agora com os buckets `sociman-test`,
-    `sociman-fonts-test` e `sociman-videos-test`, e ganha um tmpfs montado em `/hd` no `pytest`,
+    `sociman-fonts-test` e `sociman-videos-test`, e ganha um tmpfs montado em `SOCIMAN_DATA_DIR` no `pytest`,
     onde a fixture cria `work/` e o sentinela (e o remove nos testes de SC-007). Nada da stack
     de teste toca o HD.
 
 ## R12. Infra: migrar o MinIO para o HD (primeira tarefa da implementação)
-- **Decisão:** um script idempotente, `scripts/hd-setup.sh`, rodado pelo dono uma vez, um passo
+- **Decisão:** um script idempotente, `scripts/data-setup.sh`, rodado pelo dono uma vez, um passo
   por vez (subcomandos `check`, `init`, `count`, `migrate` e `verify`, na ordem abaixo; a troca
   do compose vai no commit da tarefa), com verificação em cada passo:
-  1. **conferir o HD:** `findmnt -no SOURCE,FSTYPE -T "$SOCIMAN_HD_DIR"` precisa mostrar um
+  1. **conferir o HD:** `findmnt -no SOURCE,FSTYPE -T "$SOCIMAN_DATA_DIR"` precisa mostrar um
      ponto de montagem diferente de `/` (aborta se o caminho cair no NVMe); o dono do caminho é
      1000:1000;
   2. **estrutura:** cria `minio/`, `work/tmp/` e `work/cortes/` e o sentinela
@@ -376,17 +398,17 @@ Fontes consultadas: a spec, a constitution 2.0.0, o código da 003 (`history.py`
      anota o digest da imagem `minio/minio` em uso e fixa essa tag no compose, para a versão não
      mudar entre a cópia e a subida;
   4. **cópia com o MinIO parado:** `docker compose stop edge imgproxy api minio`, depois
-     `docker run --rm -v sociman_minio-data:/from:ro -v "$SOCIMAN_HD_DIR/minio":/to alpine sh -c
+     `docker run --rm -v sociman_minio-data:/from:ro -v "$SOCIMAN_DATA_DIR/minio":/to alpine sh -c
      'cp -a /from/. /to/ && chown -R 1000:1000 /to'`. A cópia do diretório de dados é segura
      com o servidor parado e a mesma versão de imagem (formato `xl.meta` idêntico);
-  5. **trocar o compose:** o `minio` passa para o bind mount do HD, com `user` 1000, o
-     sentinela no `entrypoint` e `create_host_path: false`; o `minio-init` cria também
-     `sociman-fonts` e `sociman-videos`; `api` e `worker` ganham o bind `/hd` e o `TMPDIR`;
+  5. **trocar o compose:** o `minio` passa para os binds `${SOCIMAN_DATA_DIR}/minio → /data` e do
+     sentinela, com `user` 1000, o sentinela no `entrypoint` e `create_host_path: false`; o `minio-init` cria também
+     `sociman-fonts` e `sociman-videos`; `api` e `worker` ganham o bind de `/media/sakai` (`rslave`) e o `TMPDIR`;
      o volume nomeado sai da lista de volumes do serviço (mas **não** é removido);
   6. **verificar:** `docker compose up -d`; a contagem e o `mc du` do bucket `sociman` batem com
      o passo 3; `docker volume inspect sociman_minio-data` ainda existe; um logo de perfil da 003
      abre em `/img/...` (200, pelo `curl` com a URL que `GET /api/perfis` devolve);
-     `du -sh $SOCIMAN_HD_DIR/minio` cresceu e o NVMe não; `npm run test:api` e
+     `du -sh $SOCIMAN_DATA_DIR/minio` cresceu e o NVMe não; `npm run test:api` e
      `npm run test:e2e` verdes.
   - O volume `minio-data` só é removido pelo dono, à mão, depois de alguns dias sem problema.
 - **Alternativa:** `mc mirror` entre dois MinIO temporários (o antigo no volume e o novo no HD).
