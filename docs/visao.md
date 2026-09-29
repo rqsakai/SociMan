@@ -63,10 +63,24 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    - **Exportação** para o gerador de cortes (legenda e preset de gancho mais próximo).
    - **Aplicação da marca** por um worker com ffmpeg: gancho, marca d'água e card final por cima dos últimos segundos.
    - **O MinIO inteiro fica no HD**, com sentinela.
-5. `005-avatares-e-poses`
-6. `006-cenas`
-7. `007-scripts`: roteiros por cena e avatar.
-8. `008-canais-fonte-e-videos`: canais-fonte, vídeos e padrões de corte.
-9. `009-mcp`: servidor MCP sobre a API.
-10. `010-produtos-shop`
-11. `011-importacao`: migrar `../shared/perfis/*` e `../shared/shop/*` para o banco.
+5. `005-ui-base` ✅ **implementada** (`specs/005-ui-base/`, 2026-09-29): shadcn/ui + TanStack Table
+   com layout de painel (ADR 0001: `style-src 'unsafe-inline'`).
+6. `006-cortes-openshorts` ✅ **implementada** (`specs/006-cortes-openshorts/`, 2026-09-29). Absorve o
+   antigo item `008-canais-fonte-e-videos`. Decisões:
+   - **Canais-fonte** próprios e de parceiros, com status de direito informativo (princípio II 3.0.0):
+     aviso para `sem_acordo` e envio avulso, histórico de todo envio, sem bloqueio.
+   - **Descoberta** de todos os vídeos do canal (API do YouTube, cota controlada) com nota explicável.
+   - **Envio ao OpenShorts** local (legenda do kit, sem `auto_hook`); os clipes voltam como cortes em
+     `revisao`. Serviço `agendador` (sync, acompanhamento, importação e lembretes).
+   - **Textos de postagem pelo Claude**, uma postagem por conta de destino, calendário e aviso
+     "Hora de postar" com o app aberto. **O SociMan não publica** (princípio I).
+   - Fora: rascunho/postagem no TikTok (spec futura; exige emendar o princípio I).
+7. `007-assets-do-perfil` ✅ **implementada** (`specs/007-assets-do-perfil/`, 2026-09-29). Decisões:
+   - **Biblioteca por perfil:** avatares (looks, poses, descrição fixa para prompt), cenários, fundos,
+     stickers, marcas d'água e imagens; os fundos e marcas d'água da 004 migraram sem perda.
+   - **Só o kit bloqueia arquivar**; o uso em cortes é informativo. Link estável e download do original.
+8. `008-cenas`
+9. `009-mcp`: servidor MCP sobre a API (o número fica, porque a constitution e as specs citam a `009-mcp`).
+10. `010-scripts`: roteiros por cena e avatar.
+11. `011-produtos-shop`
+12. `012-importacao`: migrar `../shared/perfis/*` e `../shared/shop/*` para o banco.

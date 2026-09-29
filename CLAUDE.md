@@ -56,6 +56,24 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 - **Edge:** as rotas de upload grande têm `location` própria no `default.conf.template`: cortes com 520m e sem buffering, fontes com 11m. `/api/midia/` sem buffering.
 - **Gancho:** quem queima é o SociMan. Ao gerar cortes no OpenShorts, **não** use `auto_hook` (a exportação traz `openshorts.hook.enabled=false`).
 
+## Cortes com o OpenShorts (desde a spec 006)
+- **Pacotes:** `canais/` (canais-fonte, cliente do YouTube, sync, cota, pontuação), `envios/` (seleção, padrões de corte, envio, cliente do OpenShorts, acompanhamento, importação), `postagem/` (textos com o Claude, postagens, lembretes), `notificacoes/` e `integracoes.py`. Rotas `/api/canais`, `/api/videos-fonte`, `/api/envios`, `/api/postagens`, `/api/calendario`, `/api/notificacoes`, `/api/integracoes`. **Sem "youtube" nem "tiktok" em rotas e operationIds** (guarda do princípio I).
+- **Serviço `agendador`** (`sociman agendador`, mesma imagem da API, advisory lock no PG): 4 trilhas (`sync`, `openshorts`, `importacao`, `lembretes`). Logs: `docker compose logs -f agendador`; depois de mudar esse código, `docker compose restart agendador`.
+- **Chaves** `YOUTUBE_API_KEY` e `ANTHROPIC_API_KEY` no `.env` da raiz (só api e agendador). Sem elas, a sync fica ociosa e as sugestões respondem 503 `claude_unconfigured`. `GET /api/integracoes` mostra o estado sem expor valores.
+- **OpenShorts** em `http://host.docker.internal:8000` (`extra_hosts`): corpo com `auto_hook: false` e `captions: false`, legenda do kit via `/api/subtitle`. Os clipes viram cortes em `revisao`; "Aplicar marca" leva para `na_fila`. A importação precisa rodar dentro das 24 h de retenção do OpenShorts e deduplica pelo trecho do vídeo.
+- **Direito (princípio II):** `enviar` responde 409 `aviso_direito` sem `confirmarAviso: true` para canal `sem_acordo` e envio avulso; o histórico grava `direitoNoEnvio` e quem confirmou. Envio e corte não têm `revert` (exceção aprovada do princípio VII).
+- **Postagens:** uma por corte e conta; `postado` só por ação humana. Avisos "Hora de postar" no sino e no navegador **com o app aberto** (sem Web Push).
+- **Edge:** `location` própria de 2100m para o envio avulso de arquivo. Miniaturas do YouTube passam pelo imgproxy (`IMGPROXY_ALLOWED_SOURCES`).
+- **Testes:** fakes em `apps/api/tests/fakes/` (YouTube, OpenShorts, Claude); no e2e, o serviço `openshorts-fake` (`e2e/fakes/server.py`) responde também `/youtube/v3`. Nenhum teste chama serviço real.
+
+## Biblioteca de assets (desde a spec 007)
+- **Código:** pacote `assets/` (modelos `assets`/`asset_files`, `service`, `busca`, `usos`, `backfill`, routers `/api/perfis/{id}/assets…` e `/api/assets/{id}…`); `entity_type = "asset"` no `history.py`. Aba **Assets** do perfil (`?aba=assets`) e detalhe em `/app/assets/:id`.
+- **Tipo × `image_kind`:** `avatar`→`avatar`, `cenario`/`fundo`→`fundo`, `sticker`/`marca_dagua`→`watermark` (transparência obrigatória), `imagem`→`imagem`. Os arquivos continuam em `images` (o kit e os cortes não mudaram de referência); a migração `0005_assets` pôs toda imagem de fundo e marca d'água da 004 num asset (`system:migration`).
+- **Limite de 20 MB:** o edge tem `location` própria com `client_max_body_size 21m` para `…/assets/arquivo` e `/api/assets/{id}/arquivos`, para a recusa vir da API (o resto de `/api/` segue com 8m). O imgproxy tem `IMGPROXY_MAX_SRC_RESOLUTION=40`.
+- **Links:** `MidiaKind imagem` assina sem validade (`AssetFile.link` estável e `downloadUrl`).
+- **Arquivar:** só o uso no **kit** bloqueia (409 `asset_in_use`); cortes só informam. O kit guarda o `fundo_imagem_id` mesmo com fundo `cor`: para liberar a imagem, escolha outra.
+- **Seletores do kit** (fundo e marca d'água) listam da biblioteca (`GET …/assets/imagens`) com "Abrir biblioteca"; "Enviar imagem" cria o asset. As rotas antigas `…/fundos` e `…/marca-dagua` ficam `deprecated`.
+
 ## Armadilhas
 1. **Containers rodam como UID 1000.** Se uma pasta de bind mount não existir, o Docker a cria como root (foi o que aconteceu com `docker/certs`). Crie antes.
 2. **CSP estrita em produção** (herdada do volans). `check:csp` compara `apps/web/vite.config.ts` com `docker/nginx/05-edge-mode.envsh`. Mudou um, mude o outro.

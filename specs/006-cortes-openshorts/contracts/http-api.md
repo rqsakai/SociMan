@@ -111,8 +111,10 @@ há envios em andamento na tela.
 ## Postagens
 | Método e rota | Corpo | 200 | Erros |
 |---|---|---|---|
-| `POST /api/cortes/{id}/sugestoes` | `{contaId}` (a plataforma vem da conta) | `{sugestao: Sugestao}` (não altera a postagem) | 503 `claude_unconfigured`; 504 `textos_timeout`; 502 `textos_invalidos` / `claude_error` (mensagem clara; os campos continuam editáveis) |
+| `POST /api/cortes/{id}/sugestoes` | `{contaId, outraVersao?}` (a plataforma vem da conta; `outraVersao: true` pede um texto diferente das sugestões anteriores da mesma plataforma) | `{sugestao: Sugestao}` (não altera a postagem) | 503 `claude_unconfigured`; 504 `textos_timeout`; 502 `textos_invalidos` / `claude_error` (mensagem clara; os campos continuam editáveis) |
 | `GET /api/cortes/{id}/sugestoes` | – | `{items: Sugestao[]}` (mais recentes primeiro) | 404 |
+| `GET /api/cortes/{id}/postagens` (operationId `postagens_list`) | – | `{items: Postagem[]}` (todas as postagens não arquivadas do corte, uma por conta) | 404 |
+| `GET /api/postagens/{id}` | – | `{postagem}` | 404 |
 | `POST /api/cortes/{id}/postagens` | `{contaId, titulo?, descricao?, hashtags?, plannedAt?, sugestaoId?}` | `{postagem}` (201; `agendado` se vier `plannedAt`) | 409 `postagem_exists`; 409 `corte_not_ready` (com `plannedAt` e o corte fora de `pronto`); 400 `planned_in_past`; 400 `validation_error` (limites) |
 | `PATCH /api/postagens/{id}` | `{version, titulo?, descricao?, hashtags?, plannedAt?|null, contaId?}` (`plannedAt` → `agendado`; `null` → `rascunho`) | `{postagem}` | 409 `version_conflict`; 409 `corte_not_ready`; 400 `planned_in_past`; 409 `conflict` (já `postado`) |
 | `POST /api/postagens/{id}/postado` | `{version, postedUrl?}` | `{postagem}` (`postado`, `postedAt = now`) | 409 |

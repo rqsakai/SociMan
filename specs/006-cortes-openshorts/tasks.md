@@ -52,10 +52,10 @@ reescrever nem reordenar o que a 007 pôs. Marcados com ⚠️ **COMPARTILHADO (
 
 **Purpose**: dependências, configuração, compose e edge. Nada de domínio.
 
-- [ ] T001 Em `apps/api/pyproject.toml`, mover `httpx` do grupo dev para `dependencies` e
+- [X] T001 Em `apps/api/pyproject.toml`, mover `httpx` do grupo dev para `dependencies` e
   acrescentar `anthropic` (SDK oficial); atualizar `apps/api/uv.lock` (`uv lock`) e reconstruir a
   imagem. Não acrescentar `google-api-python-client` (o guarda `SOCIAL_SDKS` o proíbe).
-- [ ] T002 [P] Em `apps/api/src/sociman_api/config.py`, acrescentar: `youtube_api_key` (vazio =
+- [X] T002 [P] Em `apps/api/src/sociman_api/config.py`, acrescentar: `youtube_api_key` (vazio =
   não configurada), `youtube_api_url` (padrão `https://www.googleapis.com/youtube/v3`; o e2e
   aponta para o `openshorts-fake`), `openshorts_url` (padrão `http://host.docker.internal:8000`),
   `anthropic_api_key`, `textos_model` (padrão `claude-sonnet-5-5`), `app_tz`
@@ -63,12 +63,12 @@ reescrever nem reordenar o que a 007 pôs. Marcados com ⚠️ **COMPARTILHADO (
   `agendador_sync_s` (60), `agendador_openshorts_s` (10), `agendador_importacao_s` (5) e
   `agendador_lembretes_s` (30). As chaves nunca entram em `repr`/log (usar `SecretStr` ou
   equivalente).
-- [ ] T003 [P] Em `.env.example`, acrescentar `YOUTUBE_API_KEY=` e `ANTHROPIC_API_KEY=` vazios,
+- [X] T003 [P] Em `.env.example`, acrescentar `YOUTUBE_API_KEY=` e `ANTHROPIC_API_KEY=` vazios,
   com comentário em pt-BR ("fica só no `.env`, fora do git"). Conferir que
   `scripts/check-secrets.mjs` **já tem** os padrões `\bsk-ant-[A-Za-z0-9_-]{20,}` e
   `\bAIza[0-9A-Za-z_-]{35}\b` (linhas 11–12) e rodar `npm run check:secrets`. Só mexer no script
   se faltar algum.
-- [ ] T004 ⚠️ **COMPARTILHADO (só acréscimo)** Em `docker-compose.yml`:
+- [X] T004 ⚠️ **COMPARTILHADO (só acréscimo)** Em `docker-compose.yml`:
   - serviço novo `agendador`: a mesma imagem da `api`, `command` `uv run sociman agendador`,
     `user: "1000:1000"`, os mesmos binds do HD do `worker` (com o sentinela), `depends_on`
     postgres e minio, sem porta publicada;
@@ -78,7 +78,7 @@ reescrever nem reordenar o que a 007 pôs. Marcados com ⚠️ **COMPARTILHADO (
     recebe as chaves;
   - `imgproxy`: **acrescentar** a `IMGPROXY_ALLOWED_SOURCES` (lista separada por vírgula, sem
     trocar o que a 007 puser) `https://i.ytimg.com/,https://yt3.ggpht.com/,https://yt3.googleusercontent.com/`.
-- [ ] T005 [P] ⚠️ **COMPARTILHADO (só acréscimo)** Em `docker/nginx/default.conf.template`,
+- [X] T005 [P] ⚠️ **COMPARTILHADO (só acréscimo)** Em `docker/nginx/default.conf.template`,
   acrescentar um bloco `location` próprio (regex) para `^/api/perfis/[^/]+/envios/arquivo$`, com
   `client_max_body_size 2100m`, `proxy_request_buffering off` e timeouts longos, como o de cortes
   da 004. Não mexer no bloco de assets da 007. Depois: `docker compose restart edge` (armadilha 13).
@@ -87,6 +87,10 @@ reescrever nem reordenar o que a 007 pôs. Marcados com ⚠️ **COMPARTILHADO (
   `ANTHROPIC_API_KEY` no `.env` com o editor, conferir com `grep -c` e `git check-ignore .env`.
   Se o `agendador` não alcançar `host.docker.internal:8000`, o dono decide a regra do ufw
   (`172.16.0.0/12 → 8000`).
+  **Preparado pela Trilha 0 (2026-09-29):** `.env.example` e o compose já têm as variáveis; o
+  `.env` da raiz ainda **não** tem as chaves (sem elas a trilha `sync` fica ociosa, com log). O
+  `agendador` já alcança `http://host.docker.internal:8000/health` (200): não precisa de regra
+  no ufw. Depois de pôr as chaves: `docker compose up -d api agendador`.
 
 ---
 
@@ -98,7 +102,7 @@ disputem `main.py`, `migrations/env.py`, `cli.py` e a migration.
 
 **⚠️ CRITICAL**: nenhuma história começa antes do checkpoint desta fase.
 
-- [ ] T007 Criar `apps/api/migrations/versions/0006_cortes_openshorts.py`
+- [X] T007 Criar `apps/api/migrations/versions/0006_cortes_openshorts.py`
   (`revision = "0006_cortes_openshorts"`, `down_revision = "0005_assets"`), com `downgrade`
   completo. Restrições do data-model, literalmente:
   - enums: `canal_direito` (`proprio`, `parceiro`, `programa_de_cortes`, `sem_acordo`),
@@ -153,44 +157,44 @@ disputem `main.py`, `migrations/env.py`, `cli.py` e a migration.
   - `notificacoes`: `id` bigint identity PK; `dedupe_key` not null com UNIQUE `(user_id,
     dedupe_key)`; `corpo` not null default ''; índice `(user_id, id desc)` e parcial `(user_id)
     WHERE lida_em IS NULL`.
-- [ ] T008 [P] Criar `apps/api/src/sociman_api/canais/__init__.py` e `canais/models.py`:
+- [X] T008 [P] Criar `apps/api/src/sociman_api/canais/__init__.py` e `canais/models.py`:
   `CanalFonte` (versionado, `__versioned_fields__` = `title`, `handle`, `direito`,
   `direito_evidencia_url`, `direito_evidencia_nota`, `perfil_ids`, `archived`;
   `__immutable_fields__` = `title`, `handle`, só exibição), `CanalPerfil`, `VideoFonte`,
   `VideoMetrica`, `YoutubeCota`, com os enums.
-- [ ] T009 [P] Criar `apps/api/src/sociman_api/envios/__init__.py` e `envios/models.py`:
+- [X] T009 [P] Criar `apps/api/src/sociman_api/envios/__init__.py` e `envios/models.py`:
   `PadroesCorte` (snapshot com todos os campos) e `Envio` (snapshot só de ações humanas:
   `status`, `config`, `direito_no_envio`, `aviso_confirmado`, `source_title`, `source_url`,
   `canal_fonte_id`, `video_fonte_id`, `origem`, `archived`), com os enums `EnvioOrigem`,
   `EnvioStatus`, `DireitoEnvio`.
-- [ ] T010 [P] Ampliar `apps/api/src/sociman_api/cortes/models.py`: status `revisao`, colunas
+- [X] T010 [P] Ampliar `apps/api/src/sociman_api/cortes/models.py`: status `revisao`, colunas
   novas, `kit_version`/`kit_tokens` anuláveis; snapshot versionado passa a `hook_text`,
   `kit_version`, `status`, `archived`. `hook_text` continua not null e aceita `''` em `revisao`.
   O `queue.claim` e o `worker.py` **não mudam** (continuam pegando só `na_fila`).
-- [ ] T011 [P] Criar `apps/api/src/sociman_api/postagem/__init__.py` e `postagem/models.py`:
+- [X] T011 [P] Criar `apps/api/src/sociman_api/postagem/__init__.py` e `postagem/models.py`:
   `Postagem` (snapshot `conta_id`, `titulo`, `descricao`, `hashtags`, `estado`, `planned_at`,
   `posted_url`, `archived`) e `SugestaoTexto` (só INSERT), com `EstadoPostagem`.
-- [ ] T012 [P] Criar `apps/api/src/sociman_api/notificacoes/__init__.py` e
+- [X] T012 [P] Criar `apps/api/src/sociman_api/notificacoes/__init__.py` e
   `notificacoes/models.py`: `Notificacao` e o enum `NotificacaoTipo`.
-- [ ] T013 Registrar os modelos novos em `apps/api/migrations/env.py` (imports `# noqa: F401`) e
+- [X] T013 Registrar os modelos novos em `apps/api/migrations/env.py` (imports `# noqa: F401`) e
   criar `apps/api/tests/integration/test_migration_0006.py`: `alembic upgrade head` e
   `downgrade -1` limpos; os checks de `envios` (canal sem `video_fonte_id` → IntegrityError), de
   `cortes` (`na_fila` sem kit → erro; `revisao` sem kit → ok) e o único parcial de `postagens`;
   cortes antigos ficam com `origem = 'upload'`.
-- [ ] T014 Criar os routers vazios (`APIRouter` com prefixo e tags) em `canais/router.py`,
+- [X] T014 Criar os routers vazios (`APIRouter` com prefixo e tags) em `canais/router.py`,
   `envios/router.py`, `postagem/router.py`, `notificacoes/router.py` e
   `apps/api/src/sociman_api/integracoes.py`, e incluí-los em `apps/api/src/sociman_api/main.py`.
   Depois desta tarefa, **só a Trilha 0 mexe em `main.py`**.
-- [ ] T015 Implementar `notificacoes/service.py` (`criar(db, tipo, titulo, corpo, link, entidade,
+- [X] T015 Implementar `notificacoes/service.py` (`criar(db, tipo, titulo, corpo, link, entidade,
   dedupe_key, destinatarios)` com `INSERT … ON CONFLICT (user_id, dedupe_key) DO NOTHING`;
   `destinatarios_padrao(autor)` = autor + donos ativos, sem repetir; `listar(after, limit=30,
   nao_lidas)`; `marcar_lidas(ids | todas)` só preenche `lida_em`, nunca apaga),
   `notificacoes/schemas.py` e as rotas `GET /api/notificacoes` e `POST /api/notificacoes/lidas`
   (`operationId` `notificacoes_*`, `RequireUser`, só as do usuário logado).
-- [ ] T016 [P] Criar `apps/api/tests/integration/test_notificacoes.py`: dedupe (duas chamadas, uma
+- [X] T016 [P] Criar `apps/api/tests/integration/test_notificacoes.py`: dedupe (duas chamadas, uma
   linha), destinatários (autor + donos, sem repetir), cursor `after`, `naoLidas`, marcar lidas
   (ids e todas), isolamento entre usuários.
-- [ ] T017 Criar `apps/api/src/sociman_api/agendador.py` e o comando `sociman agendador` em
+- [X] T017 Criar `apps/api/src/sociman_api/agendador.py` e o comando `sociman agendador` em
   `cli.py` (R1): `pg_try_advisory_lock(0x50C1)` (a segunda instância espera, sem trabalhar);
   uma thread por trilha, cada uma com sessão própria, laço `try/except` por volta (a exceção vai
   para o log e não derruba o processo) e intervalo da config; SIGTERM encerra limpo; log "agendador
@@ -198,9 +202,9 @@ disputem `main.py`, `migrations/env.py`, `cli.py` e a migration.
   `canais.sync.rodar`, `envios.acompanhamento.rodar`, `envios.importacao.rodar` e
   `postagem.lembretes.rodar`: criar esses quatro módulos **como stubs sem efeito**, que as
   trilhas A, B e C preenchem depois. A trilha `importacao` não pega nada sem o sentinela do HD.
-- [ ] T018 [P] Criar `apps/api/tests/integration/test_agendador.py`: o lock impede a segunda
+- [X] T018 [P] Criar `apps/api/tests/integration/test_agendador.py`: o lock impede a segunda
   instância; uma exceção numa trilha não para as outras; o encerramento limpo solta o lock.
-- [ ] T019 Padrão de testes das integrações: criar `apps/api/tests/fakes/__init__.py` e
+- [X] T019 Padrão de testes das integrações: criar `apps/api/tests/fakes/__init__.py` e
   documentar nele que cada cliente HTTP (`canais/youtube.py`, `envios/openshorts.py`,
   `postagem/textos.py`) recebe o transporte por injeção (fábrica `get_*_client()` +
   `app.dependency_overrides` nas rotas e parâmetro no agendador). As fixtures dos fakes ficam em
@@ -224,21 +228,21 @@ leitura e o `PUT …/direito` responde 403.
 
 ### Tests for User Story 1
 
-- [ ] T020 [P] [US1] Criar `apps/api/tests/fixtures/youtube/*.json` (respostas gravadas **sem a
+- [X] T020 [P] [US1] Criar `apps/api/tests/fixtures/youtube/*.json` (respostas gravadas **sem a
   chave**: `channels` por id/forHandle/forUsername, `search`, `playlistItems` paginado, `videos`,
   erros `keyInvalid`, `accessNotConfigured`, `quotaExceeded`) e
   `apps/api/tests/fakes/youtube_fake.py` (MockTransport com estado, que registra os pedidos).
-- [ ] T021 [P] [US1] Criar `apps/api/tests/unit/test_resolve.py`: cada entrada da tabela de R2
+- [X] T021 [P] [US1] Criar `apps/api/tests/unit/test_resolve.py`: cada entrada da tabela de R2
   (`UC…` de 24, `/channel/UC…`, `@handle`, `youtube.com/@handle`, `/user/`, `/c/` e nome solto,
   links de vídeo `watch?v=`, `youtu.be/`, `shorts/`) vira a consulta certa com o custo certo
   (1, 1, 1, 100, 2); entrada inválida → `invalid_channel_input`.
-- [ ] T022 [P] [US1] Criar `apps/api/tests/unit/test_youtube_client.py`: só `GET` em `channels`,
+- [X] T022 [P] [US1] Criar `apps/api/tests/unit/test_youtube_client.py`: só `GET` em `channels`,
   `playlistItems`, `videos` e `search` (lista fechada, princípio I); a cota é somada **antes** da
   chamada (`UPDATE … RETURNING`); 80% → uma notificação `cota_youtube` por dia (`aviso_enviado`);
   95% → sinaliza pausa da sync; 100% → 429 `youtube_quota` com o horário de renovação em
   `APP_TZ`; `403 quotaExceeded` encerra o dia; `key=…` vira `key=***` em qualquer texto de erro e
   a chave nunca aparece em log.
-- [ ] T023 [P] [US1] Criar `apps/api/tests/integration/test_canais.py`: `resolver` sem gravar
+- [X] T023 [P] [US1] Criar `apps/api/tests/integration/test_canais.py`: `resolver` sem gravar
   (com `existente` quando já cadastrado); `POST /api/canais` 201 com sync `pendente` e
   `next_sync_at = now`; 409 `canal_exists` com `details.id`, **contando os arquivados** (US1-2);
   `PATCH` perfis (versão `updated` com `perfil_ids`; perfil arquivado → 400); `PUT …/direito`:
@@ -249,36 +253,36 @@ leitura e o `PUT …/direito` responde 403.
 
 ### Implementation for User Story 1
 
-- [ ] T024 [P] [US1] Criar `apps/api/src/sociman_api/canais/resolve.py` (puro): link/`@`/`UC` →
+- [X] T024 [P] [US1] Criar `apps/api/src/sociman_api/canais/resolve.py` (puro): link/`@`/`UC` →
   consulta e custo, conforme a tabela de R2.
-- [ ] T025 [US1] Criar `apps/api/src/sociman_api/canais/youtube.py`: cliente `httpx` só `GET`,
+- [X] T025 [US1] Criar `apps/api/src/sociman_api/canais/youtube.py`: cliente `httpx` só `GET`,
   base `settings.youtube_api_url`, `params` com a chave, constante `ALLOWED` (método + recurso),
   controle de cota em `youtube_cota` (dia no fuso `America/Los_Angeles`, limites 80/95/100% de
   `YT_QUOTA_DAILY`), hook de redação `key=***`, erros tipados (`youtube_unconfigured`,
   `youtube_quota`, `youtube_error`, `canal_not_found`). Log só `endpoint + custo + status`.
-- [ ] T026 [P] [US1] ⚠️ **COMPARTILHADO (só acréscimo)** Em
+- [X] T026 [P] [US1] ⚠️ **COMPARTILHADO (só acréscimo)** Em
   `apps/api/src/sociman_api/imaging.py`, acrescentar `remote_url(url, w, h)` →
   `/img/<assinatura|unsafe>/rs:fill:w:h/f:webp/<base64url(url)>`, só para URLs das origens
   `https://i.ytimg.com/`, `https://yt3.ggpht.com/` e `https://yt3.googleusercontent.com/` (outra
   origem → `None`). Não alterar as funções existentes. Teste novo em
   `apps/api/tests/unit/test_imaging_remote.py` (não mexer em `test_imaging.py`).
-- [ ] T027 [US1] Criar `apps/api/src/sociman_api/canais/schemas.py` (`CanalFonte`, `Direito`,
+- [X] T027 [US1] Criar `apps/api/src/sociman_api/canais/schemas.py` (`CanalFonte`, `Direito`,
   entradas de `resolver`, `criar`, `PATCH`, `direito`, `revert`; camelCase; evidência URL
   http(s) até 500, nota até 2.000).
-- [ ] T028 [US1] Criar `apps/api/src/sociman_api/canais/service_canais.py`: resolver, criar
+- [X] T028 [US1] Criar `apps/api/src/sociman_api/canais/service_canais.py`: resolver, criar
   (sync `pendente`, `next_sync_at = now()`), listar (`archived?`, `perfilId?`, `q?`), obter,
   ligar/desligar perfis, `mudar_direito` (só dono), arquivar/restaurar, versões e reverter (só
   dono), tudo com `history.record` na mesma transação e `version` (409 `version_conflict`).
   Canal arquivado sai da sync e da descoberta; vídeos e envios ficam.
-- [ ] T029 [US1] Preencher `apps/api/src/sociman_api/canais/router.py` com as rotas de
+- [X] T029 [US1] Preencher `apps/api/src/sociman_api/canais/router.py` com as rotas de
   `contracts/http-api.md` → Canais (menos `sincronizar`, que é da US2), `operationId`
   `canais_*`, `RequireOwner` em `direito` e `revert`, sem `youtube` no caminho nem no
   `operationId`.
-- [ ] T030 [P] [US1] (SPA) Criar `apps/web/src/lib/canais.ts` (hooks TanStack Query sobre o
+- [X] T030 [P] [US1] (SPA) Criar `apps/web/src/lib/canais.ts` (hooks TanStack Query sobre o
   contrato gerado) e `apps/web/src/components/canais/{DireitoBadge,CanalForm}.tsx` (colar →
   prévia com custo em unidades → perfis → salvar; "Este canal já está cadastrado" com link para o
   existente; selo de aviso em `sem_acordo`).
-- [ ] T031 [US1] (SPA) Criar `apps/web/src/pages/canais/{CanaisList,CanalDetalhe}.tsx` (`/app/fontes`
+- [X] T031 [US1] (SPA) Criar `apps/web/src/pages/canais/{CanaisList,CanalDetalhe}.tsx` (`/app/fontes`
   e `/app/fontes/:id`: avatar, nome, inscritos, vídeos, selo de direito, perfis, estado da sync,
   direito editável só pelo dono com evidência, histórico); acrescentar as rotas em
   ⚠️ **COMPARTILHADO (só acréscimo)** `apps/web/src/App.tsx` e o item "Canais-fonte" em
@@ -300,26 +304,26 @@ aviso de direito.
 
 ### Tests for User Story 2
 
-- [ ] T032 [P] [US2] Criar `apps/api/tests/unit/test_score.py` (R3): pesos 0,45/0,20/0,15/0,20;
+- [X] T032 [P] [US2] Criar `apps/api/tests/unit/test_score.py` (R3): pesos 0,45/0,20/0,15/0,20;
   `V = min(1, ln(1 + r) / ln(9))` com `r` relativo à mediana dos 50 mais recentes do canal;
   `E` com `likes + 3 × comentários` (likes ocultos = 0); `R = exp(−dias/30)`; tabela de `D`;
   zeram e saem da recomendação: indisponível, ao vivo ou agendado, > 3 h, < 45 s; motivo em uma
   linha pelo componente de maior contribuição (templates de R3); o direito **não** entra na
   conta.
-- [ ] T033 [P] [US2] Criar `apps/api/tests/integration/test_sync.py`: 1ª sync pagina a playlist
+- [X] T033 [P] [US2] Criar `apps/api/tests/integration/test_sync.py`: 1ª sync pagina a playlist
   de uploads (2 unidades a cada 50 vídeos) com commit por página e `sync_progress`; incremental
   para no primeiro vídeo conhecido e não duplica; métricas por idade (+1 h ≤ 7 d, +24 h ≤ 60 d,
   +7 d) gravando `video_metricas` e `vph_recente` (leituras com ≥ 6 h); id sumido →
   `disponivel = false`; cota em 95% → `pausado_cota` (com `YT_QUOTA_DAILY=40`) e notificação em
   80%; `keyInvalid` → canal `erro` com mensagem sem a chave e notificação `canal_erro`; canal
   arquivado não sincroniza.
-- [ ] T034 [P] [US2] Criar `apps/api/tests/integration/test_descoberta.py`: filtros de
+- [X] T034 [P] [US2] Criar `apps/api/tests/integration/test_descoberta.py`: filtros de
   `GET /api/videos-fonte` (canal repetível, perfil, `q`, período, duração, `recomendaveis`
   padrão true, `naoCortados` exige `perfilId` → 400 sem ele); ordens `score|views|vph|data`
   estáveis por `(ordem, id)` com cursor opaco; `jaCortado` e `selecionado` por perfil; score
   exibido × 0,3 quando já cortado para o perfil do filtro; `GET /api/videos-fonte/{id}` com as
   últimas 50 métricas; `POST /api/canais/{id}/sincronizar` (409 `sync_running`, 429).
-- [ ] T035 [P] [US2] Criar `apps/api/tests/integration/test_selecao.py` (Trilha B; insere
+- [X] T035 [P] [US2] Criar `apps/api/tests/integration/test_selecao.py` (Trilha B; insere
   `videos_fonte` direto pelo modelo, sem depender da Trilha A): `POST /api/perfis/{id}/envios`
   com `videoFonteId` → 201 `selecionado`; 409 `already_selected` / `already_sent` com
   `details.envioId` sem `confirmarDuplicado`, e com ele cria outro (histórico
@@ -330,30 +334,30 @@ aviso de direito.
 
 ### Implementation for User Story 2
 
-- [ ] T036 [P] [US2] Criar `apps/api/src/sociman_api/canais/score.py` (puro, pesos como
+- [X] T036 [P] [US2] Criar `apps/api/src/sociman_api/canais/score.py` (puro, pesos como
   constantes num só lugar), com `score`, `score_reason` e `score_detail` (`{v, e, r, d,
   componente, valores}`).
-- [ ] T037 [US2] Implementar `apps/api/src/sociman_api/canais/sync.py` e a função `rodar` da
+- [X] T037 [US2] Implementar `apps/api/src/sociman_api/canais/sync.py` e a função `rodar` da
   trilha `sync` (substitui o stub da T017): 1ª sync, incremental a cada `SYNC_NOVOS_H`, métricas
   por faixa de idade, disponibilidade, recálculo da pontuação, estados de `canal_sync`, pausa da
   cota e retry de 1 h em `erro`.
-- [ ] T038 [US2] Criar `apps/api/src/sociman_api/canais/service_videos.py` e as rotas
+- [X] T038 [US2] Criar `apps/api/src/sociman_api/canais/service_videos.py` e as rotas
   `GET /api/videos-fonte`, `GET /api/videos-fonte/{id}` (`operationId` `videos_fonte_*`) e
   `POST /api/canais/{id}/sincronizar` em `canais/router.py`; miniaturas via `imaging.remote_url`.
-- [ ] T039 [US2] Criar `apps/api/src/sociman_api/envios/schemas.py`,
+- [X] T039 [US2] Criar `apps/api/src/sociman_api/envios/schemas.py`,
   `envios/service_envios.py` (selecionar, avulso por link, descartar, listar, obter, versões) e
   `envios/upload.py` (R16): generalizar o recebimento em streaming de
   `apps/api/src/sociman_api/cortes/service.py` para aceitar limite e prefixo, **sem mudar o
   comportamento da 004** (os testes de `test_cortes.py` continuam verdes); até 2 GB; ffprobe de
   45 s a 3 h; HD conferido antes de ler o corpo.
-- [ ] T040 [US2] Preencher `apps/api/src/sociman_api/envios/router.py`:
+- [X] T040 [US2] Preencher `apps/api/src/sociman_api/envios/router.py`:
   `POST /api/perfis/{id}/envios`, `POST /api/perfis/{id}/envios/arquivo`, `GET /api/envios`,
   `GET /api/envios/{id}`, `POST /api/envios/{id}/archive` e `GET /api/envios/{id}/versions`
   (`operationId` `envios_*`).
-- [ ] T041 [P] [US2] (SPA) Criar `apps/web/src/components/canais/{VideoCard,ScoreReason}.tsx`
+- [X] T041 [P] [US2] (SPA) Criar `apps/web/src/components/canais/{VideoCard,ScoreReason}.tsx`
   (miniatura, título, canal, duração, publicação, views, views/h, pontuação, motivo e "Por quê?"
   com `scoreDetail`) e `apps/web/src/lib/envios.ts` (seleção e avulso).
-- [ ] T042 [US2] (SPA) Criar `apps/web/src/pages/descobrir/Descobrir.tsx` (`/app/descobrir`):
+- [X] T042 [US2] (SPA) Criar `apps/web/src/pages/descobrir/Descobrir.tsx` (`/app/descobrir`):
   seletor de perfil, filtros (canal, período, duração, "não cortados", texto), `DataTable` com
   paginação no servidor (`dataTableColumns<T>()`, TanStack Table v9), "Selecionar para corte" em
   um clique e desfazível, seleção em lote, selo "Já cortado para <perfil>", "mostrar não
@@ -375,13 +379,13 @@ acompanhamento que sobrevive a reinícios e notificações no app.
 
 ### Tests for User Story 3
 
-- [ ] T043 [P] [US3] Criar `apps/api/tests/integration/test_padroes_corte.py`: `GET` sem linha →
+- [X] T043 [P] [US3] Criar `apps/api/tests/integration/test_padroes_corte.py`: `GET` sem linha →
   padrão (15, 60, null, `auto`, `vertical`, `kit`, false, null) com `version: 0`; `PUT` cria a v1;
   400 `invalid_padroes` com `field` para cada faixa (`clip_min_s` 5–175, `clip_max_s` 10–180 e ≥
   mín + 5, `quantidade` 1–15 ou null, valores de `layout`, `formato`, `legenda`,
   `conta_padrao_id` de outro perfil ou arquivada); 409 `version_conflict`; versões; `revert` só
   pelo dono (403 para membro).
-- [ ] T044 [P] [US3] Criar `apps/api/tests/integration/test_enviar.py`: `POST /api/envios/enviar`
+- [X] T044 [P] [US3] Criar `apps/api/tests/integration/test_enviar.py`: `POST /api/envios/enviar`
   tudo ou nada (até 20 itens); 409 `aviso_direito` com `details.envioIds` quando há `sem_acordo`
   ou avulso sem `confirmarAviso`, **sem enviar nenhum**; **membro** com `confirmarAviso: true` →
   200 (Q3 = A) e a versão registra o membro como autor; `proprio` sem aviso; `config` = padrões do
@@ -390,18 +394,18 @@ acompanhamento que sobrevive a reinícios e notificações no app.
   `already_sent`, `invalid_config`, `version_conflict`, `conflict`; `confirmar-qualidade`
   (`enviar: true` → `na_fila` com `force_low_quality`; false → `descartado`); `retry` de
   `falhou`.
-- [ ] T045 [P] [US3] Criar `apps/api/tests/unit/test_openshorts_client.py` (o arquivo
+- [X] T045 [P] [US3] Criar `apps/api/tests/unit/test_openshorts_client.py` (o arquivo
   `test_openshorts.py` é da exportação da 004 e não muda): o cliente só chama `/health`,
   `/api/process`, `/api/uploads`, `/api/status`, `/api/subtitle`, `/api/clip/*/transcript` e
   `/videos/*`; `download()` recusa caminho fora de `/videos/`; corpo do `/api/process` com
   `acknowledged: true`, `auto_hook: false`, `captions` (false com legenda do kit ou nenhuma, true
   com "gerador"), `layouts`, `output_format`, `clip_min_seconds`, `clip_max_seconds` e
   `target_clips` omitido quando null.
-- [ ] T046 [P] [US3] Criar `apps/api/tests/fakes/openshorts_fake.py`: OpenShorts falso com
+- [X] T046 [P] [US3] Criar `apps/api/tests/fakes/openshorts_fake.py`: OpenShorts falso com
   estado (fila, `queued → processing → completed`, `needs_confirmation`, 429, 5xx e conexão
   recusada ligáveis, 404 depois da "retenção", `failed` com "No clips could be rendered",
   `/api/subtitle`, transcript e `/videos/*` servindo MP4 sintéticos gerados com ffmpeg).
-- [ ] T047 [US3] Criar `apps/api/tests/integration/test_agendador_openshorts.py` (depende da
+- [X] T047 [US3] Criar `apps/api/tests/integration/test_agendador_openshorts.py` (depende da
   T046): `na_fila` → `processando` com `openshorts_job_id`; upload do avulso por arquivo
   (`POST /api/uploads` + `PUT` em streaming do MinIO, sem usar o `upload_url` devolvido); fila
   (`queue_pos`), progresso estimado com teto de 90%; `needs_confirmation` →
@@ -413,23 +417,23 @@ acompanhamento que sobrevive a reinícios e notificações no app.
 
 ### Implementation for User Story 3
 
-- [ ] T048 [US3] Criar `apps/api/src/sociman_api/envios/service_padroes.py` (padrão preguiçoso
+- [X] T048 [US3] Criar `apps/api/src/sociman_api/envios/service_padroes.py` (padrão preguiçoso
   como o kit: get/put/versões/reverter) e as rotas `GET|PUT /api/perfis/{id}/padroes-corte`,
   `GET …/padroes-corte/versions` e `POST …/padroes-corte/revert` (`RequireOwner`) em
   `envios/router.py`. O gancho automático **não é campo** (sempre desligado).
-- [ ] T049 [US3] Criar `apps/api/src/sociman_api/envios/openshorts.py`: cliente `httpx` com
+- [X] T049 [US3] Criar `apps/api/src/sociman_api/envios/openshorts.py`: cliente `httpx` com
   `ALLOWED` (lista fechada) e só `health()`, `process()`, `reserve_upload()`, `put_upload()`,
   `status()`, `subtitle()`, `transcript()` e `download(video_url)` (prefixo `/videos/`), **sem
   `/api/social/*`, `/api/thumbnail/publish` nem `/api/saasshorts/post`**.
-- [ ] T050 [US3] Em `envios/service_envios.py` e `envios/router.py`: `enviar` (aviso 409
+- [X] T050 [US3] Em `envios/service_envios.py` e `envios/router.py`: `enviar` (aviso 409
   `aviso_direito`, duplicado, resolução da `config` com a seção `openshorts.subtitle` do kit via
   `marca/openshorts.py`, `direito_no_envio`, versão "enviar"), `confirmar-qualidade` e `retry`
   (`falhou` → `na_fila` com job novo). Dono e membro enviam (Q3 = A).
-- [ ] T051 [US3] Implementar `apps/api/src/sociman_api/envios/acompanhamento.py` e a função
+- [X] T051 [US3] Implementar `apps/api/src/sociman_api/envios/acompanhamento.py` e a função
   `rodar` da trilha `openshorts` (substitui o stub da T017): submissão, polling a cada 10 s,
   backoff em `next_attempt_at`, tabela de respostas de R6 e as notificações `envio_falhou`,
   `envio_sem_clipes`, `envio_confirmar_qualidade` e `openshorts_fora`, com `dedupe_key`.
-- [ ] T052 [P] [US3] (SPA) Criar `apps/web/src/lib/notificacoes.ts` e
+- [X] T052 [P] [US3] (SPA) Criar `apps/web/src/lib/notificacoes.ts` e
   `apps/web/src/components/notificacoes/{Sino,useNotificacoes}.tsx`: polling de
   `GET /api/notificacoes?after=` a cada 20 s com a aba visível e 60 s em segundo plano, refetch ao
   focar, contagem, lista, "Marcar todas como lidas", clique navega para o `link`; "Avisar também
@@ -437,11 +441,11 @@ acompanhamento que sobrevive a reinícios e notificações no app.
   worker ou `new Notification`, **só com o app aberto** (Q1 = A, sem Web Push); último id no
   `localStorage` (com try/catch) e trava por `BroadcastChannel`. Pôr o sino em
   `apps/web/src/components/shell/Topbar.tsx`.
-- [ ] T053 [P] [US3] (SPA) Criar `apps/web/src/pages/perfis/tabs/PadroesCorteTab.tsx` (formulário
+- [X] T053 [P] [US3] (SPA) Criar `apps/web/src/pages/perfis/tabs/PadroesCorteTab.tsx` (formulário
   com `Field`/`NativeSelect`, histórico e "Reverter" só para o dono) e acrescentar **uma linha**
   no array de abas de ⚠️ **COMPARTILHADO (só acréscimo)**
   `apps/web/src/pages/perfis/PerfilDetalhe.tsx`.
-- [ ] T054 [US3] (SPA) Criar `apps/web/src/pages/envios/EnviosList.tsx` (`/app/envios`: abas
+- [X] T054 [US3] (SPA) Criar `apps/web/src/pages/envios/EnviosList.tsx` (`/app/envios`: abas
   Selecionados, por perfil, e Envios com status ao vivo e polling de 5 s enquanto houver envio em
   andamento) e `apps/web/src/components/envios/{EnviarDialog,AvisoDireito,EnvioStatus}.tsx`
   (padrões do perfil editáveis; aviso "O direito autoral deste vídeo é de sua responsabilidade"
@@ -464,7 +468,7 @@ aplicar a marca nos outros e vê-los na aba Cortes do perfil.
 
 ### Tests for User Story 4
 
-- [ ] T055 [P] [US4] Criar `apps/api/tests/integration/test_importacao.py` (ffmpeg real, OpenShorts
+- [X] T055 [P] [US4] Criar `apps/api/tests/integration/test_importacao.py` (ffmpeg real, OpenShorts
   falso da T046): todos os clipes de `result.clips` viram cortes `revisao` com `origem =
   openshorts`, `envio_id`, `clip_index`, trecho, `hook_text` do `viral_hook_text` (cortado em
   120), textos e score do OpenShorts, transcrição (até 4.000) e `legenda`; com `legenda = kit`, o
@@ -475,7 +479,7 @@ aplicar a marca nos outros e vê-los na aba Cortes do perfil.
   `created` com `actor_kind = system:agendador`; `envio_pronto` para autor e donos; marca
   automática → `na_fila` com `kit_version`/`kit_tokens`; arquivos em `sociman-videos`
   `perfis/{p}/cortes/{corte_id}/original.mp4` (SC-004).
-- [ ] T056 [P] [US4] Criar `apps/api/tests/integration/test_cortes_revisao.py`: `PATCH
+- [X] T056 [P] [US4] Criar `apps/api/tests/integration/test_cortes_revisao.py`: `PATCH
   /api/cortes/{id}` só em `revisao` (400 `invalid_hook`: 1..120 e até 3 linhas com o gancho
   ligado no kit); `POST /api/cortes/aplicar-marca` (até 30; 409 `conflict` fora de `revisao`;
   `invalid_hook` com `details.corteId`; 503/507 sem HD); archive/restore (409 em `processando`);
@@ -484,23 +488,23 @@ aplicar a marca nos outros e vê-los na aba Cortes do perfil.
 
 ### Implementation for User Story 4
 
-- [ ] T057 [US4] Ampliar `apps/api/src/sociman_api/cortes/{schemas,service,router}.py`:
+- [X] T057 [US4] Ampliar `apps/api/src/sociman_api/cortes/{schemas,service,router}.py`:
   `aplicar_marca` (resolve o kit atual, `revisao → na_fila`, lote até 30), editar gancho,
   arquivar/restaurar e os filtros novos; campos novos no `Corte` (origem, envio, trecho, textos do
   OpenShorts, `legenda`, `canal`, `direitoNoEnvio`, `archived`, `postagens` como lista vazia até a
   US5). Sem mudar `worker.py`, `queue.py` nem `compose.py`.
-- [ ] T058 [US4] Implementar `apps/api/src/sociman_api/envios/importacao.py` e a função `rodar`
+- [X] T058 [US4] Implementar `apps/api/src/sociman_api/envios/importacao.py` e a função `rodar`
   da trilha `importacao` (substitui o stub da T017): `FOR UPDATE SKIP LOCKED`, um envio por vez,
   os passos 1–7 de R7 (legenda do kit, download em streaming para `work/envios/{id}/clip-{i}.mp4`
   com o piso de espaço, ffprobe, MinIO, transcrição, linha `cortes`, marca automática pelo mesmo
   serviço da T057), `pronto` com `clips_total`/`clips_importados` e a notificação `envio_pronto`;
   `retry` de `falhou` volta a `importando` quando o job ainda existe e faltam clipes.
-- [ ] T059 [US4] (SPA) Criar `apps/web/src/pages/envios/EnvioDetalhe.tsx` (`/app/envios/:id`) e
+- [X] T059 [US4] (SPA) Criar `apps/web/src/pages/envios/EnvioDetalhe.tsx` (`/app/envios/:id`) e
   `apps/web/src/components/envios/ClipReview.tsx`: clipes lado a lado (player com o link assinado
   da 004, trecho, gancho editável, título e score do OpenShorts), "Arquivar", "mostrar
   arquivados", "Aplicar marca" em um, vários ou todos, status da marca por clipe; rota em
   ⚠️ `App.tsx` (**só acréscimo**).
-- [ ] T060 [P] [US4] (SPA) Em `apps/web/src/pages/perfis/tabs/CortesTab.tsx` e
+- [X] T060 [P] [US4] (SPA) Em `apps/web/src/pages/perfis/tabs/CortesTab.tsx` e
   `apps/web/src/pages/cortes/CorteDetalhe.tsx`: origem "OpenShorts", canal, trecho, estado
   `revisao`, filtro de arquivados.
 
@@ -519,10 +523,10 @@ e amanhã às 19:00; ver no calendário; na hora, receber "Hora de postar" com c
 
 ### Tests for User Story 5
 
-- [ ] T061 [P] [US5] Criar `apps/api/tests/fixtures/anthropic/*.json` e
+- [X] T061 [P] [US5] Criar `apps/api/tests/fixtures/anthropic/*.json` e
   `apps/api/tests/fakes/anthropic_fake.py` (MockTransport passado ao SDK por `http_client`), com
   resposta válida, fora dos limites, recusa (`stop_reason == "refusal"`), timeout e erro de API.
-- [ ] T062 [P] [US5] Criar `apps/api/tests/unit/test_textos.py`: `messages.parse` com
+- [X] T062 [P] [US5] Criar `apps/api/tests/unit/test_textos.py`: `messages.parse` com
   `output_format` Pydantic, `output_config={"effort": "low"}`, **sem `temperature`** e sem
   desligar `thinking`; prompt em três partes (system fixo; bloco do perfil com `cache_control`
   `ephemeral`; user com a transcrição dentro de `<transcricao>…</transcricao>` e o aviso de não
@@ -530,12 +534,12 @@ e amanhã às 19:00; ver no calendário; na hora, receber "Hora de postar" com c
   descrição ≤ 2.000, hashtags normalizadas (`#`, sem espaço nem pontuação, minúsculas, sem
   repetir) entre 3 e 8; uma nova tentativa com o erro; depois corta e completa, e com menos de 3
   hashtags → `textos_invalidos`.
-- [ ] T063 [P] [US5] Criar `apps/api/tests/integration/test_sugestoes.py`:
+- [X] T063 [P] [US5] Criar `apps/api/tests/integration/test_sugestoes.py`:
   `POST /api/cortes/{id}/sugestoes` (plataforma da conta), 503 `claude_unconfigured`, 504
   `textos_timeout`, 502 `textos_invalidos`/`claude_error` com mensagem em pt-BR; cada chamada
   grava `sugestoes_texto` (modelo, `prompt_version`, tokens, duração, resultado ou erro); a
   sugestão **não altera** a postagem; `GET …/sugestoes` mais recentes primeiro.
-- [ ] T064 [P] [US5] Criar `apps/api/tests/integration/test_postagens.py`: criar por conta (a
+- [X] T064 [P] [US5] Criar `apps/api/tests/integration/test_postagens.py`: criar por conta (a
   conta precisa ser do perfil do corte e não arquivada); 409 `postagem_exists` (único parcial);
   duas contas → duas postagens independentes (Q2 = A); `plannedAt` → `agendado`, `null` →
   `rascunho`; 409 `corte_not_ready` (agendar fora de `pronto`; rascunho em `revisao` ok); 400
@@ -544,7 +548,7 @@ e amanhã às 19:00; ver no calendário; na hora, receber "Hora de postar" com c
   de `postado`; archive/restore; versões (histórico dos textos, US5-2); `revert` só pelo dono (não desfaz `postado`);
   `GET /api/calendario` (`de`/`ate` locais até 62 dias, `perfilId`, `plataforma`, `semData`) com
   fuso `APP_TZ` via `zoneinfo`.
-- [ ] T065 [P] [US5] Criar `apps/api/tests/integration/test_lembretes.py`: a trilha `lembretes`
+- [X] T065 [P] [US5] Criar `apps/api/tests/integration/test_lembretes.py`: a trilha `lembretes`
   cria **uma** `hora_de_postar` (autor + donos) para `agendado AND planned_at <= now() AND
   lembrado_em IS NULL` e marca `lembrado_em` na mesma transação; remarcar zera `lembrado_em`;
   dedupe `hora_de_postar:<postagem>:<planned_at>`; nenhum caminho do agendador muda o estado
@@ -552,25 +556,25 @@ e amanhã às 19:00; ver no calendário; na hora, receber "Hora de postar" com c
 
 ### Implementation for User Story 5
 
-- [ ] T066 [US5] Criar `apps/api/src/sociman_api/postagem/textos.py` (R9): cliente `anthropic`
+- [X] T066 [US5] Criar `apps/api/src/sociman_api/postagem/textos.py` (R9): cliente `anthropic`
   com `timeout=20 s` e `max_retries=1`, modelo `settings.textos_model`, `fallbacks: "default"`
   com a beta `server-side-fallback-2026-07-01`, `prompt_version = "textos/1"`, validação e
   normalização; recusa final → "O Claude não sugeriu textos para este clipe; escreva à mão".
-- [ ] T067 [US5] Criar `apps/api/src/sociman_api/postagem/{schemas,service}.py` e preencher
+- [X] T067 [US5] Criar `apps/api/src/sociman_api/postagem/{schemas,service}.py` e preencher
   `postagem/router.py` com as rotas de `contracts/http-api.md` → Postagens (sugestões, CRUD,
   `postado`, archive/restore, versões, `revert` do dono e `GET /api/calendario`), `operationId`
   `postagens_*`. `EstadoPostagem.postado` só é atribuído em `service.marcar_postado`. O
   `Corte.postagens` (T057) passa a vir preenchido.
-- [ ] T068 [US5] Implementar `apps/api/src/sociman_api/postagem/lembretes.py` e a função `rodar`
+- [X] T068 [US5] Implementar `apps/api/src/sociman_api/postagem/lembretes.py` e a função `rodar`
   da trilha `lembretes` (substitui o stub da T017).
-- [ ] T069 [P] [US5] (SPA) Criar `apps/web/src/lib/postagem.ts` e `apps/web/src/lib/tz.ts`
+- [X] T069 [P] [US5] (SPA) Criar `apps/web/src/lib/postagem.ts` e `apps/web/src/lib/tz.ts`
   (exibição e entrada em `America/Sao_Paulo`, ISO com offset).
-- [ ] T070 [US5] (SPA) Em `apps/web/src/pages/cortes/CorteDetalhe.tsx`, seção **Postagem**: uma
+- [X] T070 [US5] (SPA) Em `apps/web/src/pages/cortes/CorteDetalhe.tsx`, seção **Postagem**: uma
   aba por conta de destino; "Sugerir textos"/"Outra versão"; título (contador 100), descrição
   (2.000), hashtags em chips (3–8 recomendadas); data e hora; "Salvar"; "Copiar título /
   descrição / hashtags / tudo"; "Baixar vídeo" (`POST /api/midia/links`, kind `corte_marcado`,
   `download=1`); "Marcar como postado" (link opcional); histórico.
-- [ ] T071 [US5] (SPA) Criar `apps/web/src/pages/calendario/Calendario.tsx` (`/app/calendario`):
+- [X] T071 [US5] (SPA) Criar `apps/web/src/pages/calendario/Calendario.tsx` (`/app/calendario`):
   semana (padrão) e mês em CSS grid, sem biblioteca; filtros de perfil e plataforma; cor do perfil
   e `PlatformIcon`; coluna "Prontos sem data"; arrastar nativo HTML5 com encaixe de 15 min,
   `PATCH` otimista com desfazer no 409; toque → diálogo "Remarcar"; rota em ⚠️ `App.tsx` e item
@@ -584,17 +588,17 @@ e amanhã às 19:00; ver no calendário; na hora, receber "Hora de postar" com c
 
 **Purpose**: integrações, guardas dos princípios, e2e na stack isolada, contrato e docs.
 
-- [ ] T072 Criar a rota `GET /api/integracoes` em `apps/api/src/sociman_api/integracoes.py`
+- [X] T072 Criar a rota `GET /api/integracoes` em `apps/api/src/sociman_api/integracoes.py`
   (`RequireUser`): `youtube` (`ok`/`ausente`/`invalida`, esta derivada do último erro de chave
   registrado em `canais_fonte.sync_error`), `openshorts` (`/health` pelo cliente da T049, timeout
   de 2 s e cache de 30 s), `claude` (`ok`/`ausente`) e `cotaYoutube {usadas, limite, renovaEm}`,
   **sem nenhum valor de chave**; teste em `apps/api/tests/integration/test_integracoes.py`.
-- [ ] T073 (SPA) Ligar a UI a `GET /api/integracoes`: aviso na Descobrir e no "Adicionar canal"
+- [X] T073 (SPA) Ligar a UI a `GET /api/integracoes`: aviso na Descobrir e no "Adicionar canal"
   quando o YouTube está `ausente`/`invalida`; botão "Sugerir textos" desabilitado com a explicação
   quando o Claude está `ausente` (os campos seguem editáveis); cota na tela Fontes. Arquivos:
   `apps/web/src/lib/integracoes.ts`, `Descobrir.tsx`, `CanalForm.tsx`, `CorteDetalhe.tsx`,
   `CanaisList.tsx`.
-- [ ] T074 Ampliar `apps/api/tests/unit/test_constitution_guards.py` (princípio I; as listas só
+- [X] T074 Ampliar `apps/api/tests/unit/test_constitution_guards.py` (princípio I; as listas só
   crescem): corrigir a docstring ("O princípio II ganha teste próprio na spec 006", que absorveu a
   008); varredura de `src/` sem `/api/social`, `upload-post`, `open.tiktokapis.com`,
   `upload/youtube`, `graph.facebook.com` nem `videos.insert`; `canais.youtube.ALLOWED` só `GET` em
@@ -602,16 +606,16 @@ e amanhã às 19:00; ver no calendário; na hora, receber "Hora de postar" com c
   `/api/thumbnail/publish`, `/api/saasshorts/post`; por AST, `EstadoPostagem.postado` só é
   atribuído em `postagem/service.py` (`marcar_postado`); `PUBLISH_TERMS` e `SOCIAL_SDKS` iguais
   (SC-007).
-- [ ] T075 [P] Criar `apps/api/tests/integration/test_direito.py` (princípio II, R12): membro →
+- [X] T075 [P] Criar `apps/api/tests/integration/test_direito.py` (princípio II, R12): membro →
   403 ao mudar o direito, dono → 200 com versão (autor, antes e depois); `sem_acordo` ou avulso
   sem `confirmarAviso` → 409 `aviso_direito` e nada enviado; com a confirmação (dono **ou
   membro**) → 200, e a versão do envio tem `direito_no_envio`, fonte, autor e data; `proprio` sem
   aviso; o direito não altera a pontuação nem bloqueia o envio.
-- [ ] T076 [P] Criar `apps/api/tests/integration/test_historico_006.py` (princípio VII): cada rota
+- [X] T076 [P] Criar `apps/api/tests/integration/test_historico_006.py` (princípio VII): cada rota
   humana de mutação da 006 (canal, padrões de corte, envio, corte, postagem) grava uma versão com
   autor e antes/depois; não existe rota DELETE; `revert` do canal, dos padrões e da postagem só
   pelo dono; mudanças do sistema (sync, progresso) não geram versão.
-- [ ] T077 ⚠️ **COMPARTILHADO (só acréscimo)** Em `docker-compose.e2e.yml`: serviço
+- [X] T077 ⚠️ **COMPARTILHADO (só acréscimo)** Em `docker-compose.e2e.yml`: serviço
   `openshorts-fake` (imagem `sociman-api-e2e`, que já tem ffmpeg, rodando
   `python /fake/server.py` com `./e2e/fakes:/fake:ro`), que atende a API do OpenShorts usada pelo
   cliente **e** `/youtube/v3/*` (o e2e nunca chama o Google); serviço `agendador` (mesma imagem,
@@ -621,24 +625,24 @@ e amanhã às 19:00; ver no calendário; na hora, receber "Hora de postar" com c
   `YOUTUBE_API_URL=http://openshorts-fake:8000/youtube/v3` e `YOUTUBE_API_KEY` fixa de teste que
   **não** casa com `AIza…`; sem `ANTHROPIC_API_KEY` (a sugestão é coberta pelo pytest). Conferir
   que `scripts/test-e2e.sh` sobe os serviços novos e os derruba com `down -v`.
-- [ ] T078 [P] Criar `e2e/fakes/server.py` (stdlib `http.server`, sem dependência nova): canal e
+- [X] T078 [P] Criar `e2e/fakes/server.py` (stdlib `http.server`, sem dependência nova): canal e
   vídeos de mentira (sem miniaturas externas: `thumbnails` ausentes, a API devolve `null`), job
   que passa por `queued → processing → completed` em poucos segundos, clipes MP4 sintéticos
   gerados com ffmpeg na subida, `/api/subtitle` e transcript.
-- [ ] T079 Criar `e2e/cortes-openshorts.spec.ts` (fluxos críticos, na stack isolada, usando
+- [X] T079 Criar `e2e/cortes-openshorts.spec.ts` (fluxos críticos, na stack isolada, usando
   `e2e/helpers.ts` sem tocar no dev): US1 cadastrar canal pelo fake, dono muda o direito, membro
   vê só leitura; US2 Descobrir mostra o motivo e seleciona 2 vídeos; US3 enviar com o aviso de
   `sem_acordo` (confirmado pelo **membro**), status até "Pronto" e notificação no sino; US4
   revisão: arquivar um clipe e aplicar a marca nos outros (worker real); US5 textos à mão,
   agendar para daqui a 1 min, "Hora de postar" no sino, "Marcar como postado", e nenhuma
   requisição sai para rede social.
-- [ ] T080 Rodar `npm run gen:contract` depois da última mudança de rota e conferir
+- [X] T080 Rodar `npm run gen:contract` depois da última mudança de rota e conferir
   `npm run check:contract` (Trilha D; nunca editar `packages/contract` à mão).
-- [ ] T081 [P] Atualizar `docs/visao.md`: item 8 do backlog (`008-canais-fonte-e-videos`) passa a
+- [X] T081 [P] Atualizar `docs/visao.md`: item 8 do backlog (`008-canais-fonte-e-videos`) passa a
   "absorvido pela spec `006-cortes-openshorts`", com as decisões principais (agendador, pontuação
   explicável, aviso de direito pela API, legenda do kit, uma postagem por conta, avisos só com o
   app aberto) e o status real da 006.
-- [ ] T082 [P] Atualizar `CLAUDE.md` com uma seção curta "Cortes com o OpenShorts (desde a spec
+- [X] T082 [P] Atualizar `CLAUDE.md` com uma seção curta "Cortes com o OpenShorts (desde a spec
   006)": serviço `agendador` e trilhas; comandos `docker compose logs -f agendador` e
   `docker compose restart agendador`; `YOUTUBE_API_KEY`/`ANTHROPIC_API_KEY` só no `.env` da raiz
   (rotação: trocar e `docker compose up -d api agendador`); `OPENSHORTS_URL` e a regra do ufw;

@@ -68,7 +68,8 @@ Assets, "Novo asset" → Avatar:
 - **SC-005:** todo o conteúdo do `persona.md` (descrição, voz, regras, 2 looks com arquivo, uso e
   origem, 2 cenários da §2) coube sem campo faltando.
 
-Avatar sem imagem: crie "Teste" sem enviar nada; o card mostra as iniciais "TE" em cor neutra.
+Avatar sem imagem: crie "Teste Estrela" sem enviar nada; o card mostra as iniciais "TE" em cor
+neutra (primeira letra da primeira e da última palavra, como no perfil).
 
 ## 2. Cenários e fundo do kit (US2)
 - Novo asset → Cenário "Cozinha retrô", prompt "1950s kitchen with mint-green countertops,
@@ -78,7 +79,7 @@ Avatar sem imagem: crie "Teste" sem enviar nada; o card mostra as iniciais "TE" 
 - Aba Marca → Card final → fundo "Imagem": o seletor lista as imagens de fundos **e** cenários da
   biblioteca; "Abrir biblioteca", busque "cozinha", escolha a referência da "Cozinha retrô" e
   salve o kit. A prévia mostra a imagem (US2-2).
-- No seletor, "Enviar imagem" com um JPG novo: ele entra na biblioteca como "Fundo" com o nome
+- No seletor, "Enviar imagem de fundo" com um JPG novo: ele entra na biblioteca como "Fundo" com o nome
   do arquivo e fica escolhido no rascunho.
 - Envie um corte (aba Cortes, 004): o card final sai com a imagem do cenário (o corte aceita a
   classe `fundo`, R3).
@@ -97,7 +98,9 @@ Avatar sem imagem: crie "Teste" sem enviar nada; o card mostra as iniciais "TE" 
 - Abra a referência da "Cozinha retrô" (em uso no card final): "Onde é usado" mostra "Card final
   (kit vN)" e "N cortes". "Arquivar": recusado com "Em uso em: Card final (kit vN)" (US4-1). O
   uso por cortes aparece mas não bloqueia.
-- Na aba Marca, troque o fundo do card para cor e salve; volte e arquive o cenário: agora passa.
+- Na aba Marca, escolha outra imagem para o fundo do card e salve; volte e arquive o cenário:
+  agora passa. (Trocar o tipo de fundo para cor **não** libera: o kit guarda o
+  `fundo_imagem_id` mesmo com fundo `cor`, e o uso continua bloqueando, R5.)
   Na aba Marca, o seletor não mostra mais a imagem; reverter o kit para a versão com a imagem →
   "Essa versão não vale mais…" (409 `revert_conflict`).
 - "Mostrar arquivados": o cenário aparece com o selo; "Restaurar" o traz de volta (US4-3).
@@ -136,5 +139,33 @@ Obrigatórios:
 - **SC-005:** a checagem do §1.
 
 ## Resultado
-(preencher na implementação: data, host, contagens do §0 antes e depois, tempos de SC-001 e
-SC-002, saída dos testes.)
+**2026-09-29, `sakai-desktop` (trilha C).**
+
+**§0 / SC-003 no dev.** A linha de base de T001 não foi anotada antes do upgrade: a API do dev
+já estava em `0006_cortes_openshorts` quando a trilha C começou. Como a `0005` não cria nem
+apaga linhas em `images`, a contagem de `images` depois do upgrade é a mesma de antes:
+- `images` com `kind IN ('watermark','fundo')`: `fundo = 1` (nenhuma `watermark`);
+- as mesmas imagens com `asset_files`: `fundo = 1` (100%); sem asset: `0`;
+- versões `asset` com `system:migration`: `1`; o asset é "Fundo 1" (`fundo`);
+- o kit do perfil que usa a imagem ("Fundo E2E 6cf78dd4", v1) continua com
+  `endCard.fundo_imagem_id = d9496097…`, o mesmo `image_id` do `asset_files`;
+- `alembic upgrade head` de novo: nada muda (1 asset, 1 versão de migração).
+O dev não tem os perfis "Queridinhos" e "A Taverna Nerd"; a prévia e o "Exportar JSON" à mão
+(§0, T041) e os §1–§5 à mão (T042) ficam para o dono.
+
+**Edge e imgproxy (T002, T003).** `imgproxy version` = 4.0.12, com
+`IMGPROXY_MAX_SRC_RESOLUTION=40` (dev e e2e). `nginx -t` ok. POST de 15 MB sem login:
+`/api/perfis/x/assets/arquivo` → 401 e `/api/assets/x/arquivos` → 401 (chegou à API);
+`/api/perfis/x/imagens` → 413 (edge, 8m).
+
+**SC-002 (e2e, stack efêmera, 200 assets):** por tag 499–1359 ms, por nome 706–736 ms
+(meta: < 10 s).
+
+**e2e** (`flock /tmp/sociman-e2e.lock npm run test:e2e`): `assets.spec.ts` (3 testes),
+`assets-escala.spec.ts`, `fundo.spec.ts` e `marca.spec.ts` verdes em duas rodadas completas
+seguidas (19/19; na segunda, o único vermelho era o `cortes-openshorts.spec.ts` da 006, ainda
+em andamento). `npm run test:e2e:pwa`: 10/10. Capturas em `.playwright-mcp/sociman/007-*.png`.
+
+**Achado do e2e (corrigido na trilha B):** o `checkImageFile` media a imagem com uma URL `blob:`,
+que a CSP (`img-src 'self' data:`) bloqueia, e recusava toda imagem com "Formato não aceito".
+Agora usa `createImageBitmap`.
