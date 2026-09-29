@@ -40,13 +40,20 @@ em silêncio.
 ### V. Segurança e segredos
 - Nenhum segredo no repositório nem no bundle do SPA (`npm run check:secrets`,
   `npm run check:bundle`).
-- CSP estrita em produção, com `apps/web/vite.config.ts` e `docker/nginx/05-edge-mode.envsh`
-  sincronizados (`npm run check:csp`).
+- CSP de produção sincronizada entre `apps/web/vite.config.ts` e
+  `docker/nginx/05-edge-mode.envsh` (`npm run check:csp`):
+  - `script-src 'self'` **estrito, sem exceções** (nada de `unsafe-inline`, `unsafe-eval` nem
+    origens externas);
+  - `style-src 'self' 'unsafe-inline'` é **permitido**, porque os componentes de UI (shadcn/ui,
+    Radix) injetam `<style>` (risco aceito, ver `docs/adr/0001`);
+  - nenhuma origem externa em nenhuma diretiva.
 - A API só é alcançada pelo edge, e sua porta NÃO DEVE ser publicada.
 - As credenciais do compose servem só para dev e NÃO DEVEM ser usadas fora dele.
 
 **Por quê:** a API confia em `X-Forwarded-*`, e o SPA roda num navegador que a IA e terceiros
-podem inspecionar.
+podem inspecionar. O `script-src` estrito é a defesa real contra XSS, que poderia usar o cookie de
+refresh na mesma origem. Relaxar só o `style-src` é aceito porque a ferramenta é interna (rede de
+casa), e injeção de CSS não executa código.
 
 ### VI. Empírico: testes antes de pronto
 Nenhuma feature pode ser declarada pronta sem que passem: `uv run pytest`, `uv run ruff check .`,
@@ -74,7 +81,9 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 
 ## Restrições técnicas
 
-- **Stack fixa:** SPA React 19 + Vite + Tailwind 4 (`apps/web`); API FastAPI com Python 3.12 e uv
+- **Stack fixa:** SPA React 19 + Vite + Tailwind 4 + **shadcn/ui** (Radix) + **TanStack Query**
+  + **TanStack Table** (`apps/web`), com layout de painel inspirado no Material Dashboard React
+  (referência visual apenas; nada de código ou imagem da Creative Tim); API FastAPI com Python 3.12 e uv
   (`apps/api`); SQLAlchemy 2 + Alembic + PostgreSQL; Redis para estado efêmero (sessões de
   autenticação e limites de tentativa); MinIO + imgproxy para imagens; nginx como edge.
   Trocar ou adicionar um componente da stack é emenda desta constitution.
@@ -82,6 +91,16 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
   usado em produção.
 - **Redis não é banco de registro:** dado que precisa sobreviver (usuários, eventos de segurança,
   histórico) fica no PostgreSQL; perder o Redis no máximo obriga os usuários a entrar de novo.
+- **Armazenamento (NVMe × HD):**
+  - no **NVMe** ficam a aplicação (código e containers), o PostgreSQL e o Redis, ou seja, tudo o
+    que a aplicação lê a cada requisição e que precisa ser rápido;
+  - tudo o que é **pesado ou gerado continuamente** DEVE ficar no **HD**
+    (`/media/sakai/BACKUP/tiktok`, configurável por variável): o **MinIO inteiro** (imagens,
+    fontes e vídeos), as pastas temporárias de processamento (ffmpeg), os downloads e exportações
+    grandes, e os caches que crescem;
+  - todo uso do HD DEVE checar o arquivo marcador `.sociman-volume`. Sem ele, o serviço se recusa
+    a operar, porque um HD desmontado faria o Docker criar a pasta no NVMe;
+  - todo uso do HD DEVE recusar novas gravações abaixo de um piso de espaço livre configurável.
 - **Banco:** toda mudança de schema passa por migration Alembic versionada.
 - **Portas:** edge 8180/8543. NÃO usar 8000/5175 (OpenShorts) nem 18789 (OpenClaw).
 - **Containers** rodam como UID 1000, e pastas de bind mount são criadas antes do `up`.
@@ -112,4 +131,4 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 - **Conformidade:** toda spec, plano e revisão de código verifica a aderência aos princípios.
   Uma violação dos princípios I, II ou VII bloqueia a entrega.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-28
+**Version**: 2.1.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-29

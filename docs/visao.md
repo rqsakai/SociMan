@@ -29,7 +29,7 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 1. **Nenhum agente publica.** O SociMan não posta em rede social; quem posta é o dono.
 2. **Direito primeiro.** Só vira corte o vídeo de um canal com status `autorizado` ou `programa-de-cortes`, e só o dono muda esse status.
 3. **Marca em tokens, não em texto livre.** Todo item de identidade visual precisa ser aplicável por máquina e verificável pelo revisor.
-4. **Segredos nunca no repositório** (`npm run check:secrets`). CSP estrita e nenhum segredo no bundle do SPA (herdados do volans).
+4. **Segredos nunca no repositório** (`npm run check:secrets`). Nenhum segredo no bundle do SPA. CSP com `script-src` estrito; o `style-src` aceita `'unsafe-inline'` por causa dos componentes shadcn/Radix (ver `docs/adr/0001`, constitution 2.0.0).
 5. **O contrato é a fonte única.** O OpenAPI do FastAPI gera o cliente tipado do SPA e as tools do MCP.
 6. **Empírico:** teste antes de declarar pronto, com `pytest` + `npm run check:web` + e2e.
 7. **Humano no controle:** o que a IA grava via MCP fica rastreável (autor, data) e reversível.
