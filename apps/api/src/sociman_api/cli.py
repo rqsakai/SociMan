@@ -4,7 +4,8 @@
 - `set-password`: redefine a senha de alguém e encerra as sessões dele;
 - `reset-db`: zera banco e Redis para o e2e (nunca em produção);
 - `worker`: processa a fila de cortes (spec 004, serviço `worker` do compose);
-- `agendador`: tarefas periódicas da spec 006 (serviço `agendador` do compose).
+- `agendador`: tarefas periódicas da spec 006 (serviço `agendador` do compose);
+- `tokens recifrar`: regrava as credenciais da publicação com a chave atual (spec 015, R4).
 
 Cada comando faz o próprio commit e grava o evento com o autor `system:cli`.
 """
@@ -161,6 +162,51 @@ def agendador() -> None:
     from sociman_api.agendador import main
 
     main()
+
+
+tokens_app = typer.Typer(help="Credenciais da publicação (spec 015).", no_args_is_help=True)
+app.add_typer(tokens_app, name="tokens")
+
+
+@tokens_app.command("recifrar")
+def tokens_recifrar() -> None:
+    """Regrava com SOCIMAN_TOKENS_KEY todas as credenciais (e links de envio em andamento)
+    cifradas com a chave anterior. Imprime só contagens, nunca valores."""
+    from sociman_api.agendador import _registrar_modelos
+    from sociman_api.publicacao import cifra
+    from sociman_api.publicacao.models import ConexaoCredencial, Tentativa
+
+    _registrar_modelos()
+    try:
+        atual = cifra.key_id_atual()
+    except cifra.CifraErro as e:
+        _fail(str(e))
+    regravadas = iguais = links = 0
+    with get_sessionmaker()() as db:
+        try:
+            for cred in db.scalars(select(ConexaoCredencial).with_for_update()):
+                if cred.key_id == atual:
+                    iguais += 1
+                    continue
+                for campo in ("access", "refresh"):
+                    coluna = f"{campo}_cifrado"
+                    aad = cifra.aad(cred.conexao_id, campo)
+                    texto = cifra.decifrar(getattr(cred, coluna), aad, cred.key_id)
+                    setattr(cred, coluna, cifra.cifrar(texto, aad)[0])
+                cred.key_id = atual
+                regravadas += 1
+            for t in db.scalars(select(Tentativa).where(Tentativa.upload_url_cifrado.is_not(None))
+                                .with_for_update()):
+                aad = cifra.aad(t.id, "upload")
+                t.upload_url_cifrado = cifra.cifrar(cifra.decifrar(t.upload_url_cifrado, aad),
+                                                    aad)[0]
+                links += 1
+        except cifra.CifraErro as e:
+            db.rollback()
+            _fail(f"nada foi regravado: {e}")
+        db.commit()
+    typer.echo(f"Credenciais regravadas: {regravadas}; já na chave atual: {iguais}; "
+               f"links de envio regravados: {links}.")
 
 
 if __name__ == "__main__":

@@ -19,6 +19,7 @@ from integration.envios_helpers import (
 from sociman_api import history, storage
 from sociman_api.canais.models import CanalDireito
 from sociman_api.config import get_settings
+from sociman_api.conteudos.models import Conteudo, ConteudoOrigem
 from sociman_api.cortes.models import Corte, CorteOrigem, CorteStatus
 from sociman_api.db import get_sessionmaker
 from sociman_api.envios import acompanhamento, importacao
@@ -98,6 +99,15 @@ def test_importa_todos_os_clipes_em_revisao(client, owner, member, perfil, db, f
     assert v.action == "created" and v.actor_kind == "system:agendador"
     assert v.after["status"] == "revisao"
 
+    # Spec 014 (invariante): cada corte importado tem o seu conteúdo, com o mesmo id.
+    for corte in cortes:
+        conteudo = db.get(Conteudo, corte.id)
+        assert conteudo is not None and conteudo.corte_id == corte.id
+        assert conteudo.origem == ConteudoOrigem.corte and conteudo.perfil_id == corte.perfil_id
+    assert db.get(Conteudo, c.id).titulo == "Título 1"  # o título do OpenShorts vem primeiro
+    (cv,) = history.list_versions(db, "conteudo", c.id)
+    assert cv.action == "created" and cv.actor_kind == "system:agendador"
+
     # a legenda do kit foi pedida com a seção openshorts.subtitle do envio
     assert len(fake.subtitles) == 3
     sub = fake.subtitles[0]
@@ -119,7 +129,7 @@ def test_importa_todos_os_clipes_em_revisao(client, owner, member, perfil, db, f
     assert c0["status"] == "revisao" and c0["kitVersion"] is None and c0["origem"] == "openshorts"
     assert c0["envioId"] == e["id"] and c0["clipIndex"] == 0 and c0["legenda"] == "kit"
     assert c0["canal"]["title"] == "Canal" and c0["direitoNoEnvio"] == "proprio"
-    assert c0["openshortsScore"] == 82 and c0["archived"] is False and c0["postagens"] == []
+    assert c0["openshortsScore"] == 82 and c0["archived"] is False and c0["destinos"] == []
     r = client.get(f"/api/perfis/{perfil['id']}/cortes", params={"origem": "openshorts"},
                    headers=h)
     assert len(r.json()["items"]) == 3

@@ -11,6 +11,8 @@ from sociman_api.auth.router_auth import router as auth_router
 from sociman_api.auth.router_events import router as events_router
 from sociman_api.auth.router_users import router as users_router
 from sociman_api.canais.router import router as canais_router
+from sociman_api.conteudos.router import router as conteudos_router
+from sociman_api.conteudos.router_video import router as conteudos_video_router
 from sociman_api.cortes.router import router as cortes_router
 from sociman_api.db import get_engine
 from sociman_api.envios.router import router as envios_router
@@ -26,6 +28,7 @@ from sociman_api.perfis.router_contas import router as contas_router
 from sociman_api.perfis.router_imagens import router as imagens_router
 from sociman_api.perfis.router_perfis import router as perfis_router
 from sociman_api.postagem.router import router as postagem_router
+from sociman_api.publicacao.router import router as publicacao_router
 from sociman_api.redis import get_redis
 from sociman_api.router_midia import router as midia_router
 
@@ -53,6 +56,9 @@ app.include_router(postagem_router)
 app.include_router(notificacoes_router)
 app.include_router(integracoes_router)
 app.include_router(ia_router)
+app.include_router(conteudos_router)  # spec 014
+app.include_router(conteudos_video_router)  # spec 014: vídeo próprio
+app.include_router(publicacao_router)  # spec 015: conexões, interruptor e execução
 install_openapi_error_contract(app)
 
 

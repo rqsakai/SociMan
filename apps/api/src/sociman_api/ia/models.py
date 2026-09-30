@@ -32,6 +32,7 @@ from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from sociman_api.auth.models import AuditMixin
+from sociman_api.conteudos import models as _conteudos_models  # noqa: F401 — FK (spec 014)
 from sociman_api.db import Base
 from sociman_api.perfis.models import Platform
 
@@ -82,6 +83,8 @@ class IaChamada(Base):
     entity_type: Mapped[str] = mapped_column(Text, nullable=False)  # asset|perfil|kit|postagem|corte
     entity_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)  # null no kit nunca salvo
     corte_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("cortes.id"))
+    # Spec 014: preenchida em toda chamada `postagem.*` (na origem corte, = corte_id).
+    conteudo_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("conteudos.id"))
     conta_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("contas.id"))
     plataforma: Mapped[Platform | None] = mapped_column(Enum(Platform, name="platform"))
     sessao_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
@@ -143,5 +146,6 @@ class IaChamada(Base):
 Index("ix_ia_chamadas_created", IaChamada.created_at.desc(), IaChamada.id)
 Index("ix_ia_chamadas_perfil_created", IaChamada.perfil_id, IaChamada.created_at.desc())
 Index("ix_ia_chamadas_tipo_created", IaChamada.tipo_campo, IaChamada.created_at.desc())
+Index("ix_ia_chamadas_conteudo", IaChamada.conteudo_id, IaChamada.created_at.desc())
 Index("ix_ia_chamadas_sessao", IaChamada.sessao_id,
       postgresql_where=text("sessao_id IS NOT NULL"))

@@ -1,5 +1,6 @@
-"""Dados de teste das postagens (spec 006, US5): perfil e contas pela API e cortes direto pelo
-modelo (sem MinIO: o calendário só precisa das linhas). Importado pelos testes da trilha C."""
+"""Dados de teste das postagens (spec 006, US5) e dos destinos (spec 014): perfil e contas pela
+API e cortes direto pelo modelo (sem MinIO: o calendário só precisa das linhas), cada um com o
+seu conteúdo (mesmo id, como no `create_corte`)."""
 
 import itertools
 import uuid
@@ -8,6 +9,7 @@ from decimal import Decimal
 
 import pytest
 
+from sociman_api.conteudos.models import Conteudo, ConteudoOrigem
 from sociman_api.cortes.models import Corte, CorteStatus
 
 PW = "senha-forte-123"
@@ -62,5 +64,44 @@ def criar_corte(db, perfil_id, status: CorteStatus = CorteStatus.pronto, **extra
     campos.update(extra)
     corte = Corte(**campos)
     db.add(corte)
+    db.flush()
+    titulo = corte.openshorts_title or corte.hook_text or corte.original_filename
+    db.add(Conteudo(id=corte.id, perfil_id=pid, origem=ConteudoOrigem.corte, corte_id=corte.id,
+                    titulo=(titulo or "")[:100], created_by=corte.created_by))
     db.commit()
     return corte
+
+
+# ---- spec 014: destinos e agendamentos pela API ----
+
+# Spec 015 (T101): na TikTok a descrição (legenda) é obrigatória para agendar; os dados de
+# teste já nascem com uma.
+LEGENDA = "Legenda de teste"
+
+
+def add_destino(client, h, conteudo_id, conta_id, **body) -> dict:
+    r = client.post(f"/api/conteudos/{conteudo_id}/destinos", headers=h,
+                    json={"contaId": str(conta_id), **body})
+    assert r.status_code == 201, r.text
+    return r.json()["destino"]
+
+
+def acao(client, h, destino: dict, nome: str, **body):
+    """`POST /api/destinos/{id}/{nome}` com a versão do destino."""
+    return client.post(f"/api/destinos/{destino['id']}/{nome}", headers=h,
+                       json={"version": destino["version"], **body})
+
+
+def aprovado(client, h, conteudo_id, conta_id, **body) -> dict:
+    """Destino novo, aprovado por `h` (dono)."""
+    d = add_destino(client, h, conteudo_id, conta_id, **body)
+    r = acao(client, h, d, "aprovar")
+    assert r.status_code == 200, r.text
+    return r.json()["destino"]
+
+
+def agendar(client, h, conteudo_id, conta_id, planned_at, **body):
+    body["textos"] = {"descricao": LEGENDA, **(body.get("textos") or {})}
+    return client.post("/api/agendamentos", headers=h, json={
+        "conteudoId": str(conteudo_id), "contaId": str(conta_id),
+        "plannedAt": planned_at.isoformat(), "modo": "lembrete", **body})

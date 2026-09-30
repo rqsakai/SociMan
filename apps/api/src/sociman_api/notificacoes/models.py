@@ -36,6 +36,14 @@ class NotificacaoTipo(enum.StrEnum):
     hora_de_postar = "hora_de_postar"
     cota_youtube = "cota_youtube"
     canal_erro = "canal_erro"
+    aprovacao_pedida = "aprovacao_pedida"  # 0009: para os donos ativos (spec 014)
+    aprovacao_respondida = "aprovacao_respondida"  # 0009: para quem pediu
+    # 0010 (spec 015): execução na rede, para os donos ativos.
+    rascunho_criado = "rascunho_criado"
+    envio_publicado = "envio_publicado"
+    envio_rede_falhou = "envio_rede_falhou"
+    envio_aguardando_vaga = "envio_aguardando_vaga"
+    conexao_precisa_reconectar = "conexao_precisa_reconectar"
 
 
 class Notificacao(Base):

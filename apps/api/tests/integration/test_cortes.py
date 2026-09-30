@@ -6,8 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from sociman_api import storage
+from sociman_api import history, storage
 from sociman_api.config import get_settings
+from sociman_api.conteudos.models import Conteudo, ConteudoOrigem
 from sociman_api.cortes import worker
 from sociman_api.cortes.models import Corte, CorteStatus
 from sociman_api.db import get_sessionmaker
@@ -120,6 +121,17 @@ def test_envio_cria_corte_na_fila(client, owner, perfil, videos):
     assert r.status_code == 200
     (v,) = r.json()["items"]
     assert v["action"] == "created" and v["after"]["status"] == "na_fila"
+
+    # Spec 014 (invariante): o corte nasce com o seu conteúdo, mesmo id, no mesmo flush.
+    with get_sessionmaker()() as s:
+        conteudo = s.get(Conteudo, uuid.UUID(c["id"]))
+        assert conteudo is not None and conteudo.corte_id == conteudo.id
+        assert conteudo.origem == ConteudoOrigem.corte and conteudo.perfil_id == uuid.UUID(perfil["id"])
+        assert conteudo.titulo == "Olha esse achadinho" and conteudo.archived_at is None
+        assert conteudo.created_by == user.id
+        (cv,) = history.list_versions(s, "conteudo", conteudo.id)
+        assert cv.action == "created" and cv.actor_user_id == user.id
+        assert cv.after == {"titulo": "Olha esse achadinho", "archived": False}
 
 
 def test_envio_grava_versao_do_kit(client, owner, perfil, videos):

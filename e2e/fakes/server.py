@@ -17,6 +17,19 @@ tem o ffmpeg) e atende, na porta 8000:
   timeout do cliente; "fora do limite" devolve um texto acima de qualquer limite. Nas sugestões,
   os itens nunca repetem um texto que já esteja no pedido (lista, aceitos e rejeitados). O e2e
   nunca chama a Anthropic.
+- `/tiktok/v2/...` (spec 015, T039): uma TikTok de mentira, apontada por `TIKTOK_API_URL`, com
+  exatamente os pedidos do cliente (`ALLOWED`, research R21): OAuth (token e revoke),
+  `user/info`, `creator_info`, os dois `init`, `status/fetch`, o `PUT` das partes em
+  `/tiktok/upload/` e o avatar em `/tiktok/avatar/` (host em `TIKTOK_UPLOAD_HOSTS`). O Direct
+  Post exige `post_info` com a privacidade do `creator_info` (sandbox: só `SELF_ONLY`) e recusa
+  conteúdo de marca como "Só eu"; o `status` chega a `PUBLISH_COMPLETE` com o id do post. O login
+  do navegador é interceptado pelo Playwright, que volta com `code=e2e-<handle>`: a TikTok
+  falsa responde como a conta `<handle>` (`open_id` = `open-<handle>`). Rotas de controle, só do
+  e2e (o cliente da API nunca as chama): `GET /tiktok-e2e/pedidos[?handle=h]` (tudo o que a
+  TikTok falsa recebeu, sem segredo) e `POST /tiktok-e2e/falhas` com
+  `{handle, endpoint, falha}`: a próxima chamada de `endpoint` para `handle` falha com
+  `sem_resposta` (cria e não responde), `5xx` ou um código da TikTok; no `status`, a falha é o
+  `fail_reason` do `FAILED`. O e2e nunca chama a TikTok.
 
 Nada aqui publica: não existe `/api/social` (princípio I).
 """
@@ -24,11 +37,14 @@ Nada aqui publica: não existe `/api/social` (princípio I).
 import itertools
 import json
 import re
+import secrets
+import struct
 import subprocess
 import tempfile
 import threading
 import time
 import uuid
+import zlib
 from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -396,6 +412,267 @@ def claude(body: dict) -> tuple[int, dict]:
     }
 
 
+# ---- TikTok (spec 015, T039) ----
+
+TT_HOST = "openshorts-fake:8000"  # upload e avatar (TIKTOK_UPLOAD_HOSTS=openshorts-fake)
+TT_ESCOPOS = "user.info.basic,user.info.profile,video.upload,video.publish"
+TT_PASSOS_STATUS = 1  # consultas em PROCESSING_UPLOAD antes do estado final
+TT_LOG_ID = "202609290000000000000000E2E"
+TT_HTTP = {"access_token_invalid": 401, "scope_not_authorized": 401, "rate_limit_exceeded": 429,
+           "spam_risk_too_many_pending_share": 403, "spam_risk_too_many_posts": 403,
+           "unaudited_client_can_only_post_to_private_accounts": 403,
+           "internal_error": 500}
+TT_CAMINHOS = {
+    ("POST", "/v2/oauth/token/"): "token",
+    ("POST", "/v2/oauth/revoke/"): "revoke",
+    ("GET", "/v2/user/info/"): "user_info",
+    ("POST", "/v2/post/publish/creator_info/query/"): "creator_info",
+    ("POST", "/v2/post/publish/inbox/video/init/"): "inbox_init",
+    ("POST", "/v2/post/publish/video/init/"): "video_init",
+    ("POST", "/v2/post/publish/status/fetch/"): "status",
+}
+SEM_RESPOSTA = object()  # o pedido chegou (e a TikTok criou), a resposta não sai
+TT = {"access": {}, "refresh": {}, "envios": {}, "uploads": {}, "pedidos": [], "falhas": []}
+_TT_SEQ = itertools.count(1)
+
+
+def _handle_de(open_id: str | None) -> str | None:
+    return open_id.removeprefix("open-") if open_id else None
+
+
+def _tt_ok(data: dict) -> tuple[int, dict]:
+    return 200, {"data": data, "error": {"code": "ok", "message": "", "log_id": TT_LOG_ID}}
+
+
+def _tt_erro(codigo: str) -> tuple[int, dict]:
+    return TT_HTTP.get(codigo, 400), {"error": {"code": codigo, "message": f"e2e: {codigo}",
+                                                "log_id": TT_LOG_ID}}
+
+
+def _tt_falha(endpoint: str, handle: str | None) -> str | None:
+    """A falha injetada para este `endpoint` e `handle` (uso único)."""
+    with LOCK:
+        for i, f in enumerate(TT["falhas"]):
+            if f["endpoint"] == endpoint and f["handle"] == handle:
+                return TT["falhas"].pop(i)["falha"]
+    return None
+
+
+def _tt_registrar(metodo: str, endpoint: str, handle: str | None, **extra) -> None:
+    with LOCK:
+        TT["pedidos"].append({"metodo": metodo, "endpoint": endpoint, "handle": handle,
+                              "em": _iso(datetime.now(UTC)), **extra})
+
+
+def _tt_tokens(open_id: str) -> tuple[int, dict]:
+    n = next(_TT_SEQ)
+    access = f"act.e2e-{n}-{secrets.token_hex(6)}"
+    refresh = f"rft.e2e-{n}-{secrets.token_hex(6)}"
+    TT["access"][access] = open_id
+    TT["refresh"][refresh] = open_id
+    return 200, {"access_token": access, "refresh_token": refresh, "open_id": open_id,
+                 "scope": TT_ESCOPOS, "expires_in": 86400, "refresh_expires_in": 31536000,
+                 "token_type": "Bearer"}
+
+
+def _tt_oauth(endpoint: str, form: dict[str, str]) -> tuple[int, dict]:
+    if endpoint == "revoke":
+        open_id = TT["access"].pop(form.get("token", ""), None)
+        _tt_registrar("POST", "revoke", _handle_de(open_id))
+        TT["refresh"] = {k: v for k, v in TT["refresh"].items() if v != open_id}
+        return 200, {}
+    grant = form.get("grant_type")
+    if grant == "authorization_code":
+        code = form.get("code", "")
+        handle = code.removeprefix("e2e-") if code.startswith("e2e-") else None
+        _tt_registrar("POST", "token", handle, grant=grant, pkce="code_verifier" in form)
+        if handle is None:
+            return 400, {"error": "invalid_grant", "error_description": "code inválido",
+                         "log_id": TT_LOG_ID}
+        return _tt_tokens(f"open-{handle}")
+    if grant == "refresh_token":
+        open_id = TT["refresh"].pop(form.get("refresh_token", ""), None)
+        _tt_registrar("POST", "token", _handle_de(open_id), grant=grant)
+        if open_id is None:
+            return 400, {"error": "invalid_grant", "error_description": "refresh revogado",
+                         "log_id": TT_LOG_ID}
+        return _tt_tokens(open_id)
+    return 400, {"error": "invalid_request", "error_description": "", "log_id": TT_LOG_ID}
+
+
+def _regra_partes_ok(size: int, chunk: int, total: int) -> bool:
+    """Regra da TikTok real (sem os limites de 5–64 MB, para os testes usarem partes pequenas):
+    total = floor(size/chunk); com 1 parte, chunk == size (o bug do sandbox em 2026-09-29)."""
+    if total == 1:
+        return chunk == size
+    return total == size // chunk
+
+
+TT_PRIVACIDADES = ["SELF_ONLY"]  # app sem auditoria (sandbox): só "Só eu"
+TT_POST_INFO_BOOL = ("disable_comment", "disable_duet", "disable_stitch", "brand_organic_toggle",
+                     "brand_content_toggle", "is_aigc")
+
+
+def _tt_post_info(info: object) -> str | None:
+    """Como a TikTok confere o `post_info` do Direct Post: privacidade entre as opções do
+    `creator_info` e conteúdo de marca (parceria paga) nunca como "Só eu"."""
+    if not isinstance(info, dict) or not isinstance(info.get("title", ""), str) \
+            or any(not isinstance(info.get(k, False), bool) for k in TT_POST_INFO_BOOL):
+        return "invalid_params"
+    if info.get("privacy_level") not in TT_PRIVACIDADES:
+        return "privacy_level_option_mismatch"
+    if info.get("brand_content_toggle") and info.get("privacy_level") == "SELF_ONLY":
+        return "invalid_params"
+    return None
+
+
+def _tt_init(open_id: str, corpo: dict, direto: bool) -> tuple[int, dict]:
+    fonte = corpo.get("source_info") or {}
+    size, chunk = int(fonte.get("video_size", 0)), int(fonte.get("chunk_size", 0))
+    total = int(fonte.get("total_chunk_count", 0))
+    if fonte.get("source") != "FILE_UPLOAD" or size <= 0 or chunk <= 0 or total <= 0 \
+            or (not direto and "post_info" in corpo) \
+                or not _regra_partes_ok(size, chunk, total):
+        return _tt_erro("invalid_params")
+    if direto:  # Direct Post: `post_info` obrigatório, com a privacidade do `creator_info`
+        erro = _tt_post_info(corpo.get("post_info"))
+        if erro:
+            return _tt_erro(erro)
+    n = next(_TT_SEQ)
+    publish_id = f"v_{'pub' if direto else 'inbox'}_file~v2.e2e{n}"
+    upload_token = secrets.token_hex(8)
+    TT["envios"][publish_id] = {"open_id": open_id, "direto": direto, "video_size": size,
+                                "recebidos": 0, "partes": [], "consultas": 0,
+                                "fail_reason": None, "post_info": corpo.get("post_info")}
+    TT["uploads"][upload_token] = publish_id
+    return _tt_ok({"publish_id": publish_id, "upload_url":
+                   f"http://{TT_HOST}/tiktok/upload/?upload_id={n}&upload_token={upload_token}"})
+
+
+def _tt_status(corpo: dict, handle: str | None) -> tuple[int, dict]:
+    envio = TT["envios"].get(corpo.get("publish_id", ""))
+    if envio is None:
+        return _tt_erro("invalid_params")
+    envio["consultas"] += 1
+    completo = envio["recebidos"] == envio["video_size"]
+    dados = {"status": "PROCESSING_UPLOAD", "fail_reason": "", "uploaded_bytes": envio["recebidos"],
+             "publicaly_available_post_id": []}
+    if completo and envio["fail_reason"] is None:
+        envio["fail_reason"] = _tt_falha("status", handle)
+    if envio["fail_reason"]:
+        dados.update(status="FAILED", fail_reason=envio["fail_reason"])
+    elif completo and envio["consultas"] > TT_PASSOS_STATUS:
+        if envio["direto"]:
+            dados.update(status="PUBLISH_COMPLETE",
+                         publicaly_available_post_id=[7_000_000_000_000_000_000 + envio["consultas"]])
+        else:
+            dados["status"] = "SEND_TO_USER_INBOX"
+    return _tt_ok(dados)
+
+
+def tiktok_api(metodo: str, caminho: str, headers, corpo: bytes) -> tuple[int, dict] | object:
+    """Os pedidos do cliente `publicacao/tiktok/cliente.py`, com o caminho sem o `/tiktok`."""
+    endpoint = TT_CAMINHOS.get((metodo, caminho))
+    if endpoint is None:
+        _tt_registrar(metodo, "desconhecido", None, caminho=caminho)
+        return _tt_erro("invalid_params")
+    if endpoint in ("token", "revoke"):
+        return _tt_oauth(endpoint, {k: v[-1] for k, v in parse_qs(corpo.decode()).items()})
+    token = (headers.get("authorization") or "").removeprefix("Bearer ").strip()
+    open_id = TT["access"].get(token)
+    handle = _handle_de(open_id)
+    dados = json.loads(corpo or b"{}") if metodo == "POST" else {}
+    extra = {"publish_id": dados.get("publish_id")} if endpoint == "status" else {}
+    if endpoint.endswith("init"):
+        info = dados.get("post_info")
+        extra = {"post_info": info is not None,
+                 "privacy_level": info.get("privacy_level") if isinstance(info, dict) else None,
+                 "title": info.get("title") if isinstance(info, dict) else None}
+    _tt_registrar(metodo, endpoint, handle, **extra)
+    if open_id is None:
+        return _tt_erro("access_token_invalid")
+    falha = None if endpoint == "status" else _tt_falha(endpoint, handle)
+    if falha == "5xx":
+        return 503, {"error": {"code": "internal_error", "message": "", "log_id": TT_LOG_ID}}
+    if falha and falha != "sem_resposta":
+        return _tt_erro(falha)
+    if endpoint == "user_info":
+        resposta = _tt_ok({"user": {
+            "open_id": open_id, "username": handle, "display_name": f"Apelido {handle}",
+            "avatar_url": f"http://{TT_HOST}/tiktok/avatar/{handle}.png"}})
+    elif endpoint == "creator_info":
+        resposta = _tt_ok({
+            "creator_avatar_url": f"http://{TT_HOST}/tiktok/avatar/{handle}.png",
+            "creator_username": handle, "creator_nickname": f"Apelido {handle}",
+            "privacy_level_options": TT_PRIVACIDADES, "comment_disabled": False,
+            "duet_disabled": False, "stitch_disabled": True, "max_video_post_duration_sec": 600})
+    elif endpoint in ("inbox_init", "video_init"):
+        resposta = _tt_init(open_id, dados, direto=endpoint == "video_init")
+    else:
+        resposta = _tt_status(dados, handle)
+    return SEM_RESPOSTA if falha == "sem_resposta" else resposta
+
+
+def tiktok_parte(query: str, faixa: str, corpo: bytes) -> int:
+    """`PUT` de uma parte: confere `Content-Range`, a ordem e o tamanho (como a TikTok)."""
+    upload_token = parse_qs(query).get("upload_token", [""])[0]
+    publish_id = TT["uploads"].get(upload_token, "")
+    envio = TT["envios"].get(publish_id)
+    handle = _handle_de(envio["open_id"]) if envio else None
+    _tt_registrar("PUT", "put", handle, content_range=faixa)
+    if envio is None:
+        return 404
+    falha = _tt_falha("put", handle)
+    if falha:
+        return 503 if falha == "5xx" else 400
+    try:
+        unidade, resto = faixa.split(" ", 1)
+        intervalo, total = resto.split("/")
+        inicio, fim = (int(x) for x in intervalo.split("-"))
+    except ValueError:
+        return 400
+    if unidade != "bytes" or int(total) != envio["video_size"] or fim - inicio + 1 != len(corpo) \
+            or fim >= envio["video_size"]:
+        return 416
+    if inicio == envio["recebidos"]:
+        envio["recebidos"] = fim + 1
+        envio["partes"].append([inicio, fim])
+    elif [inicio, fim] not in envio["partes"]:
+        return 416
+    return 201 if envio["recebidos"] == envio["video_size"] else 206
+
+
+def avatar_png(handle: str, lado: int = 96) -> bytes:
+    """PNG RGB `lado`×`lado` com a cor tirada do handle (o SociMan exige imagem ≥ 64 px)."""
+    cor = zlib.crc32(handle.encode()).to_bytes(4, "big")[:3]
+    linha = b"\x00" + cor * lado
+    bruto = zlib.compress(linha * lado)
+
+    def bloco(tipo: bytes, dados: bytes) -> bytes:
+        return struct.pack(">I", len(dados)) + tipo + dados + \
+            struct.pack(">I", zlib.crc32(tipo + dados))
+
+    ihdr = struct.pack(">IIBBBBB", lado, lado, 8, 2, 0, 0, 0)
+    return b"\x89PNG\r\n\x1a\n" + bloco(b"IHDR", ihdr) + bloco(b"IDAT", bruto) + \
+        bloco(b"IEND", b"")
+
+
+def tiktok_controle(metodo: str, caminho: str, query: str, corpo: bytes) -> tuple[int, dict]:
+    """Rotas só do e2e: inspeção dos pedidos e injeção de falhas."""
+    if metodo == "GET" and caminho == "/tiktok-e2e/pedidos":
+        handle = parse_qs(query).get("handle", [None])[0]
+        with LOCK:
+            itens = [p for p in TT["pedidos"] if handle is None or p["handle"] == handle]
+        return 200, {"items": itens}
+    if metodo == "POST" and caminho == "/tiktok-e2e/falhas":
+        f = json.loads(corpo or b"{}")
+        with LOCK:
+            TT["falhas"].append({"handle": f["handle"], "endpoint": f["endpoint"],
+                                 "falha": f["falha"]})
+        return 200, {"falhas": len(TT["falhas"])}
+    return 404, {"detail": "Not Found"}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "openshorts-fake/1"
 
@@ -415,9 +692,35 @@ class Handler(BaseHTTPRequestHandler):
         n = int(self.headers.get("content-length") or 0)
         return self.rfile.read(n) if n else b""
 
+    def _tiktok(self, url, corpo: bytes) -> None:
+        """TikTok falsa (spec 015): API, partes, avatar e as rotas de controle do e2e."""
+        if url.path.startswith("/tiktok-e2e/"):
+            return self._json(*tiktok_controle(self.command, url.path, url.query, corpo))
+        if self.command == "PUT" and url.path == "/tiktok/upload/":
+            codigo = tiktok_parte(url.query, self.headers.get("content-range", ""), corpo)
+            self.send_response(codigo)
+            self.send_header("content-length", "0")
+            self.end_headers()
+            return None
+        if self.command == "GET" and url.path.startswith("/tiktok/avatar/"):
+            dados = avatar_png(url.path.rsplit("/", 1)[-1].removesuffix(".png"))
+            self.send_response(200)
+            self.send_header("content-type", "image/png")
+            self.send_header("content-length", str(len(dados)))
+            self.end_headers()
+            self.wfile.write(dados)
+            return None
+        resposta = tiktok_api(self.command, url.path.removeprefix("/tiktok"), self.headers, corpo)
+        if resposta is SEM_RESPOSTA:  # a TikTok recebeu (e criou), a resposta se perdeu
+            self.close_connection = True
+            return None
+        return self._json(*resposta)
+
     def do_GET(self) -> None:  # noqa: N802
         url = urlsplit(self.path)
         partes = url.path.strip("/").split("/")
+        if url.path.startswith("/tiktok"):
+            return self._tiktok(url, b"")
         if url.path == "/health":
             return self._json(200, {"status": "ok"})
         if url.path.startswith("/youtube/v3/"):
@@ -434,6 +737,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         path = urlsplit(self.path).path
         corpo = self._corpo()
+        if path.startswith("/tiktok"):
+            return self._tiktok(urlsplit(self.path), corpo)
         if path == "/api/uploads":
             upload_id = str(uuid.uuid4())
             UPLOADS[upload_id] = None
@@ -452,6 +757,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_PUT(self) -> None:  # noqa: N802
         path = urlsplit(self.path).path
+        if path.startswith("/tiktok"):
+            return self._tiktok(urlsplit(self.path), self._corpo())
         if not path.startswith("/api/uploads/"):
             return self._json(404, {"detail": "Not Found"})
         upload_id = path.rsplit("/", 1)[-1]

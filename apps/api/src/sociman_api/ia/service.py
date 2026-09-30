@@ -52,12 +52,13 @@ def tipo_or_404(tipo_campo: str) -> TipoCampo:
 
 @dataclass(frozen=True)
 class AlvoResolvido:
-    entity_type: str  # asset | perfil | kit | postagem | corte
+    entity_type: str  # asset | perfil | kit | postagem | corte | conteudo
     entity_id: uuid.UUID | None
     asset: Asset | None = None
-    corte: Corte | None = None
+    corte: Corte | None = None  # só na origem corte (transcrição e gancho no contexto)
     conta: Conta | None = None
     postagem: Any | None = None
+    conteudo: Any | None = None  # spec 014: toda chamada `postagem.*` grava o `conteudo_id`
 
 
 def _arquivado(nome: str) -> ApiError:
@@ -99,37 +100,52 @@ def _resolver_alvo(db: Session, tipo: TipoCampo, perfil: Perfil,
     return _resolver_postagem(db, perfil, alvo)
 
 
+def _conteudo_arquivado(conteudo: Any, corte: Corte | None) -> bool:
+    return corte.archived if corte is not None else conteudo.archived
+
+
 def _resolver_postagem(db: Session, perfil: Perfil, alvo: schemas.Alvo) -> AlvoResolvido:
-    from sociman_api.postagem.models import Postagem  # import tardio (ciclo)
+    """Destino existente (`postagem`) ou conteúdo + conta antes de o destino existir
+    (`conteudo`, ou `corte` com o mesmo id, spec 014 R12). Na origem corte, o corte entra no
+    contexto (transcrição, gancho); no vídeo próprio, não há transcrição."""
+    from sociman_api.conteudos.models import Conteudo  # import tardio (ciclo)
+    from sociman_api.postagem.models import Postagem
 
     if alvo.entity_type == "postagem" and alvo.entity_id is not None:
         postagem = db.get(Postagem, alvo.entity_id)
         if postagem is None:
-            raise ApiError(404, "not_found", "Postagem não encontrada")
-        corte = db.get(Corte, postagem.corte_id)
+            raise ApiError(404, "not_found", "Destino não encontrado")
+        conteudo = db.get(Conteudo, postagem.conteudo_id)
         conta = db.get(Conta, postagem.conta_id)
-        assert corte is not None and conta is not None
-        if corte.perfil_id != perfil.id:
-            raise invalid("A postagem é de outro perfil")
+        assert conteudo is not None and conta is not None
+        corte = db.get(Corte, conteudo.corte_id) if conteudo.corte_id is not None else None
+        if conteudo.perfil_id != perfil.id:
+            raise invalid("O destino é de outro perfil")
         if postagem.archived:
-            raise _arquivado("Esta postagem")
+            raise _arquivado("Este destino")
         return AlvoResolvido("postagem", postagem.id, corte=corte, conta=conta,
-                             postagem=postagem)
-    if alvo.entity_type != "corte" or alvo.entity_id is None or alvo.conta_id is None:
-        raise invalid("Este campo é de uma postagem (ou de um corte com a conta de destino)")
-    corte = db.get(Corte, alvo.entity_id)
-    if corte is None:
+                             postagem=postagem, conteudo=conteudo)
+    if alvo.entity_type not in ("corte", "conteudo") or alvo.entity_id is None \
+            or alvo.conta_id is None:
+        raise invalid("Este campo é de um destino (ou de um conteúdo com a conta de destino)")
+    conteudo = db.get(Conteudo, alvo.entity_id)
+    if conteudo is None:
+        nome = "Corte" if alvo.entity_type == "corte" else "Conteúdo"
+        raise ApiError(404, "not_found", f"{nome} não encontrado")
+    corte = db.get(Corte, conteudo.corte_id) if conteudo.corte_id is not None else None
+    if alvo.entity_type == "corte" and corte is None:
         raise ApiError(404, "not_found", "Corte não encontrado")
     conta = db.get(Conta, alvo.conta_id)
     if conta is None:
         raise ApiError(404, "not_found", "Conta não encontrada")
-    if corte.perfil_id != perfil.id or conta.perfil_id != perfil.id:
-        raise invalid("O corte e a conta precisam ser do perfil")
-    if corte.archived:
-        raise _arquivado("Este corte")
+    if conteudo.perfil_id != perfil.id or conta.perfil_id != perfil.id:
+        raise invalid("O conteúdo e a conta precisam ser do perfil")
+    if _conteudo_arquivado(conteudo, corte):
+        raise _arquivado("Este corte" if alvo.entity_type == "corte" else "Este conteúdo")
     if conta.archived:
         raise _arquivado("Esta conta")
-    return AlvoResolvido("corte", corte.id, corte=corte, conta=conta)
+    return AlvoResolvido(alvo.entity_type, conteudo.id, corte=corte, conta=conta,
+                         conteudo=conteudo)
 
 
 # ---- valor atual e seleção ----
@@ -186,6 +202,11 @@ def _anteriores(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil,
         c = rows.get(cid)
         mesmo_alvo = c is not None and c.entity_type == alvo.entity_type and (
             c.entity_id == alvo.entity_id or (alvo.entity_type == "kit" and c.entity_id is None))
+        # Spec 014: a sessão sobrevive à criação do destino (conteúdo + conta → destino).
+        mesmo_alvo = mesmo_alvo or (
+            c is not None and alvo.conteudo is not None
+            and c.entity_type in ("corte", "conteudo", "postagem")
+            and c.conteudo_id == alvo.conteudo.id)
         if (c is None or not mesmo_alvo or c.created_by != actor.user_id
                 or c.sessao_id != sessao_id or c.tipo_campo != tipo.id
                 or c.perfil_id != perfil.id
@@ -246,11 +267,12 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: A
     """Monta o contexto, chama o Claude e grava a chamada. Com erro, commita e levanta."""
     regras = regras_em_vigor(db, tipo)
     contexto = ctx_mod.montar(db, tipo, perfil, asset=alvo.asset, corte=alvo.corte,
-                              conta=alvo.conta, postagem=alvo.postagem)
+                              conta=alvo.conta, postagem=alvo.postagem, conteudo=alvo.conteudo)
     row = IaChamada(
         id=uuid.uuid4(), tipo_campo=tipo.id, perfil_id=perfil.id,
         entity_type=alvo.entity_type, entity_id=alvo.entity_id,
         corte_id=alvo.corte.id if alvo.corte is not None else None,
+        conteudo_id=alvo.conteudo.id if alvo.conteudo is not None else None,
         conta_id=alvo.conta.id if alvo.conta is not None else None,
         plataforma=alvo.conta.platform if alvo.conta is not None else None,
         sessao_id=sessao_id, anteriores=[a.id for a in anteriores], aceitos=list(aceitos),
@@ -350,7 +372,7 @@ def chamadas_out(db: Session, rows: Sequence[IaChamada]) -> list[schemas.IaChama
     out = []
     for r in rows:
         p = perfis[r.perfil_id]
-        conta_id = r.conta_id if r.entity_type == "corte" else None
+        conta_id = r.conta_id if r.entity_type in ("corte", "conteudo") else None
         out.append(schemas.IaChamada(
             id=r.id, tipo_campo=r.tipo_campo,
             perfil=PerfilRef(id=p.id, name=p.name, slug=p.slug),

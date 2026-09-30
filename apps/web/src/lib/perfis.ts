@@ -47,6 +47,10 @@ export function initials(name: string): string {
 export function errorText(err: unknown): string {
   if (err instanceof ApiError) {
     if (err.code === "forbidden") return "Sem permissão.";
+    // spec 015: envio automático só por dono humano; nada muda enquanto o vídeo está indo para a rede
+    if (err.code === "somente_humano") return "Só um dono, pela tela do SociMan, pode fazer isto. Pedidos de IA, agente ou MCP são recusados.";
+    if (err.code === "somente_dono") return err.message || "Só um dono pode fazer isto com um envio automático.";
+    if (err.code === "envio_em_andamento") return "O vídeo está sendo enviado para a rede agora. Espere o envio terminar e tente de novo.";
     return err.message;
   }
   return "Não foi possível concluir a operação. Tente de novo.";
@@ -77,6 +81,7 @@ export const contaFieldLabel: Record<string, string> = {
   status: "Status",
   notes: "Observação",
   archived: "Arquivada",
+  intervalo_min_minutos: "Intervalo mínimo entre posts (min)", // spec 014
 };
 
 export function formatPerfilValue(field: string, value: unknown): string {

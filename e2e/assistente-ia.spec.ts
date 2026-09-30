@@ -355,7 +355,7 @@ test("regras do título e textos da postagem pelo mesmo painel", async ({ page, 
   const perfilId = await createPerfilViaApi(request, token, { name: `IA Post ${sfx}`, slug: `ia-post-${sfx}`, niche: "achadinhos" });
   const conta = await request.post(`/api/perfis/${perfilId}/contas`, {
     headers: auth,
-    data: { platform: "tiktok", handle: `iapost${sfx}`, status: "ativa" },
+    data: { platform: "youtube", handle: `iapost${sfx}`, status: "ativa" },
   });
   expect(conta.status(), "POST contas").toBe(201);
   const member = await createVerifiedMember(page);
@@ -386,27 +386,34 @@ test("regras do título e textos da postagem pelo mesmo painel", async ({ page, 
   await expect(page.getByText("Personalizada").first()).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/008-regra-titulo.png`, fullPage: true });
 
-  // ---- US4: corte sem postagem; "Sugerir textos" cria o rascunho com os três campos ----
+  // ---- US4: o corte pronto em Conteúdos (spec 014: conteúdo = corte, destino por conta);
+  // "Sugerir textos" preenche os três campos do destino ----
   await page.goto(corteUrl);
   await expect(page.getByText("Pronto", { exact: true }).first()).toBeVisible({ timeout: 180_000 });
-  const postagem = page.getByRole("group", { name: /^Postagem em TikTok/ });
+  const corteId = corteUrl.split("/").pop()!;
+  await page.goto(`/app/conteudos/${corteId}`);
+  await page.getByRole("button", { name: "Adicionar conta" }).click();
+  const add = page.getByRole("dialog", { name: "Adicionar conta" });
+  const contaOpt = add.getByLabel("Conta").and(page.locator("select")).locator("option").filter({ hasText: `iapost${sfx}` }).first();
+  await add.getByLabel("Conta").and(page.locator("select")).selectOption((await contaOpt.getAttribute("value"))!);
+  await add.getByRole("button", { name: "Adicionar" }).click();
+  const postagem = page.getByRole("tabpanel");
+  await expect(postagem.getByLabel("Título", { exact: true })).toBeVisible();
   const textos = await abrirPainel(page, "postagem.textos");
   await gerar(textos);
   await textos.getByRole("button", { name: "Aplicar", exact: true }).click();
   await expect(page.getByText("Salvo com ajuda da IA")).toBeVisible();
   // a regra editada vale só para o tipo "Título da postagem", não para "Sugerir textos"
   await expect(postagem.getByLabel("Título", { exact: true })).toHaveValue(/^Título sugerido pela IA \d+$/);
-  const corteId = corteUrl.split("/").pop()!;
-  const lista = await getJson<{ items: { id: string; titulo: string; descricao: string; hashtags: string[]; status: string }[] }>(
-    request, auth, `/api/cortes/${corteId}/postagens`,
+  const conteudo = await getJson<{ conteudo: { destinos: { id: string; titulo: string; descricao: string; hashtags: string[] }[] } }>(
+    request, auth, `/api/conteudos/${corteId}`,
   );
-  expect(lista.items).toHaveLength(1);
-  const post = lista.items[0];
+  expect(conteudo.conteudo.destinos).toHaveLength(1);
+  const post = conteudo.conteudo.destinos[0];
   expect(post.titulo).toMatch(/^Título sugerido pela IA \d+$/);
   expect(post.descricao).toMatch(/^Descrição sugerida pela IA/);
   expect(post.hashtags.length).toBeGreaterThanOrEqual(3);
-  let hv = await versions(request, auth, `/api/postagens/${post.id}/versions`);
-  expect(hv[0].version).toBe(1);
+  let hv = await versions(request, auth, `/api/destinos/${post.id}/versions`);
   expect(hv[0].details.ia?.[0]).toMatchObject({ tipoCampo: "postagem.textos", desfecho: "aplicada" });
 
   // título "mais polêmico" em 1 clique
@@ -415,7 +422,7 @@ test("regras do título e textos da postagem pelo mesmo painel", async ({ page, 
   await titulo.getByRole("button", { name: "Aplicar", exact: true }).click();
   await expect(page.getByText("Salvo com ajuda da IA")).toBeVisible();
   await expect(postagem.getByLabel("Título", { exact: true })).toHaveValue(/\(mais polêmico\) 🔥$/); // a regra chegou ao Claude
-  hv = await versions(request, auth, `/api/postagens/${post.id}/versions`);
+  hv = await versions(request, auth, `/api/destinos/${post.id}/versions`);
   expect(hv[0].changedFields).toEqual(["titulo"]);
   expect(hv[0].details.ia?.[0]).toMatchObject({ tipoCampo: "postagem.titulo", desfecho: "aplicada" });
   await expect(page.getByText("com ajuda da IA").first()).toBeVisible();

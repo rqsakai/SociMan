@@ -328,3 +328,62 @@ export async function seedAssets(request: APIRequestContext, token: string, perf
     await new Promise((r) => setTimeout(r, 60));
   }
 }
+
+// --- TikTok falsa (spec 015) ---
+
+const LOGIN_TIKTOK = /^https:\/\/www\.tiktok\.com\/v2\/auth\/authorize\//;
+
+// Intercepta o login da TikTok no navegador: em vez de sair da máquina, volta direto para o
+// `redirect_uri` do SociMan com `code=e2e-<handle>` e o mesmo `state` (a TikTok falsa do
+// `openshorts-fake` responde como a conta `<handle>`). Chamar de novo troca o handle. Devolve a
+// lista (viva) das URLs interceptadas, sem o `state`.
+export async function interceptarLoginTikTok(page: Page, handle: string): Promise<string[]> {
+  const interceptados: string[] = [];
+  await page.unroute(LOGIN_TIKTOK);
+  await page.route(LOGIN_TIKTOK, async (route) => {
+    const url = new URL(route.request().url());
+    const volta = new URL(url.searchParams.get("redirect_uri")!);
+    volta.searchParams.set("code", `e2e-${handle}`);
+    volta.searchParams.set("state", url.searchParams.get("state") ?? "");
+    url.searchParams.delete("state");
+    interceptados.push(url.toString());
+    await route.fulfill({ status: 302, headers: { location: volta.toString() } });
+  });
+  return interceptados;
+}
+
+// Chama as rotas de controle da TikTok falsa de dentro do container (ela não é publicada no host).
+function tiktokFake(metodo: "GET" | "POST", caminho: string, corpo?: unknown): unknown {
+  const script = [
+    "import json, sys, urllib.request",
+    "corpo = sys.stdin.read().encode() or None",
+    `req = urllib.request.Request("http://localhost:8000${caminho}", data=corpo, method="${metodo}",`,
+    "                             headers={'content-type': 'application/json'})",
+    "print(urllib.request.urlopen(req, timeout=5).read().decode())",
+  ].join("\n");
+  return JSON.parse(compose(["exec", "-T", "openshorts-fake", "python", "-c", script], corpo === undefined ? "" : JSON.stringify(corpo)));
+}
+
+export interface PedidoTikTok {
+  metodo: string;
+  endpoint: string; // token, revoke, user_info, creator_info, inbox_init, video_init, status, put
+  handle: string | null;
+  em: string;
+  grant?: string;
+  pkce?: boolean;
+  post_info?: boolean;
+  privacy_level?: string | null; // Direct Post (US3)
+  title?: string | null;
+}
+
+// Tudo o que a TikTok falsa recebeu (de uma conta, ou de todas).
+export function pedidosTikTok(handle?: string): PedidoTikTok[] {
+  const q = handle ? `?handle=${encodeURIComponent(handle)}` : "";
+  return (tiktokFake("GET", `/tiktok-e2e/pedidos${q}`) as { items: PedidoTikTok[] }).items;
+}
+
+// A próxima chamada de `endpoint` para `handle` falha: "sem_resposta" (a TikTok falsa cria e não
+// responde), "5xx" ou um código da TikTok; no "status", `falha` é o `fail_reason` do FAILED.
+export function falharTikTok(handle: string, endpoint: string, falha: string): void {
+  tiktokFake("POST", "/tiktok-e2e/falhas", { handle, endpoint, falha });
+}

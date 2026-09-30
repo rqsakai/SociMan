@@ -15,7 +15,7 @@ from sociman_api.auth.schemas import CamelModel
 from sociman_api.cortes.models import CorteOrigem, CorteStatus
 from sociman_api.envios.models import DireitoEnvio
 from sociman_api.perfis.schemas import UserRef, VersionNumber
-from sociman_api.postagem.schemas import PostagemResumo  # o mesmo nome no OpenAPI (Trilha C)
+from sociman_api.postagem.schemas import DestinoResumo  # o mesmo nome no OpenAPI (spec 014)
 
 
 class CorteCanal(CamelModel):
@@ -61,7 +61,7 @@ class Corte(CamelModel):
     canal: CorteCanal | None
     direito_no_envio: DireitoEnvio | None
     archived: bool
-    postagens: list[PostagemResumo]
+    destinos: list[DestinoResumo]  # spec 014: os destinos ativos (era `postagens` na 006)
 
 
 class CorteOut(CamelModel):

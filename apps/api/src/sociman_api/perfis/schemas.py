@@ -35,6 +35,7 @@ HttpUrl = Annotated[
     str, StringConstraints(strip_whitespace=True, max_length=500, pattern=r"^https?://\S+$")
 ]
 Notes = Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]
+IntervaloMin = Annotated[int, Field(ge=0, le=1440)]  # minutos (spec 014, Q3 = C)
 VersionNumber = Annotated[int, Field(ge=1)]
 Action = Literal["created", "updated", "archived", "restored", "reverted"]
 
@@ -87,6 +88,7 @@ class Conta(CamelModel):
     url: str
     status: ContaStatus
     notes: str
+    intervalo_min_minutos: int  # spec 014: intervalo mínimo entre posts (só dono muda)
     archived: bool
     version: int
     created_at: datetime
@@ -198,3 +200,5 @@ class UpdateContaIn(CamelModel):
     status: ContaStatus | None = None
     notes: Notes | None = None
     platform_name: PlatformName | None = None
+    # Spec 014: só dono muda (403 `forbidden` para membro, no service).
+    intervalo_min_minutos: IntervaloMin | None = None

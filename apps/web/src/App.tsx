@@ -37,6 +37,12 @@ import EnviosList from "./pages/envios/EnviosList";
 // 008-assistente-ia
 import AssistenteIa from "./pages/ia/AssistenteIa";
 import RegraDetalhe from "./pages/ia/RegraDetalhe";
+// 014-central-de-conteudos
+import ConteudoDetalhe from "./pages/conteudos/ConteudoDetalhe";
+import Conteudos from "./pages/conteudos/Conteudos";
+// 015-tiktok-rascunho
+import ConexaoRetorno from "./pages/conexoes/Retorno";
+import PublicacaoConfig from "./pages/configuracoes/Publicacao";
 
 // Vitrine dos componentes da spec 005 (só em dev; o build de produção descarta o import).
 const Showcase = import.meta.env.DEV ? lazy(() => import("./pages/_Showcase")) : null;
@@ -82,6 +88,15 @@ export default function App() {
                   </RequireAuth>
                 }
               />
+              {/* spec 015: volta do login da TikTok, sem o layout do painel */}
+              <Route
+                path="/app/conexoes/retorno"
+                element={
+                  <RequireAuth>
+                    <ConexaoRetorno />
+                  </RequireAuth>
+                }
+              />
               {/* Área logada: o AppShell é rota de layout (o menu não remonta ao navegar). */}
               <Route
                 element={
@@ -106,6 +121,8 @@ export default function App() {
                 <Route path="/app/envios" element={<EnviosList />} />
                 <Route path="/app/envios/:id" element={<EnvioDetalhe />} />
                 <Route path="/app/calendario" element={<Calendario />} />
+                <Route path="/app/conteudos" element={<Conteudos />} />
+                <Route path="/app/conteudos/:id" element={<ConteudoDetalhe />} />
                 <Route path="/app/assistente-ia" element={<AssistenteIa />} />
                 <Route path="/app/assistente-ia/regras/:tipo" element={<RegraDetalhe />} />
                 <Route
@@ -121,6 +138,14 @@ export default function App() {
                   element={
                     <RequireOwner>
                       <SecurityEvents />
+                    </RequireOwner>
+                  }
+                />
+                <Route
+                  path="/app/configuracoes/publicacao"
+                  element={
+                    <RequireOwner>
+                      <PublicacaoConfig />
                     </RequireOwner>
                   }
                 />

@@ -68,6 +68,19 @@ services:
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENSHORTS_URL: ${OPENSHORTS_URL:-http://host.docker.internal:8000}
+      # Spec 015: publicação no TikTok (contracts, "Variáveis de ambiente"). Segredos só no .env
+      # da raiz; o worker NÃO recebe a chave dos tokens. PUBLICACAO_HABILITADA=false desliga tudo.
+      TIKTOK_CLIENT_KEY: ${TIKTOK_CLIENT_KEY:-}
+      TIKTOK_CLIENT_SECRET: ${TIKTOK_CLIENT_SECRET:-}
+      SOCIMAN_TOKENS_KEY: ${SOCIMAN_TOKENS_KEY:-}
+      SOCIMAN_TOKENS_KEY_ANTERIOR: ${SOCIMAN_TOKENS_KEY_ANTERIOR:-}
+      PUBLICACAO_HABILITADA: ${PUBLICACAO_HABILITADA:-false}
+      TIKTOK_APP_SITUACAO: ${TIKTOK_APP_SITUACAO:-sandbox}
+      TIKTOK_API_URL: ${TIKTOK_API_URL:-}
+      TIKTOK_UPLOAD_HOSTS: ${TIKTOK_UPLOAD_HOSTS:-}
+      TIKTOK_REDIRECT_WEB: ${TIKTOK_REDIRECT_WEB:-}
+      TIKTOK_REDIRECT_DESKTOP: ${TIKTOK_REDIRECT_DESKTOP:-}
+      TIKTOK_SCOPES: ${TIKTOK_SCOPES:-user.info.basic,user.info.profile,video.upload,video.publish}
     extra_hosts:
       - "host.docker.internal:host-gateway"   # OpenShorts roda no host (:8000)
     volumes:
@@ -145,6 +158,17 @@ services:
       YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENSHORTS_URL: ${OPENSHORTS_URL:-http://host.docker.internal:8000}
+      # Spec 015: publicação no TikTok (contracts, "Variáveis de ambiente"). Segredos só no .env
+      # da raiz; o worker NÃO recebe a chave dos tokens. PUBLICACAO_HABILITADA=false desliga tudo.
+      TIKTOK_CLIENT_KEY: ${TIKTOK_CLIENT_KEY:-}
+      TIKTOK_CLIENT_SECRET: ${TIKTOK_CLIENT_SECRET:-}
+      SOCIMAN_TOKENS_KEY: ${SOCIMAN_TOKENS_KEY:-}
+      SOCIMAN_TOKENS_KEY_ANTERIOR: ${SOCIMAN_TOKENS_KEY_ANTERIOR:-}
+      PUBLICACAO_HABILITADA: ${PUBLICACAO_HABILITADA:-false}
+      TIKTOK_APP_SITUACAO: ${TIKTOK_APP_SITUACAO:-sandbox}
+      TIKTOK_API_URL: ${TIKTOK_API_URL:-}
+      TIKTOK_UPLOAD_HOSTS: ${TIKTOK_UPLOAD_HOSTS:-}
+      AGENDADOR_PUBLICACAO_S: ${AGENDADOR_PUBLICACAO_S:-15}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

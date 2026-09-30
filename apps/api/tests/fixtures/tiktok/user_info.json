@@ -1,0 +1,11 @@
+{
+  "data": {
+    "user": {
+      "open_id": "SUBSTITUIDO",
+      "username": "SUBSTITUIDO",
+      "display_name": "Apelido de teste",
+      "avatar_url": "https://p16-sign.tiktokcdn-us.com/fake-avatar.jpeg"
+    }
+  },
+  "error": {"code": "ok", "message": "", "log_id": "202609290000000000000000FAKE"}
+}

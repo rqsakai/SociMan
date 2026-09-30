@@ -57,6 +57,27 @@ x-integracoes-env: &integracoes-env
   ANTHROPIC_API_KEY: chave-claude-de-mentira-do-e2e
   ANTHROPIC_BASE_URL: http://openshorts-fake:8000
 
+# Spec 015 (T039): a TikTok também é o `openshorts-fake` (`/tiktok/v2/...`, partes e avatar no
+# mesmo host). Chave dos tokens e client secret FIXOS de teste (liberados por valor no
+# check:secrets); PUBLICACAO_HABILITADA=true SÓ aqui. O login do navegador é interceptado pelo
+# Playwright (volta com `code=e2e-<handle>`). Os hosts reais da TikTok apontam para 127.0.0.1
+# (`extra_hosts` abaixo): um pedido que escapasse do fake não sairia da máquina.
+x-tiktok-env: &tiktok-env
+  TIKTOK_CLIENT_KEY: e2e-client-key-de-teste
+  TIKTOK_CLIENT_SECRET: e2e-client-secret-de-teste
+  SOCIMAN_TOKENS_KEY: ZTJlLWVmZW1lcm8tY2hhdmUtZG9zLXRva2Vucy0zMmI=
+  PUBLICACAO_HABILITADA: "true"
+  TIKTOK_APP_SITUACAO: sandbox
+  TIKTOK_API_URL: http://openshorts-fake:8000/tiktok
+  TIKTOK_UPLOAD_HOSTS: openshorts-fake
+  TIKTOK_REDIRECT_WEB: https://192.168.86.47:${E2E_EDGE_TLS_PORT:-8643}/app/conexoes/retorno
+  TIKTOK_REDIRECT_DESKTOP: http://localhost:${E2E_EDGE_PORT:-8280}/app/conexoes/retorno
+
+x-tiktok-hosts: &tiktok-hosts
+  - "open.tiktokapis.com:127.0.0.1"
+  - "open-upload.tiktokapis.com:127.0.0.1"
+  - "www.tiktok.com:127.0.0.1"
+
 services:
   edge:
     image: nginx:1.27-alpine
@@ -83,7 +104,8 @@ services:
     image: sociman-api-e2e:latest   # a mesma tag no worker: um build serve os dois
     user: "1000:1000"
     environment:
-      <<: [*api-env, *integracoes-env]
+      <<: [*api-env, *integracoes-env, *tiktok-env]
+    extra_hosts: *tiktok-hosts
     volumes:
       - sociman-data:/srv/sociman-data
     entrypoint: *data-entrypoint
@@ -139,11 +161,13 @@ services:
     image: sociman-api-e2e:latest
     user: "1000:1000"
     environment:
-      <<: [*api-env, *integracoes-env]
+      <<: [*api-env, *integracoes-env, *tiktok-env]
       AGENDADOR_SYNC_S: "2"
       AGENDADOR_OPENSHORTS_S: "1"
       AGENDADOR_IMPORTACAO_S: "1"
       AGENDADOR_LEMBRETES_S: "2"
+      AGENDADOR_PUBLICACAO_S: "2"
+    extra_hosts: *tiktok-hosts
     volumes:
       - sociman-data:/srv/sociman-data
     entrypoint: *data-entrypoint

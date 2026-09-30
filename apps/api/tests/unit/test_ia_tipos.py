@@ -15,10 +15,10 @@ from sociman_api.marca.tokens import KitTokens
 from sociman_api.perfis.schemas import UpdatePerfilIn
 from sociman_api.postagem import service as postagem_service
 from sociman_api.postagem import textos
-from sociman_api.postagem.schemas import CreatePostagemIn, UpdatePostagemIn
+from sociman_api.postagem.schemas import CreateDestinoIn, UpdateDestinoIn
 
 SCHEMAS: dict[str, type[BaseModel]] = {"asset": AssetPatch, "perfil": UpdatePerfilIn,
-                                       "kit": KitTokens, "postagem": UpdatePostagemIn}
+                                       "kit": KitTokens, "postagem": UpdateDestinoIn}
 
 
 def _adapter(model: type[BaseModel], campo: str) -> TypeAdapter:
@@ -80,7 +80,7 @@ def test_limites_das_hashtags_batem_com_a_postagem():
         lim = TIPOS[tid].limites
         assert (lim.min_itens, lim.max_itens) == (textos.HASHTAGS_MIN, textos.HASHTAGS_MAX)
         assert lim.max_chars_item == textos.HASHTAG_MAX_CHARS and lim.normalizar == "hashtag"
-    for model in (UpdatePostagemIn, CreatePostagemIn):
+    for model in (UpdateDestinoIn, CreateDestinoIn):
         adapter = _adapter(model, "hashtags")
         assert _aceita(adapter, ["#a"] * 8) and not _aceita(adapter, ["#a"] * 9)
     assert postagem_service.HASHTAG_RE.match("#" + "a" * 50)

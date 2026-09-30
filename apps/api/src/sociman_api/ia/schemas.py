@@ -24,7 +24,8 @@ REJEITADOS_MAX = 100
 LISTA_MAX = 40  # itens no valor atual (o limite do tipo é conferido no service)
 ITEM_MAX = 400
 
-AlvoTipo = Literal["asset", "perfil", "kit", "postagem", "corte"]
+# Spec 014: "conteudo" (+ conta) antes de o destino existir; "corte" continua (mesmo id).
+AlvoTipo = Literal["asset", "perfil", "kit", "postagem", "corte", "conteudo"]
 Item = Annotated[str, StringConstraints(max_length=ITEM_MAX)]
 
 
@@ -84,7 +85,7 @@ class PadraoIn(CamelModel):
 class Alvo(CamelModel):
     entity_type: AlvoTipo
     entity_id: UUID | None = None  # null no kit nunca salvo
-    conta_id: UUID | None = None  # corte + conta quando a postagem ainda não existe
+    conta_id: UUID | None = None  # conteúdo (ou corte) + conta quando o destino não existe
 
 
 class Valor(CamelModel):

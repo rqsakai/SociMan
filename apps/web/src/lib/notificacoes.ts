@@ -17,6 +17,15 @@ export const tipoLabel: Record<NotificacaoTipo, string> = {
   hora_de_postar: "Hora de postar",
   cota_youtube: "Cota do YouTube",
   canal_erro: "Erro no canal",
+  // spec 014
+  aprovacao_pedida: "Aprovação pedida",
+  aprovacao_respondida: "Aprovação respondida",
+  // spec 015
+  rascunho_criado: "Rascunho criado",
+  envio_publicado: "Publicado",
+  envio_rede_falhou: "Envio para a rede falhou",
+  envio_aguardando_vaga: "Aguardando vaga na rede",
+  conexao_precisa_reconectar: "Conta precisa reconectar",
 };
 
 // Polling (R11): 20 s com a aba visível e 60 s em segundo plano.

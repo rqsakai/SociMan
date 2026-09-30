@@ -19,6 +19,11 @@
  *                                     Com { hasMore, onLoadMore, loadingMore? }: modo externo para
  *                                     listas por cursor; mostra todas as linhas recebidas e o botão
  *                                     "Carregar mais" (ordenação e filtro valem sobre o que já veio).
+ *   manual?: boolean                  filtro, ordenação e paginação ficam no servidor (spec 014): a
+ *                                     tabela mostra as linhas como vieram, sem cabeçalho ordenável
+ *                                     nem busca local, e o rodapé é o <CursorPagination> (com o
+ *                                     `pagination.total`, quando houver). Sem a prop, nada muda.
+ *   isRowSelected?: (row: T) => boolean  destaca a linha marcada (seleção em lote fica na página).
  *
  * Colunas:
  *   const col = dataTableColumns<Perfil>();
@@ -43,6 +48,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { CursorPagination } from "./CursorPagination";
 import { ClientPagination, LoadMorePagination } from "./DataTablePagination";
 import { dataTableFeatures, type DataTableColumnDef } from "./features";
 import { SortableHeader } from "./SortableHeader";
@@ -51,6 +57,8 @@ export interface DataTableExternalPagination {
   hasMore: boolean;
   onLoadMore: () => void;
   loadingMore?: boolean;
+  // Total do filtro no servidor (modo `manual`).
+  total?: number;
 }
 
 export interface DataTableProps<T extends RowData> {
@@ -65,6 +73,9 @@ export interface DataTableProps<T extends RowData> {
   emptyMessage?: string;
   label?: string;
   pagination?: DataTableExternalPagination;
+  manual?: boolean;
+  // Linha marcada (seleção em lote da página): recebe data-state="selected".
+  isRowSelected?: (row: T) => boolean;
 }
 
 const EMPTY: never[] = [];
@@ -82,8 +93,10 @@ export function DataTable<T extends RowData>({
   emptyMessage = "Nenhum resultado",
   label,
   pagination,
+  manual,
+  isRowSelected,
 }: DataTableProps<T>) {
-  const external = pagination !== undefined;
+  const external = pagination !== undefined || Boolean(manual);
   const [initialState] = useState(() => ({
     sorting: initialSorting ?? [],
     pagination: { pageIndex: 0, pageSize: initialPageSize },
@@ -98,6 +111,8 @@ export function DataTable<T extends RowData>({
     globalFilterFn: "includesString",
     // modo externo: a tabela mostra tudo o que já veio (o "Carregar mais" traz o resto)
     manualPagination: external,
+    // modo manual (spec 014): o servidor filtra, ordena e pagina
+    ...(manual ? { manualSorting: true, manualFiltering: true, enableSorting: false } : {}),
   });
 
   const searchOptions = typeof search === "object" ? search : {};
@@ -106,9 +121,9 @@ export function DataTable<T extends RowData>({
 
   return (
     <div className="min-w-0">
-      {(search || toolbar) && (
+      {((search && !manual) || toolbar) && (
         <div className="flex flex-wrap items-center gap-3 pb-3">
-          {search && (
+          {search && !manual && (
             <div className="relative w-full sm:w-64">
               <Search
                 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -175,7 +190,7 @@ export function DataTable<T extends RowData>({
             </TableRow>
           ) : (
             rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow key={row.id} data-state={isRowSelected?.(row.original) ? "selected" : undefined}>
                 {row.getAllCells().map((cell) => (
                   <TableCell key={cell.id} className={cn("py-3.5", cell.column.columnDef.meta?.className)}>
                     <table.FlexRender cell={cell} />
@@ -188,7 +203,17 @@ export function DataTable<T extends RowData>({
       </Table>
 
       {!loading &&
-        (pagination ? (
+        (manual ? (
+          pagination && (
+            <CursorPagination
+              loaded={table.getRowCount()}
+              total={pagination.total}
+              hasMore={pagination.hasMore}
+              onLoadMore={pagination.onLoadMore}
+              loadingMore={pagination.loadingMore}
+            />
+          )
+        ) : pagination ? (
           <LoadMorePagination
             loaded={table.getRowCount()}
             hasMore={pagination.hasMore}

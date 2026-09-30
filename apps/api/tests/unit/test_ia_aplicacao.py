@@ -27,6 +27,8 @@ def chamada(tipo_campo, proposta, *, entity_type="asset", entity_id=None, perfil
     return SimpleNamespace(
         id=uuid.uuid4(), tipo_campo=tipo_campo, perfil_id=perfil_id, entity_type=entity_type,
         entity_id=entity_id, corte_id=extra.get("corte_id"), conta_id=extra.get("conta_id"),
+        # Spec 014: na origem corte, o conteúdo tem o id do corte (a migration preenche).
+        conteudo_id=extra.get("conteudo_id", extra.get("corte_id")),
         plataforma=extra.get("plataforma"), proposta=proposta, desfecho=desfecho,
         desfecho_em=None, desfecho_por=None, aplicada_versao=None,
         itens_aplicados=itens_aplicados,
@@ -213,7 +215,7 @@ def test_kit_nunca_salvo_casa_chamada_sem_entity_id():
 
 def test_postagem_textos_e_hashtags():
     corte, conta = uuid.uuid4(), uuid.uuid4()
-    p = SimpleNamespace(id=uuid.uuid4(), corte_id=corte, conta_id=conta, version=1)
+    p = SimpleNamespace(id=uuid.uuid4(), conteudo_id=corte, conta_id=conta, version=1)
     t = chamada("postagem.textos", {"titulo": "T", "descricao": "D",
                                     "hashtags": ["#a", "#b", "#c"]},
                 entity_type="corte", entity_id=corte, corte_id=corte, conta_id=conta)
@@ -231,7 +233,7 @@ def test_postagem_textos_e_hashtags():
 
 def test_postagem_alvo_de_outra_conta_ignorado_e_linha_da_006_pela_plataforma():
     corte = uuid.uuid4()
-    p = SimpleNamespace(id=uuid.uuid4(), corte_id=corte, conta_id=uuid.uuid4(), version=1)
+    p = SimpleNamespace(id=uuid.uuid4(), conteudo_id=corte, conta_id=uuid.uuid4(), version=1)
     outra = chamada("postagem.titulo", {"texto": "T"}, entity_type="corte", entity_id=corte,
                     corte_id=corte, conta_id=uuid.uuid4())
     assert marcar(FakeDb(outra), ACTOR, "postagem", p, {"titulo": ""}, {"titulo": "T"},
@@ -244,3 +246,19 @@ def test_postagem_alvo_de_outra_conta_ignorado_e_linha_da_006_pela_plataforma():
                {"titulo": "T", "descricao": "", "hashtags": []}, ia(antiga),
                perfil_id=PERFIL, plataforma="youtube")
     assert d["ia"][0]["desfecho"] == "aplicada"
+
+
+def test_postagem_alvo_conteudo_da_014():
+    """Spec 014: a chamada feita com o alvo `conteudo` (antes de o destino existir) casa com o
+    destino do mesmo conteúdo e conta; de outro conteúdo, não."""
+    conteudo, conta = uuid.uuid4(), uuid.uuid4()
+    p = SimpleNamespace(id=uuid.uuid4(), conteudo_id=conteudo, conta_id=conta, version=1)
+    c = chamada("postagem.titulo", {"texto": "T"}, entity_type="conteudo", entity_id=conteudo,
+                conteudo_id=conteudo, conta_id=conta)
+    d = marcar(FakeDb(c), ACTOR, "postagem", p, None, {"titulo": "T"}, ia(c),
+               perfil_id=PERFIL, plataforma="tiktok")
+    assert d["ia"][0]["desfecho"] == "aplicada"
+    outro = chamada("postagem.titulo", {"texto": "T"}, entity_type="conteudo",
+                    entity_id=uuid.uuid4(), conta_id=conta)
+    assert marcar(FakeDb(outro), ACTOR, "postagem", p, None, {"titulo": "T"}, ia(outro),
+                  perfil_id=PERFIL, plataforma="tiktok") is None

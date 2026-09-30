@@ -44,7 +44,7 @@ export type Corte = components["schemas"]["Corte"];
 export type CorteStatus = components["schemas"]["CorteStatus"];
 export type Armazenamento = components["schemas"]["Armazenamento"];
 export type MidiaLink = components["schemas"]["MidiaLink"];
-export type MidiaKind = "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem";
+export type MidiaKind = "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video";
 export type CorteFilters = NonNullable<paths["/api/perfis/{perfil_id}/cortes"]["get"]["parameters"]["query"]>;
 // 007-assets-do-perfil
 export type Asset = components["schemas"]["Asset"];
@@ -87,11 +87,7 @@ type Defaulted<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type SelecionarRequest = Defaulted<components["schemas"]["SelecionarIn"], "confirmarDuplicado">;
 export type EnviarRequest = Defaulted<components["schemas"]["EnviarIn"], "confirmarAviso" | "confirmarDuplicado">;
 export type EnvioFilters = NonNullable<paths["/api/envios"]["get"]["parameters"]["query"]>;
-export type Postagem = components["schemas"]["Postagem"];
-export type EstadoPostagem = components["schemas"]["EstadoPostagem"];
 export type Sugestao = components["schemas"]["Sugestao"];
-export type CreatePostagemRequest = Defaulted<components["schemas"]["CreatePostagemIn"], "titulo" | "descricao">;
-export type UpdatePostagemRequest = components["schemas"]["UpdatePostagemIn"];
 export type CalendarioItem = components["schemas"]["CalendarioItem"];
 export type CalendarioSemData = components["schemas"]["SemData"];
 export type CalendarioFilters = paths["/api/calendario"]["get"]["parameters"]["query"];
@@ -110,6 +106,40 @@ export type IaAplicacao = components["schemas"]["IaAplicacao"];
 export type IaGerarRequest = components["schemas"]["GerarIn"];
 export type IaResumo = components["schemas"]["IaResumo"];
 export type IaChamadaFilters = NonNullable<paths["/api/ia/chamadas"]["get"]["parameters"]["query"]>;
+// 014-central-de-conteudos
+export type Origem = components["schemas"]["ConteudoOrigem"];
+export type Situacao = components["schemas"]["Situacao"];
+export type DestinoEstado = components["schemas"]["DestinoEstado"];
+export type EstadoEfetivo = components["schemas"]["EstadoEfetivo"];
+export type Modo = components["schemas"]["Modo"];
+export type ModoInfo = components["schemas"]["ModoInfo"];
+export type DestinoResumo = components["schemas"]["DestinoResumo"];
+export type Destino = components["schemas"]["Destino"];
+export type ConteudoItem = components["schemas"]["ConteudoItem"];
+export type Conteudo = components["schemas"]["Conteudo"];
+export type Atalhos = components["schemas"]["Atalhos"];
+export type LoteResultado = components["schemas"]["LoteResultado"];
+export type SlotSequencia = components["schemas"]["SlotSequencia"];
+export type Previa = components["schemas"]["Previa"];
+export type PropostaOpenshorts = components["schemas"]["PropostaOpenshorts"];
+export type ConteudoFilters = NonNullable<paths["/api/conteudos"]["get"]["parameters"]["query"]>;
+export type ResumoFilters = NonNullable<paths["/api/conteudos/resumo"]["get"]["parameters"]["query"]>;
+export type CreateDestinoRequest = components["schemas"]["CreateDestinoIn"];
+export type UpdateDestinoRequest = components["schemas"]["UpdateDestinoIn"];
+export type AgendarRequest = Defaulted<components["schemas"]["AgendarIn"], "ignorarIntervalo">;
+export type ReagendarRequest = Defaulted<components["schemas"]["ReagendarIn"], "ignorarIntervalo">;
+export type LoteReagendarRequest = Defaulted<components["schemas"]["LoteReagendarIn"], "ignorarIntervalo">;
+export type SequenciaRequest = components["schemas"]["SequenciaIn"];
+export type SequenciaConfirmarRequest = components["schemas"]["SequenciaConfirmarIn"];
+// 015-tiktok-rascunho
+export type Conexao = components["schemas"]["Conexao"];
+export type ConexaoEstado = Conexao["estado"];
+export type Criador = components["schemas"]["Criador"];
+export type PublicacaoConfig = components["schemas"]["PublicacaoConfig"];
+export type Tentativa = components["schemas"]["Tentativa"];
+export type TentativaFase = Tentativa["fase"];
+export type OpcoesTikTok = components["schemas"]["OpcoesTikTok"];
+export type RetornoRequest = components["schemas"]["RetornoIn"];
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -447,6 +477,36 @@ export function createApiClient(options: ApiClientOptions = {}) {
         ),
       versions: (contaId: string) =>
         unwrap(client.GET("/api/contas/{conta_id}/versions", { params: { path: { conta_id: contaId } } })),
+      // spec 014: os quatro modos de agendamento, com o motivo dos indisponíveis
+      modos: (contaId: string) =>
+        unwrap(client.GET("/api/contas/{conta_id}/modos", { params: { path: { conta_id: contaId } } })),
+    },
+    // Conexão da conta com a rede (spec 015). Iniciar, desconectar e criador são só do dono humano;
+    // o retorno do login é o SPA que envia (`/app/conexoes/retorno`).
+    conexoes: {
+      get: (contaId: string) =>
+        unwrap(client.GET("/api/contas/{conta_id}/conexao", { params: { path: { conta_id: contaId } } })),
+      iniciar: (contaId: string) =>
+        unwrap(client.POST("/api/contas/{conta_id}/conexao/iniciar", { params: { path: { conta_id: contaId } } })),
+      retorno: (body: RetornoRequest) => unwrap(client.POST("/api/conexoes/retorno", { body })),
+      desconectar: (contaId: string, version: number) =>
+        unwrap(
+          client.POST("/api/contas/{conta_id}/conexao/desconectar", {
+            params: { path: { conta_id: contaId } },
+            body: { version },
+          }),
+        ),
+      criador: (contaId: string) =>
+        unwrap(client.GET("/api/contas/{conta_id}/conexao/criador", { params: { path: { conta_id: contaId } } })),
+      versions: (contaId: string) =>
+        unwrap(client.GET("/api/contas/{conta_id}/conexao/versions", { params: { path: { conta_id: contaId } } })),
+    },
+    // Interruptor "Envios automáticos" (spec 015): só o dono humano muda; o nível do servidor é leitura.
+    publicacao: {
+      config: () => unwrap(client.GET("/api/publicacao/config")),
+      updateConfig: (body: { version: number; enviosHabilitados: boolean }) =>
+        unwrap(client.PUT("/api/publicacao/config", { body })),
+      configVersions: () => unwrap(client.GET("/api/publicacao/config/versions")),
     },
     // Canais-fonte (spec 006, US1). O direito e o revert são só do dono. Nenhuma rota DELETE.
     canais: {
@@ -514,7 +574,7 @@ export function createApiClient(options: ApiClientOptions = {}) {
       versions: (envioId: string) =>
         unwrap(client.GET("/api/envios/{envio_id}/versions", { params: { path: { envio_id: envioId } } })),
     },
-    // Postagens (spec 006, US5): uma por conta de destino; o SociMan NÃO publica (princípio I).
+    // Sugestões de texto da 006 (deprecated; as rotas de postagem saíram na 014, que usa destinos).
     postagens: {
       sugerir: (corteId: string, body: { contaId: string; outraVersao?: boolean }) =>
         unwrap(
@@ -525,34 +585,6 @@ export function createApiClient(options: ApiClientOptions = {}) {
         ),
       sugestoes: (corteId: string) =>
         unwrap(client.GET("/api/cortes/{corte_id}/sugestoes", { params: { path: { corte_id: corteId } } })),
-      listDoCorte: (corteId: string, archived = false) =>
-        unwrap(client.GET("/api/cortes/{corte_id}/postagens", { params: { path: { corte_id: corteId }, query: { archived } } })),
-      create: (corteId: string, body: CreatePostagemRequest) =>
-        unwrap(
-          client.POST("/api/cortes/{corte_id}/postagens", {
-            params: { path: { corte_id: corteId } },
-            body: { titulo: "", descricao: "", ...body },
-          }),
-        ),
-      get: (postagemId: string) =>
-        unwrap(client.GET("/api/postagens/{postagem_id}", { params: { path: { postagem_id: postagemId } } })),
-      update: (postagemId: string, body: UpdatePostagemRequest) =>
-        unwrap(client.PATCH("/api/postagens/{postagem_id}", { params: { path: { postagem_id: postagemId } }, body })),
-      postado: (postagemId: string, body: { version: number; postedUrl?: string | null }) =>
-        unwrap(client.POST("/api/postagens/{postagem_id}/postado", { params: { path: { postagem_id: postagemId } }, body })),
-      archive: (postagemId: string, version: number) =>
-        unwrap(client.POST("/api/postagens/{postagem_id}/archive", { params: { path: { postagem_id: postagemId } }, body: { version } })),
-      restore: (postagemId: string, version: number) =>
-        unwrap(client.POST("/api/postagens/{postagem_id}/restore", { params: { path: { postagem_id: postagemId } }, body: { version } })),
-      versions: (postagemId: string) =>
-        unwrap(client.GET("/api/postagens/{postagem_id}/versions", { params: { path: { postagem_id: postagemId } } })),
-      revert: (postagemId: string, version: number, toVersion: number) =>
-        unwrap(
-          client.POST("/api/postagens/{postagem_id}/revert", {
-            params: { path: { postagem_id: postagemId } },
-            body: { version, toVersion },
-          }),
-        ),
     },
     // Assistente de IA (spec 008): gerar nunca salva; o Aplicar é o save de cada tela com `ia`.
     // Regras (mutações), registro e resumo são só do dono. Nenhuma rota DELETE.
@@ -573,6 +605,102 @@ export function createApiClient(options: ApiClientOptions = {}) {
       chamada: (chamadaId: string) =>
         unwrap(client.GET("/api/ia/chamadas/{chamada_id}", { params: { path: { chamada_id: chamadaId } } })),
       resumo: (mes?: string) => unwrap(client.GET("/api/ia/resumo", { params: { query: mes ? { mes } : {} } })),
+    },
+    // Central de conteúdos (spec 014). O vídeo próprio (POST multipart) fica no app, por XHR.
+    conteudos: {
+      list: (query: ConteudoFilters = {}) => unwrap(client.GET("/api/conteudos", { params: { query } })),
+      resumo: (query: ResumoFilters = {}) => unwrap(client.GET("/api/conteudos/resumo", { params: { query } })),
+      get: (conteudoId: string) =>
+        unwrap(client.GET("/api/conteudos/{conteudo_id}", { params: { path: { conteudo_id: conteudoId } } })),
+      update: (conteudoId: string, body: { version: number; titulo: string }) =>
+        unwrap(client.PATCH("/api/conteudos/{conteudo_id}", { params: { path: { conteudo_id: conteudoId } }, body })),
+      archive: (conteudoId: string, version: number) =>
+        unwrap(client.POST("/api/conteudos/{conteudo_id}/archive", { params: { path: { conteudo_id: conteudoId } }, body: { version } })),
+      restore: (conteudoId: string, version: number) =>
+        unwrap(client.POST("/api/conteudos/{conteudo_id}/restore", { params: { path: { conteudo_id: conteudoId } }, body: { version } })),
+      versions: (conteudoId: string) =>
+        unwrap(client.GET("/api/conteudos/{conteudo_id}/versions", { params: { path: { conteudo_id: conteudoId } } })),
+      revert: (conteudoId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/conteudos/{conteudo_id}/revert", {
+            params: { path: { conteudo_id: conteudoId } },
+            body: { version, toVersion },
+          }),
+        ),
+      addDestino: (conteudoId: string, body: CreateDestinoRequest) =>
+        unwrap(client.POST("/api/conteudos/{conteudo_id}/destinos", { params: { path: { conteudo_id: conteudoId } }, body })),
+    },
+    // Destino = conteúdo × conta. Aprovar, recusar, aprovar em lote e reverter são só do dono.
+    destinos: {
+      get: (destinoId: string) =>
+        unwrap(client.GET("/api/destinos/{destino_id}", { params: { path: { destino_id: destinoId } } })),
+      update: (destinoId: string, body: UpdateDestinoRequest) =>
+        unwrap(client.PATCH("/api/destinos/{destino_id}", { params: { path: { destino_id: destinoId } }, body })),
+      pedirAprovacao: (destinoId: string, body: { version: number; nota?: string | null }) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/pedir-aprovacao", { params: { path: { destino_id: destinoId } }, body })),
+      aprovar: (destinoId: string, version: number) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/aprovar", { params: { path: { destino_id: destinoId } }, body: { version } })),
+      recusar: (destinoId: string, body: { version: number; motivo: string }) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/recusar", { params: { path: { destino_id: destinoId } }, body })),
+      postado: (destinoId: string, body: { version: number; postedUrl?: string | null }) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/postado", { params: { path: { destino_id: destinoId } }, body })),
+      archive: (destinoId: string, version: number) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/archive", { params: { path: { destino_id: destinoId } }, body: { version } })),
+      restore: (destinoId: string, version: number) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/restore", { params: { path: { destino_id: destinoId } }, body: { version } })),
+      versions: (destinoId: string) =>
+        unwrap(client.GET("/api/destinos/{destino_id}/versions", { params: { path: { destino_id: destinoId } } })),
+      revert: (destinoId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/destinos/{destino_id}/revert", {
+            params: { path: { destino_id: destinoId } },
+            body: { version, toVersion },
+          }),
+        ),
+      loteAprovar: (body: { contaId: string; conteudoIds: string[] }) => unwrap(client.POST("/api/destinos/lote/aprovar", { body })),
+      lotePedirAprovacao: (body: { contaId: string; conteudoIds: string[]; nota?: string | null }) =>
+        unwrap(client.POST("/api/destinos/lote/pedir-aprovacao", { body })),
+      // spec 015: execução do envio automático (tentar de novo e confirmar envio: só dono humano)
+      tentativas: (destinoId: string) =>
+        unwrap(client.GET("/api/destinos/{destino_id}/tentativas", { params: { path: { destino_id: destinoId } } })),
+      tentarDeNovo: (destinoId: string, body: { version: number; confirmoQueNaoChegou?: boolean }) =>
+        unwrap(
+          client.POST("/api/destinos/{destino_id}/tentar-de-novo", {
+            params: { path: { destino_id: destinoId } },
+            body: { confirmoQueNaoChegou: false, ...body },
+          }),
+        ),
+      // "Enviar agora" (T099): agenda para já num modo automático; `aviso` quando fica pausado
+      enviarAgora: (destinoId: string, body: { version: number; modo?: Modo; conferiNoApp?: boolean | null }) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/enviar-agora", { params: { path: { destino_id: destinoId } }, body: { modo: "criar_rascunho", ...body } })),
+      confirmarEnvio: (destinoId: string, version: number) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/confirmar-envio", { params: { path: { destino_id: destinoId } }, body: { version } })),
+    },
+    // Agendamento no destino (spec 014): só o modo lembrete executa. 409 intervalo_conflito → reenviar
+    // com ignorarIntervalo: true.
+    agendamentos: {
+      create: (body: AgendarRequest) =>
+        unwrap(client.POST("/api/agendamentos", { body: { ignorarIntervalo: false, ...body } })),
+      update: (destinoId: string, body: ReagendarRequest) =>
+        unwrap(
+          client.PATCH("/api/destinos/{destino_id}/agendamento", {
+            params: { path: { destino_id: destinoId } },
+            body: { ignorarIntervalo: false, ...body },
+          }),
+        ),
+      cancelar: (destinoId: string, version: number) =>
+        unwrap(
+          client.POST("/api/destinos/{destino_id}/agendamento/cancelar", {
+            params: { path: { destino_id: destinoId } },
+            body: { version },
+          }),
+        ),
+      loteReagendar: (body: LoteReagendarRequest) =>
+        unwrap(client.POST("/api/agendamentos/lote/reagendar", { body: { ignorarIntervalo: false, ...body } })),
+      loteCancelar: (body: { itens: { destinoId: string; version: number }[] }) =>
+        unwrap(client.POST("/api/agendamentos/lote/cancelar", { body })),
+      sequenciaPrevia: (body: SequenciaRequest) => unwrap(client.POST("/api/agendamentos/sequencia/previa", { body })),
+      sequencia: (body: SequenciaConfirmarRequest) => unwrap(client.POST("/api/agendamentos/sequencia", { body })),
     },
     calendario: (query: CalendarioFilters) => unwrap(client.GET("/api/calendario", { params: { query } })),
     integracoes: () => unwrap(client.GET("/api/integracoes")),

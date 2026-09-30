@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, ArrowLeft, Download, ExternalLink, Loader2, RotateCcw, Stamp } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, CalendarClock, Clapperboard, Download, ExternalLink, Loader2, RotateCcw, Stamp } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -13,13 +13,13 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { Badge } from "@/components/ui/badge";
 import { DireitoBadge } from "../../components/canais/DireitoBadge";
 import { CorteStatusBadge, ProgressBar } from "../../components/marca/CorteStatusBadge";
-import { PostagemSection } from "../../components/postagem/PostagemSection";
+import { AgendarDialog } from "../../components/conteudos/AgendarDialog";
+import { DestinosSection } from "../../components/conteudos/DestinoPanel";
 import { HistoryHeading, VersionHistory } from "../../components/VersionHistory";
 import { api } from "../../lib/api";
 import { corteKey, cortesKey, corteStatusLabel, formatBytes, formatDuration, type Corte } from "../../lib/marca";
-import { padroesKey } from "../../lib/envios";
+import { invalidarConteudos, propostaDe, useConteudo } from "../../lib/conteudos";
 import { perfilKey } from "../../lib/perfis";
-import { postagensKey } from "../../lib/postagem";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "medium" });
 const busy = (c: Corte | undefined) => c?.status === "na_fila" || c?.status === "processando";
@@ -33,7 +33,8 @@ function formatCorteValue(field: string, value: unknown): string {
 }
 
 // spec 006: origem (OpenShorts, canal, trecho, direito no envio), "Em revisão" com "Aplicar marca",
-// Arquivar/Restaurar e a seção Postagem (uma aba por conta de destino).
+// Arquivar/Restaurar. spec 014: o painel de destinos do conteúdo (mesmo id do corte), com "Agendar"
+// no corte pronto, no lugar da seção Postagem da 006.
 // /app/cortes/:id (US4, T027): status com polling de 2 s enquanto está na fila ou processando;
 // player com o resultado (ou o original enquanto não fica pronto) por link de mídia assinado;
 // "Baixar", "Baixar original", "Tentar de novo" (só em "Falhou") e os detalhes do envio (FR-017).
@@ -76,10 +77,10 @@ export default function CorteDetalhe() {
     staleTime: 50 * 60_000,
   });
   const versions = useQuery({ queryKey: ["corte-versions", id], queryFn: () => api.cortes.versions(id) });
-  // spec 006: postagens por conta de destino e a conta padrão dos padrões de corte
-  const postagens = useQuery({ queryKey: postagensKey(id), queryFn: () => api.postagens.listDoCorte(id), enabled: Boolean(c) });
-  const padroes = useQuery({ queryKey: padroesKey(c?.perfilId ?? ""), queryFn: () => api.padroesCorte.get(c!.perfilId), enabled: Boolean(c) });
+  // spec 014: o conteúdo do corte (mesmo id) com os destinos por conta
+  const conteudo = useConteudo(c ? id : "");
   const [acting, setActing] = useState<"marca" | "archive" | null>(null);
+  const [agendarOpen, setAgendarOpen] = useState(false);
 
   const perfilName = perfil.data?.perfil.name;
   usePageMeta({
@@ -113,7 +114,7 @@ export default function CorteDetalhe() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: corteKey(id) }),
       queryClient.invalidateQueries({ queryKey: ["corte-versions", id] }),
-      queryClient.invalidateQueries({ queryKey: postagensKey(id) }),
+      invalidarConteudos(queryClient, id),
       ...(c ? [queryClient.invalidateQueries({ queryKey: cortesKey(c.perfilId) })] : []),
       ...(c?.envioId ? [queryClient.invalidateQueries({ queryKey: ["envio", c.envioId] })] : []),
     ]);
@@ -292,6 +293,18 @@ export default function CorteDetalhe() {
                 </dl>
               )}
               <div className="flex flex-wrap gap-2">
+                {ready && !c.archived && conteudo.data && (
+                  <Button type="button" size="sm" onClick={() => setAgendarOpen(true)}>
+                    <CalendarClock aria-hidden="true" />
+                    Agendar
+                  </Button>
+                )}
+                <Button type="button" size="sm" variant="ghost" asChild>
+                  <Link to={`/app/conteudos/${c.id}`}>
+                    <Clapperboard aria-hidden="true" />
+                    Ver em Conteúdos
+                  </Link>
+                </Button>
                 {c.status !== "processando" && (
                   <ConfirmButton
                     label={c.archived ? "Restaurar" : "Arquivar"}
@@ -328,19 +341,21 @@ export default function CorteDetalhe() {
             </CardContent>
           </Card>
 
-          {!c.archived && perfil.data && (
-            postagens.isError ? (
-              <ApiErrorAlert error={postagens.error} />
-            ) : postagens.data ? (
-              <PostagemSection
-                corte={c}
-                contas={perfil.data.contas}
-                postagens={postagens.data.items}
-                contaPadraoId={padroes.data?.padroes.contaPadraoId}
-                onChanged={refreshAll}
-              />
-            ) : null
-          )}
+          {!c.archived &&
+            (conteudo.isError ? (
+              <ApiErrorAlert error={conteudo.error} />
+            ) : conteudo.data ? (
+              <>
+                <DestinosSection conteudo={conteudo.data.conteudo} onChanged={refreshAll} />
+                <AgendarDialog
+                  open={agendarOpen}
+                  onOpenChange={setAgendarOpen}
+                  conteudo={{ id: c.id, perfilId: c.perfilId, titulo: conteudo.data.conteudo.titulo, situacao: conteudo.data.conteudo.situacao, proposta: propostaDe(conteudo.data.conteudo) }}
+                  destinos={conteudo.data.conteudo.destinos}
+                  onDone={refreshAll}
+                />
+              </>
+            ) : null)}
 
           <Card className="shadow-card">
             <CardHeader>

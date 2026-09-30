@@ -1,0 +1,5 @@
+{
+  "error": "invalid_grant",
+  "error_description": "Authorization code is expired.",
+  "log_id": "202609290000000000000000FAKE"
+}

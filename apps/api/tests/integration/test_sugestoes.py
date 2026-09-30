@@ -63,10 +63,10 @@ def test_sugere_para_a_plataforma_da_conta_e_registra(client, db, cenario, anthr
 
 def test_nao_altera_a_postagem(client, cenario):
     c = cenario
-    p = client.post(f"/api/cortes/{c['corte'].id}/postagens", headers=c["h"],
-                    json={"contaId": c["conta"]["id"], "titulo": "meu título"}).json()["postagem"]
+    p = client.post(f"/api/conteudos/{c['corte'].id}/destinos", headers=c["h"],
+                    json={"contaId": c["conta"]["id"], "titulo": "meu título"}).json()["destino"]
     assert _sugerir(client, c).status_code == 200
-    atual = client.get(f"/api/postagens/{p['id']}", headers=c["h"]).json()["postagem"]
+    atual = client.get(f"/api/destinos/{p['id']}", headers=c["h"]).json()["destino"]
     assert atual["titulo"] == "meu título" and atual["version"] == 1
 
 

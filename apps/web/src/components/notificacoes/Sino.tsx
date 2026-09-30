@@ -35,6 +35,13 @@ const tipoTone: Record<NotificacaoTipo, string> = {
   hora_de_postar: "bg-primary",
   cota_youtube: "bg-warning",
   canal_erro: "bg-destructive",
+  aprovacao_pedida: "bg-warning",
+  aprovacao_respondida: "bg-info",
+  rascunho_criado: "bg-success",
+  envio_publicado: "bg-success",
+  envio_rede_falhou: "bg-destructive",
+  envio_aguardando_vaga: "bg-warning",
+  conexao_precisa_reconectar: "bg-destructive",
 };
 
 export function Sino() {

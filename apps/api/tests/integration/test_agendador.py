@@ -139,7 +139,7 @@ def test_volta_com_erro_faz_rollback(rodar, db):
 
 def test_trilhas_padrao_e_ociosidade(monkeypatch):
     nomes = [t.nome for t in agendador_mod.trilhas_padrao()]
-    assert nomes == ["sync", "openshorts", "importacao", "lembretes"]
+    assert nomes == ["sync", "openshorts", "importacao", "lembretes", "publicacao"]  # + 015
 
     trilhas = {t.nome: t for t in agendador_mod.trilhas_padrao()}
     # Stack de teste sem YOUTUBE_API_KEY: a sync fica ociosa com motivo claro, sem vazar valor.
@@ -152,3 +152,28 @@ def test_trilhas_padrao_e_ociosidade(monkeypatch):
 
     monkeypatch.setattr(agendador_mod.datadir, "status", lambda: _SemHd())
     assert "sentinela" in (trilhas["importacao"].ociosa() or "")
+
+
+def test_trilha_publicacao_ociosa_na_ordem(monkeypatch):
+    """Spec 015 (R6): servidor desligado, depois a chave dos tokens, depois o HD."""
+    from pydantic import SecretStr
+
+    from sociman_api.config import get_settings
+
+    trilha = {t.nome: t for t in agendador_mod.trilhas_padrao()}["publicacao"]
+    s = get_settings()
+    monkeypatch.setattr(s, "publicacao_habilitada", False)
+    assert "PUBLICACAO_HABILITADA" in (trilha.ociosa() or "")
+    monkeypatch.setattr(s, "publicacao_habilitada", True)
+    assert trilha.ociosa() is None  # a stack de teste tem a chave e o HD
+    chave = s.sociman_tokens_key
+    monkeypatch.setattr(s, "sociman_tokens_key", SecretStr(""))
+    motivo = trilha.ociosa() or ""
+    assert "SOCIMAN_TOKENS_KEY" in motivo and "=" not in motivo
+
+    class _SemHd:
+        reason = "sem_sentinela"
+
+    monkeypatch.setattr(s, "sociman_tokens_key", chave)
+    monkeypatch.setattr(agendador_mod.datadir, "status", lambda: _SemHd())
+    assert "sentinela" in (trilha.ociosa() or "")

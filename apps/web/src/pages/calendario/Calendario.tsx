@@ -5,14 +5,20 @@
  * - Filtros de perfil e plataforma; cada postagem com a cor do perfil e o ícone da plataforma.
  * - Arrastar (HTML5 nativo, desktop): soltar uma postagem remarca com encaixe de 15 min, com
  *   atualização otimista, "Desfazer" no aviso e volta ao lugar no 409.
- * - Coluna "Prontos sem data": cortes prontos sem postagem agendada; arrastar um para a grade (ou
- *   tocar nele) abre "Agendar" com a conta de destino e o horário já preenchido.
+ * - Coluna "Sem data" (spec 014, R11): primeiro os destinos aprovados sem data, depois os conteúdos
+ *   prontos sem agendamento; arrastar um para a grade (ou tocar nele) abre o AgendarDialog comum
+ *   com o horário já preenchido (o membro, diante de um não aprovado, vê "Pedir aprovação").
  * - Toque (celular/PWA): o arrastar nativo não funciona; tocar numa postagem abre "Remarcar".
+ * - spec 014: cartões com o modo e o estado efetivo ("A postar" e "Atrasado" em destaque), filtro de
+ *   conta, e remarcar por `lote/reagendar`; perto de outro post da conta, o aviso do intervalo
+ *   mínimo oferece "Manter mesmo assim".
  * Nada é publicado: na hora, o sino avisa "Hora de postar".
+ * - spec 015: chips com os estados do envio automático (enviando, pausado, vencido, aguardando
+ *   vaga, falhou, rascunho criado); envio automático só o dono remarca; "Remarcar" mostra o motivo.
  */
 import { ApiError, type Platform } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, ChevronLeft, ChevronRight, ExternalLink, Film, Loader2 } from "lucide-react";
+import { Bell, CalendarClock, ChevronLeft, ChevronRight, ExternalLink, Film, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -24,9 +30,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { AgendarDialog } from "@/components/conteudos/AgendarDialog";
+import { EstadoBadge } from "@/components/conteudos/EstadoBadge";
+import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
-import { contaPlatformText, errorText, platformLabel } from "@/lib/perfis";
-import { calendarioKey, estadoLabel, type CalendarioItem, type CalendarioSemData } from "@/lib/postagem";
+import { estadoEfetivoLabel, propostaDe, useConteudo, useEhDono } from "@/lib/conteudos";
+import { ehAutomatico, faseLabel } from "@/lib/publicacao";
+import { contaPlatformText, errorText, perfilKey, platformLabel } from "@/lib/perfis";
+import { calendarioKey, modoLabel, type CalendarioItem, type CalendarioSemData } from "@/lib/postagem";
 import {
   addDays,
   formatDateTime,
@@ -50,7 +61,10 @@ const monthFormat = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "num
 const dayFormat = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
 
 type View = "semana" | "mes";
-type DragPayload = { kind: "postagem"; id: string } | { kind: "semData"; corteId: string };
+type DragPayload = { kind: "postagem"; id: string } | { kind: "semData"; key: string };
+
+// Chave de um item "sem data" (o mesmo conteúdo pode aparecer por mais de uma conta).
+const semDataKey = (s: CalendarioSemData) => `${s.conteudoId}:${s.contaId ?? ""}`;
 
 const weekStart = (key: string) => addDays(key, -((weekdayOf(key) + 6) % 7));
 const utcDate = (key: string) => {
@@ -87,6 +101,8 @@ export default function Calendario() {
   const anchor = params.get("data") ?? today;
   const perfilId = params.get("perfil") ?? "";
   const plataforma = params.get("plataforma") ?? "";
+  const contaId = params.get("conta") ?? "";
+  const perfilSel = useQuery({ queryKey: perfilKey(perfilId), queryFn: () => api.perfis.get(perfilId), enabled: Boolean(perfilId) });
   const set = (patch: Record<string, string>) =>
     setParams(
       (cur) => {
@@ -102,8 +118,14 @@ export default function Calendario() {
 
   const { de, ate, days } = useMemo(() => range(view, anchor), [view, anchor]);
   const filters = useMemo(
-    () => ({ de, ate, ...(perfilId ? { perfilId } : {}), ...(plataforma ? { plataforma: plataforma as Platform } : {}) }),
-    [de, ate, perfilId, plataforma],
+    () => ({
+      de,
+      ate,
+      ...(perfilId ? { perfilId } : {}),
+      ...(plataforma ? { plataforma: plataforma as Platform } : {}),
+      ...(contaId ? { contaId } : {}),
+    }),
+    [de, ate, perfilId, plataforma, contaId],
   );
   const cal = useQuery({ queryKey: calendarioKey(filters), queryFn: () => api.calendario(filters) });
 
@@ -146,20 +168,34 @@ export default function Calendario() {
     await queryClient.invalidateQueries({ queryKey: ["calendario"] });
   }
 
-  async function mover(p: CalendarioItem, plannedAt: string, opts: { undo?: boolean } = {}) {
-    if (p.estado === "postado") return toast.info("Já postado: não dá para remarcar.");
+  // Remarcar = `lote/reagendar` com um item (R11). Perto de outro post da conta, a API devolve a
+  // falha `intervalo_conflito`: o aviso oferece "Manter mesmo assim" (Q3).
+  async function mover(p: CalendarioItem, plannedAt: string, opts: { undo?: boolean; ignorarIntervalo?: boolean } = {}) {
+    if (p.estado !== "agendado") return toast.info(`${estadoEfetivoLabel[p.estadoEfetivo]}: não dá para remarcar.`);
     if (new Date(plannedAt).getTime() < Date.now() - 60_000) return toast.error("Escolha um horário no futuro.");
     const before = p.plannedAt;
     setOverrides((o) => ({ ...o, [p.id]: plannedAt }));
     try {
-      const { postagem } = await api.postagens.update(p.id, { version: p.version, plannedAt });
-      if (!opts.undo && before) {
+      const r = await api.agendamentos.loteReagendar({
+        itens: [{ destinoId: p.id, version: p.version, plannedAt }],
+        ...(opts.ignorarIntervalo ? { ignorarIntervalo: true } : {}),
+      });
+      const falha = r.falhas[0];
+      const novo = r.ok[0];
+      if (falha) {
+        if (falha.code === "intervalo_conflito") {
+          toast.warning(falha.message, {
+            duration: 10_000,
+            action: { label: "Manter mesmo assim", onClick: () => void mover(p, plannedAt, { ...opts, ignorarIntervalo: true }) },
+          });
+        } else toast.error(falha.code === "version_conflict" ? "Este agendamento mudou em outra tela; recarreguei o calendário." : falha.message);
+      } else if (!opts.undo && before && novo) {
         toast.success(`Remarcado para ${formatDateTime(plannedAt)}.`, {
-          action: { label: "Desfazer", onClick: () => void mover({ ...p, version: postagem.version, plannedAt }, before, { undo: true }) },
+          action: { label: "Desfazer", onClick: () => void mover({ ...p, version: novo.version, plannedAt }, before, { undo: true, ignorarIntervalo: true }) },
         });
       } else toast.success(`Agendado para ${formatDateTime(plannedAt)}.`);
     } catch (err) {
-      toast.error(err instanceof ApiError && err.code === "version_conflict" ? "Esta postagem mudou em outra tela; recarreguei o calendário." : errorText(err));
+      toast.error(err instanceof ApiError && err.code === "version_conflict" ? "Este agendamento mudou em outra tela; recarreguei o calendário." : errorText(err));
     } finally {
       await invalidate();
       setOverrides((o) => {
@@ -172,7 +208,7 @@ export default function Calendario() {
   function onDragStart(e: DragEvent, payload: DragPayload) {
     drag.current = payload;
     e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", payload.kind === "postagem" ? payload.id : payload.corteId);
+    e.dataTransfer.setData("text/plain", payload.kind === "postagem" ? payload.id : payload.key);
   }
 
   function drop(plannedAt: string) {
@@ -184,7 +220,7 @@ export default function Calendario() {
       const p = items.find((x) => x.id === payload.id);
       if (p && p.plannedAt !== plannedAt) void mover(p, plannedAt);
     } else {
-      const item = semData.find((s) => s.corteId === payload.corteId);
+      const item = semData.find((s) => semDataKey(s) === payload.key);
       if (item) setAgendar({ item, plannedAt });
     }
   }
@@ -202,18 +238,32 @@ export default function Calendario() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeading title="Calendário" description="Cortes agendados por dia, perfil e plataforma. Arraste para remarcar (no celular, toque)." />
+      <PageHeading title="Calendário" description="Conteúdos agendados por dia, perfil, conta e plataforma. Arraste para remarcar (no celular, toque)." />
 
       <div className="flex flex-wrap items-end gap-3">
         <Field label="Perfil" className="w-full sm:w-56">
           {({ id }) => (
-            <NativeSelect id={id} value={perfilId} onChange={(e) => set({ perfil: e.target.value })}>
+            <NativeSelect id={id} value={perfilId} onChange={(e) => set({ perfil: e.target.value, conta: "" })}>
               <option value="">Todos os perfis</option>
               {perfis.data?.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
                 </option>
               ))}
+            </NativeSelect>
+          )}
+        </Field>
+        <Field label="Conta" className="w-full sm:w-52">
+          {({ id }) => (
+            <NativeSelect id={id} value={contaId} disabled={!perfilId} onChange={(e) => set({ conta: e.target.value })}>
+              <option value="">{perfilId ? "Todas as contas" : "Escolha um perfil"}</option>
+              {perfilSel.data?.contas
+                .filter((c) => !c.archived)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {contaPlatformText(c)} @{c.handle}
+                  </option>
+                ))}
             </NativeSelect>
           )}
         </Field>
@@ -265,23 +315,23 @@ export default function Calendario() {
       {cal.isError && <ApiErrorAlert error={cal.error} />}
 
       <div className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)]">
-        <aside aria-label="Prontos sem data" className="h-fit rounded-xl bg-card p-3 shadow-card">
-          <h2 className="mb-1 text-sm font-bold">Prontos sem data</h2>
-          <p className="mb-3 text-xs text-muted-foreground">Arraste para um horário ou toque para agendar.</p>
+        <aside aria-label="Sem data" className="h-fit rounded-xl bg-card p-3 shadow-card">
+          <h2 className="mb-1 text-sm font-bold">Sem data</h2>
+          <p className="mb-3 text-xs text-muted-foreground">Aprovados primeiro. Arraste para um horário ou toque para agendar.</p>
           {cal.isPending && <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label="Carregando" />}
-          {cal.isSuccess && semData.length === 0 && <p className="text-xs text-muted-foreground">Nenhum corte pronto sem data.</p>}
+          {cal.isSuccess && semData.length === 0 && <p className="text-xs text-muted-foreground">Nenhum conteúdo pronto sem data.</p>}
           <ul className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
             {semData.map((s) => (
-              <li key={s.corteId} className="shrink-0 lg:shrink">
+              <li key={semDataKey(s)} className="shrink-0 lg:shrink">
                 <button
                   type="button"
                   draggable
-                  onDragStart={(e) => onDragStart(e, { kind: "semData", corteId: s.corteId })}
+                  onDragStart={(e) => onDragStart(e, { kind: "semData", key: semDataKey(s) })}
                   onDragEnd={() => setDropHint(null)}
                   onClick={() => setAgendar({ item: s, plannedAt: null })}
                   className="flex w-52 cursor-grab items-center gap-2 rounded-lg border bg-background p-1.5 text-left text-xs hover:border-primary active:cursor-grabbing lg:w-full"
                   style={{ borderLeft: `4px solid ${perfilColor(s.perfilId, s.perfilCor)}` }}
-                  aria-label={`Agendar: ${s.titulo || "corte sem título"}`}
+                  aria-label={`Agendar: ${s.titulo || "conteúdo sem título"}${s.aprovado ? " (aprovado)" : ""}`}
                 >
                   {s.posterUrl ? (
                     <img src={s.posterUrl} alt="" className="h-12 w-7 shrink-0 rounded bg-muted object-cover" />
@@ -291,6 +341,7 @@ export default function Calendario() {
                   <span className="min-w-0">
                     <span className="line-clamp-2 font-medium">{s.titulo || "Sem título"}</span>
                     <span className="block truncate text-muted-foreground">{perfis.data?.find((p) => p.id === s.perfilId)?.name}</span>
+                    {s.aprovado && <Badge className="mt-0.5 bg-primary/15 text-[0.6rem] text-primary">Aprovado</Badge>}
                   </span>
                 </button>
               </li>
@@ -332,7 +383,7 @@ export default function Calendario() {
       <RemarcarDialog item={remarcar} onClose={() => setRemarcar(null)} onSave={async (p, iso) => {
           await mover(p, iso);
         }} />
-      <AgendarDialog state={agendar} onClose={() => setAgendar(null)} onDone={invalidate} />
+      {agendar && <AgendarDoCalendario state={agendar} onClose={() => setAgendar(null)} onDone={invalidate} />}
     </div>
   );
 }
@@ -347,25 +398,40 @@ interface GridProps {
   onOpen: (p: CalendarioItem) => void;
 }
 
+// Estados que aparecem escritos no chip (os de atenção e os do envio automático, spec 015).
+const DESTAQUE: CalendarioItem["estadoEfetivo"][] = ["a_postar", "atrasado", "atencao", "enviando", "pausado", "vencido", "aguardando_vaga", "falhou", "rascunho_criado"];
+
 function Chip({ p, onDragStart, onOpen, compact }: { p: CalendarioItem; onDragStart: GridProps["onDragStart"]; onOpen: GridProps["onOpen"]; compact?: boolean }) {
-  const postado = p.estado === "postado";
+  const dono = useEhDono();
+  // spec 015: envio automático só o dono remarca (a API recusa o membro)
+  const movel = p.estado === "agendado" && (dono || !ehAutomatico(p.modo));
+  const destaque = DESTAQUE.includes(p.estadoEfetivo);
   return (
     <button
       type="button"
-      draggable={!postado}
+      draggable={movel}
       onDragStart={(e) => onDragStart(e, { kind: "postagem", id: p.id })}
       onClick={() => onOpen(p)}
       className={cn(
         "flex w-full min-w-0 flex-wrap items-center gap-x-1 rounded-md bg-card px-1.5 py-1 text-left text-[0.7rem] leading-tight shadow-sm ring-1 ring-border hover:ring-primary",
-        !postado && "cursor-grab active:cursor-grabbing",
-        postado && "opacity-60",
+        movel && "cursor-grab active:cursor-grabbing",
+        !movel && "opacity-60",
+        p.estadoEfetivo === "a_postar" && "ring-2 ring-primary",
+        (p.estadoEfetivo === "atrasado" || p.estadoEfetivo === "atencao" || p.estadoEfetivo === "falhou" || p.estadoEfetivo === "vencido") && "ring-2 ring-destructive",
+        (p.estadoEfetivo === "enviando" || p.estadoEfetivo === "aguardando_vaga" || p.estadoEfetivo === "pausado") && "ring-2 ring-info",
       )}
       style={{ borderLeft: `4px solid ${perfilColor(p.perfil.id, p.perfil.cor)}` }}
-      aria-label={`${formatTime(p.plannedAt!)} ${p.titulo || "Sem título"} (${p.perfil.name}, ${platformLabel[p.conta.platform]}, ${estadoLabel[p.estado]})`}
+      aria-label={`${formatTime(p.plannedAt!)} ${p.titulo || p.conteudo.titulo || "Sem título"} (${p.perfil.name}, ${platformLabel[p.conta.platform]}, ${estadoEfetivoLabel[p.estadoEfetivo]}, ${modoLabel[p.modo]})`}
     >
       <PlatformIcon platform={p.conta.platform} className="size-3" />
+      {p.modo === "lembrete" && <Bell className="size-3 text-muted-foreground" aria-hidden="true" />}
       <span className="font-semibold tabular-nums">{formatTime(p.plannedAt!)}</span>
-      {!compact && <span className="min-w-0 basis-full truncate">{p.titulo || "Sem título"}</span>}
+      {destaque && (
+        <span className={p.estadoEfetivo === "rascunho_criado" || p.estadoEfetivo === "enviando" ? "font-semibold text-info" : "font-semibold text-destructive"}>
+          {estadoEfetivoLabel[p.estadoEfetivo]}
+        </span>
+      )}
+      {!compact && <span className="min-w-0 basis-full truncate">{p.titulo || p.conteudo.titulo || "Sem título"}</span>}
     </button>
   );
 }
@@ -504,7 +570,8 @@ function RemarcarDialog({ item, onClose, onSave }: { item: CalendarioItem | null
     setErr(null);
   }, [item]);
   if (!item) return null;
-  const postado = item.estado === "postado";
+  const postado = item.estado !== "agendado";
+  const t = item.ultimaTentativa;
 
   async function save() {
     const iso = fromLocalInput(value);
@@ -520,12 +587,23 @@ function RemarcarDialog({ item, onClose, onSave }: { item: CalendarioItem | null
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{postado ? "Postagem" : "Remarcar"}</DialogTitle>
+          <DialogTitle>{postado ? "Agendamento" : "Remarcar"}</DialogTitle>
           <DialogDescription>
-            {item.titulo || "Sem título"} · {item.perfil.name} · {contaPlatformText(item.conta)} @{item.conta.handle} · {estadoLabel[item.estado]}
+            {item.titulo || item.conteudo.titulo || "Sem título"} · {item.perfil.name} · {contaPlatformText(item.conta)} @{item.conta.handle} · {modoLabel[item.modo]}
           </DialogDescription>
         </DialogHeader>
-        {item.corte.posterUrl && <img src={item.corte.posterUrl} alt="" className="mx-auto h-40 rounded-md bg-muted object-cover" />}
+        <div className="flex justify-center">
+          <EstadoBadge estado={item.estadoEfetivo} motivo={item.motivoAtencao} />
+        </div>
+        {/* spec 015: onde o envio automático está e o motivo da falha */}
+        {item.estado === "enviando" && t && (
+          <p className="text-center text-sm text-muted-foreground">
+            {faseLabel[t.fase]}
+            {t.totalPartes > 0 ? `: parte ${t.partesEnviadas} de ${t.totalPartes}` : ""}
+          </p>
+        )}
+        {item.estado === "falhou" && (item.falhaMotivo ?? t?.motivo) && <p className="text-center text-sm text-destructive">{item.falhaMotivo ?? t?.motivo}</p>}
+        {item.conteudo.posterUrl && <img src={item.conteudo.posterUrl} alt="" className="mx-auto h-40 rounded-md bg-muted object-cover" />}
         {!postado && (
           <Field label="Data e hora (horário de Brasília)" error={err ?? undefined}>
             {({ id, describedBy, invalid }) => (
@@ -535,9 +613,9 @@ function RemarcarDialog({ item, onClose, onSave }: { item: CalendarioItem | null
         )}
         <DialogFooter className="flex-wrap gap-2">
           <Button variant="ghost" asChild>
-            <Link to={`/app/cortes/${item.corte.id}`}>
+            <Link to={`/app/conteudos/${item.conteudo.id}?conta=${item.conta.id}`}>
               <ExternalLink aria-hidden="true" />
-              Abrir corte
+              Abrir conteúdo
             </Link>
           </Button>
           {!postado && (
@@ -552,95 +630,35 @@ function RemarcarDialog({ item, onClose, onSave }: { item: CalendarioItem | null
   );
 }
 
-function AgendarDialog({
+// Soltar (ou tocar) um item "sem data": o AgendarDialog comum, com os destinos do conteúdo (para o
+// dono ver "Aprovar e agendar" e o membro, diante de um não aprovado, "Pedir aprovação").
+function AgendarDoCalendario({
   state,
   onClose,
   onDone,
 }: {
-  state: { item: CalendarioSemData; plannedAt: string | null } | null;
+  state: { item: CalendarioSemData; plannedAt: string | null };
   onClose: () => void;
   onDone: () => Promise<void>;
 }) {
-  const perfilId = state?.item.perfilId ?? "";
-  const perfil = useQuery({ queryKey: ["perfil", perfilId], queryFn: () => api.perfis.get(perfilId), enabled: Boolean(perfilId) });
-  const padroes = useQuery({ queryKey: ["padroes-corte", perfilId], queryFn: () => api.padroesCorte.get(perfilId), enabled: Boolean(perfilId) });
-  const contas = (perfil.data?.contas ?? []).filter((c) => !c.archived);
-  const [contaId, setContaId] = useState("");
-  const [value, setValue] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-  const [error, setError] = useState<unknown>(null);
-  const [busy, setBusy] = useState(false);
-
+  const conteudo = useConteudo(state.item.conteudoId);
+  const c = conteudo.data?.conteudo;
+  const erro = conteudo.isError ? conteudo.error : null;
   useEffect(() => {
-    setValue(state?.plannedAt ? toLocalInput(state.plannedAt) : "");
-    setErr(null);
-    setError(null);
-  }, [state]);
-  useEffect(() => {
-    const padrao = padroes.data?.padroes.contaPadraoId;
-    setContaId(padrao && contas.some((c) => c.id === padrao) ? padrao : (contas[0]?.id ?? ""));
-  }, [padroes.data, perfil.data]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (!state) return null;
-
-  async function save() {
-    const iso = fromLocalInput(value);
-    if (!iso) return setErr("Escolha a data e a hora");
-    if (new Date(iso).getTime() < Date.now() - 60_000) return setErr("Escolha um horário no futuro");
-    if (!contaId) return setErr("Escolha a conta de destino");
-    setBusy(true);
-    setError(null);
-    try {
-      await api.postagens.create(state!.item.corteId, { contaId, plannedAt: iso, titulo: state!.item.titulo.slice(0, 100) });
-      toast.success(`Agendado para ${formatDateTime(iso)}. Prepare os textos no corte.`);
-      await onDone();
-      onClose();
-    } catch (e) {
-      if (e instanceof ApiError && e.code === "postagem_exists") setErr("Este corte já tem postagem nesta conta; abra o corte para remarcar.");
-      else setError(e);
-    } finally {
-      setBusy(false);
-    }
-  }
-
+    if (!erro) return;
+    toast.error(errorText(erro));
+    onClose();
+  }, [erro]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!c) return null;
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Agendar</DialogTitle>
-          <DialogDescription>{state.item.titulo || "Corte sem título"}</DialogDescription>
-        </DialogHeader>
-        <Field label="Conta de destino">
-          {({ id }) => (
-            <NativeSelect id={id} value={contaId} onChange={(e) => setContaId(e.target.value)}>
-              {contas.length === 0 && <option value="">Nenhuma conta ativa no perfil</option>}
-              {contas.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {contaPlatformText(c)} @{c.handle}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
-        <Field label="Data e hora (horário de Brasília)" error={err ?? undefined}>
-          {({ id, describedBy, invalid }) => (
-            <Input id={id} type="datetime-local" step={900} value={value} aria-invalid={invalid} aria-describedby={describedBy} onChange={(e) => setValue(e.target.value)} />
-          )}
-        </Field>
-        {error !== null && <ApiErrorAlert error={error} />}
-        <DialogFooter className="flex-wrap gap-2">
-          <Button variant="ghost" asChild>
-            <Link to={`/app/cortes/${state.item.corteId}`}>
-              <ExternalLink aria-hidden="true" />
-              Abrir corte
-            </Link>
-          </Button>
-          <Button type="button" disabled={busy} aria-busy={busy} onClick={() => void save()}>
-            {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CalendarClock aria-hidden="true" />}
-            Agendar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <AgendarDialog
+      open
+      onOpenChange={(open) => !open && onClose()}
+      conteudo={{ id: c.id, perfilId: c.perfil.id, titulo: c.titulo, situacao: c.situacao, proposta: propostaDe(c) }}
+      destinos={c.destinos}
+      contaId={state.item.contaId}
+      plannedAt={state.plannedAt}
+      onDone={onDone}
+    />
   );
 }

@@ -131,11 +131,14 @@ def test_postagem_ativa_unica_por_corte_e_conta():
             "INSERT INTO contas (id, perfil_id, platform, handle, url) "
             "VALUES (:id, :p, 'tiktok', 'teste', 'https://www.tiktok.com/@teste')"
         ), {"id": conta, "p": pid})
-        sql = text("INSERT INTO postagens (id, corte_id, conta_id, archived_at) "
+        # Spec 014 (0009): a postagem aponta para o conteúdo do corte (mesmo id).
+        conn.execute(text("INSERT INTO conteudos (id, perfil_id, origem, corte_id) "
+                          "VALUES (:id, :p, 'corte', :id)"), {"id": corte, "p": pid})
+        sql = text("INSERT INTO postagens (id, conteudo_id, conta_id, archived_at) "
                    "VALUES (:id, :c, :k, :arq)")
         conn.execute(sql, {"id": uuid.uuid4(), "c": corte, "k": conta, "arq": None})
         # Uma arquivada (cancelada) não conta.
         conn.execute(sql, {"id": uuid.uuid4(), "c": corte, "k": conta, "arq": "2026-09-29"})
-    with pytest.raises(IntegrityError, match="uq_postagens_corte_conta_ativa"), \
+    with pytest.raises(IntegrityError, match="uq_postagens_conteudo_conta_ativa"), \
             engine.begin() as conn:
         conn.execute(sql, {"id": uuid.uuid4(), "c": corte, "k": conta, "arq": None})

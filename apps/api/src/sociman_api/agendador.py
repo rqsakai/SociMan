@@ -55,11 +55,27 @@ def _sem_hd() -> str | None:
     return None
 
 
+def _publicacao_ociosa() -> str | None:
+    """Spec 015 (R6): a trilha `publicacao` só roda com o nível do servidor ligado, a chave dos
+    tokens e o HD. Com ela ociosa, nenhum pedido sai para a rede (princípio I)."""
+    from sociman_api.publicacao import cifra
+
+    if not get_settings().publicacao_habilitada:
+        return "PUBLICACAO_HABILITADA desligada no servidor: nada é enviado às redes"
+    if not cifra.chave_configurada():
+        return "chave dos tokens ausente (SOCIMAN_TOKENS_KEY): nada é enviado às redes"
+    if datadir.status().reason == "sem_sentinela":
+        return "HD de dados sem o sentinela: nada é enviado às redes"
+    return None
+
+
 def trilhas_padrao() -> list[Trilha]:
-    """As quatro trilhas de R1, com os intervalos da config (import tardio dos módulos)."""
+    """As trilhas de R1 e a `publicacao` da 015, com os intervalos da config (import tardio
+    dos módulos)."""
     from sociman_api.canais import sync
     from sociman_api.envios import acompanhamento, importacao
     from sociman_api.postagem import lembretes
+    from sociman_api.publicacao import trilha as publicacao
 
     s = get_settings()
     return [
@@ -67,6 +83,7 @@ def trilhas_padrao() -> list[Trilha]:
         Trilha("openshorts", s.agendador_openshorts_s, acompanhamento.rodar),
         Trilha("importacao", s.agendador_importacao_s, importacao.rodar, _sem_hd),
         Trilha("lembretes", s.agendador_lembretes_s, lembretes.rodar),
+        Trilha("publicacao", s.agendador_publicacao_s, publicacao.rodar, _publicacao_ociosa),
     ]
 
 
@@ -75,12 +92,14 @@ def _registrar_modelos() -> None:
     from sociman_api import history  # noqa: F401
     from sociman_api.auth import models as _auth  # noqa: F401
     from sociman_api.canais import models as _canais  # noqa: F401
+    from sociman_api.conteudos import models as _conteudos  # noqa: F401 — spec 014
     from sociman_api.cortes import models as _cortes  # noqa: F401
     from sociman_api.envios import models as _envios  # noqa: F401
     from sociman_api.marca import models as _marca  # noqa: F401
     from sociman_api.notificacoes import models as _notificacoes  # noqa: F401
     from sociman_api.perfis import models as _perfis  # noqa: F401
     from sociman_api.postagem import models as _postagem  # noqa: F401
+    from sociman_api.publicacao import models as _publicacao  # noqa: F401 — spec 015
 
 
 class _Laco(threading.Thread):

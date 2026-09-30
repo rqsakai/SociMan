@@ -48,13 +48,13 @@ _FINAIS = (IaDesfecho.descartada, IaDesfecho.erro)
 
 @dataclass(frozen=True)
 class _Alvo:
-    """O que a chamada precisa casar: o perfil e a entidade salva (ou o corte + conta)."""
+    """O que a chamada precisa casar: o perfil e a entidade salva (ou o conteúdo + conta)."""
 
     entidade: str  # asset | perfil | kit | postagem
     perfil_id: uuid.UUID
     entity_id: uuid.UUID
     tipo_asset: str | None = None
-    corte_id: uuid.UUID | None = None
+    conteudo_id: uuid.UUID | None = None  # spec 014 (na origem corte, = o id do corte)
     conta_id: uuid.UUID | None = None
     plataforma: str | None = None
 
@@ -68,8 +68,8 @@ def _alvo(entity_type: str, entidade: Any, perfil_id: uuid.UUID | None,
     if entity_type == "perfil":
         return _Alvo("perfil", entidade.id, entidade.id)
     if entity_type == "postagem":
-        assert perfil_id is not None, "postagem: passe o perfil do corte"
-        return _Alvo("postagem", perfil_id, entidade.id, corte_id=entidade.corte_id,
+        assert perfil_id is not None, "postagem: passe o perfil do conteúdo"
+        return _Alvo("postagem", perfil_id, entidade.id, conteudo_id=entidade.conteudo_id,
                      conta_id=entidade.conta_id, plataforma=plataforma)
     tipo_asset = _valor(entidade.tipo) if entity_type == "asset" else None
     return _Alvo(entity_type, entidade.perfil_id, entidade.id, tipo_asset=tipo_asset)
@@ -86,7 +86,8 @@ def _casa_alvo(chamada: Any, tipo: TipoCampo, alvo: _Alvo) -> bool:
     if alvo.entidade == "postagem":
         if chamada.entity_type == "postagem":
             return chamada.entity_id == alvo.entity_id
-        if chamada.entity_type != "corte" or chamada.corte_id != alvo.corte_id:
+        if chamada.entity_type not in ("corte", "conteudo") \
+                or chamada.conteudo_id != alvo.conteudo_id:
             return False
         if chamada.conta_id is not None:
             return chamada.conta_id == alvo.conta_id
@@ -219,7 +220,7 @@ def marcar(db: Session, actor: ActorLike, entity_type: str, entidade: Any,
 
     Chame depois de conferir que houve mudança e **antes** do `history.record` (a versão nova
     é a atual + 1; na criação, `antes` é None e a versão é 1). Na postagem, passe `perfil_id`
-    (o do corte) e a `plataforma` da conta (casa as linhas da 006, que não têm conta).
+    (o do conteúdo) e a `plataforma` da conta (casa as linhas da 006, que não têm conta).
     """
     if not ia:
         return None

@@ -20,13 +20,18 @@ LIMIT_PADRAO = 30
 LIMIT_MAX = 100
 
 
-def destinatarios_padrao(db: Session, autor_id: uuid.UUID | None) -> list[uuid.UUID]:
-    """O autor da ação (se houver) e os donos ativos, sem repetir, nessa ordem."""
-    donos = db.scalars(
+def donos_ativos(db: Session) -> list[uuid.UUID]:
+    """Os donos ativos, na ordem de criação (spec 014: `aprovacao_pedida`)."""
+    return list(db.scalars(
         select(User.id)
         .where(User.role == UserRole.dono, User.is_active.is_(True))
         .order_by(User.created_at, User.id)
-    )
+    ))
+
+
+def destinatarios_padrao(db: Session, autor_id: uuid.UUID | None) -> list[uuid.UUID]:
+    """O autor da ação (se houver) e os donos ativos, sem repetir, nessa ordem."""
+    donos = donos_ativos(db)
     ids = [autor_id] if autor_id is not None else []
     ids += [d for d in donos if d != autor_id]
     return ids

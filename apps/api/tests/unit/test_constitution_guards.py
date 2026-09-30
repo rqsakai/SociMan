@@ -1,6 +1,7 @@
-"""Guarda do princípio I da constitution: nenhum agente publica em rede social.
+"""Guarda do princípio I da constitution: publicação só com decisão humana.
 
-As próximas specs só ampliam as listas abaixo; nunca as reduzem.
+As listas só crescem; exceções só por pasta de `publicacao/`, uma por rede, criada por spec
+(a 015 criou a da TikTok: `PERMITIDO_EM`).
 O princípio II (direito primeiro) tem teste próprio desde a spec 006, que absorveu a 008
 (`tests/integration/test_direito.py`).
 """
@@ -8,6 +9,7 @@ O princípio II (direito primeiro) tem teste próprio desde a spec 006, que abso
 import ast
 import re
 import tomllib
+from collections.abc import Callable
 from pathlib import Path
 
 from sociman_api.main import app
@@ -20,6 +22,8 @@ PUBLISH_ENDPOINTS = ("/api/social", "upload-post", "open.tiktokapis.com", "uploa
 # Clientes HTTP com lista fechada (R12).
 YOUTUBE_RECURSOS = {"channels", "playlistItems", "videos", "search"}
 OPENSHORTS_PROIBIDOS = ("/api/social", "/api/thumbnail/publish", "/api/saasshorts/post")
+# Spec 015 (R16.1): o único endpoint liberado, e só na pasta do executor da rede.
+PERMITIDO_EM = {"open.tiktokapis.com": "publicacao/tiktok/"}
 
 API_DIR = Path(__file__).resolve().parents[2]
 PYPROJECT = API_DIR / "pyproject.toml"
@@ -73,14 +77,21 @@ def _strings_de_codigo(tree: ast.AST) -> list[str]:
             and id(n) not in docstrings]
 
 
+def _permitido(rel: str, endpoint: str) -> bool:
+    pasta = PERMITIDO_EM.get(endpoint)
+    return pasta is not None and rel.startswith(pasta)
+
+
 def test_codigo_fonte_sem_endpoint_de_publicacao():
-    """Nenhum literal do código (fora docstrings e comentários) cita endpoint de publicação.
-    Uma lista de proibidos, se houver, fica nos testes, nunca em `src/`."""
+    """Nenhum literal do código (fora docstrings e comentários) cita endpoint de publicação,
+    salvo a exceção por pasta de `PERMITIDO_EM` (spec 015, R16.1). Uma lista de proibidos, se
+    houver, fica nos testes, nunca em `src/`."""
     offenders = []
     for path in _fontes():
+        rel = str(path.relative_to(SRC))
         for texto in _strings_de_codigo(ast.parse(path.read_text())):
-            offenders += [f"{path.relative_to(SRC)}: {t}" for t in PUBLISH_ENDPOINTS
-                          if t in texto]
+            offenders += [f"{rel}: {t}" for t in PUBLISH_ENDPOINTS
+                          if t in texto and not _permitido(rel, t)]
     assert not offenders, f"código cita endpoint de publicação (princípio I): {offenders}"
 
 
@@ -122,17 +133,26 @@ def test_openshorts_sem_rotas_de_publicacao():
     assert not offenders, f"OpenShorts com rota de publicação (princípio I): {offenders}"
 
 
-def _e_postado(node: ast.AST) -> bool:
-    """`EstadoPostagem.postado` (ou `….postado` de qualquer import dele) ou "postado" literal."""
+# Enums de estado do destino (a `EstadoPostagem` da 006 virou `DestinoEstado` na 014).
+ESTADO_ENUMS = ("EstadoPostagem", "DestinoEstado")
+
+
+def _e_valor(node: ast.AST, valores: tuple[str, ...]) -> bool:
+    """`DestinoEstado.<valor>` (ou `….<valor>` de qualquer import dele) ou o literal."""
     for sub in ast.walk(node):
-        if isinstance(sub, ast.Attribute) and sub.attr == "postado":
+        if isinstance(sub, ast.Attribute) and sub.attr in valores:
             base = sub.value
             nome = base.id if isinstance(base, ast.Name) else getattr(base, "attr", "")
-            if nome == "EstadoPostagem":
+            if nome in ESTADO_ENUMS:
                 return True
-        if isinstance(sub, ast.Constant) and sub.value == "postado":
+        if isinstance(sub, ast.Constant) and sub.value in valores:
             return True
     return False
+
+
+def _e_postado(node: ast.AST) -> bool:
+    """`EstadoPostagem.postado`/`DestinoEstado.postado` ou "postado" literal."""
+    return _e_valor(node, ("postado",))
 
 
 def _alvo_estado(target: ast.AST) -> bool:
@@ -143,6 +163,10 @@ def _alvo_estado(target: ast.AST) -> bool:
 def _atribuicoes_de_postado(tree: ast.AST) -> list[tuple[int, str]]:
     """(linha, função) de cada lugar que ATRIBUI `postado` a um estado: `x.estado = …`,
     `estado=…` como argumento, `{"estado": …}` e `.values(estado=…)`. Comparar não conta."""
+    return _atribuicoes(tree, _e_postado)
+
+
+def _atribuicoes(tree: ast.AST, casa: Callable[[ast.AST], bool]) -> list[tuple[int, str]]:
     achados: list[tuple[int, str]] = []
 
     def visitar(node: ast.AST, funcao: str) -> None:
@@ -152,14 +176,14 @@ def _atribuicoes_de_postado(tree: ast.AST) -> list[tuple[int, str]]:
             if isinstance(filho, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
                 alvos = filho.targets if isinstance(filho, ast.Assign) else [filho.target]
                 if filho.value is not None and any(_alvo_estado(t) for t in alvos) \
-                        and _e_postado(filho.value):
+                        and casa(filho.value):
                     achados.append((filho.lineno, nome))
             if isinstance(filho, ast.keyword) and filho.arg == "estado" \
-                    and _e_postado(filho.value):
+                    and casa(filho.value):
                 achados.append((filho.value.lineno, nome))
             if isinstance(filho, ast.Dict):
                 for k, v in zip(filho.keys, filho.values, strict=True):
-                    if isinstance(k, ast.Constant) and k.value == "estado" and _e_postado(v):
+                    if isinstance(k, ast.Constant) and k.value == "estado" and casa(v):
                         achados.append((v.lineno, nome))
             visitar(filho, nome)
 
@@ -201,6 +225,8 @@ def test_listas_do_guarda_nao_encolheram():
                                   "youtube", "instagram"}
     assert set(SOCIAL_SDKS) >= {"tiktok", "google-api-python-client", "instagrapi", "facebook",
                                 "tweepy"}
+    assert set(PUBLISH_ENDPOINTS) >= {"/api/social", "upload-post", "open.tiktokapis.com",
+                                      "upload/youtube", "graph.facebook.com", "videos.insert"}
 
 
 # ---- spec 008 (assistente de IA) ----
@@ -239,3 +265,234 @@ def test_cliente_da_ia_nao_envia_tools():
                                lambda erro, t=tipo: montar_user(t, ctx, {}, "", erro_anterior=erro))
     assert len(fake.bodies) >= len(TIPOS)
     assert all("tools" not in b and "tool_choice" not in b for b in fake.bodies)
+
+
+# ---- spec 014 (central de conteúdos) ----
+
+RECURSOS_014 = ("/api/conteudos", "/api/destinos", "/api/agendamentos")
+OPERATION_PREFIXOS_014 = ("conteudos_", "destinos_", "agendamentos_")
+# Estados que só a trilha da 015 grava (R16.4): o único lugar é `_concluir` da trilha.
+ESTADOS_015 = ("rascunho_criado", "publicado", "falhou")
+ESTADOS_015_PERMITIDOS = {("publicacao/trilha.py", "_concluir")}
+# `enviando` só ao reivindicar (spec 015, R16.4).
+ENVIANDO_PERMITIDO = {("publicacao/trilha.py", "_reivindicar")}
+
+
+def _rotas_014() -> list[tuple[str, str, str]]:
+    return [(method.upper(), path, op.get("operationId", ""))
+            for path, ops in app.openapi()["paths"].items()
+            if path.startswith(RECURSOS_014)
+            for method, op in ops.items()]
+
+
+def test_rotas_da_014_com_operation_id_do_recurso_e_sem_delete():
+    """Guarda 1: `conteudos_*`, `destinos_*` ou `agendamentos_*`; nenhuma DELETE."""
+    rotas = _rotas_014()
+    assert rotas, "nenhuma rota /api/conteudos, /api/destinos ou /api/agendamentos no OpenAPI"
+    for method, path, op_id in rotas:
+        assert method != "DELETE", f"{method} {path}: não existe DELETE no domínio"
+        assert op_id.startswith(OPERATION_PREFIXOS_014), f"{method} {path}: {op_id!r}"
+
+
+def _e_estado_015(node: ast.AST) -> bool:
+    return _e_valor(node, ESTADOS_015)
+
+
+def _lugares(casa: Callable[[ast.AST], bool]) -> list[tuple[str, str, int]]:
+    achados = []
+    for path in _fontes():
+        rel = str(path.relative_to(SRC))
+        for linha, funcao in _atribuicoes(ast.parse(path.read_text()), casa):
+            achados.append((rel, funcao, linha))
+    return achados
+
+
+def test_estados_da_015_nunca_atribuidos():
+    """Guarda 5 (R16.4): por AST, só `publicacao/trilha.py::_concluir` atribui
+    `rascunho_criado`, `publicado` ou `falhou` a um estado."""
+    achados = _lugares(_e_estado_015)
+    fora = [a for a in achados if (a[0], a[1]) not in ESTADOS_015_PERMITIDOS]
+    assert not fora, f"estado da execução atribuído fora da trilha (princípio I): {fora}"
+    assert any((a[0], a[1]) in ESTADOS_015_PERMITIDOS for a in achados)  # guarda vivo
+
+
+def test_enviando_so_ao_reivindicar():
+    """R16.4: `enviando` só é atribuído em `publicacao/trilha.py::_reivindicar`."""
+    achados = _lugares(lambda n: _e_valor(n, ("enviando",)))
+    fora = [a for a in achados if (a[0], a[1]) not in ENVIANDO_PERMITIDO]
+    assert not fora, f"`enviando` atribuído fora da reivindicação (princípio I): {fora}"
+    assert any((a[0], a[1]) in ENVIANDO_PERMITIDO for a in achados)  # guarda vivo
+
+
+def test_guarda_dos_estados_015_pega_os_jeitos_de_atribuir():
+    codigo = """
+def executor(p, db):
+    p.estado = DestinoEstado.publicado
+    db.execute(update(Postagem).values(estado="falhou"))
+    Postagem(estado=m.DestinoEstado.rascunho_criado)
+    corte.status = CorteStatus.falhou
+    if p.estado == DestinoEstado.publicado:
+        pass
+"""
+    linhas = [linha for linha, _ in _atribuicoes(ast.parse(codigo), _e_estado_015)]
+    assert linhas == [3, 4, 5]
+
+
+def test_agendador_sem_trilha_nova():
+    """Guarda 6 (R16.6): a única trilha nova é a `publicacao` da 015 (a lista só cresce por
+    spec)."""
+    from sociman_api.agendador import trilhas_padrao
+
+    assert {t.nome for t in trilhas_padrao()} == {"sync", "openshorts", "importacao",
+                                                  "lembretes", "publicacao"}
+
+
+# ---- spec 015 (publicação no TikTok), parte 1: R16.1, R16.2, R16.3 e R16.8 ----
+
+# Exatamente os pedidos de R21 (a lista do cliente não cresce sem spec).
+TIKTOK_ALLOWED_R21 = {
+    ("POST", "/v2/oauth/token/"),
+    ("POST", "/v2/oauth/revoke/"),
+    ("GET", "/v2/user/info/"),
+    ("POST", "/v2/post/publish/creator_info/query/"),
+    ("POST", "/v2/post/publish/inbox/video/init/"),
+    ("POST", "/v2/post/publish/video/init/"),
+    ("POST", "/v2/post/publish/status/fetch/"),
+    ("PUT", "<upload_url>"),
+    ("GET", "<avatar>"),
+}
+PUBLICACAO = SRC / "publicacao"
+
+
+def test_permitido_em_so_libera_a_pasta_da_rede():
+    """R16.1: a exceção é por pasta de `publicacao/` e só para o endpoint da própria rede."""
+    assert all(pasta.startswith("publicacao/") and pasta.endswith("/")
+               for pasta in PERMITIDO_EM.values())
+    assert set(PERMITIDO_EM) <= set(PUBLISH_ENDPOINTS)  # a lista de proibidos não encolhe
+    assert _permitido("publicacao/tiktok/cliente.py", "open.tiktokapis.com")
+    assert not _permitido("publicacao/trilha.py", "open.tiktokapis.com")
+    assert not _permitido("config.py", "open.tiktokapis.com")
+    assert not _permitido("publicacao/tiktok/cliente.py", "graph.facebook.com")
+    # O guarda está vivo: o endpoint aparece (só) no cliente da TikTok.
+    usos = [str(p.relative_to(SRC)) for p in _fontes()
+            if any("open.tiktokapis.com" in t
+                   for t in _strings_de_codigo(ast.parse(p.read_text())))]
+    assert usos == ["publicacao/tiktok/cliente.py"]
+
+
+def _importa(tree: ast.AST, modulo: str) -> bool:
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            if any(a.name == modulo or a.name.startswith(f"{modulo}.") for a in node.names):
+                return True
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            if node.module == modulo or node.module.startswith(f"{modulo}."):
+                return True
+            if node.module == modulo.rsplit(".", 1)[0] and any(
+                    a.name == modulo.rsplit(".", 1)[1] for a in node.names):
+                return True
+    return False
+
+
+def test_so_o_registro_importa_o_executor_da_rede():
+    """R16.2: nenhum módulo fora de `publicacao/` importa `publicacao.tiktok`, e dentro de
+    `publicacao/` só `registro.py` (a pasta da própria rede se importa à vontade)."""
+    permitidos = {PUBLICACAO / "registro.py"}
+    fora = []
+    for path in _fontes():
+        if path.is_relative_to(PUBLICACAO / "tiktok") or path in permitidos:
+            continue
+        if _importa(ast.parse(path.read_text()), "sociman_api.publicacao.tiktok"):
+            fora.append(str(path.relative_to(SRC)))
+    assert not fora, f"importam publicacao.tiktok fora do registro (princípio I): {fora}"
+    assert _importa(ast.parse((PUBLICACAO / "registro.py").read_text()),
+                    "sociman_api.publicacao.tiktok")
+
+
+def test_guarda_de_import_pega_os_jeitos_de_importar():
+    m = "sociman_api.publicacao.tiktok"
+    for codigo in ("import sociman_api.publicacao.tiktok.cliente",
+                   "from sociman_api.publicacao.tiktok.cliente import ALLOWED",
+                   "from sociman_api.publicacao import tiktok",
+                   "from sociman_api.publicacao.tiktok import oauth"):
+        assert _importa(ast.parse(codigo), m), codigo
+    assert not _importa(ast.parse("from sociman_api.publicacao import registro"), m)
+
+
+def test_cliente_da_tiktok_com_lista_fechada_do_r21():
+    """R16.3: `ALLOWED` exatamente igual ao de R21; nada fora dele sai do cliente."""
+    from sociman_api.publicacao.tiktok import cliente
+
+    assert set(cliente.ALLOWED) == TIKTOK_ALLOWED_R21
+    assert cliente.UPLOAD_SUFIXO == ".tiktokapis.com"
+    assert set(cliente.CDN_SUFIXOS) == {".tiktokcdn.com", ".tiktokcdn-us.com"}
+
+
+def test_config_sem_url_da_tiktok():
+    """R16.1: o endereço padrão da API fica no cliente, não no `config.py`."""
+    from sociman_api.config import Settings
+
+    padroes = [str(f.default) for f in Settings.model_fields.values()]
+    assert not [p for p in padroes if "tiktok" in p.lower() and "://" in p]
+
+
+# ---- spec 015, parte 3: R16.5 (rotas) ----
+
+# As rotas **H** do contrato (dono humano): nenhuma pode virar tool do MCP (009).
+ROTAS_H_015 = {"conexoes_iniciar", "conexoes_retorno", "conexoes_desconectar",
+               "conexoes_criador", "publicacao_config_update", "destinos_tentar_de_novo",
+               "destinos_confirmar_envio", "destinos_enviar_agora"}
+OPERATION_PREFIXOS_015 = ("conexoes_", "publicacao_config_", "destinos_")
+
+
+def _rotas_resolvidas(rotas) -> list:
+    """As `APIRoute` de verdade: o FastAPI 0.141 embrulha os routers incluídos em
+    `_IncludedRouter` (armadilha 16), por isso a busca desce em `original_router`."""
+    out = []
+    for r in rotas:
+        if hasattr(r, "original_router"):
+            out += _rotas_resolvidas(r.original_router.routes)
+        elif hasattr(r, "dependant"):
+            out.append(r)
+        elif hasattr(r, "routes"):
+            out += _rotas_resolvidas(r.routes)
+    return out
+
+
+def _chamadas(dependant) -> set:
+    calls = set()
+    for d in dependant.dependencies:
+        calls.add(d.call)
+        calls |= _chamadas(d)
+    return calls
+
+
+def test_rotas_h_exigem_dono_humano():
+    """R16.5: toda rota **H** tem `require_human_owner` na árvore de dependências, e as rotas
+    da 015 seguem os prefixos neutros (sem `tiktok`/`publish`, que o guarda geral confere)."""
+    from sociman_api.auth.deps import require_human_owner
+
+    por_op = {r.operation_id: r for r in _rotas_resolvidas(app.routes)
+              if getattr(r, "operation_id", None)}
+    assert ROTAS_H_015 <= set(por_op), ROTAS_H_015 - set(por_op)
+    sem = [op for op in sorted(ROTAS_H_015) if require_human_owner not in _chamadas(
+        por_op[op].dependant)]
+    assert not sem, f"rotas H sem RequireHumanOwner (princípio I): {sem}"
+    assert all(op.startswith(OPERATION_PREFIXOS_015) for op in ROTAS_H_015)
+    # O guarda está vivo: a leitura (User) não exige dono humano.
+    assert require_human_owner not in _chamadas(por_op["publicacao_config_get"].dependant)
+
+
+def test_rotas_da_015_sem_delete():
+    metodos = {(m.upper(), path) for path, ops in app.openapi()["paths"].items()
+               for m, op in ops.items()
+               if op.get("operationId", "").startswith(("conexoes_", "publicacao_config_"))}
+    assert metodos and not [m for m in metodos if m[0] == "DELETE"]
+
+
+def test_httpx_na_publicacao_so_na_pasta_da_rede():
+    """T092: dentro de `publicacao/`, só a pasta da rede fala HTTP; a parte genérica recebe o
+    cliente pelo registro."""
+    fora = [str(p.relative_to(SRC)) for p in sorted(PUBLICACAO.glob("*.py"))
+            if _importa(ast.parse(p.read_text()), "httpx")]
+    assert not fora, f"httpx fora de publicacao/<rede>/: {fora}"

@@ -151,8 +151,9 @@ def _origem(db: Session, corte: Corte) -> tuple[str, str]:
     return envio.source_title, canal.title if canal else ""
 
 
-def _postagem(tipo: TipoCampo, db: Session, corte: Corte, conta: Conta,
-              postagem: Any | None) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+def _postagem(tipo: TipoCampo, db: Session, corte: Corte | None, conta: Conta,
+              postagem: Any | None, conteudo: Any | None
+              ) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
     entidade = [
         ("Plataforma alvo", PLATAFORMAS.get(conta.platform.value, PLATAFORMAS["outra"])),
         ("Conta", f"{plataforma_label(conta.platform, conta.platform_name)} @{conta.handle}"),
@@ -162,6 +163,15 @@ def _postagem(tipo: TipoCampo, db: Session, corte: Corte, conta: Conta,
                   "descricao": ("Descrição atual da postagem", postagem.descricao),
                   "hashtags": ("Hashtags atuais da postagem", " ".join(postagem.hashtags))}
         entidade += [v for k, v in outros.items() if k not in tipo.campos and v[1]]
+    if corte is None:
+        # Spec 014: vídeo próprio (sem corte): título, origem e duração; sem transcrição.
+        if conteudo is not None:
+            if conteudo.titulo:
+                entidade.append(("Título do conteúdo", conteudo.titulo))
+            entidade.append(("Origem", "vídeo próprio enviado pela equipe"))
+            if conteudo.duration_ms:
+                entidade.append(("Duração", f"{round(conteudo.duration_ms / 1000)} s"))
+        return entidade, []
     video_titulo, canal = _origem(db, corte)
     terceiros = [(nome, _corta(valor, TERCEIRO_MAX)) for nome, valor in (
         ("titulo_do_video", video_titulo), ("canal", canal),
@@ -175,7 +185,7 @@ def _postagem(tipo: TipoCampo, db: Session, corte: Corte, conta: Conta,
 
 def montar(db: Session, tipo: TipoCampo, perfil: Perfil, *, asset: Asset | None = None,
            corte: Corte | None = None, conta: Conta | None = None,
-           postagem: Any | None = None) -> Contexto:
+           postagem: Any | None = None, conteudo: Any | None = None) -> Contexto:
     bloco, kit_salvo = perfil_bloco(db, perfil)
     personas = _personas(db, perfil.id, asset.id if asset is not None else None)
     entidade: list[tuple[str, str]] = []
@@ -184,15 +194,17 @@ def montar(db: Session, tipo: TipoCampo, perfil: Perfil, *, asset: Asset | None 
         entidade = _asset(tipo, asset)
     elif tipo.entidade == "kit":
         entidade = _kit(tipo, bloco)
-    elif tipo.entidade == "postagem" and corte is not None and conta is not None:
-        entidade, terceiros = _postagem(tipo, db, corte, conta, postagem)
+    elif tipo.entidade == "postagem" and conta is not None and (
+            corte is not None or conteudo is not None):
+        entidade, terceiros = _postagem(tipo, db, corte, conta, postagem, conteudo)
 
     faltante = []
     if not kit_salvo:
         faltante.append("kit")
     if not personas and not (asset is not None and asset.tipo == AssetTipo.avatar):
         faltante.append("persona")
-    if tipo.entidade == "postagem" and corte is not None and not (corte.transcript or "").strip():
+    if tipo.entidade == "postagem" and (corte is not None or conteudo is not None) \
+            and not (corte is not None and (corte.transcript or "").strip()):
         faltante.append("transcricao")
     if not perfil.bio.strip() and tipo.id != "perfil.bio":
         faltante.append("bio")

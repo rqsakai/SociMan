@@ -69,6 +69,10 @@ _TABLES += ("canais_fonte", "canal_perfis", "videos_fonte", "video_metricas", "y
             "padroes_corte", "envios", "postagens", "ia_chamadas", "notificacoes")
 # Spec 008.
 _TABLES += ("ia_regras",)
+# Spec 014.
+_TABLES += ("conteudos",)
+# Spec 015 (a linha única de `publicacao_config` volta desligada em `_clean_state`).
+_TABLES += ("conexoes", "conexao_credenciais", "publicacao_tentativas")
 
 
 @pytest.fixture(autouse=True)
@@ -77,6 +81,12 @@ def _clean_state() -> Iterator[None]:
         existing = [t for t in _TABLES
                     if conn.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar()]
         conn.execute(text(f"TRUNCATE {', '.join(existing)} RESTART IDENTITY CASCADE"))
+        # Spec 015: o TRUNCATE de `users` (CASCADE) leva o singleton junto; volta desligado.
+        if conn.execute(text("SELECT to_regclass('publicacao_config')")).scalar():
+            conn.execute(text(
+                "INSERT INTO publicacao_config (id, envios_habilitados, version) "
+                "VALUES (1, false, 1) ON CONFLICT (id) DO UPDATE SET envios_habilitados = false, "
+                "version = 1, created_by = NULL, updated_by = NULL"))
     get_redis().flushdb()
     yield
     app.dependency_overrides.clear()
@@ -208,3 +218,24 @@ def login() -> Callable[[TestClient, str, str], dict[str, str]]:
         return {"Authorization": f"Bearer {r.json()['accessToken']}"}
 
     return _login
+
+
+# ---- spec 015 ----
+
+@pytest.fixture
+def tiktok_fake():
+    """TikTok falsa (`tests/fakes/tiktok_fake.py`, R18): nenhum teste chama a TikTok real."""
+    from fakes.tiktok_fake import TikTokFake
+
+    return TikTokFake()
+
+
+@pytest.fixture
+def publicacao_habilitada(monkeypatch: pytest.MonkeyPatch) -> Callable[[bool], None]:
+    """Override do nível do servidor do interruptor (`PUBLICACAO_HABILITADA`, R11): a stack de
+    teste sobe com `false`; `publicacao_habilitada(True)` liga só neste teste."""
+
+    def _set(valor: bool = True) -> None:
+        monkeypatch.setattr(get_settings(), "publicacao_habilitada", valor)
+
+    return _set

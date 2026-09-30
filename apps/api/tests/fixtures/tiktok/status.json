@@ -1,0 +1,9 @@
+{
+  "data": {
+    "status": "PROCESSING_UPLOAD",
+    "fail_reason": "",
+    "publicaly_available_post_id": [],
+    "uploaded_bytes": 0
+  },
+  "error": {"code": "ok", "message": "", "log_id": "202609290000000000000000FAKE"}
+}

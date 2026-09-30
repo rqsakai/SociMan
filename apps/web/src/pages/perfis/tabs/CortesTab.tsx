@@ -1,6 +1,6 @@
 import { ApiError, type Perfil } from "@sociman/contract";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CircleAlert, HardDrive, Loader2, Upload, X } from "lucide-react";
+import { CalendarClock, CircleAlert, Clapperboard, HardDrive, Loader2, Upload, X } from "lucide-react";
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AgendarDialog } from "../../../components/conteudos/AgendarDialog";
+import { VideoProprioDialog } from "../../../components/conteudos/VideoProprioDialog";
 import { CorteStatusBadge, ProgressBar } from "../../../components/marca/CorteStatusBadge";
 import { armazenamentoKey, cortesKey, formatBytes, type Armazenamento, type Corte } from "../../../lib/marca";
 import { api } from "../../../lib/api";
@@ -69,7 +71,35 @@ const columns = col.columns([
     header: "Status",
     cell: (c) => (c.row.original.archived ? <Badge className="bg-dark text-dark-foreground">Arquivado</Badge> : <CorteStatusBadge corte={c.row.original} />),
   }),
+  // spec 014: "Agendar" direto no corte pronto (FR-010)
+  col.display({
+    id: "agendar",
+    header: "",
+    cell: (c) => (c.row.original.status === "pronto" && !c.row.original.archived ? <AgendarCorte corte={c.row.original} /> : null),
+    meta: { className: "text-right" },
+  }),
 ]);
+
+function AgendarCorte({ corte }: { corte: Corte }) {
+  const [open, setOpen] = useState(false);
+  const titulo = corte.hookText || corte.openshortsTitle || "Clipe sem gancho";
+  return (
+    <>
+      <Button type="button" size="sm" variant="outline" aria-label={`Agendar ${titulo}`} onClick={() => setOpen(true)}>
+        <CalendarClock aria-hidden="true" />
+        Agendar
+      </Button>
+      {open && (
+        <AgendarDialog
+          open
+          onOpenChange={setOpen}
+          conteudo={{ id: corte.id, perfilId: corte.perfilId, titulo, situacao: "pronto" }}
+          destinos={corte.destinos}
+        />
+      )}
+    </>
+  );
+}
 
 const busyStatus = (c: Corte) => c.status === "na_fila" || c.status === "processando";
 
@@ -90,6 +120,7 @@ export function CortesTab({ perfil }: { perfil: Perfil }) {
     refetchInterval: (query) => (query.state.data?.pages.some((p) => p.items.some(busyStatus)) ? 2000 : false),
   });
   const rows = useMemo(() => cortes.data?.pages.flatMap((p) => p.items) ?? [], [cortes.data]);
+  const [videoOpen, setVideoOpen] = useState(false);
 
   // flex + gap (e não space-y): o space-y zeraria o mt-6 do HeaderCard, e a faixa subiria sobre o
   // cartão de cima.
@@ -97,7 +128,26 @@ export function CortesTab({ perfil }: { perfil: Perfil }) {
     <div className="flex flex-col gap-6">
       <StorageCard storage={storage.data} error={storage.error} />
       <CorteUpload perfil={perfil} storage={storage.data} />
-      <HeaderCard title="Cortes enviados" description="Da mais recente para a mais antiga. Abra um corte para assistir e baixar.">
+      <HeaderCard
+        title="Cortes enviados"
+        description="Da mais recente para a mais antiga. Abra um corte para assistir e baixar; agende os prontos."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" size="sm" asChild>
+              <Link to={`/app/conteudos?perfil=${perfil.id}`}>
+                <Clapperboard aria-hidden="true" />
+                Ver em Conteúdos
+              </Link>
+            </Button>
+            {!perfil.archived && (
+              <Button type="button" variant="secondary" size="sm" onClick={() => setVideoOpen(true)}>
+                <Upload aria-hidden="true" />
+                Enviar vídeo próprio
+              </Button>
+            )}
+          </div>
+        }
+      >
         {cortes.isError ? (
           <ApiErrorAlert error={cortes.error} />
         ) : (
@@ -130,6 +180,7 @@ export function CortesTab({ perfil }: { perfil: Perfil }) {
           />
         )}
       </HeaderCard>
+      <VideoProprioDialog open={videoOpen} onOpenChange={setVideoOpen} perfilId={perfil.id} />
     </div>
   );
 }

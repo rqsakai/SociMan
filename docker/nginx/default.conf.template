@@ -93,6 +93,22 @@ server {
     proxy_set_header X-Real-IP $remote_addr;
   }
 
+  # ------------------------------------- vídeo próprio da central (spec 014, US5)
+  # Até 2 GB, como o envio avulso: a API confere o tamanho e a duração. Sem buffer no edge.
+  location ~ ^/api/perfis/[^/]+/conteudos/arquivo$ {
+    client_max_body_size 2100m;
+    client_body_timeout 300s;
+    proxy_request_buffering off;
+    proxy_read_timeout 900s;
+    proxy_send_timeout 900s;
+    limit_req zone=edge_api burst=40 nodelay;
+    proxy_pass http://$api_upstream;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
   # ------------------------------------------------ mídia assinada (spec 004, R6)
   # Vídeo, fonte e marca d'água por `/api/midia/{token}` (sem login; o token é a
   # autorização). Streaming: sem buffer no edge (o <video> pula com Range e recebe

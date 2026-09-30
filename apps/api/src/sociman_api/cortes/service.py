@@ -40,6 +40,7 @@ from sociman_api import datadir, history, imaging, storage
 from sociman_api.auth.deps import Actor
 from sociman_api.canais.models import CanalFonte
 from sociman_api.config import get_settings
+from sociman_api.conteudos import service as conteudos_service
 from sociman_api.cortes import worker
 from sociman_api.cortes.models import Corte, CorteOrigem, CorteStatus
 from sociman_api.cortes.probe import MAX_BYTES, probe
@@ -318,6 +319,7 @@ def create_corte(db: Session, actor: Actor, perfil_id: uuid.UUID, up: Spooled) -
     db.add(corte)
     db.flush()
     history.record(db, actor, ENTITY, corte, "created", None, history.snapshot(corte))
+    conteudos_service.criar_para_corte(db, actor, corte)  # spec 014: mesmo id, mesmo flush
     db.flush()
     db.refresh(corte)
     return corte
@@ -356,10 +358,8 @@ def cortes_out(db: Session, cortes: list[Corte]) -> list[CorteSchema]:
     positions = _queue_positions(db) if any(
         c.status == CorteStatus.na_fila for c in cortes) else {}
     envios, canais = _envios_e_canais(db, cortes)
-    # Import tardio: postagem/service importa cortes.models.
-    from sociman_api.postagem.service import resumos_por_corte
-
-    postagens = resumos_por_corte(db, [c.id for c in cortes]) if cortes else {}
+    destinos = conteudos_service.resumos_por_conteudo(db, [c.id for c in cortes]) \
+        if cortes else {}
 
     def extra(c: Corte) -> dict[str, Any]:
         envio = envios.get(c.envio_id) if c.envio_id else None
@@ -373,7 +373,7 @@ def cortes_out(db: Session, cortes: list[Corte]) -> list[CorteSchema]:
             "canal": CorteCanal(id=canal.id, title=canal.title) if canal else None,
             "direito_no_envio": envio.direito_no_envio if envio else None,
             "archived": c.archived,
-            "postagens": postagens.get(c.id, []),
+            "destinos": destinos.get(c.id, []),
         }
 
     return [
@@ -442,6 +442,7 @@ def retry(db: Session, actor: Actor, corte_id: uuid.UUID, version: int) -> Corte
     history.check_version(corte, version, LABEL)
     if corte.status != CorteStatus.falhou:
         raise ApiError(409, "conflict", "Só um corte que falhou pode ser tentado de novo")
+    _check_sem_envio(db, corte)
     before = history.snapshot(corte)
     corte.status = CorteStatus.na_fila
     corte.attempts = 0
@@ -494,12 +495,23 @@ def _check_hook_revisao(hook_text: str, tokens: dict[str, Any], width: int) -> N
         _check_hook(hook_text, tokens, width, Path(tmp))
 
 
+def _check_sem_envio(db: Session, corte: Corte) -> None:
+    """Spec 015 (R9): o vídeo não muda durante um envio à rede (o `result_key` é o mesmo)."""
+    from sociman_api.postagem.models import DestinoEstado, Postagem  # import tardio (ciclo)
+
+    if db.scalar(select(Postagem.id).where(Postagem.conteudo_id == corte.id,
+                                           Postagem.estado == DestinoEstado.enviando).limit(1)):
+        raise ApiError(409, "envio_em_andamento",
+                       "Este corte está sendo enviado à rede; espere terminar")
+
+
 def marcar(db: Session, actor: history.ActorLike, corte: Corte, kits: KitCache) -> Corte:
     """`revisao` → `na_fila` com o kit atual resolvido (`kit_version`/`kit_tokens`), sem
     conferir a versão: quem chama já conferiu (rota) ou é a importação (marca automática).
     Levanta 400 `invalid_hook` se o gancho não cabe."""
     if corte.status != CorteStatus.revisao or corte.archived:
         raise _conflict("Só um clipe em revisão (não arquivado) recebe a marca")
+    _check_sem_envio(db, corte)
     hook_text = _normalize_hook(corte.hook_text)
     kit_version, resolved = kits.get(corte.perfil_id)
     _check_hook_revisao(hook_text, resolved, corte.width)
@@ -573,11 +585,19 @@ def arquivar(db: Session, actor: Actor, corte_id: uuid.UUID, version: int) -> Co
         raise _conflict("Este corte já está arquivado")
     if corte.status == CorteStatus.processando:
         raise _conflict("O corte está sendo processado; espere terminar para arquivar")
+    # Spec 015: nada com envio em andamento; arquivar um automático agendado é de dono humano.
+    from sociman_api.postagem.service import checar_arquivo  # import tardio (ciclo)
+
+    checar_arquivo(db, actor, corte.id, "POST /api/cortes/{id}/archive")
     before = history.snapshot(corte)
     corte.archived_at = datetime.now(UTC)
     corte.archived_by = actor.user_id
     corte.updated_by = actor.user_id
     history.record(db, actor, ENTITY, corte, "archived", before, history.snapshot(corte))
+    # Spec 014: arquivar cancela os agendamentos do conteúdo (mesmo id), na mesma transação.
+    from sociman_api.postagem.service import cancelar_por_arquivo  # import tardio (ciclo)
+
+    cancelar_por_arquivo(db, actor, corte.id)
     db.flush()
     db.refresh(corte)
     return corte

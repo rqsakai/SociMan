@@ -16,6 +16,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    SmallInteger,
     Text,
     UniqueConstraint,
     Uuid,
@@ -28,6 +29,7 @@ from sociman_api.auth.models import AuditMixin
 from sociman_api.db import Base
 
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
+INTERVALO_MIN_PADRAO = 30  # minutos entre posts da conta (spec 014, Q3 = C)
 
 
 class PerfilStatus(enum.StrEnum):
@@ -132,9 +134,13 @@ class Conta(_Versioned, AuditMixin, Base):
             unique=True,
             postgresql_where=text("status = 'ativa' AND archived_at IS NULL"),
         ),
+        # Spec 014 (Q3 = C): intervalo mínimo entre posts da conta, em minutos.
+        CheckConstraint("intervalo_min_minutos BETWEEN 0 AND 1440",
+                        name="ck_contas_intervalo_min"),
     )
     __versioned_fields__ = (
         "platform", "platform_name", "handle", "url", "status", "notes", "archived",
+        "intervalo_min_minutos",
     )
     __immutable_fields__ = ()
 
@@ -154,6 +160,11 @@ class Conta(_Versioned, AuditMixin, Base):
         server_default=ContaStatus.planejada.value,
     )
     notes: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    # Spec 014: só dono muda (service); a sequência pula, o agendamento individual avisa.
+    intervalo_min_minutos: Mapped[int] = mapped_column(
+        SmallInteger, nullable=False, default=INTERVALO_MIN_PADRAO,
+        server_default=text(str(INTERVALO_MIN_PADRAO))
+    )
 
 
 class Image(Base):

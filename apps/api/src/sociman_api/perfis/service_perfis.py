@@ -148,7 +148,9 @@ def conta_out(
     return schemas.Conta(
         id=conta.id, perfil_id=conta.perfil_id, platform=conta.platform,
         platform_name=conta.platform_name, handle=conta.handle, url=conta.url,
-        status=conta.status, notes=conta.notes, archived=conta.archived, version=conta.version,
+        status=conta.status, notes=conta.notes,
+        intervalo_min_minutos=conta.intervalo_min_minutos, archived=conta.archived,
+        version=conta.version,
         created_at=conta.created_at, updated_at=conta.updated_at,
         created_by=users.get(conta.created_by) if conta.created_by else None,
         updated_by=users.get(conta.updated_by) if conta.updated_by else None,

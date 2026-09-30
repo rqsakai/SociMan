@@ -135,7 +135,7 @@ export const chaveItem = (s: string) => s.trim().toLocaleLowerCase("pt-BR");
 
 // ---------------------------------------------------------------------------------------------
 // Sessão do painel: fica fora do React para sobreviver à remontagem do formulário pela `key` com a
-// versão (PerfilDetalhe, MarcaTab, PostagemSection). Some ao fechar o painel; se a tela sai de cena
+// versão (PerfilDetalhe, MarcaTab, DestinoPanel). Some ao fechar o painel; se a tela sai de cena
 // (navegação), `aoAbandonar` roda (descarta as chamadas sem aplicação) e a sessão some também.
 
 const sessoes = new Map<string, unknown>();

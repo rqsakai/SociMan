@@ -8,11 +8,18 @@ import { apiToken, createPerfilViaApi, createVerifiedMember, login, logout } fro
 // US1 cadastrar canal, dono muda o direito, membro vê só leitura; US2 Descobrir com o motivo e
 // dois vídeos selecionados; US3 envio com o aviso de "Sem acordo" confirmado pelo MEMBRO, status
 // até "Pronto" e notificação no sino; US4 revisão: arquivar um clipe e aplicar a marca nos outros;
-// US5 textos à mão, agendar para daqui a 1 min, "Hora de postar" no sino e "Marcar como postado".
+// US5 agendar pelo AgendarDialog da 014 (textos à mão, daqui a 1 min), "Hora de postar" no sino
+// e "Postado" na aba da conta em Conteúdos.
 // Nenhuma requisição sai para rede social.
 
 const SHOTS = ".playwright-mcp/sociman";
-const SOCIAL = /tiktok|open\.tiktokapis|upload-post|graph\.facebook|instagram\.com|youtube\.com\/upload|googleapis\.com|\/api\/social|videos\.insert/i;
+// Guarda do princípio I pelo DOMÍNIO (e por /api/social): o caminho de módulos locais do Vite
+// (ex.: /src/components/publicacao/TikTokPostForm.tsx em localhost) não é rede social.
+const SOCIAL_HOST = /(^|\.)(tiktok\.com|tiktokapis\.com|tiktokcdn\.com|upload-post\.com|facebook\.com|instagram\.com|youtube\.com|googleapis\.com)$/i;
+const ehRedeSocial = (url: string): boolean => {
+  const u = new URL(url);
+  return SOCIAL_HOST.test(u.hostname) || /\/api\/social/i.test(u.pathname) || /videos\.insert/i.test(u.pathname);
+};
 
 // Data e hora locais de São Paulo ("2026-09-30T19:07") para o <input type="datetime-local">.
 function spLocalInput(date: Date): string {
@@ -45,7 +52,7 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
 
   const social: string[] = [];
   page.on("request", (req) => {
-    if (SOCIAL.test(req.url())) social.push(`${req.method()} ${req.url()}`);
+    if (ehRedeSocial(req.url())) social.push(`${req.method()} ${req.url()}`);
   });
 
   // ---- dados de base pela API: perfil, conta TikTok ativa e o membro ----
@@ -202,28 +209,46 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await expect(clipes.getByText("Pronto", { exact: true })).toHaveCount(2, { timeout: 180_000 });
   await page.screenshot({ path: `${SHOTS}/006-revisao-marca.png`, fullPage: true });
 
-  // ---- US5: textos à mão e agendar para daqui a ~1 min ----
+  // ---- US5: agendar direto no clipe pronto (spec 014: AgendarDialog), textos à mão, ~1 min ----
   await clipes.first().getByRole("link", { name: "Abrir" }).click();
   await expect(page).toHaveURL(/\/app\/cortes\/[0-9a-f-]{36}$/);
-  const postagem = page.getByRole("group", { name: /^Postagem em TikTok/ });
-  await postagem.getByLabel("Título").fill("Notebook gamer: vale a pena?");
-  await postagem.getByLabel("Descrição").fill("O review completo no canal. Corte feito no e2e.");
-  const tags = postagem.getByLabel("Hashtags", { exact: true });
+  // spec 014: só o dono aprova; ele aprova e agenda no mesmo passo (o membro veria "Pedir aprovação")
+  const corteUrl = page.url();
+  await logout(page);
+  await login(page, OWNER.email, OWNER.password);
+  await expect(page).toHaveURL(/\/app$/);
+  await page.goto(corteUrl);
+  await page.getByRole("button", { name: "Agendar", exact: true }).first().click();
+  const agendar = page.getByRole("dialog", { name: "Agendar" });
+  const contaOpt = agendar.getByLabel("Conta").and(page.locator("select")).locator("option").filter({ hasText: `cortese2e${sfx}` }).first();
+  await agendar.getByLabel("Conta").and(page.locator("select")).selectOption((await contaOpt.getAttribute("value"))!);
+  // spec 015 (T103): na TikTok não há título, só a legenda (descrição + hashtags), obrigatória
+  await expect(agendar.getByLabel("Título", { exact: true })).toHaveCount(0);
+  await agendar.getByRole("textbox", { name: /^Legenda/ }).fill("Notebook gamer: vale a pena? O review completo no canal. Corte feito no e2e.");
+  const tags = agendar.getByLabel("Hashtags", { exact: true });
   for (const t of ["#notebook", "#gamer", "#tecnologia"]) {
     await tags.fill(t);
     await tags.press("Enter");
   }
-  await expect(postagem.getByRole("list", { name: "Hashtags escolhidas" }).getByRole("listitem")).toHaveCount(3);
+  await expect(agendar.getByRole("list", { name: "Hashtags escolhidas" }).getByRole("listitem")).toHaveCount(3);
   const quando = new Date(Date.now() + 70_000);
-  await postagem.getByLabel("Data e hora (horário de Brasília)").fill(spLocalInput(quando));
-  await postagem.getByRole("button", { name: "Salvar" }).click();
-  await expect(page.getByText(/^Agendado para /)).toBeVisible();
-  await expect(postagem.getByText("Agendado", { exact: true })).toBeVisible();
+  await agendar.getByLabel("Data e hora (horário de Brasília)").fill(spLocalInput(quando));
+  await expect(agendar.getByLabel("Modo", { exact: true })).toHaveValue("lembrete");
+  await agendar.getByRole("button", { name: "Aprovar e agendar" }).click();
+  await expect(agendar).toBeHidden();
+  await expect(page.getByText("Agendado", { exact: true }).first()).toBeVisible();
+  // o título que o calendário e o sino mostram é o do conteúdo (a TikTok não tem título)
+  const corteId = corteUrl.split("/").pop()!;
+  const conteudoRes = await request.get(`/api/conteudos/${corteId}`, { headers: { Authorization: `Bearer ${ownerToken}` } });
+  const agendado = ((await conteudoRes.json()) as { conteudo: { destinos: { titulo: string; descricao: string; hashtags: string[] }[] } }).conteudo.destinos[0];
+  expect(agendado.descricao).toContain("Notebook gamer: vale a pena?");
+  expect(agendado.hashtags).toEqual(["#notebook", "#gamer", "#tecnologia"]);
+  const tituloPost = agendado.titulo.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   await page.screenshot({ path: `${SHOTS}/006-postagem.png`, fullPage: true });
 
   // calendário: a postagem aparece na semana
   await nav(page, "Calendário").click();
-  await expect(page.getByRole("button", { name: /Notebook gamer: vale a pena\?/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: new RegExp(tituloPost) }).first()).toBeVisible();
   await expect(page.getByRole("list", { name: "Cores dos perfis" })).toContainText(perfilName);
   await page.screenshot({ path: `${SHOTS}/006-calendario.png` });
 
@@ -233,7 +258,7 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
       async () => {
         await page.reload();
         await sino(page).click();
-        const found = await page.getByRole("menuitem", { name: /Hora de postar/ }).count();
+        const found = await page.getByRole("menuitem", { name: new RegExp(`Hora de postar: ${tituloPost}`) }).count();
         await page.keyboard.press("Escape");
         return found;
       },
@@ -241,15 +266,16 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
     )
     .toBeGreaterThan(0);
   await sino(page).click();
-  await page.getByRole("menuitem", { name: /Hora de postar/ }).first().click();
-  await expect(page).toHaveURL(/\/app\/cortes\//);
+  // outros testes da suíte também geram "Hora de postar" para o mesmo dono: clicar no DESTE post
+  await page.getByRole("menuitem", { name: new RegExp(`Hora de postar: ${tituloPost}`) }).first().click();
+  await expect(page).toHaveURL(/\/app\/conteudos\/[0-9a-f-]{36}\?conta=/);
 
-  // "Marcar como postado" (manual; nada é publicado)
-  const post = page.getByRole("group", { name: /^Postagem em TikTok/ });
-  await post.getByRole("button", { name: "Marcar como postado" }).click();
+  // "Postado" (manual; nada é publicado)
+  const destino = page.getByRole("tabpanel");
+  await expect(destino.getByText("A postar", { exact: true }).first()).toBeVisible();
+  await destino.getByRole("button", { name: "Postado", exact: true }).click();
   await page.getByRole("dialog", { name: "Marcar como postado" }).getByRole("button", { name: "Confirmar postado" }).click();
-  await expect(page.getByText("Marcado como postado.")).toBeVisible();
-  await expect(post.getByText("Postado", { exact: true })).toBeVisible();
+  await expect(destino.getByText("Postado", { exact: true }).first()).toBeVisible();
 
   expect(social, "nenhuma requisição para rede social").toEqual([]);
 });

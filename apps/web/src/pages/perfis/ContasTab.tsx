@@ -17,7 +17,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { PlatformIcon } from "../../components/PlatformIcon";
 import { HistoryHeading, VersionHistory } from "../../components/VersionHistory";
+import { ConexaoCard } from "../../components/publicacao/ConexaoCard";
 import { api } from "../../lib/api";
+import { useEhDono } from "../../lib/conteudos";
+import { INTERVALO_MAX } from "../../lib/postagem";
 import { contaForm, isUrl, type ContaForm } from "../../lib/forms";
 import {
   contaFieldLabel,
@@ -156,6 +159,7 @@ export function ContasTab({ perfil, contas, onChanged, onError, onActionStart }:
                         <span className="min-w-0">
                           <span className="block font-semibold">@{conta.handle}</span>
                           <span className="block text-xs text-muted-foreground">{contaPlatformText(conta)}</span>
+                          <span className="block text-xs text-muted-foreground">Intervalo mínimo entre posts: {conta.intervaloMinMinutos} min</span>
                         </span>
                       </span>
                       <div className="mt-2 -ml-2 flex flex-wrap gap-1 sm:hidden">{rowActions(conta)}</div>
@@ -187,6 +191,25 @@ export function ContasTab({ perfil, contas, onChanged, onError, onActionStart }:
           )}
         </CardContent>
       </Card>
+
+      {/* spec 015: conexão das contas TikTok com o app da agência (botões só para o dono) */}
+      {contas.some((c) => c.platform === "tiktok" && !c.archived) && (
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle>
+              <h2>Conexão com a TikTok</h2>
+            </CardTitle>
+            <CardDescription>Com a conta conectada, o SociMan cria o rascunho na TikTok no horário agendado; você finaliza e publica no app.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {contas
+              .filter((c) => c.platform === "tiktok" && !c.archived)
+              .map((c) => (
+                <ConexaoCard key={c.id} conta={c} perfilId={perfil.id} />
+              ))}
+          </CardContent>
+        </Card>
+      )}
 
       {panel?.kind === "edit" && panelConta && (
         <EditContaCard
@@ -388,11 +411,21 @@ function EditContaCard({
     handleSubmit,
     formState: { isSubmitting },
   } = form;
+  // spec 014 (Q3): intervalo mínimo entre posts da conta, 0..1.440 min; só o dono muda.
+  const dono = useEhDono();
+  const [intervalo, setIntervalo] = useState(String(conta.intervaloMinMinutos));
+  const intervaloNum = Number(intervalo);
+  const intervaloErro =
+    intervalo.trim() === "" || !Number.isInteger(intervaloNum) || intervaloNum < 0 || intervaloNum > INTERVALO_MAX
+      ? `De 0 a ${INTERVALO_MAX.toLocaleString("pt-BR")} minutos`
+      : null;
 
   async function onSubmit(data: ContaForm) {
+    if (dono && intervaloErro) return;
     onSubmitStart();
     // Só manda o que mudou; o @ é comparado já normalizado, como a API guarda.
     const changes: UpdateContaRequest = { version: conta.version };
+    if (dono && intervaloNum !== conta.intervaloMinMinutos) changes.intervaloMinMinutos = intervaloNum;
     if (isUrl(data.handleOrUrl)) {
       if (data.handleOrUrl !== conta.url) changes.url = data.handleOrUrl;
     } else if (data.handleOrUrl.replace(/\s+/g, "").replace(/^@/, "").toLowerCase() !== conta.handle) {
@@ -425,6 +458,37 @@ function EditContaCard({
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <ContaFields form={form} platformLocked />
+          <Field
+            label="Intervalo mínimo entre posts (min)"
+            error={dono ? (intervaloErro ?? undefined) : undefined}
+            hint={
+              dono
+                ? "Agendar a menos disso de outro post desta conta mostra um aviso; a sequência pula o horário. 0 = só o mesmo minuto conflita."
+                : "Só um dono muda este valor."
+            }
+          >
+            {({ id, describedBy, invalid }) =>
+              !dono ? (
+                <p id={id} aria-describedby={describedBy} className="text-sm font-medium">
+                  {conta.intervaloMinMinutos} min
+                </p>
+              ) : (
+              <Input
+                id={id}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={INTERVALO_MAX}
+                step={1}
+                value={intervalo}
+                aria-invalid={invalid}
+                aria-describedby={describedBy}
+                className="w-32"
+                onChange={(e) => setIntervalo(e.target.value)}
+              />
+              )
+            }
+          </Field>
           <div className="flex gap-2">
             <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
               {isSubmitting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}

@@ -330,7 +330,8 @@ def test_versoes_gravadas(client: TestClient, headers, member, make_perfil, db: 
     assert created["before"] is None
     assert created["after"] == {"platform": "tiktok", "platform_name": "", "handle": "x",
                                 "url": "https://www.tiktok.com/@x", "status": "planejada",
-                                "notes": "", "archived": False}
+                                "notes": "", "archived": False,
+                                "intervalo_min_minutos": 30}
 
     rows = db.scalars(select(EntityVersion).where(EntityVersion.entity_type == "conta")).all()
     assert len(rows) == 4
@@ -351,3 +352,84 @@ def test_plataformas_do_perfil_refletem_contas_ativas(
     assert platforms() == ["tiktok"]
     _action(client, headers, tiktok, "archive")
     assert platforms() == []
+
+
+# ---- intervalo mínimo entre posts (spec 014, Q3 = C) ----
+
+@pytest.fixture
+def owner_headers(make_user, login, client: TestClient) -> dict[str, str]:
+    user = make_user(role="dono", email="dono@teste.local", name="Dono")
+    return login(client, user.email, PW)
+
+
+def test_intervalo_padrao_30_na_criacao(client: TestClient, headers, make_perfil) -> None:
+    conta = _create(client, headers, make_perfil(), platform="tiktok", handle="a")
+    assert conta["intervaloMinMinutos"] == 30
+    r = client.get(f"/api/perfis/{conta['perfilId']}", headers=headers)
+    assert r.json()["contas"][0]["intervaloMinMinutos"] == 30
+
+
+@pytest.mark.parametrize("valor", [0, 45, 1440])
+def test_dono_muda_intervalo_com_historico(client: TestClient, owner_headers, make_perfil,
+                                           db: Session, valor: int) -> None:
+    conta = _create(client, owner_headers, make_perfil(), platform="tiktok", handle="a")
+    r = _patch(client, owner_headers, conta, intervaloMinMinutos=valor)
+    assert r.status_code == 200, r.text
+    assert r.json()["conta"]["intervaloMinMinutos"] == valor
+    v = db.scalar(select(EntityVersion).where(EntityVersion.entity_id == conta["id"],
+                                              EntityVersion.version == 2))
+    assert v is not None and v.changed_fields == ["intervalo_min_minutos"]
+    assert v.after["intervalo_min_minutos"] == valor
+
+
+@pytest.mark.parametrize("valor", [-1, 1441])
+def test_intervalo_fora_dos_limites_da_400(client: TestClient, owner_headers, make_perfil,
+                                           valor: int) -> None:
+    conta = _create(client, owner_headers, make_perfil(), platform="tiktok", handle="a")
+    r = _patch(client, owner_headers, conta, intervaloMinMinutos=valor)
+    assert r.status_code == 400
+    assert _error(r)["code"] == "validation_error"
+
+
+def test_membro_nao_muda_intervalo(client: TestClient, headers, make_perfil,
+                                   db: Session) -> None:
+    conta = _create(client, headers, make_perfil(), platform="tiktok", handle="a")
+    r = _patch(client, headers, conta, intervaloMinMinutos=10, notes="x")
+    assert r.status_code == 403
+    assert _error(r)["code"] == "forbidden"
+    db.expire_all()
+    row = db.get(Conta, conta["id"])
+    assert row is not None and row.intervalo_min_minutos == 30 and row.version == 1
+    # mandar o mesmo valor não é mudança; só `notes` segue as regras da 002
+    r = _patch(client, headers, conta, intervaloMinMinutos=30, notes="ok")
+    assert r.status_code == 200, r.text
+    r = _patch(client, headers, r.json()["conta"], notes="de novo")
+    assert r.status_code == 200, r.text
+
+
+def test_reverter_para_versao_sem_o_campo_mantem_o_atual(
+    client: TestClient, owner_headers, make_perfil, db: Session
+) -> None:
+    conta = _create(client, owner_headers, make_perfil(), platform="tiktok", handle="a")
+    # Simula uma versão da 002 (anterior à 0009): o snapshot não tem o campo.
+    v1 = db.scalar(select(EntityVersion).where(EntityVersion.entity_id == conta["id"],
+                                               EntityVersion.version == 1))
+    assert v1 is not None
+    after = dict(v1.after)
+    after.pop("intervalo_min_minutos")
+    v1.after = after
+    db.commit()
+    conta = _patch(client, owner_headers, conta, intervaloMinMinutos=60,
+                   notes="nota").json()["conta"]
+    r = client.post(f"/api/contas/{conta['id']}/revert",
+                    json={"version": conta["version"], "toVersion": 1}, headers=owner_headers)
+    assert r.status_code == 200, r.text
+    assert r.json()["conta"]["notes"] == ""
+    assert r.json()["conta"]["intervaloMinMinutos"] == 60
+    # e para uma versão que tem o campo, ele volta
+    conta = _patch(client, owner_headers, r.json()["conta"],
+                   intervaloMinMinutos=5).json()["conta"]
+    r = client.post(f"/api/contas/{conta['id']}/revert",
+                    json={"version": conta["version"], "toVersion": 2}, headers=owner_headers)
+    assert r.status_code == 200, r.text
+    assert r.json()["conta"]["intervaloMinMinutos"] == 60

@@ -39,7 +39,7 @@ const actionDot: Record<EntityVersion["action"], string> = {
   reverted: "tone-warning",
 };
 
-const actorKindLabel: Record<string, string> = { "system:cli": "CLI", "system:agendador": "Agendador", mcp_client: "Cliente MCP" };
+const actorKindLabel: Record<string, string> = { "system:cli": "CLI", "system:agendador": "Agendador", mcp_client: "Cliente MCP", "system:publicacao": "Envio automático" };
 
 function actorText(version: EntityVersion): string {
   return version.actor?.name ?? actorKindLabel[version.actorKind] ?? "—";

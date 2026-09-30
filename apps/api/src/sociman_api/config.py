@@ -3,6 +3,7 @@
 import logging
 import secrets
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import AliasChoices, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -70,6 +71,22 @@ class Settings(BaseSettings):
     agendador_openshorts_s: float = Field(10, gt=0)
     agendador_importacao_s: float = Field(5, gt=0)
     agendador_lembretes_s: float = Field(30, gt=0)
+
+    # Publicação no TikTok (spec 015, contracts "Variáveis de ambiente"). Segredos em SecretStr;
+    # vazio = não configurado. Nenhuma URL da TikTok aqui (guarda R16.1): `tiktok_api_url` e
+    # `tiktok_upload_hosts` vazios usam as constantes de `publicacao/tiktok/cliente.py`.
+    tiktok_client_key: SecretStr = SecretStr("")
+    tiktok_client_secret: SecretStr = SecretStr("")
+    sociman_tokens_key: SecretStr = SecretStr("")
+    sociman_tokens_key_anterior: SecretStr = SecretStr("")
+    publicacao_habilitada: bool = False  # nível do servidor do interruptor (R11)
+    tiktok_app_situacao: Literal["sandbox", "auditado"] = "sandbox"
+    tiktok_redirect_web: str = ""
+    tiktok_redirect_desktop: str = ""
+    tiktok_scopes: str = "user.info.basic,user.info.profile,video.upload,video.publish"
+    tiktok_api_url: str = ""  # só o e2e aponta para o fake
+    tiktok_upload_hosts: str = ""  # hosts extras para o PUT das partes, separados por vírgula
+    agendador_publicacao_s: float = Field(15, gt=0)
 
     @model_validator(mode="after")
     def _jwt_secret(self) -> "Settings":

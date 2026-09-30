@@ -41,6 +41,7 @@ from sqlalchemy.orm import Session
 from sociman_api import datadir, history, storage
 from sociman_api.auth.deps import Actor
 from sociman_api.config import get_settings
+from sociman_api.conteudos import service as conteudos_service
 from sociman_api.cortes import service as cortes_service
 from sociman_api.cortes import worker
 from sociman_api.cortes.models import Corte, CorteOrigem, CorteStatus
@@ -190,6 +191,7 @@ def importar_clipe(db: Session, client: OpenShortsClient, envio: Envio, pos: int
     db.flush()
     history.record(db, SISTEMA, cortes_service.ENTITY, corte, "created", None,
                    history.snapshot(corte), {"envio_id": envio.id, "clip_index": clip_index})
+    conteudos_service.criar_para_corte(db, SISTEMA, corte)  # spec 014: mesmo id, mesmo flush
     db.flush()
     return corte
 

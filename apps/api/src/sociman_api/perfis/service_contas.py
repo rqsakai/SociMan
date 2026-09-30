@@ -16,9 +16,16 @@ from sqlalchemy.orm import Session
 
 from sociman_api import history
 from sociman_api.auth.deps import Actor
+from sociman_api.auth.models import UserRole
 from sociman_api.errors import ApiError
 from sociman_api.perfis import schemas
-from sociman_api.perfis.models import Conta, ContaStatus, Perfil, Platform
+from sociman_api.perfis.models import (
+    INTERVALO_MIN_PADRAO,
+    Conta,
+    ContaStatus,
+    Perfil,
+    Platform,
+)
 from sociman_api.perfis.platforms import PLATFORMS, handle_from_url, normalize_handle, url_for
 from sociman_api.perfis.service_perfis import (
     apply_archived,
@@ -175,6 +182,7 @@ def create_conta(
         url=url,
         status=body.status,
         notes=body.notes,
+        intervalo_min_minutos=INTERVALO_MIN_PADRAO,  # já no snapshot da versão 1
         created_by=actor.user_id,
         updated_by=actor.user_id,
     )
@@ -211,6 +219,13 @@ def update_conta(
         conta.status = body.status
     if body.notes is not None:
         conta.notes = body.notes
+    if (body.intervalo_min_minutos is not None
+            and body.intervalo_min_minutos != conta.intervalo_min_minutos):
+        # Spec 014 (Q3 = C): só dono muda; vale para os próximos agendamentos (nada é remarcado).
+        if actor.user is None or actor.user.role != UserRole.dono:
+            raise ApiError(403, "forbidden",
+                           "Só um dono muda o intervalo mínimo entre posts")
+        conta.intervalo_min_minutos = body.intervalo_min_minutos
 
     after = history.snapshot(conta)
     if not history.diff(before, after):
@@ -267,6 +282,9 @@ def revert_conta(
     conta.url = state["url"]
     conta.status = ContaStatus(state["status"])
     conta.notes = state["notes"]
+    # Versões anteriores à spec 014 não têm o campo: mantém o valor atual.
+    if "intervalo_min_minutos" in state:
+        conta.intervalo_min_minutos = state["intervalo_min_minutos"]
     apply_archived(conta, state["archived"], actor)
 
     after = history.snapshot(conta)

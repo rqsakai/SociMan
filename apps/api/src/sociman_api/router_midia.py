@@ -23,6 +23,7 @@ from sociman_api.assets.service import asset_download_name
 from sociman_api.auth.deps import RequireUser
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.config import get_settings
+from sociman_api.conteudos.models import Conteudo, ConteudoOrigem
 from sociman_api.cortes.models import Corte, CorteStatus
 from sociman_api.db import DbSession
 from sociman_api.errors import ApiError, ErrorEnvelope
@@ -114,6 +115,15 @@ def resolve(db: Session, kind: str, entity_id: uuid.UUID) -> Target:
             raise _not_found()
         return Target("imagens", image.object_key, image.content_type,
                       asset_download_name(db, image))
+    if kind == "conteudo_video":  # vídeo próprio (spec 014); o corte usa `corte_marcado`
+        conteudo = db.get(Conteudo, entity_id)
+        if conteudo is None or conteudo.origem != ConteudoOrigem.video_proprio \
+                or not conteudo.video_key or not conteudo.video_content_type:
+            raise _not_found()
+        ext = _VIDEO_EXT.get(conteudo.video_content_type, "mp4")
+        stem = f"{_slug(db, conteudo.perfil_id)}-{conteudo.created_at:%Y-%m-%d}"
+        return Target("videos", conteudo.video_key, conteudo.video_content_type,
+                      f"{stem}-video.{ext}")
     if kind in midia.VIDEO_KINDS:
         corte = db.get(Corte, entity_id)
         if corte is None:

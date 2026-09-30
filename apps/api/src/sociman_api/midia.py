@@ -3,7 +3,8 @@
 O token é `base64url(payload).base64url(HMAC-SHA256)`, com o `JWT_SECRET` e o domínio
 separado `midia:` (um token de mídia nunca vale como outro segredo da API, e vice-versa). O
 payload é `{k: tipo, id, v?: variante, exp?: epoch}`:
-- vídeo (`corte_original`, `corte_marcado`) sempre tem `exp` (1 h na interface);
+- vídeo (`corte_original`, `corte_marcado`, `conteudo_video` da spec 014) sempre tem `exp`
+  (1 h na interface);
 - fonte, imagem de marca d'água e imagem de fundo podem sair **sem `exp`** na exportação do kit (FR-011,
   decisão do dono em 2026-09-29): valem enquanto o arquivo existir, e arquivos nunca são
   apagados.
@@ -38,9 +39,10 @@ from sociman_api.config import get_settings
 from sociman_api.errors import ApiError
 
 MidiaKind = Literal["corte_original", "corte_marcado", "fonte", "marca_dagua", "fundo",
-                    "imagem"]  # imagem: qualquer `images.id` (biblioteca da 007)
+                    "imagem",  # imagem: qualquer `images.id` (biblioteca da 007)
+                    "conteudo_video"]  # vídeo próprio (spec 014)
 KINDS: frozenset[str] = frozenset(get_args(MidiaKind))
-VIDEO_KINDS: frozenset[str] = frozenset({"corte_original", "corte_marcado"})
+VIDEO_KINDS: frozenset[str] = frozenset({"corte_original", "corte_marcado", "conteudo_video"})
 LINK_TTL = 60 * 60  # 1 h (interface)
 PATH_PREFIX = "/api/midia/"
 _DOMAIN = b"midia:"

@@ -1,5 +1,5 @@
 """Guarda do princípio VII na spec 006 (T076): toda rota humana de mutação (canal, padrões de
-corte, envio, corte e postagem) grava uma versão com autor e antes/depois; não existe DELETE;
+corte, envio, corte e destino/postagem) grava uma versão com autor e antes/depois; não existe DELETE;
 `revert` do canal, dos padrões e da postagem só pelo dono; mudanças do sistema não versionam."""
 
 import uuid
@@ -124,21 +124,24 @@ def test_corte_gancho_archive_restore_versionam(client, db, base):
     _ultima_por(db, "corte", corte.id, user, "restored")
 
 
-def test_postagem_create_patch_postado_archive_versionam(client, db, base):
+def test_destino_create_patch_postado_archive_versionam(client, db, base):
+    """Spec 014: a postagem da 006 é o destino (`entity_type = "postagem"`)."""
     hm, user = base["hm"], base["membro"]
     conta = criar_conta(client, base["h"], base["perfil"]["id"])
     corte = criar_corte(db, base["perfil"]["id"])
-    p = _ok(client.post(f"/api/cortes/{corte.id}/postagens", headers=hm,
-                        json={"contaId": conta["id"]}), 201)["postagem"]
+    p = _ok(client.post(f"/api/conteudos/{corte.id}/destinos", headers=hm,
+                        json={"contaId": conta["id"]}), 201)["destino"]
     _ultima_por(db, "postagem", p["id"], user, "created")
-    p = _ok(client.patch(f"/api/postagens/{p['id']}", headers=hm,
-                         json={"version": p["version"], "titulo": "Novo"}))["postagem"]
+    p = _ok(client.patch(f"/api/destinos/{p['id']}", headers=hm,
+                         json={"version": p["version"], "titulo": "Novo"}))["destino"]
     _ultima_por(db, "postagem", p["id"], user, "updated")
-    p = _ok(client.post(f"/api/postagens/{p['id']}/postado", headers=hm,
-                        json={"version": p["version"]}))["postagem"]
+    p = _ok(client.post(f"/api/destinos/{p['id']}/aprovar", headers=base["h"],
+                        json={"version": p["version"]}))["destino"]
+    p = _ok(client.post(f"/api/destinos/{p['id']}/postado", headers=hm,
+                        json={"version": p["version"]}))["destino"]
     v = _ultima_por(db, "postagem", p["id"], user, "updated")
-    assert v.before["estado"] == "rascunho" and v.after["estado"] == "postado"
-    _ok(client.post(f"/api/postagens/{p['id']}/archive", headers=hm,
+    assert v.before["estado"] == "aprovado" and v.after["estado"] == "postado"
+    _ok(client.post(f"/api/destinos/{p['id']}/archive", headers=hm,
                     json={"version": p["version"]}))
     _ultima_por(db, "postagem", p["id"], user, "archived")
 
@@ -147,12 +150,12 @@ def test_revert_so_pelo_dono(client, db, base):
     """Membro recebe 403 em todas as reversões da 006 (canal, padrões e postagem)."""
     reverts = {op.get("operationId") for ops in app.openapi()["paths"].values()
                for op in ops.values()}
-    assert {"canais_revert", "envios_padroes_revert", "postagens_revert"} <= reverts
+    assert {"canais_revert", "envios_padroes_revert", "destinos_revert"} <= reverts
     alvo = uuid.uuid4()
     corpo = {"version": 2, "toVersion": 1}
     for url in (f"/api/canais/{alvo}/revert",
                 f"/api/perfis/{base['perfil']['id']}/padroes-corte/revert",
-                f"/api/postagens/{alvo}/revert"):
+                f"/api/destinos/{alvo}/revert"):
         r = client.post(url, headers=base["hm"], json=corpo)
         assert r.status_code == 403, (url, r.text)
 
@@ -161,10 +164,10 @@ def test_mudanca_do_sistema_nao_versiona(client, db, base):
     """A trilha `lembretes` (estado de job) não grava versão; só as ações humanas."""
     conta = criar_conta(client, base["h"], base["perfil"]["id"])
     corte = criar_corte(db, base["perfil"]["id"])
-    p = _ok(client.post(f"/api/cortes/{corte.id}/postagens", headers=base["h"],
-                        json={"contaId": conta["id"],
-                              "plannedAt": (datetime.now(UTC) + timedelta(hours=1)).isoformat()}),
-            201)["postagem"]
+    p = _ok(client.post("/api/agendamentos", headers=base["h"], json={
+        "conteudoId": str(corte.id), "contaId": conta["id"], "modo": "lembrete",
+        "textos": {"descricao": "Legenda"},  # 015 (T101): obrigatória na TikTok
+        "plannedAt": (datetime.now(UTC) + timedelta(hours=1)).isoformat()}), 201)["destino"]
     db.query(Postagem).filter_by(id=p["id"]).update(
         {"planned_at": datetime.now(UTC) - timedelta(minutes=1)})
     db.commit()
