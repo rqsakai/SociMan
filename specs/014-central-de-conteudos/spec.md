@@ -18,13 +18,33 @@ publicado na hora."
 ### Session 2026-09-29
 
 - Q: Uma spec ou duas? → A: Duas. Esta (014) cobre a central de conteúdos, a aprovação e o
-  agendamento; a execução na rede (rascunho no TikTok) é a 015, depois da emenda do princípio I.
+  agendamento; a execução na rede (rascunho no TikTok) é a 015, já com a emenda do princípio I (constitution
+  4.0.0).
 - Q: Existe o passo "aprovado"? → A: Sim, separado de agendar. Aprovar = "este conteúdo pode ir
   para a conta X". Donos aprovam; membros pedem aprovação.
 - Q: Quais modos de agendamento? → A: Quatro: lembrete manual; criar rascunho na rede no horário;
   publicar no horário; criar rascunho antes e publicar no horário. Cada conta mostra só os modos que
   a rede dela oferece, com o motivo dos indisponíveis. Nesta spec só o lembrete manual executa.
 - Q: Quem conecta contas e envia para as redes? → A: Só donos (vale para a 015 em diante).
+- Q: Quem pode agendar um conteúdo já aprovado? → A: Dono e membro agendam, reagendam e cancelam o
+  que **já está aprovado**; aprovar continua só do dono. O membro diante de um item não aprovado vê
+  "Pedir aprovação". Na 015, os modos automáticos (criar rascunho, publicar) ficam **restritos a
+  donos**, como manda o princípio I da constitution 4.0.0; na 014 só existe o lembrete.
+- Q: Editar os textos depois da aprovação desfaz a aprovação? → A: Não. A aprovação vale para o
+  vídeo naquela conta; título, descrição e hashtags seguem editáveis, e cada mudança fica no
+  histórico do destino.
+- Q: O que conta como "horário em conflito"? → A: Um **intervalo mínimo entre posts configurável por
+  conta** (padrão 30 min, de 0 a 1.440 min; com 0, só o mesmo minuto conflita), editável só por dono,
+  com histórico da conta. A sequência **pula** os horários em conflito; o agendamento individual
+  (agendar, reagendar, arrastar no calendário) **avisa** e deixa manter mesmo assim, registrando no
+  histórico que o intervalo foi ignorado.
+- Q: Limites do vídeo próprio? → A: De 1 s a 10 min, até 2 GB, qualquer proporção; vídeo que não é
+  vertical entra com o aviso "não é vertical".
+
+- Q: Os textos que o OpenShorts propõe aparecem para o operador? → A: **Sim** (dono, 2026-09-29): o detalhe do
+  conteúdo mostra a **proposta do OpenShorts** (título, descrição, gancho e nota), e todo destino novo nasce
+  com título e descrição **pré-preenchidos** com essa proposta (editáveis; o operador valida ou ajusta).
+  Destinos já existentes com texto vazio podem receber a proposta por "Usar proposta do OpenShorts".
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -138,7 +158,8 @@ na lista, e os modos 2–4 desabilitados com o motivo.
 O usuário seleciona vários conteúdos aprovados e escolhe **Agendar em sequência**: conta, primeira
 data, cadência (ex.: 1 por dia às 19h, ou 2 por dia às 12h e 19h), modo e se os textos devem ser
 gerados pela IA para os que não têm. A prévia mostra o calendário resultante antes de confirmar.
-Horários que conflitam com agendamentos existentes da mesma conta são pulados.
+Horários a menos do **intervalo mínimo da conta** (padrão 30 min) de outro agendamento da mesma
+conta, ou da própria sequência, são pulados.
 
 **Why this priority**: acelera muito a operação com dezenas de cortes, mas o agendamento individual já
 resolve o essencial.
@@ -149,7 +170,7 @@ ver a prévia com 7 dias, confirmar e ver os 7 no calendário, um por dia.
 **Acceptance Scenarios**:
 
 1. **Given** N conteúdos e uma cadência, **When** o usuário pede a prévia, **Then** vê a data de cada
-   um e os que foram pulados por conflito, antes de confirmar.
+   um, o intervalo mínimo da conta e os horários pulados por conflito, antes de confirmar.
 2. **Given** a prévia confirmada, **When** aplicada, **Then** todos ficam agendados de uma vez, e uma
    falha em um item não desfaz os outros (o que falhou aparece com o motivo).
 3. **Given** agendamentos em sequência, **When** o usuário reordena na lista ou arrasta no calendário,
@@ -187,6 +208,13 @@ com a origem "vídeo próprio", aprovar e agendar em lembrete manual.
 - Agendamento em lembrete manual não marcado como "Postado" 24 h depois: vira "atrasado" nos atalhos.
 - Centenas de conteúdos: a lista pagina e os filtros respondem rápido.
 - Fuso: datas e horas sempre no horário de São Paulo, como no calendário da 006.
+- Agendamento individual a menos do intervalo mínimo de outro da mesma conta: o SociMan avisa
+  ("Há outro post em @conta às 19:10; o intervalo mínimo é 30 min") e oferece "Manter mesmo assim"
+  ou escolher outro horário; mantido, o histórico registra que o intervalo foi ignorado.
+- Dono muda o intervalo mínimo de uma conta: vale para os próximos agendamentos; os existentes não
+  mudam nem são remarcados.
+- Vídeo próprio horizontal ou quadrado: aceito, com o aviso "não é vertical"; fora de 1 s a 10 min ou
+  acima de 2 GB: recusado com o motivo.
 
 ## Requirements *(mandatory)*
 
@@ -202,10 +230,12 @@ com a origem "vídeo próprio", aprovar e agendar em lembrete manual.
   falharam) e paginação; os filtros ficam na URL.
 - **FR-004**: **Aprovar** um conteúdo para uma conta DEVE ser ação de dono; membro DEVE poder **pedir
   aprovação** (com aviso aos donos). Recusar DEVE exigir motivo. Só conteúdo `pronto` (marca aplicada)
-  pode ser aprovado.
+  pode ser aprovado. Editar os textos depois da aprovação NÃO desfaz a aprovação (fica no histórico).
 - **FR-005**: **Agendar** DEVE registrar conta, data e hora, textos e **modo** (`lembrete`,
   `criar_rascunho`, `publicar`, `rascunho_e_publicar`, com a antecedência do rascunho no último).
-  Agendar direto num conteúdo pronto, por um dono, aprova e agenda no mesmo passo.
+  Agendar direto num conteúdo pronto, por um dono, aprova e agenda no mesmo passo. Dono e membro
+  agendam, reagendam e cancelam o que já está aprovado; o membro diante de um item não aprovado vê
+  "Pedir aprovação".
 - **FR-006**: Cada conta DEVE expor os **modos disponíveis** e o motivo dos indisponíveis, de acordo
   com as capacidades da rede e o estado da conexão. Nesta spec, só `lembrete` está disponível.
 - **FR-007**: O modo `lembrete` DEVE avisar "Hora de postar" no horário e deixar o item "a postar" até
@@ -214,16 +244,23 @@ com a origem "vídeo próprio", aprovar e agendar em lembrete manual.
   histórico e reversão pelo dono.
 - **FR-009**: **Agendar em sequência** DEVE aceitar conta, primeira data, cadência (N por dia em
   horários fixos), modo e geração de textos pela IA para os que não têm; DEVE mostrar a prévia antes
-  de confirmar e pular horários que conflitam com a mesma conta.
+  de confirmar e pular horários a menos do **intervalo mínimo da conta** de outro agendamento da
+  mesma conta (ou de outro item da própria sequência).
+- **FR-009a**: Cada conta DEVE ter um **intervalo mínimo entre posts** (padrão 30 min, de 0 a 1.440),
+  editável só por dono e registrado no histórico da conta. O agendamento individual (agendar,
+  reagendar, arrastar no calendário, trocar horários) a menos desse intervalo de outro agendamento da
+  mesma conta DEVE **avisar e permitir manter**; manter fica registrado no histórico do destino.
 - **FR-010**: O **agendar direto** DEVE existir no corte pronto (detalhe do corte e lista de cortes do
   perfil), no detalhe do conteúdo e na lista de Conteúdos.
 - **FR-011**: O modelo de conteúdo DEVE aceitar origens diferentes (corte, vídeo próprio e, no futuro,
-  avatar/afiliado), e esta spec DEVE permitir enviar **vídeo próprio** pronto para um perfil.
+  avatar/afiliado), e esta spec DEVE permitir enviar **vídeo próprio** pronto para um perfil: de 1 s
+  a 10 min, até 2 GB, em qualquer proporção, com o aviso "não é vertical" quando for o caso.
 - **FR-012**: O calendário (006) DEVE mostrar os agendamentos com o modo e o estado, e continuar
   permitindo arrastar para reagendar.
 - **FR-013**: Nada nesta spec publica nem envia conteúdo para rede social (princípio I); os modos
-  automáticos ficam registrados e visíveis, mas só executam quando uma spec de integração (015+) e a
-  emenda da constitution os liberarem.
+  automáticos ficam registrados e visíveis, mas só executam quando uma spec de integração (015+) os
+  liberar, dentro do princípio I da constitution 4.0.0 ("Publicação só com decisão humana": só para
+  destino aprovado e agendado por um dono).
 
 ### Key Entities
 
@@ -233,6 +270,7 @@ com a origem "vídeo próprio", aprovar e agendar em lembrete manual.
   motivo de recusa), pedidos de aprovação. Evolui a Postagem da 006, que já é uma por corte e conta.
 - **Agendamento**: data e hora, modo, antecedência do rascunho, textos, autor, estado de execução,
   resultado (link, motivo de falha).
+- **Conta** (da 002, ampliada): ganha o **intervalo mínimo entre posts** (minutos, padrão 30).
 - **Capacidade de rede**: para cada rede (e conta), quais modos existem e por quê não quando
   indisponíveis.
 
@@ -261,5 +299,6 @@ com a origem "vídeo próprio", aprovar e agendar em lembrete manual.
 - Para o TikTok, a pesquisa de 2026-09-29 (`docs/pesquisa/publicacao-redes.md`) indica que "criar
   rascunho" é viável; "publicar" só sai privado sem auditoria; "rascunho e publicar" não existe na API.
   As capacidades da 015 refletirão isso.
-- O vídeo próprio segue os limites de upload da 004/006 (formato vertical recomendado, até 2 GB).
+- O vídeo próprio usa o recebimento em streaming da 004/006 (HD com sentinela e piso), com os limites
+  decididos nas Clarifications: 1 s a 10 min, até 2 GB, qualquer proporção (aviso "não é vertical").
 - Aprovação e agendamento são por conta; um conteúdo pode ir para várias contas.

@@ -27,6 +27,52 @@ enviar duas vezes; respeitar os limites. Primeiro teste real: rascunho para @ata
   disponível com aviso (sem auditoria da TikTok, o post sai privado e a conta precisa estar privada);
   "Rascunho antes e publicar no horário" indisponível (a TikTok não permite publicar um rascunho).
   Base: `docs/pesquisa/publicacao-redes.md`.
+- Q: Como contar o limite de "5 rascunhos pendentes em 24 h", se a TikTok não informa quando o
+  dono finaliza um rascunho no app? → A: Contar localmente (opção A). Contam os rascunhos cujo
+  envio começou nas últimas 24 h para a conta, mesmo que o dono já tenha finalizado algum no app.
+  O 6º espera "aguardando vaga" até o mais antigo completar 24 h; se a TikTok recusar antes por
+  excesso, também espera. Dá para afrouxar depois do teste real.
+- Q: Quem edita os textos de um "Publicar no horário" já agendado? → A: Só um dono (opção A). A
+  edição vale como nova confirmação: o SociMan regrava o que será publicado (snapshot) e registra
+  no histórico. No rascunho e no lembrete, os textos continuam livres, como na 014.
+- Q: Como é o interruptor geral? → A: Dois níveis (opção A): `PUBLICACAO_HABILITADA` no `.env` do
+  servidor (desligado por padrão) **e** o botão "Envios automáticos" na tela. Só envia com os dois
+  ligados; com qualquer um desligado, nada sai para a TikTok.
+- Q: "Tentar de novo" quando a TikTok talvez tenha recebido (o SociMan caiu entre o pedido e a
+  resposta)? → A: Permitido (opção A). O estado mostra "Falhou: a TikTok pode ter recebido", e
+  qualquer ação que devolva o envio à fila (Tentar de novo, reagendar, agendar de novo) exige
+  marcar "Conferi no app e o rascunho não chegou".
+
+- Q: Com o interruptor desligado, um envio já em andamento termina? → A: **Não.** Com qualquer nível
+  desligado, nada sai para a TikTok (nenhum início e nenhuma parte); o envio fica "pausado" e retoma
+  ao religar, sem risco de duplicar (confirmado pelo dono).
+- Q: Membro pode arquivar um conteúdo com envio automático agendado? → A: **Não.** Arquivar cancela o
+  agendamento automático, então exige dono humano (confirmado pelo dono).
+
+- Q: O portal da TikTok aceitou o redirect com o IP da casa? → A: **Sim** (dono, 2026-09-29):
+  `https://192.168.86.47:8543/app/conexoes/retorno` está cadastrado e é o caminho principal; o
+  `http://localhost:8180/app/conexoes/retorno` fica como reserva.
+
+- Q: Dá para enviar na hora, sem agendar? → A: **Sim** (dono, 2026-09-29): ação **"Enviar agora"** no painel da conta
+  e no diálogo Agendar, só para dono humano com a conta conectada, nos modos automáticos disponíveis
+  (hoje "Criar rascunho"). Aprova se preciso e agenda para o horário atual; a trilha envia na próxima volta,
+  com as mesmas regras (interruptor, limites, idempotência, histórico) e uma confirmação antes.
+
+- Q: "Publicar no horário" fica para depois do teste? → A: **Não — correção do dono (2026-09-29):** um agendamento
+  feito na interface por um dono **precisa ser respeitado**; a IA/agente/MCP nunca posta sozinha, mas o post
+  aprovado e agendado por um humano é publicado no horário. A US3 passa a **P1** e entra agora. A única
+  restrição que fica é a da TikTok (sem auditoria: só privado "Só eu" e conta privada), mostrada com
+  honestidade na tela; ao auditar, basta mudar `TIKTOK_APP_SITUACAO=auditado`.
+- Q: Onde aparece o rascunho enviado? → A: status final `SEND_TO_USER_INBOX` (teste real 2026-09-29): vai para a
+  caixa de entrada do **app** da conta (notificações do sistema / rascunhos), não para o TikTok Studio web.
+
+- Q: Título e descrição na TikTok? → A: **Regra do dono (2026-09-29):** a TikTok não tem título, só **legenda** =
+  descrição + hashtags (até 2.200 caracteres). Em destinos TikTok o SPA não mostra "Título"; mostra "Legenda"
+  (descrição) + hashtags e a prévia da legenda final. A **descrição é obrigatória** para agendar (qualquer modo),
+  "Enviar agora" e aprovar e agendar: sem ela, a API recusa (400 `legenda_obrigatoria`, "Descreva o post: na
+  TikTok a legenda (descrição + hashtags) é obrigatória"); na sequência, o item sem descrição é pulado com esse
+  motivo (salvo se a geração por IA estiver marcada). No "Publicar" a legenda composta vai no post; no rascunho,
+  "Copiar textos" copia a mesma legenda composta.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -89,7 +135,7 @@ app da TikTok e conseguir abrir o rascunho lá.
 
 ---
 
-### User Story 3 - Publicar no horário, com as regras da TikTok (Priority: P2)
+### User Story 3 - Publicar no horário, com as regras da TikTok (Priority: P1)
 
 Num conteúdo aprovado, o dono escolhe **Publicar no horário**. Antes de confirmar, o SociMan mostra o
 aviso da situação do app ("sem auditoria da TikTok, o post sai **só para você** e a conta precisa

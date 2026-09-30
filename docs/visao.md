@@ -93,10 +93,12 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 11. `011-scripts`: roteiros por cena e avatar.
 12. `012-produtos-shop`
 13. `013-importacao`: migrar `../shared/perfis/*` e `../shared/shop/*` para o banco.
-14. `014-central-de-conteudos` 📝 **especificada** (`specs/014-central-de-conteudos/`, 2026-09-29): tela
-   Conteúdos com todo vídeo publicável (cortes, vídeos próprios e, depois, avatar/afiliado), estado por
-   conta, aprovação (donos aprovam, membros pedem), agendamento com 4 modos (lembrete, criar rascunho,
-   publicar, rascunho e publicar; só o lembrete executa aqui) e agendamento em sequência.
-15. `015-tiktok-rascunho` 📝 **especificada** (`specs/015-tiktok-rascunho/`, 2026-09-29; constitution 4.0.0): conectar contas TikTok
-   (só donos; login pelo IP da casa com fallback localhost) e executar "criar rascunho" no horário.
-   Depois, YouTube/Instagram. Pesquisa em `docs/pesquisa/publicacao-redes.md`.
+14. `014-central-de-conteudos` ✅ **implementada** (`specs/014-central-de-conteudos/`, 2026-09-30). Tela Conteúdos com todo
+   vídeo publicável (cortes, vídeos próprios; depois avatar/afiliado), estado por conta, aprovação (donos aprovam,
+   membros pedem), agendamento com modos, intervalo mínimo por conta, sequência com prévia, e a proposta do
+   OpenShorts (título, descrição, gancho) pré-preenchendo os textos.
+15. `015-tiktok-rascunho` ✅ **implementada** (`specs/015-tiktok-rascunho/`, 2026-09-30; constitution 4.0.0): conectar
+   contas TikTok (só donos, login pelo IP da casa), **criar rascunho** e **publicar** no horário ou "agora",
+   com legenda obrigatória (descrição + hashtags), sem envio duplicado e com interruptor geral. Teste real no
+   sandbox: rascunho entregue no app (`SEND_TO_USER_INBOX`). Publicar sai só "Só eu" até a auditoria da TikTok.
+   Pesquisa em `docs/pesquisa/publicacao-redes.md`.

@@ -56,6 +56,15 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 - **Edge:** as rotas de upload grande têm `location` própria no `default.conf.template`: cortes com 520m e sem buffering, fontes com 11m. `/api/midia/` sem buffering.
 - **Gancho:** quem queima é o SociMan. Ao gerar cortes no OpenShorts, **não** use `auto_hook` (a exportação traz `openshorts.hook.enabled=false`).
 
+## Central de conteúdos (desde a spec 014)
+- **Conteúdo** (`conteudos`) é todo vídeo publicável; na origem `corte`, `conteudos.id = cortes.id`. O vídeo próprio (`video_proprio`) fica em `sociman-videos/conteudos/<id>/`.
+- **Destino** = uma linha de `postagens` (conteúdo × conta; `entity_type` continua `"postagem"`). O estado efetivo (`a_postar`, `atrasado`, `atencao`, `em_revisao`…) só é calculado em `conteudos/consulta.py`; nunca é gravado.
+- **Só `lembrete` executa.** Os CHECKs `ck_postagens_modo_014` e `ck_postagens_estados_015` barram os modos automáticos no banco (a 015 os remove).
+- Aprovar e recusar (com motivo): só dono. Agendar, reagendar e cancelar: dono e membro, com o destino aprovado (o dono aprova e agenda no mesmo passo; o membro vê "Pedir aprovação").
+- **Intervalo mínimo por conta** (`contas.intervalo_min_minutos`, padrão 30, só dono muda): a sequência **pula** o conflito; o agendamento individual **avisa** (409 `intervalo_conflito`) e aceita `ignorarIntervalo: true`, registrado no histórico.
+- As rotas de postagem da 006 (`/api/cortes/{id}/postagens`, `/api/postagens/{id}…`) foram removidas: use `/api/conteudos`, `/api/destinos` e `/api/agendamentos`.
+- **Edge:** o vídeo próprio (`/api/perfis/{id}/conteudos/arquivo`) tem `location` própria com 2100m e sem buffering, como o envio avulso.
+
 ## Cortes com o OpenShorts (desde a spec 006)
 - **Pacotes:** `canais/` (canais-fonte, cliente do YouTube, sync, cota, pontuação), `envios/` (seleção, padrões de corte, envio, cliente do OpenShorts, acompanhamento, importação), `postagem/` (textos com o Claude, postagens, lembretes), `notificacoes/` e `integracoes.py`. Rotas `/api/canais`, `/api/videos-fonte`, `/api/envios`, `/api/postagens`, `/api/calendario`, `/api/notificacoes`, `/api/integracoes`. **Sem "youtube" nem "tiktok" em rotas e operationIds** (guarda do princípio I).
 - **Serviço `agendador`** (`sociman agendador`, mesma imagem da API, advisory lock no PG): 4 trilhas (`sync`, `openshorts`, `importacao`, `lembretes`). Logs: `docker compose logs -f agendador`; depois de mudar esse código, `docker compose restart agendador`.
@@ -80,6 +89,15 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 - **Aplicar salva só o campo** (1 clique) pelo save normal da tela, com `ia: [{ tipoCampo, chamadaId, itens? }]` no corpo (`PATCH` de asset, perfil e postagem, `PUT` do kit com os tokens **salvos**, `POST` que cria a postagem). O `ia.aplicacao.marcar` roda antes do `history.record` e grava `details.ia` (o selo "com ajuda da IA"); o autor continua o humano. Gerar nunca salva. As outras alterações não salvas continuam no formulário.
 - **Bordões e séries** usam o formato `sugestoes` (marcar, "Gerar mais" com aceitos e rejeitados da sessão, lista do kit ≤ 20). Hashtags são `lista`; "Sugerir textos" da postagem é `textos_postagem`.
 - **`ANTHROPIC_BASE_URL`** (vazio = padrão do SDK) só é usado no e2e, apontando para o `openshorts-fake` (`POST /v1/messages`: "lento" e "fora do limite" na instrução ativam os modos de erro). As rotas de sugestões da 006 (`/api/cortes/{id}/sugestoes`) ficam `deprecated`.
+
+## Publicação no TikTok (desde a spec 015)
+- **`publicacao/` é o único pacote que fala com rede social:** só `publicacao/tiktok/` (cliente com lista fechada `ALLOWED`, OAuth, executor, erros em pt-BR) e só `publicacao/registro.py` o importa. A trilha `publicacao` do agendador executa os modos `criar_rascunho` e `publicar`; `lembrete` continua na 014.
+- **Interruptor em dois níveis:** `PUBLICACAO_HABILITADA` no `.env` (padrão `false`) **e** o botão "Envios automáticos" em `/app/configuracoes/publicacao`. Com qualquer um desligado, nenhum init e nenhuma parte sai (o destino aparece "Pausado"); vencido há mais de 1 h só sai com "Confirmar envio agora".
+- **`SOCIMAN_TOKENS_KEY`** (AES-256-GCM dos tokens) é gerada pelo **dono**, nunca impressa, e a linha fica guardada junto do backup do banco (sem ela, reconectar as contas). Rotação: `SOCIMAN_TOKENS_KEY_ANTERIOR` + `sociman tokens recifrar`.
+- **`RequireHumanOwner`** (`auth/deps.py`): conectar, agendar em modo automático, cancelar, tentar de novo, confirmar envio e o interruptor são só de dono humano; outro ator → 403 `somente_humano` + evento `publicacao_recusada`.
+- **Nunca repetir o `init` sem humano:** resposta perdida no init vira `incerta` ("a TikTok pode ter recebido"), e "Tentar de novo" exige "Conferi no app e o rascunho não chegou".
+- **Login:** Web pelo IP da casa (`https://192.168.86.47:8543/app/conexoes/retorno`, aceito pelo portal) e Desktop com PKCE pelo `localhost` (`http://localhost:8180/app/conexoes/retorno`, reserva). A API escolhe pelo `Host`.
+- **Testes:** pytest com `tests/fakes/tiktok_fake.py`; no e2e, a TikTok falsa é o `openshorts-fake` (`/tiktok/v2/...`, inspeção e falhas em `/tiktok-e2e/*`), o login do navegador é interceptado (`interceptarLoginTikTok`) e os hosts reais da TikTok apontam para 127.0.0.1 na stack e2e. O teste real é **manual, com o dono** (quickstart §2 a §4).
 
 ## Armadilhas
 1. **Containers rodam como UID 1000.** Se uma pasta de bind mount não existir, o Docker a cria como root (foi o que aconteceu com `docker/certs`). Crie antes.
