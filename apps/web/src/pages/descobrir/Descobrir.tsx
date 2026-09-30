@@ -8,7 +8,7 @@
  *   publicação, views, views/h, pontuação e o motivo em uma linha ("Por quê?" abre a conta).
  * - "Selecionar" em um clique, desfazível (toast com "Desfazer"); marcar vários e "Selecionar N".
  * - "Colar link" e "Enviar arquivo" para avulsos.
- * - Barra fixa "N selecionados para <perfil> → Enviar para corte" (abre o EnviarDialog).
+ * - Barra fixa "N selecionados para <perfil> → Gerar cortes" (abre o EnviarDialog).
  */
 import { ApiError } from "@sociman/contract";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -133,7 +133,7 @@ export default function Descobrir() {
   const rows = useMemo(() => videos.data?.pages.flatMap((p) => p.items) ?? [], [videos.data]);
   const total = videos.data?.pages[0]?.total;
 
-  // Selecionados do perfil (envios em "selecionado"): alimentam a barra fixa e o diálogo de envio.
+  // Selecionados do perfil (envios em "selecionado"): alimentam a barra fixa e o diálogo de geração.
   const selecionados = useQuery({
     queryKey: enviosKey({ perfilId, status: ["selecionado"] }),
     queryFn: () => api.envios.list({ perfilId, status: ["selecionado"], limit: 100 }),
@@ -205,7 +205,7 @@ export default function Descobrir() {
     if (ok > 0) toast.success(ok === 1 ? "1 vídeo selecionado." : `${ok} vídeos selecionados.`);
     if (skipped.length > 0) {
       toast.info(`${skipped.length} ${skipped.length === 1 ? "vídeo ficou" : "vídeos ficaram"} de fora`, {
-        description: "Já selecionados, já enviados ou indisponíveis. Selecione um por um para confirmar duplicados.",
+        description: "Já selecionados, já com cortes gerados ou indisponíveis. Selecione um por um para confirmar duplicados.",
       });
     }
   }
@@ -472,7 +472,7 @@ export default function Descobrir() {
             </Button>
             <Button size="sm" className="tone-primary" onClick={() => setEnviar(true)}>
               <Scissors aria-hidden="true" />
-              Enviar para corte
+              Gerar cortes
             </Button>
           </div>
         </div>
@@ -489,8 +489,8 @@ export default function Descobrir() {
       <AlertDialog open={duplicado !== null} onOpenChange={(open) => !open && setDuplicado(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Este vídeo já foi enviado para {perfil?.name ?? "este perfil"}</AlertDialogTitle>
-            <AlertDialogDescription>{duplicado?.title}. Selecionar de novo gera outro envio para corte.</AlertDialogDescription>
+            <AlertDialogTitle>Este vídeo já teve cortes gerados para {perfil?.name ?? "este perfil"}</AlertDialogTitle>
+            <AlertDialogDescription>{duplicado?.title}. Selecionar de novo cria outra geração de cortes.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>

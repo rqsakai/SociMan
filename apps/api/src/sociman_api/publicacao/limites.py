@@ -23,6 +23,10 @@ from sociman_api.redis import get_redis
 
 # Um abaixo dos limites da TikTok (6 init, 30 status e 20 creator_info por minuto e token).
 TAXAS = {"init": 5, "status": 29, "creator_info": 19}
+# Spec 016 (R18): leitura das métricas, 120 por minuto, por token e **por endpoint** (a TikTok
+# permite 600). O `status/fetch` do vínculo usa a chave "status", compartilhada com a trilha.
+TAXAS["leitura"] = 120
+LEITURA = ("user_info", "video_list", "video_query")
 RASCUNHOS_24H = 5
 JANELA = timedelta(hours=24)
 
@@ -32,8 +36,9 @@ def _chave(conexao_id: uuid.UUID, endpoint: str, minuto: int) -> str:
 
 
 def consumir(conexao_id: uuid.UUID, endpoint: str, agora: float | None = None) -> bool:
-    """Reserva um pedido no minuto atual. False = a taxa estourou (não chamar a rede)."""
-    limite = TAXAS[endpoint]
+    """Reserva um pedido no minuto atual. False = a taxa estourou (não chamar a rede). Os
+    endpoints de `LEITURA` têm contador próprio, com o limite `TAXAS["leitura"]`."""
+    limite = TAXAS["leitura"] if endpoint in LEITURA else TAXAS[endpoint]
     minuto = int((time.time() if agora is None else agora) // 60)
     chave = _chave(conexao_id, endpoint, minuto)
     r = get_redis()

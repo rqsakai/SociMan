@@ -19,7 +19,7 @@ export const direitoHint: Record<Direito, string> = {
   proprio: "O canal é da agência ou do dono.",
   parceiro: "Há acordo com o dono do canal.",
   programa_de_cortes: "O canal tem programa aberto de cortes.",
-  sem_acordo: "Sem acordo registrado: o envio mostra o aviso de direito.",
+  sem_acordo: "Sem acordo registrado: a geração mostra o aviso de direito.",
 };
 
 export const syncLabel: Record<CanalSyncStatus, string> = {

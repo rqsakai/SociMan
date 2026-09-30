@@ -54,7 +54,7 @@ PIPELINE = (Etapa.baixando, Etapa.transcrevendo, Etapa.escolhendo_momentos,
             Etapa.processando_clipes)  # as etapas de um job `processing` no OpenShorts
 
 ROTULO: dict[Etapa, str] = {
-    Etapa.fila: "Na fila do OpenShorts",
+    Etapa.fila: "Na fila do SociShorts",
     Etapa.baixando: "Baixando o vídeo",
     Etapa.transcrevendo: "Transcrevendo o vídeo",
     Etapa.escolhendo_momentos: "Escolhendo os momentos",
@@ -279,8 +279,8 @@ def interpretar(status: Any, anterior: Etapa | None = None) -> Progresso:
                          progresso_geral=geral(Etapa.importando, 0))
     if estado == "failed":
         linha = _ultima_linha(logs)
-        return Progresso(Etapa.erro, mensagem=(f"O OpenShorts falhou: {linha}" if linha
-                                               else "O OpenShorts falhou"))
+        return Progresso(Etapa.erro, mensagem=(f"O SociShorts falhou: {linha}" if linha
+                                               else "O SociShorts falhou"))
 
     st = _ler_logs(logs)
     assert st.prontos is not None and st.falhos is not None
@@ -385,9 +385,9 @@ def publico(envio: Any) -> Publico:
         return Publico(Etapa.erro, None, None, envio.clipes_previstos,
                        envio.error_message or ROTULO[Etapa.erro])
     if status == "na_fila":
-        return Publico(Etapa.fila, None, None, None, "Enviando ao OpenShorts")
+        return Publico(Etapa.fila, None, None, None, "Enviando ao SociShorts")
     if status == "aguardando_openshorts":
-        return Publico(Etapa.fila, None, None, None, "Aguardando o OpenShorts voltar")
+        return Publico(Etapa.fila, None, None, None, "Aguardando o SociShorts voltar")
     if status not in ("processando", "importando"):
         return Publico(None, None, None, None, None)
     etapa = Etapa(envio.etapa) if envio.etapa in ETAPAS else None

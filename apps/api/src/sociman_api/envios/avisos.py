@@ -45,8 +45,8 @@ def notificar(db: Session, envio: Envio, tipo: NotificacaoTipo, titulo: str,
 def momentos(db: Session, envio: Envio) -> int:
     """A única transição do meio do processamento que vai para o sino (FR-010a)."""
     n = envio.clipes_previstos
-    corpo = (f"{n} clipe{'s' if n != 1 else ''} em produção no OpenShorts" if n
-             else "Os clipes estão em produção no OpenShorts")
+    corpo = (f"{n} clipe{'s' if n != 1 else ''} em produção no SociShorts" if n
+             else "Os clipes estão em produção no SociShorts")
     return notificar(db, envio, NotificacaoTipo.envio_momentos,
                      f"Momentos escolhidos: {_titulo(envio)}", corpo)
 
@@ -79,7 +79,7 @@ def openshorts_fora(db: Session, desde: datetime, envios: Iterable[Envio]) -> in
     for envio in envios:
         destinatarios += notificacoes.destinatarios_padrao(db, autor(envio))
     return notificacoes.criar(
-        db, NotificacaoTipo.openshorts_fora, "O OpenShorts está fora do ar",
+        db, NotificacaoTipo.openshorts_fora, "O SociShorts está fora do ar",
         "Os envios continuam na fila e voltam sozinhos quando ele responder.", "/app/envios",
         None, f"openshorts_fora:{desde.isoformat()}", destinatarios,
     )

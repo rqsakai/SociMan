@@ -67,7 +67,7 @@ BACKOFF_S = 30  # × tentativas
 HD_ESPERA_S = 60
 FORA_ESPERA_S = 30
 TRANSCRICAO_MAX = 4000
-EXPIRADOS = "Os clipes expiraram no OpenShorts"
+EXPIRADOS = "Os clipes expiraram no SociShorts"
 FALHOU = "Não foi possível importar os clipes ({motivo}); use \"Importar de novo\""
 TOLERANCIA_TRECHO_MS = 1000
 _CLIP_N = re.compile(r"_clip_(\d+)\.\w+$")
@@ -293,7 +293,7 @@ def importar(db: Session, client: OpenShortsClient, envio: Envio) -> None:
     clips = [c for c in (result.get("clips") or []) if isinstance(c, dict)] \
         if isinstance(result, dict) else []
     if not clips:
-        _erro(db, envio, "o OpenShorts não devolveu os clipes", agora)
+        _erro(db, envio, "o SociShorts não devolveu os clipes", agora)
         return
     envio.clips_total = len(clips)
     envio.clipes_previstos = len(clips)

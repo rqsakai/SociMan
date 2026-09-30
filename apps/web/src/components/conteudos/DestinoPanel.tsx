@@ -2,11 +2,15 @@
  * Destinos de um conteúdo (spec 014; evolução do PostagemSection da 006). Usado no detalhe do
  * conteúdo e no detalhe do corte (o id é o mesmo, R1).
  *
- * <DestinosSection conteudo conta? onContaChange? onChanged />
+ * <DestinosSection conteudo conta? onContaChange? onChanged destaque? acoes? desempenho? />
  *   Uma aba por conta de destino (`conta`/`onContaChange` ligam a aba ao `?conta=` da URL),
  *   "Adicionar conta" (cria o destino pendente) e, em cada aba, o <DestinoPanel>.
+ *   spec 018: `destaque` (detalhe do conteúdo) vira o bloco "Contas" da coluna da esquerda, em
+ *   vermelho (token destrutivo) com "Obrigatório" quando o post não tem conta; `acoes` entram ao
+ *   lado de "Adicionar conta"; `desempenho={false}` tira o <DesempenhoDestino> do painel (o detalhe
+ *   o mostra na coluna da direita).
  *
- * <DestinoPanel conteudo destino onChanged />
+ * <DestinoPanel conteudo destino onChanged desempenho? />
  *   - textos (título, descrição, hashtags) com o assistente de IA da 008; editar depois da
  *     aprovação não desfaz a aprovação (Q2 = A);
  *   - aprovação: "Pedir aprovação" (com nota), "Aprovar" e "Recusar" (com motivo) só para dono; a
@@ -17,6 +21,8 @@
  * Nada é publicado (princípio I): no horário, o SociMan avisa no sino e o humano posta.
  * spec 015: nos modos automáticos, o <ExecucaoStatus> mostra o envio (enviando, rascunho criado,
  * falhou, pausado, vencido, aguardando vaga) com as ações do dono e o histórico do envio.
+ * spec 016: na TikTok, a seção "Desempenho" (<DesempenhoDestino>) mostra a curva, os marcos e o
+ * vínculo com o post.
  */
 import type { Conteudo, Destino } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,7 +44,7 @@ import {
   TriangleAlert,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -55,6 +61,7 @@ import { VersionHistory } from "@/components/VersionHistory";
 import { IaAssist } from "@/components/ia/IaAssist";
 import { EnviarAgora } from "@/components/publicacao/EnviarAgora";
 import { ExecucaoStatus } from "@/components/publicacao/ExecucaoStatus";
+import { DesempenhoDestino } from "@/components/metricas/DesempenhoDestino";
 import { LegendaFinal } from "@/components/publicacao/LegendaFinal";
 import { api } from "@/lib/api";
 import { destinoVersionsKey, estadoEfetivoTone, invalidarConteudos, propostaDe, useEhDono } from "@/lib/conteudos";
@@ -93,11 +100,17 @@ export function DestinosSection({
   conta,
   onContaChange,
   onChanged,
+  destaque = false,
+  acoes,
+  desempenho = true,
 }: {
   conteudo: Conteudo;
   conta?: string | null;
   onContaChange?: (contaId: string) => void;
   onChanged: () => Promise<void>;
+  destaque?: boolean;
+  acoes?: ReactNode;
+  desempenho?: boolean;
 }) {
   const perfil = useQuery({ queryKey: perfilKey(conteudo.perfil.id), queryFn: () => api.perfis.get(conteudo.perfil.id) });
   const ativos = conteudo.destinos.filter((d) => !d.archived);
@@ -129,31 +142,49 @@ export function DestinosSection({
     }
   }
 
+  const obrigatorio = destaque && ativos.length === 0 && !conteudo.archived;
+
   return (
-    <Card className="shadow-card">
+    <Card
+      className={cn("shadow-card", destaque && "border-2 border-primary/40", obrigatorio && "border-destructive bg-destructive/10")}
+      aria-labelledby={destaque ? "bloco-contas" : undefined}
+    >
       <CardHeader>
         <CardTitle>
-          <h2>Contas de destino</h2>
+          <h2 id={destaque ? "bloco-contas" : undefined} className={cn(destaque && "text-lg")}>
+            {destaque ? "Contas" : "Contas de destino"}
+          </h2>
         </CardTitle>
         <CardDescription>
           Aprovação, textos e agendamento por conta. O SociMan não publica: na hora, ele avisa no sino e você posta.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!conteudo.archived && livres.length > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setAdding(livres[0]?.id ?? "");
-              setError(null);
-              setAddOpen(true);
-            }}
-          >
-            <Plus aria-hidden="true" />
-            Adicionar conta
-          </Button>
+        {obrigatorio && (
+          <p role="note" className="flex items-center gap-2 rounded-md border border-destructive px-3 py-2 text-sm font-medium text-destructive">
+            <TriangleAlert className="size-4 shrink-0" aria-hidden="true" />
+            Obrigatório: escolha ao menos uma conta para este post
+          </p>
+        )}
+        {((!conteudo.archived && livres.length > 0) || acoes) && (
+          <div className="flex flex-wrap gap-2">
+            {!conteudo.archived && livres.length > 0 && (
+              <Button
+                type="button"
+                variant={obrigatorio ? "destructive" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setAdding(livres[0]?.id ?? "");
+                  setError(null);
+                  setAddOpen(true);
+                }}
+              >
+                <Plus aria-hidden="true" />
+                Adicionar conta
+              </Button>
+            )}
+            {acoes}
+          </div>
         )}
         <Dialog open={addOpen} onOpenChange={setAddOpen}>
           <DialogContent>
@@ -187,7 +218,7 @@ export function DestinosSection({
         {perfil.isSuccess && contasAtivas.length === 0 && ativos.length === 0 && (
           <p className="text-sm text-muted-foreground">Este perfil não tem contas ativas. Cadastre uma na aba Contas do perfil.</p>
         )}
-        {ativos.length === 0 && contasAtivas.length > 0 && (
+        {ativos.length === 0 && contasAtivas.length > 0 && !obrigatorio && (
           <p className="text-sm text-muted-foreground">Sem conta de destino ainda. Adicione uma conta ou use "Agendar".</p>
         )}
         {ativos.length > 0 && (
@@ -202,8 +233,8 @@ export function DestinosSection({
               ))}
             </TabsList>
             {ativos.map((d) => (
-              <TabsContent key={d.conta.id} value={d.conta.id}>
-                <DestinoPanel key={`${d.id}-${d.version}`} conteudo={conteudo} destino={d} onChanged={onChanged} />
+              <TabsContent key={d.conta.id} value={d.conta.id} className={cn(destaque && "rounded-lg border bg-card p-3")}>
+                <DestinoPanel key={`${d.id}-${d.version}`} conteudo={conteudo} destino={d} onChanged={onChanged} desempenho={desempenho} />
               </TabsContent>
             ))}
           </Tabs>
@@ -221,7 +252,17 @@ interface Rascunho {
 
 const EDITAVEL: DestinoEstado[] = ["pendente", "aprovacao_pedida", "aprovado", "agendado"];
 
-export function DestinoPanel({ conteudo, destino, onChanged }: { conteudo: Conteudo; destino: Destino; onChanged: () => Promise<void> }) {
+export function DestinoPanel({
+  conteudo,
+  destino,
+  onChanged,
+  desempenho = true,
+}: {
+  conteudo: Conteudo;
+  destino: Destino;
+  onChanged: () => Promise<void>;
+  desempenho?: boolean;
+}) {
   const queryClient = useQueryClient();
   const dono = useEhDono();
   const rebase = useFormRebase<Partial<Rascunho>>(`destino:${destino.id}`);
@@ -410,6 +451,8 @@ export function DestinoPanel({ conteudo, destino, onChanged }: { conteudo: Conte
         <p className="text-sm text-muted-foreground">Os textos de uma publicação agendada só um dono muda: a mudança vale como nova confirmação do que vai para a rede.</p>
       )}
       <ExecucaoStatus conteudo={conteudo} destino={destino} onChanged={onChanged} onPostado={() => setPostadoOpen(true)} onReagendar={() => setAgendarOpen(true)} />
+      {/* spec 016: curva, marcos e vínculo com o post na TikTok */}
+      {desempenho && <DesempenhoDestino destino={destino} onChanged={onChanged} />}
 
       {/* Aprovação e agendamento */}
       {editavel && (
@@ -511,7 +554,7 @@ export function DestinoPanel({ conteudo, destino, onChanged }: { conteudo: Conte
       >
         {(botao) => (
           <div className="flex flex-wrap justify-end gap-2">
-            {/* T075: textos vazios → "Usar proposta do OpenShorts" preenche o formulário (salvar é com "Salvar textos"). */}
+            {/* T075: textos vazios → "Usar proposta do SociShorts" preenche o formulário (salvar é com "Salvar textos"). */}
             {proposta && editavel && (tiktok || !titulo.trim()) && !descricao.trim() && (
               <Button
                 type="button"
@@ -523,7 +566,7 @@ export function DestinoPanel({ conteudo, destino, onChanged }: { conteudo: Conte
                 }}
               >
                 <ClipboardPaste aria-hidden="true" />
-                Usar proposta do OpenShorts
+                Usar proposta do SociShorts
               </Button>
             )}
             {botao}

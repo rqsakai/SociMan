@@ -83,10 +83,17 @@ class Settings(BaseSettings):
     tiktok_app_situacao: Literal["sandbox", "auditado"] = "sandbox"
     tiktok_redirect_web: str = ""
     tiktok_redirect_desktop: str = ""
-    tiktok_scopes: str = "user.info.basic,user.info.profile,video.upload,video.publish"
+    # Spec 016 (R1): + `user.info.stats,video.list` no fim (métricas; opcionais na conexão).
+    tiktok_scopes: str = (
+        "user.info.basic,user.info.profile,video.upload,video.publish,user.info.stats,video.list")
     tiktok_api_url: str = ""  # só o e2e aponta para o fake
     tiktok_upload_hosts: str = ""  # hosts extras para o PUT das partes, separados por vírgula
     agendador_publicacao_s: float = Field(15, gt=0)
+
+    # Métricas das redes (spec 016, R3): a trilha `metricas` só lê. `false` pausa a coleta sem
+    # desconectar (desconectar anonimiza, Q4 = A).
+    metricas_coleta_habilitada: bool = True
+    agendador_metricas_s: int = Field(60, gt=0)
 
     @model_validator(mode="after")
     def _jwt_secret(self) -> "Settings":

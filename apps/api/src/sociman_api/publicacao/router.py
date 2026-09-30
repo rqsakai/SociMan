@@ -72,11 +72,16 @@ def conexao_retorno(body: schemas.RetornoIn, actor: RequireHumanOwner, db: DbSes
 
 @router.post("/contas/{conta_id}/conexao/desconectar", operation_id="conexoes_desconectar",
              response_model=schemas.DesconectarOut, responses=_errors(400, 401, 403, 404, 409))
-def conexao_desconectar(conta_id: UUID, body: VersionIn, actor: RequireHumanOwner,
-                        db: DbSession, client: Cliente) -> schemas.DesconectarOut:
-    conta, em_atencao = conexoes.desconectar(db, actor, conta_id, body.version, client)
+def conexao_desconectar(conta_id: UUID, body: schemas.DesconectarIn,
+                        actor: RequireHumanOwner, db: DbSession,
+                        client: Cliente) -> schemas.DesconectarOut:
+    conta, em_atencao, anonimizadas = conexoes.desconectar(
+        db, actor, conta_id, body.version, client, body.confirmo_anonimizar)
+    metricas = schemas.MetricasAnonimizadas(videos=anonimizadas[0], fotos=anonimizadas[1]) \
+        if anonimizadas is not None else None
     return schemas.DesconectarOut(conexao=conexoes.conexao_out(db, conta, None),
-                                  agendamentos_em_atencao=em_atencao)
+                                  agendamentos_em_atencao=em_atencao,
+                                  metricas_anonimizadas=metricas)
 
 
 @router.get("/contas/{conta_id}/conexao/criador", operation_id="conexoes_criador",

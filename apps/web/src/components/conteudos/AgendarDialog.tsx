@@ -13,7 +13,7 @@
  * - 409 `intervalo_conflito` (Q3): mostra os posts próximos e o intervalo mínimo da conta, com
  *   "Manter mesmo assim" (reenvia com `ignorarIntervalo: true`) e "Escolher outro horário".
  * - spec 015 (US2): "Criar rascunho no horário" com a conta conectada (só dono; o membro vê o modo
- *   desabilitado), aviso do sandbox e de "Envios automáticos" desligado (fica pausado), avisos da
+ *   desabilitado), aviso do sandbox e de "Publicação automática" desligada (fica pausado), avisos da
  *   rede depois de agendar e, num envio que falhou, "Reagendar" com a caixa "Conferi no app e o
  *   rascunho não chegou" quando a falha é incerta. "Publicar no horário" fica para a US3.
  */
@@ -240,7 +240,7 @@ export function AgendarDialog({
     for (const a of avisos ?? []) toast.warning(a, { duration: 10_000 });
   }
 
-  // "Enviar agora" (T100): usa o destino desta conta (criado aqui se ainda não existe), gravando antes
+  // "Enviar rascunho agora" (T100): usa o destino desta conta (criado aqui se ainda não existe), gravando antes
   // os textos editados no diálogo.
   async function destinoParaEnviar(): Promise<{ id: string; version: number }> {
     const t = textosMudaram || ia.length > 0 ? { ...textos, ...(ia.length > 0 ? { ia } : {}) } : {};
@@ -360,7 +360,7 @@ export function AgendarDialog({
               {automatico && cfg && !enviosLigados(cfg) && (
                 <Alert>
                   <CirclePause aria-hidden="true" />
-                  <AlertTitle>Envios automáticos desligados: vai ficar pausado</AlertTitle>
+                  <AlertTitle>Publicação automática desligada: vai ficar pausado</AlertTitle>
                   <AlertDescription>{enviosDesligadosTexto(cfg)} No horário, o envio fica "Pausado" até os envios serem ligados.</AlertDescription>
                 </Alert>
               )}

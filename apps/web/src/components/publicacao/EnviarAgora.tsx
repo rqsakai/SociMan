@@ -1,8 +1,8 @@
 /*
- * "Enviar agora" (spec 015, emenda do dono; T100): envia o rascunho para a conta na próxima volta do
+ * "Enviar rascunho agora" (spec 015, emenda do dono; T100): envia o rascunho para a conta na próxima volta do
  * agendador, sem escolher horário. Só para o dono humano e só quando a conta oferece um modo
  * automático (hoje "Criar rascunho"). Confirma num AlertDialog; se a última falha foi incerta, exige
- * "Conferi no app e o rascunho não chegou"; avisa quando os envios automáticos estão desligados.
+ * "Conferi no app e o rascunho não chegou"; avisa quando a publicação automática está desligada.
  *
  * <EnviarAgora contaId handle falhaIncerta? modo? opcoes? destino={() => Promise<{ id, version }>} onDone />
  *   `destino` devolve o destino a enviar (o AgendarDialog cria um quando a conta ainda não tem).
@@ -69,7 +69,7 @@ export function EnviarAgora({
   const cfg = config.data?.config;
   const arroba = `@${handle.replace(/^@/, "")}`;
   const publicar = modo === "publicar";
-  const rotulo = publicar ? "Publicar agora" : "Enviar agora";
+  const rotulo = publicar ? "Publicar agora" : "Enviar rascunho agora";
   const sandbox = cfg?.situacaoApp === "sandbox";
 
   async function enviar() {
@@ -126,7 +126,7 @@ export function EnviarAgora({
           {cfg && !enviosLigados(cfg) && (
             <Alert>
               <CirclePause aria-hidden="true" />
-              <AlertTitle>Envios automáticos desligados</AlertTitle>
+              <AlertTitle>Publicação automática desligada</AlertTitle>
               <AlertDescription>{enviosDesligadosTexto(cfg)} O envio fica "Pausado" até ligar.</AlertDescription>
             </Alert>
           )}

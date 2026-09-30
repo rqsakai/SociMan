@@ -32,12 +32,12 @@ function formatCorteValue(field: string, value: unknown): string {
   return value === null || value === undefined ? "—" : String(value);
 }
 
-// spec 006: origem (OpenShorts, canal, trecho, direito no envio), "Em revisão" com "Aplicar marca",
+// spec 006: origem (OpenShorts, canal, trecho, direito na geração), "Em revisão" com "Aplicar marca",
 // Arquivar/Restaurar. spec 014: o painel de destinos do conteúdo (mesmo id do corte), com "Agendar"
 // no corte pronto, no lugar da seção Postagem da 006.
 // /app/cortes/:id (US4, T027): status com polling de 2 s enquanto está na fila ou processando;
 // player com o resultado (ou o original enquanto não fica pronto) por link de mídia assinado;
-// "Baixar", "Baixar original", "Tentar de novo" (só em "Falhou") e os detalhes do envio (FR-017).
+// "Baixar", "Baixar original", "Tentar de novo" (só em "Falhou") e os detalhes da geração (FR-017).
 export default function CorteDetalhe() {
   const { id = "" } = useParams();
   const queryClient = useQueryClient();
@@ -208,7 +208,7 @@ export default function CorteDetalhe() {
               </CardTitle>
               <CardDescription className="flex flex-wrap items-center gap-2">
                 {c.archived ? <Badge className="bg-dark text-dark-foreground">Arquivado</Badge> : <CorteStatusBadge corte={c} />}
-                {c.origem === "openshorts" && <Badge variant="outline">OpenShorts</Badge>}
+                {c.origem === "openshorts" && <Badge variant="outline">SociShorts</Badge>}
                 <span>
                   {c.kitVersion === null || c.kitVersion === undefined
                     ? "Sem a marca ainda"
@@ -223,7 +223,7 @@ export default function CorteDetalhe() {
                   <Stamp aria-hidden="true" />
                   <AlertTitle>Em revisão</AlertTitle>
                   <AlertDescription>
-                    <p>Clipe do OpenShorts sem a marca. Aplique a marca do kit para poder agendar a postagem.</p>
+                    <p>Clipe do SociShorts sem a marca. Aplique a marca do kit para poder agendar a postagem.</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       <Button
                         type="button"
@@ -268,10 +268,10 @@ export default function CorteDetalhe() {
                   <Detail label="Origem">
                     {c.envioId ? (
                       <Link to={`/app/envios/${c.envioId}`} className="inline-flex items-center gap-1 underline">
-                        OpenShorts, clipe {(c.clipIndex ?? 0) + 1} <ExternalLink className="size-3" aria-hidden="true" />
+                        SociShorts, clipe {(c.clipIndex ?? 0) + 1} <ExternalLink className="size-3" aria-hidden="true" />
                       </Link>
                     ) : (
-                      "OpenShorts"
+                      "SociShorts"
                     )}
                   </Detail>
                   <Detail label="Canal">{c.canal?.title ?? "Avulso"}</Detail>
@@ -280,12 +280,12 @@ export default function CorteDetalhe() {
                       ? `${formatDuration(c.sourceStartMs)}–${formatDuration(c.sourceEndMs)}`
                       : "—"}
                   </Detail>
-                  <Detail label="Direito no envio">{c.direitoNoEnvio ? <DireitoBadge direito={c.direitoNoEnvio} /> : "—"}</Detail>
-                  <Detail label="Título sugerido pelo OpenShorts">{c.openshortsTitle ?? "—"}</Detail>
-                  <Detail label="Pontuação do OpenShorts">{c.openshortsScore ?? "—"}</Detail>
+                  <Detail label="Direito na geração">{c.direitoNoEnvio ? <DireitoBadge direito={c.direitoNoEnvio} /> : "—"}</Detail>
+                  <Detail label="Título sugerido pelo SociShorts">{c.openshortsTitle ?? "—"}</Detail>
+                  <Detail label="Pontuação do SociShorts">{c.openshortsScore ?? "—"}</Detail>
                   {c.openshortsDescription && (
                     <div className="sm:col-span-2">
-                      <Detail label="Descrição sugerida pelo OpenShorts">
+                      <Detail label="Descrição sugerida pelo SociShorts">
                         <span className="font-normal whitespace-pre-wrap">{c.openshortsDescription}</span>
                       </Detail>
                     </div>

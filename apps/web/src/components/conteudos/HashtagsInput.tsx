@@ -48,7 +48,7 @@ export function HashtagsInput({
             <Badge variant="secondary" className="gap-1 pr-1">
               {t}
               {!readOnly && (
-                <button type="button" aria-label={`Tirar ${t}`} className="rounded-full hover:bg-black/10" onClick={() => onChange(value.filter((x) => x !== t))}>
+                <button type="button" aria-label={`Tirar ${t}`} className="rounded-full hover:bg-foreground/10" onClick={() => onChange(value.filter((x) => x !== t))}>
                   <X className="size-3" aria-hidden="true" />
                 </button>
               )}

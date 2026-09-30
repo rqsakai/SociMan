@@ -148,7 +148,7 @@ export default function CanaisList() {
 
       <HeaderCard
         title="Canais"
-        description="Selo amarelo: sem acordo registrado (o envio mostra o aviso de direito)."
+        description="Selo amarelo: sem acordo registrado (a geração mostra o aviso de direito)."
         actions={
           <Button variant="secondary" size="sm" onClick={() => setAdding(true)}>
             <Plus aria-hidden="true" />

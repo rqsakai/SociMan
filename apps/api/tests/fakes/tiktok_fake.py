@@ -24,7 +24,23 @@ O que existe:
 
 `requests` registra (método, endpoint, detalhes sem segredo) de tudo, para os guardas e o SC-003.
 Endpoints: "token", "revoke", "user_info", "creator_info", "inbox_init", "video_init", "status",
-"put", "avatar".
+"put", "avatar", "video_list" e "video_query".
+
+Spec 016 (T017, research R17), só leitura:
+- `user_info` devolve os campos de stats quando pedidos no `fields` (`seguidores(handle, n)`;
+  sem configurar, 0 seguidores e `video_count` = vídeos públicos);
+- `video_list`: cursor em ms (devolve os criados **antes** dele), `max_count` ≤ 20, `has_more`, só
+  os públicos da conta do token, do mais novo ao mais antigo;
+- `video_query`: até 20 ids, só os vídeos públicos **da conta do token**;
+- os campos do vídeo vêm só os pedidos no `fields` (o `id` vem como número JSON, como na TikTok);
+- controles: `video(handle, id, criado_em, duracao, legenda, publico=True)`,
+  `contadores(id, views=…, likes=…)` (aceita cair), `tornar_privado(id)`/`tornar_publico(id)`,
+  `publicar_rascunho(publish_id, post_id)` (o próximo `status` devolve `PUBLISH_COMPLETE` com
+  `publicaly_available_post_id`, mesmo para um `publish_id` que não saiu deste fake) e
+  `rascunho_na_caixa(publish_id)` (`SEND_TO_USER_INBOX` para um `publish_id` semeado no banco);
+- escopos: um usuário registrado por `usuario(..., escopos=…)` sem `video.list` (ou sem
+  `user.info.stats`, ao pedir stats) recebe `scope_not_authorized`; tokens semeados por
+  `emitir_tokens` sem usuário registrado leem à vontade. `ESCOPOS_016` tem os 6 escopos.
 """
 
 import copy
@@ -32,6 +48,7 @@ import itertools
 import json
 import secrets
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
@@ -44,6 +61,9 @@ FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "tiktok"
 UPLOAD_HOST = "open-upload.tiktokapis.com"
 AVATAR_URL = "https://p16-sign.tiktokcdn-us.com/fake-avatar.jpeg"
 ESCOPOS = "user.info.basic,user.info.profile,video.upload,video.publish"
+ESCOPOS_016 = f"{ESCOPOS},user.info.stats,video.list"  # spec 016: com as métricas
+CAMPOS_STATS = ("follower_count", "following_count", "likes_count", "video_count")
+MAX_VIDEOS = 20
 # PNG 1×1 válido (para o avatar).
 AVATAR_PNG = bytes.fromhex(
     "89504e470d0a1a0a0000000d4948445200000001000000010806000000"
@@ -57,6 +77,8 @@ CAMINHOS = {
     ("POST", "/v2/post/publish/inbox/video/init/"): "inbox_init",
     ("POST", "/v2/post/publish/video/init/"): "video_init",
     ("POST", "/v2/post/publish/status/fetch/"): "status",
+    ("POST", "/v2/video/list/"): "video_list",  # spec 016
+    ("POST", "/v2/video/query/"): "video_query",  # spec 016
 }
 HTTP_DOS_CODIGOS = {
     "access_token_invalid": 401,
@@ -114,6 +136,44 @@ class Envio:
         return self.recebidos == self.video_size
 
 
+@dataclass
+class VideoFake:
+    """Um post da conta `handle` (spec 016)."""
+
+    handle: str
+    id: str
+    criado_em: datetime
+    duracao: int = 30
+    legenda: str = ""
+    titulo: str = ""
+    publico: bool = True
+    views: int | None = 0
+    likes: int | None = 0
+    comments: int | None = 0
+    shares: int | None = 0
+    largura: int = 1080
+    altura: int = 1920
+
+    @property
+    def criado_ms(self) -> int:
+        return int(self.criado_em.timestamp() * 1000)
+
+    def json(self, campos: list[str]) -> dict[str, Any]:
+        completo = {
+            "id": int(self.id) if self.id.isdigit() else self.id,
+            "create_time": int(self.criado_em.timestamp()),
+            "share_url": f"https://www.tiktok.com/@{self.handle}/video/{self.id}",
+            "video_description": self.legenda, "title": self.titulo,
+            "duration": self.duracao, "width": self.largura, "height": self.altura,
+            "view_count": self.views, "like_count": self.likes,
+            "comment_count": self.comments, "share_count": self.shares,
+            "cover_image_url": "https://p16-sign.tiktokcdn-us.com/capa.jpeg",
+            "embed_html": "<blockquote></blockquote>",
+        }
+        # A TikTok omite o contador que não tem: None aqui = campo ausente.
+        return {c: completo[c] for c in campos if c in completo and completo[c] is not None}
+
+
 class TikTokFake:
     def __init__(self) -> None:
         self.usuarios: dict[str, Usuario] = {}  # code → usuário (o code é de uso único)
@@ -132,6 +192,10 @@ class TikTokFake:
         self._falhas: dict[str, list[str]] = {}
         self.falhar_sempre: dict[str, str] = {}
         self.fail_reason_proximo: str | None = None
+        # Spec 016: vídeos e stats por conta, e o destino dos rascunhos (publish_id → post_id).
+        self.videos: dict[str, VideoFake] = {}
+        self.stats: dict[str, dict[str, int]] = {}
+        self.rascunhos: dict[str, str | None] = {}
         self._seq = itertools.count(1)
         self.transport = httpx.MockTransport(self._handle)
 
@@ -168,6 +232,44 @@ class TikTokFake:
 
     def client(self) -> TikTokCliente:
         return TikTokCliente(transport=self.transport)
+
+    # ---- controles da spec 016 ----
+
+    def video(self, handle: str, id: str | int, criado_em: datetime, duracao: int = 30,
+              legenda: str = "", publico: bool = True, **extra: Any) -> VideoFake:
+        v = VideoFake(handle=handle, id=str(id), criado_em=criado_em, duracao=duracao,
+                      legenda=legenda, publico=publico, **extra)
+        self.videos[v.id] = v
+        return v
+
+    def contadores(self, id: str | int, **valores: int | None) -> None:
+        """`views`, `likes`, `comments`, `shares` (podem cair; None = a TikTok omite)."""
+        v = self.videos[str(id)]
+        for nome, valor in valores.items():
+            if nome not in ("views", "likes", "comments", "shares"):
+                raise ValueError(nome)
+            setattr(v, nome, valor)
+
+    def tornar_privado(self, id: str | int) -> None:
+        self.videos[str(id)].publico = False
+
+    def tornar_publico(self, id: str | int) -> None:
+        self.videos[str(id)].publico = True
+
+    def seguidores(self, handle: str, n: int, *, seguindo: int = 0, curtidas: int = 0,
+                   videos: int | None = None) -> None:
+        self.stats[handle] = {"follower_count": n, "following_count": seguindo,
+                              "likes_count": curtidas}
+        if videos is not None:
+            self.stats[handle]["video_count"] = videos
+
+    def rascunho_na_caixa(self, publish_id: str) -> None:
+        """Um `publish_id` (semeado no banco) que está na caixa do app: `SEND_TO_USER_INBOX`."""
+        self.rascunhos.setdefault(publish_id, None)
+
+    def publicar_rascunho(self, publish_id: str, post_id: str | int) -> None:
+        """O dono finalizou o rascunho no app: o `status` passa a `PUBLISH_COMPLETE`."""
+        self.rascunhos[publish_id] = str(post_id)
 
     # ---- respostas ----
 
@@ -219,6 +321,12 @@ class TikTokFake:
                        "source_info": corpo.get("source_info")}
         elif endpoint == "status":
             detalhe = {"publish_id": corpo.get("publish_id")}
+        elif endpoint in ("user_info", "video_list", "video_query"):
+            detalhe = {"fields": _campos(url.query)}
+            if endpoint == "video_list":
+                detalhe.update(cursor=corpo.get("cursor"), max_count=corpo.get("max_count"))
+            elif endpoint == "video_query":
+                detalhe["ids"] = list((corpo.get("filters") or {}).get("video_ids") or [])
         self.requests.append((request.method, endpoint, detalhe))
 
         falha = self._falha(endpoint, request)
@@ -278,6 +386,63 @@ class TikTokFake:
                                      display_name=u.display_name, avatar_url=u.avatar_url)
         if u.username is None:
             dados["data"]["user"].pop("username")
+        pedidos = [c for c in _campos(urlsplit(str(request.url)).query) if c in CAMPOS_STATS]
+        if pedidos:  # spec 016
+            if not self._tem_escopo(open_id, "user.info.stats"):
+                return self._erro("scope_not_authorized")
+            handle = u.username or ""
+            stats = {"follower_count": 0, "following_count": 0, "likes_count": 0,
+                     "video_count": sum(1 for v in self.videos.values()
+                                        if v.handle == handle and v.publico),
+                     **self.stats.get(handle, {})}
+            dados["data"]["user"].update({c: stats[c] for c in pedidos})
+        return self._json(dados)
+
+    # ---- Display API (spec 016) ----
+
+    def _tem_escopo(self, open_id: str, escopo: str) -> bool:
+        u = self.por_open_id.get(open_id)
+        return u is None or escopo in u.escopos.split(",")
+
+    def _publicos_de(self, open_id: str) -> list[VideoFake]:
+        handle = self._usuario_de(open_id).username or ""
+        return sorted((v for v in self.videos.values() if v.handle == handle and v.publico),
+                      key=lambda v: (v.criado_ms, int(v.id) if v.id.isdigit() else 0),
+                      reverse=True)
+
+    def _video_list(self, request, form, corpo) -> httpx.Response:
+        open_id = self._token_de(request)
+        if open_id is None:
+            return self._erro("access_token_invalid")
+        if not self._tem_escopo(open_id, "video.list"):
+            return self._erro("scope_not_authorized")
+        max_count = int(corpo.get("max_count") or MAX_VIDEOS)
+        if not 0 < max_count <= MAX_VIDEOS:
+            return self._erro("invalid_params")
+        cursor = corpo.get("cursor")
+        videos = [v for v in self._publicos_de(open_id)
+                  if cursor is None or v.criado_ms < int(cursor)]
+        pagina = videos[:max_count]
+        campos = _campos(urlsplit(str(request.url)).query)
+        dados = fixture("video_list.json")
+        dados["data"] = {"videos": [v.json(campos) for v in pagina],
+                         "cursor": pagina[-1].criado_ms if pagina else (cursor or 0),
+                         "has_more": len(videos) > len(pagina)}
+        return self._json(dados)
+
+    def _video_query(self, request, form, corpo) -> httpx.Response:
+        open_id = self._token_de(request)
+        if open_id is None:
+            return self._erro("access_token_invalid")
+        if not self._tem_escopo(open_id, "video.list"):
+            return self._erro("scope_not_authorized")
+        ids = [str(i) for i in (corpo.get("filters") or {}).get("video_ids") or []]
+        if not 0 < len(ids) <= MAX_VIDEOS:
+            return self._erro("invalid_params")
+        meus = {v.id: v for v in self._publicos_de(open_id)}  # só os da conta do token
+        campos = _campos(urlsplit(str(request.url)).query)
+        dados = fixture("video_query.json")
+        dados["data"] = {"videos": [meus[i].json(campos) for i in ids if i in meus]}
         return self._json(dados)
 
     # ---- Content Posting ----
@@ -355,10 +520,19 @@ class TikTokFake:
     def _status(self, request, form, corpo) -> httpx.Response:
         if self._token_de(request) is None:
             return self._erro("access_token_invalid")
-        envio = self.envios.get(corpo.get("publish_id", ""))
+        publish_id = corpo.get("publish_id", "")
+        dados = fixture("status.json")
+        if publish_id in self.rascunhos:  # spec 016: o dono finalizou (ou não) no app
+            post_id = self.rascunhos[publish_id]
+            if post_id is None:
+                dados["data"].update(status="SEND_TO_USER_INBOX")
+            else:
+                dados["data"].update(status="PUBLISH_COMPLETE", publicaly_available_post_id=[
+                    int(post_id) if post_id.isdigit() else post_id])
+            return self._json(dados)
+        envio = self.envios.get(publish_id)
         if envio is None:
             return self._erro("invalid_params")
-        dados = fixture("status.json")
         envio.consultas += 1
         if self.fail_reason_proximo and envio.completo:
             envio.fail_reason, self.fail_reason_proximo = self.fail_reason_proximo, None
@@ -372,3 +546,9 @@ class TikTokFake:
         else:
             dados["data"].update(status="SEND_TO_USER_INBOX", uploaded_bytes=envio.recebidos)
         return self._json(dados)
+
+
+def _campos(query: str) -> list[str]:
+    """O `fields` da query string (spec 016), na ordem pedida."""
+    valor = parse_qs(query).get("fields", [""])[0]
+    return [c for c in valor.split(",") if c]

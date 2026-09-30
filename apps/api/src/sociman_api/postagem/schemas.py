@@ -189,6 +189,18 @@ class LoteResultado(CamelModel):
     falhas: list[LoteFalha]
 
 
+class TodasResultado(CamelModel):
+    """Aprovar/desaprovar todas as contas do conteúdo (spec 018): os que mudaram e os que
+    ficaram como estavam, com o motivo."""
+
+    ok: list[Destino]
+    ignorados: list[LoteFalha]
+
+
+class DesaprovarTodasIn(CamelModel):
+    confirmo: bool = False  # obrigatório quando algum destino está agendado
+
+
 class SlotSequencia(CamelModel):
     conteudo_id: UUID
     planned_at: datetime

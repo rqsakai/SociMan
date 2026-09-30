@@ -110,7 +110,7 @@ async function conectarViaApi(request: APIRequestContext, auth: Auth, contaId: s
   expect((await conexao(request, auth, contaId)).estado).toBe("conectada");
 }
 
-// Liga ou desliga o botão "Envios automáticos" pela API (a tela é coberta na US4).
+// Liga ou desliga o botão "Publicação automática" pela API (a tela é coberta na US4).
 async function enviosAutomaticos(request: APIRequestContext, auth: Auth, ligado: boolean): Promise<void> {
   const { config } = await getJson<{ config: { version: number; enviosHabilitados: boolean } }>(request, auth, "/api/publicacao/config");
   if (config.enviosHabilitados === ligado) return;
@@ -336,7 +336,7 @@ test("US1: o dono conecta a conta TikTok; conta diferente é recusada; membro s�
   await expect(page.getByRole("button", { name: "Conectar", exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Desconectar" })).toHaveCount(0);
   await page.screenshot({ path: `${SHOTS}/015-conexao-membro.png`, fullPage: true });
-  await expect(page.getByRole("link", { name: "Envios automáticos" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Publicação automática" })).toHaveCount(0);
   const memberAuth = { Authorization: `Bearer ${await apiToken(request, member.email, member.final)}` };
   const ini = await request.post(`/api/contas/${p.contaId}/conexao/iniciar`, { headers: memberAuth, data: {} });
   expect(ini.status(), "membro não conecta").toBe(403);
@@ -575,11 +575,11 @@ test("US4: interruptor da tela pausa os envios; vencido pede confirmação do do
   const pausado = await videoProprio(request, auth, p.perfilId, buf, `Pausado ${sfx}`);
   const vencido = await videoProprio(request, auth, p.perfilId, buf, `Vencido ${sfx}`);
 
-  // ---- a tela: desligar "Envios automáticos" ----
+  // ---- a tela: desligar "Publicação automática" ----
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
   await page.goto("/app/configuracoes/publicacao");
-  const chave = page.getByRole("switch", { name: /Envios automáticos/ });
+  const chave = page.getByRole("switch", { name: /Publicação automática/ });
   await expect(chave).toBeChecked();
   await chave.click(); // desligar não pede confirmação
   await expect(chave).not.toBeChecked();

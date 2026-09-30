@@ -145,22 +145,22 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await expect(barra).toContainText("2 vídeos selecionados");
 
   // ---- US3: enviar; o aviso de direito aparece (canal "Sem acordo") e o membro confirma ----
-  await barra.getByRole("button", { name: "Enviar para corte" }).click();
-  const enviar = page.getByRole("dialog", { name: "Enviar para corte" });
+  await barra.getByRole("button", { name: "Gerar cortes" }).click();
+  const enviar = page.getByRole("dialog", { name: "Gerar cortes" });
   await expect(enviar.getByLabel("Duração mínima (s)")).toHaveValue("15");
   await expect(enviar.getByLabel("Duração máxima (s)")).toHaveValue("60");
-  await enviar.getByRole("button", { name: "Enviar 2 vídeos" }).click();
+  await enviar.getByRole("button", { name: "Gerar cortes de 2 vídeos" }).click();
   const aviso = page.getByRole("alertdialog");
   await expect(aviso).toContainText("O direito autoral deste vídeo é de sua responsabilidade");
   await expect(aviso).toContainText("Entrevista com dev");
   await page.screenshot({ path: `${SHOTS}/006-aviso-direito.png`, fullPage: true });
-  await aviso.getByRole("button", { name: "Confirmo e quero enviar" }).click();
-  await expect(page.getByText("2 vídeos enviados para corte.")).toBeVisible();
+  await aviso.getByRole("button", { name: "Confirmo e quero gerar" }).click();
+  await expect(page.getByText("Geração de cortes iniciada: 2 vídeos.")).toBeVisible();
 
   // status ao vivo até "Pronto" (3 clipes importados cada)
-  await nav(page, "Envios").click();
-  await page.getByRole("tab", { name: "Envios" }).click();
-  const envios = page.getByRole("table", { name: "Envios" });
+  await nav(page, "Gerar cortes").click();
+  await page.getByRole("tab", { name: "Gerações" }).click();
+  const envios = page.getByRole("table", { name: "Gerações" });
   // FR-010a: "Processando N% · <etapa real>" (o fake revela logs de um job real em ~12 s), com
   // ícone e a barra do % geral, enquanto o envio anda
   const etapa = envios.locator("[data-etapa]").first();
@@ -168,7 +168,7 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
     /^Processando \d+% · (Baixando o vídeo|Vídeo baixado|Transcrevendo o vídeo|Escolhendo os momentos|Cortando clipe \d de 3|Aplicando legendas do kit \d de 3|Importando)/,
     { timeout: 30_000 },
   );
-  await expect(envios.getByRole("progressbar", { name: "Progresso do envio" }).first()).toBeVisible();
+  await expect(envios.getByRole("progressbar", { name: "Progresso da geração" }).first()).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/006-envios-etapa.png`, fullPage: true });
   await expect(envios.getByText("Pronto: 3 clipes")).toHaveCount(2, { timeout: 180_000 });
   await expect(envios.locator("[data-etapa]")).toHaveCount(0);
@@ -185,16 +185,16 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await envios.getByRole("link", { name: /Entrevista com dev/ }).click();
   await expect(page.getByRole("heading", { name: "Entrevista com dev", level: 1 })).toBeVisible();
   // o detalhe lista as etapas; no fim, todas concluídas (legenda do kit incluída)
-  const etapas = page.getByRole("list", { name: "Etapas do envio" });
+  const etapas = page.getByRole("list", { name: "Etapas da geração" });
   await expect(etapas.getByRole("listitem")).toHaveCount(8);
   await expect(etapas).toContainText("Aplicando legendas do kit");
   await expect(etapas.getByText("(concluída)")).toHaveCount(8);
   await expect(page.getByRole("list").filter({ has: page.getByRole("listitem", { name: /Versão/ }) })).toContainText(member.name);
 
   // ---- US4: revisão do outro envio: arquivar um clipe e aplicar a marca nos outros ----
-  await nav(page, "Envios").click();
-  await page.getByRole("tab", { name: "Envios" }).click();
-  await page.getByRole("table", { name: "Envios" }).getByRole("link", { name: /Review do notebook gamer/ }).click();
+  await nav(page, "Gerar cortes").click();
+  await page.getByRole("tab", { name: "Gerações" }).click();
+  await page.getByRole("table", { name: "Gerações" }).getByRole("link", { name: /Review do notebook gamer/ }).click();
   await expect(page.getByRole("heading", { name: "Review do notebook gamer", level: 1 })).toBeVisible();
   const clipes = page.getByRole("article", { name: /^Clipe:/ });
   await expect(clipes).toHaveCount(3);

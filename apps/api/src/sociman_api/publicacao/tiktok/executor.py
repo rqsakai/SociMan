@@ -34,6 +34,7 @@ from sociman_api.publicacao.executor import (
     SemVaga,
 )
 from sociman_api.publicacao.tiktok import cliente, erros
+from sociman_api.publicacao.tiktok.leitor import LeitorTikTok
 
 if TYPE_CHECKING:
     from sociman_api.publicacao.models import Tentativa
@@ -85,6 +86,8 @@ class TikTokExecutor:
         Modo.criar_rascunho: "video.upload",
         Modo.publicar: "video.publish",
     }
+    # Spec 016 (R2): o leitor das métricas (só leitura); nada muda no envio.
+    leitor = LeitorTikTok()
 
     @property
     def oauth(self) -> ModuleType:

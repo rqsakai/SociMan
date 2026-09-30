@@ -38,7 +38,7 @@ import { usePerfisAtivos } from "../../lib/usePerfis";
 
 // /app/fontes/:id (spec 006, US1; T031): direito (editável só pelo dono, com evidência), perfis
 // ligados, estado da busca com "Sincronizar agora", os vídeos mais recentes do canal e o histórico
-// (reverter só pelo dono). Arquivar tira o canal da busca e da descoberta; vídeos e envios ficam.
+// (reverter só pelo dono). Arquivar tira o canal da busca e da descoberta; vídeos e gerações ficam.
 export default function CanalDetalhe() {
   const { id = "" } = useParams();
   const queryClient = useQueryClient();
@@ -141,7 +141,7 @@ export default function CanalDetalhe() {
             description={
               canal.archived
                 ? "O canal volta para a busca de vídeos e para a descoberta."
-                : "O canal sai da busca de vídeos e da descoberta. Os vídeos já encontrados e os envios continuam."
+                : "O canal sai da busca de vídeos e da descoberta. Os vídeos já encontrados e as gerações de cortes continuam."
             }
             onConfirm={() =>
               run(
@@ -253,7 +253,7 @@ function DireitoCard({ canal, onSaved }: { canal: CanalFonte; onSaved: () => Pro
           <h2>Direito autoral</h2>
         </CardTitle>
         <CardDescription>
-          Informativo: não bloqueia nada. "Sem acordo" mostra o aviso antes de enviar para corte. Só o dono muda.
+          Informativo: não bloqueia nada. "Sem acordo" mostra o aviso antes de gerar cortes. Só o dono muda.
         </CardDescription>
       </CardHeader>
       <CardContent>

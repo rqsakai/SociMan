@@ -387,3 +387,79 @@ export function pedidosTikTok(handle?: string): PedidoTikTok[] {
 export function falharTikTok(handle: string, endpoint: string, falha: string): void {
   tiktokFake("POST", "/tiktok-e2e/falhas", { handle, endpoint, falha });
 }
+
+// --- métricas (spec 016, T079) ---
+
+// Os escopos de métricas da TikTok (research R1).
+export const ESCOPOS_METRICAS = "user.info.basic,user.info.profile,video.upload,video.publish,user.info.stats,video.list";
+
+// O que o dono "marca" na tela de autorização da TikTok falsa: vale para os próximos logins da
+// conta. Sem chamar isto, a TikTok falsa concede só os escopos da 015 (sem métricas).
+export function escoposTikTok(handle: string, escopos: string = ESCOPOS_METRICAS): void {
+  tiktokFake("POST", "/tiktok-e2e/escopos", { handle, escopos });
+}
+
+export interface VideoTikTok {
+  id: string; // texto: passa de 2^53
+  handle: string;
+  create_time: number;
+  duracao: number;
+  legenda: string;
+  publico: boolean;
+  share_url: string;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+}
+
+type Contadores = { views?: number; likes?: number; comments?: number; shares?: number };
+type Ritmo = { ritmo?: Partial<Record<"views" | "likes" | "comments" | "shares", number>> };
+
+// Um post público (ou privado) na conta, publicado há `idadeS` segundos. Os contadores crescem
+// sozinhos (`ritmo` por minuto; 0 congela).
+export function criarVideoTikTok(
+  handle: string,
+  video: { duracao: number; legenda: string; idadeS?: number; publico?: boolean } & Contadores & Ritmo,
+): VideoTikTok {
+  const { idadeS, ...resto } = video;
+  return (tiktokFake("POST", "/tiktok-e2e/videos", { acao: "criar", handle, idade_s: idadeS ?? 0, ...resto }) as { video: VideoTikTok }).video;
+}
+
+export function ajustarVideoTikTok(id: string, acao: "contadores" | "privado" | "publico", valores: Contadores & Ritmo = {}): VideoTikTok {
+  return (tiktokFake("POST", "/tiktok-e2e/videos", { acao, id, ...valores }) as { video: VideoTikTok }).video;
+}
+
+// O dono finaliza no app o último rascunho entregue da conta, como post público. Com
+// `informarId: false`, o `status/fetch` não devolve o id (o vínculo sai pelo casamento).
+export function publicarRascunhoTikTok(handle: string, post: { duracao: number; legenda: string; informarId?: boolean }): VideoTikTok {
+  const r = tiktokFake("POST", "/tiktok-e2e/publicar-rascunho", {
+    handle,
+    duracao: post.duracao,
+    legenda: post.legenda,
+    informar_id: post.informarId ?? true,
+  }) as { video: VideoTikTok };
+  return r.video;
+}
+
+// SQL no Postgres da stack e2e (só o projeto sociman-e2e, pelo `compose()`); devolve as linhas
+// sem cabeçalho, com `|` entre as colunas. Serve para semear fotos (o trigger das fotos aceita
+// INSERT) e para adiantar a agenda da coleta, que é por hora.
+export function sqlE2e(sql: string): string[] {
+  const out = compose(["exec", "-T", "postgres", "psql", "-U", PG_USER, "-d", PG_DB, "-v", "ON_ERROR_STOP=1", "-tA", "-c", sql]);
+  return out.split("\n").filter((l) => l.trim() !== "");
+}
+
+// Adianta a série viva da conta: a próxima volta da trilha `metricas` (2 s no e2e) faz a
+// descoberta (1ª página do `video/list`), a fila de vídeos e a foto da conta.
+export function adiantarColeta(contaId: string): void {
+  sqlE2e(
+    `update metricas_series set lista_proxima_em = now(), conta_proxima_em = now(), adiar_ate = null ` +
+      `where conta_id = '${contaId}' and anonimizada_em is null`,
+  );
+}
+
+// Adianta a busca do post (nível 1) de um destino de rascunho entregue.
+export function adiantarBusca(destinoId: string): void {
+  sqlE2e(`update metricas_buscas_post set proxima_em = now() where destino_id = '${destinoId}' and encerrada_em is null`);
+}

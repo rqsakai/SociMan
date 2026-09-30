@@ -1250,6 +1250,51 @@
         "title": "Body_perfis_upload_logo",
         "type": "object"
       },
+      "Busca": {
+        "properties": {
+          "ate": {
+            "format": "date-time",
+            "title": "Ate",
+            "type": "string"
+          },
+          "consultas": {
+            "title": "Consultas",
+            "type": "integer"
+          },
+          "entregueEm": {
+            "format": "date-time",
+            "title": "Entregueem",
+            "type": "string"
+          },
+          "fim": {
+            "anyOf": [
+              {
+                "enum": [
+                  "vinculado",
+                  "prazo",
+                  "falhou",
+                  "desfeito",
+                  "anonimizada",
+                  "cancelada"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fim"
+          }
+        },
+        "required": [
+          "entregueEm",
+          "consultas",
+          "ate",
+          "fim"
+        ],
+        "title": "Busca",
+        "type": "object"
+      },
       "CalendarioItem": {
         "properties": {
           "agendadoEm": {
@@ -1863,6 +1908,45 @@
         "title": "CanalSync",
         "type": "string"
       },
+      "Candidato": {
+        "properties": {
+          "duracaoDiferencaS": {
+            "title": "Duracaodiferencas",
+            "type": "number"
+          },
+          "legenda": {
+            "enum": [
+              "compativel",
+              "neutra",
+              "incompativel"
+            ],
+            "title": "Legenda",
+            "type": "string"
+          },
+          "minutosDaAncora": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minutosdaancora"
+          },
+          "video": {
+            "$ref": "#/components/schemas/VideoResumo"
+          }
+        },
+        "required": [
+          "video",
+          "duracaoDiferencaS",
+          "legenda",
+          "minutosDaAncora"
+        ],
+        "title": "Candidato",
+        "type": "object"
+      },
       "CardFinal": {
         "additionalProperties": false,
         "properties": {
@@ -2074,6 +2158,16 @@
             "title": "Estado",
             "type": "string"
           },
+          "metricas": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EstadoColeta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "modos": {
             "items": {
               "$ref": "#/components/schemas/ModoInfo"
@@ -2143,7 +2237,8 @@
           "motivo",
           "refreshExpiraEm",
           "modos",
-          "version"
+          "version",
+          "metricas"
         ],
         "title": "Conexao",
         "type": "object"
@@ -2295,6 +2390,34 @@
           "updatedBy"
         ],
         "title": "Conta",
+        "type": "object"
+      },
+      "ContaMetricasOut": {
+        "properties": {
+          "coleta": {
+            "$ref": "#/components/schemas/EstadoColeta"
+          },
+          "fotos": {
+            "items": {
+              "$ref": "#/components/schemas/FotoConta"
+            },
+            "title": "Fotos",
+            "type": "array"
+          },
+          "publicacoes": {
+            "items": {
+              "$ref": "#/components/schemas/Publicacao"
+            },
+            "title": "Publicacoes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "coleta",
+          "fotos",
+          "publicacoes"
+        ],
+        "title": "ContaMetricasOut",
         "type": "object"
       },
       "ContaOut": {
@@ -3520,6 +3643,37 @@
         "title": "CriadorOut",
         "type": "object"
       },
+      "DesaprovarTodasIn": {
+        "properties": {
+          "confirmo": {
+            "default": false,
+            "title": "Confirmo",
+            "type": "boolean"
+          }
+        },
+        "title": "DesaprovarTodasIn",
+        "type": "object"
+      },
+      "DesconectarIn": {
+        "description": "Spec 016 (R13): com a série de métricas com dados, `confirmoAnonimizar` é obrigatório.",
+        "properties": {
+          "confirmoAnonimizar": {
+            "default": false,
+            "title": "Confirmoanonimizar",
+            "type": "boolean"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "DesconectarIn",
+        "type": "object"
+      },
       "DesconectarOut": {
         "properties": {
           "agendamentosEmAtencao": {
@@ -3528,11 +3682,22 @@
           },
           "conexao": {
             "$ref": "#/components/schemas/Conexao"
+          },
+          "metricasAnonimizadas": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MetricasAnonimizadas"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "conexao",
-          "agendamentosEmAtencao"
+          "agendamentosEmAtencao",
+          "metricasAnonimizadas"
         ],
         "title": "DesconectarOut",
         "type": "object"
@@ -3858,6 +4023,29 @@
         ],
         "title": "DestinoEstado",
         "type": "string"
+      },
+      "DestinoMetricasOut": {
+        "properties": {
+          "video": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VideoDetalhe"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vinculo": {
+            "$ref": "#/components/schemas/Vinculo"
+          }
+        },
+        "required": [
+          "vinculo",
+          "video"
+        ],
+        "title": "DestinoMetricasOut",
+        "type": "object"
       },
       "DestinoOut": {
         "properties": {
@@ -4703,6 +4891,30 @@
         "title": "EnviosList",
         "type": "object"
       },
+      "ErroColeta": {
+        "properties": {
+          "codigo": {
+            "title": "Codigo",
+            "type": "string"
+          },
+          "em": {
+            "format": "date-time",
+            "title": "Em",
+            "type": "string"
+          },
+          "motivo": {
+            "title": "Motivo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo",
+          "motivo",
+          "em"
+        ],
+        "title": "ErroColeta",
+        "type": "object"
+      },
       "ErrorBody": {
         "properties": {
           "code": {
@@ -4743,6 +4955,94 @@
           "error"
         ],
         "title": "ErrorEnvelope",
+        "type": "object"
+      },
+      "EstadoColeta": {
+        "properties": {
+          "coletando": {
+            "title": "Coletando",
+            "type": "boolean"
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErroColeta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "escoposFaltando": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Escoposfaltando",
+            "type": "array"
+          },
+          "fotos": {
+            "title": "Fotos",
+            "type": "integer"
+          },
+          "habilitada": {
+            "title": "Habilitada",
+            "type": "boolean"
+          },
+          "permissao": {
+            "enum": [
+              "ok",
+              "faltando",
+              "sem_conexao"
+            ],
+            "title": "Permissao",
+            "type": "string"
+          },
+          "proximaColetaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proximacoletaem"
+          },
+          "ultimaColetaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultimacoletaem"
+          },
+          "varreduraConcluida": {
+            "title": "Varreduraconcluida",
+            "type": "boolean"
+          },
+          "videos": {
+            "title": "Videos",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "permissao",
+          "escoposFaltando",
+          "coletando",
+          "habilitada",
+          "ultimaColetaEm",
+          "proximaColetaEm",
+          "erro",
+          "varreduraConcluida",
+          "videos",
+          "fotos"
+        ],
+        "title": "EstadoColeta",
         "type": "object"
       },
       "EstadoEfetivo": {
@@ -5232,6 +5532,146 @@
           "email"
         ],
         "title": "ForgotIn",
+        "type": "object"
+      },
+      "FotoConta": {
+        "properties": {
+          "coletadoEm": {
+            "format": "date-time",
+            "title": "Coletadoem",
+            "type": "string"
+          },
+          "curtidas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curtidas"
+          },
+          "janelaEm": {
+            "format": "date-time",
+            "title": "Janelaem",
+            "type": "string"
+          },
+          "seguidores": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seguidores"
+          },
+          "seguindo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seguindo"
+          },
+          "videos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Videos"
+          }
+        },
+        "required": [
+          "coletadoEm",
+          "janelaEm",
+          "seguidores",
+          "seguindo",
+          "curtidas",
+          "videos"
+        ],
+        "title": "FotoConta",
+        "type": "object"
+      },
+      "FotoVideo": {
+        "properties": {
+          "alvoIdadeMin": {
+            "title": "Alvoidademin",
+            "type": "integer"
+          },
+          "coletadoEm": {
+            "format": "date-time",
+            "title": "Coletadoem",
+            "type": "string"
+          },
+          "comments": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
+          },
+          "idadeS": {
+            "title": "Idades",
+            "type": "integer"
+          },
+          "likes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likes"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "views": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views"
+          }
+        },
+        "required": [
+          "views",
+          "likes",
+          "comments",
+          "shares",
+          "coletadoEm",
+          "idadeS",
+          "alvoIdadeMin"
+        ],
+        "title": "FotoVideo",
         "type": "object"
       },
       "FundoImageOut": {
@@ -6903,6 +7343,95 @@
         "title": "MarcarLidasIn",
         "type": "object"
       },
+      "MarcoMetricas": {
+        "properties": {
+          "comments": {
+            "$ref": "#/components/schemas/MarcoValor"
+          },
+          "likes": {
+            "$ref": "#/components/schemas/MarcoValor"
+          },
+          "shares": {
+            "$ref": "#/components/schemas/MarcoValor"
+          },
+          "views": {
+            "$ref": "#/components/schemas/MarcoValor"
+          }
+        },
+        "required": [
+          "views",
+          "likes",
+          "comments",
+          "shares"
+        ],
+        "title": "MarcoMetricas",
+        "type": "object"
+      },
+      "MarcoValor": {
+        "properties": {
+          "estimado": {
+            "title": "Estimado",
+            "type": "boolean"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ainda_nao",
+                  "sem_dado"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "valor",
+          "estimado",
+          "motivo"
+        ],
+        "title": "MarcoValor",
+        "type": "object"
+      },
+      "Marcos": {
+        "properties": {
+          "d30": {
+            "$ref": "#/components/schemas/MarcoMetricas"
+          },
+          "d7": {
+            "$ref": "#/components/schemas/MarcoMetricas"
+          },
+          "h1": {
+            "$ref": "#/components/schemas/MarcoMetricas"
+          },
+          "h24": {
+            "$ref": "#/components/schemas/MarcoMetricas"
+          }
+        },
+        "required": [
+          "h1",
+          "h24",
+          "d7",
+          "d30"
+        ],
+        "title": "Marcos",
+        "type": "object"
+      },
       "Metrica": {
         "properties": {
           "comments": {
@@ -6951,6 +7480,24 @@
           "comments"
         ],
         "title": "Metrica",
+        "type": "object"
+      },
+      "MetricasAnonimizadas": {
+        "properties": {
+          "fotos": {
+            "title": "Fotos",
+            "type": "integer"
+          },
+          "videos": {
+            "title": "Videos",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "videos",
+          "fotos"
+        ],
+        "title": "MetricasAnonimizadas",
         "type": "object"
       },
       "MidiaItem": {
@@ -7182,7 +7729,9 @@
           "envio_publicado",
           "envio_rede_falhou",
           "envio_aguardando_vaga",
-          "conexao_precisa_reconectar"
+          "conexao_precisa_reconectar",
+          "post_detectado",
+          "vinculo_a_confirmar"
         ],
         "title": "NotificacaoTipo",
         "type": "string"
@@ -8127,6 +8676,39 @@
           "score"
         ],
         "title": "PropostaOpenshorts",
+        "type": "object"
+      },
+      "Publicacao": {
+        "properties": {
+          "conteudoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conteudoid"
+          },
+          "publicadoEm": {
+            "format": "date-time",
+            "title": "Publicadoem",
+            "type": "string"
+          },
+          "videoId": {
+            "format": "uuid",
+            "title": "Videoid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "videoId",
+          "publicadoEm",
+          "conteudoId"
+        ],
+        "title": "Publicacao",
         "type": "object"
       },
       "PublicacaoConfig": {
@@ -9736,6 +10318,31 @@
         "title": "TiposList",
         "type": "object"
       },
+      "TodasResultado": {
+        "description": "Aprovar/desaprovar todas as contas do conteúdo (spec 018): os que mudaram e os que\nficaram como estavam, com o motivo.",
+        "properties": {
+          "ignorados": {
+            "items": {
+              "$ref": "#/components/schemas/LoteFalha"
+            },
+            "title": "Ignorados",
+            "type": "array"
+          },
+          "ok": {
+            "items": {
+              "$ref": "#/components/schemas/Destino"
+            },
+            "title": "Ok",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ok",
+          "ignorados"
+        ],
+        "title": "TodasResultado",
+        "type": "object"
+      },
       "UpdateCanalIn": {
         "additionalProperties": false,
         "properties": {
@@ -10477,6 +11084,259 @@
         "title": "VersionsList",
         "type": "object"
       },
+      "VideoDetalhe": {
+        "properties": {
+          "coletaParadaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coletaparadaem"
+          },
+          "conta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContaRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "conteudoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conteudoid"
+          },
+          "destinoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destinoid"
+          },
+          "disponivel": {
+            "title": "Disponivel",
+            "type": "boolean"
+          },
+          "duracaoS": {
+            "title": "Duracaos",
+            "type": "integer"
+          },
+          "engajamento": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engajamento"
+          },
+          "fotos": {
+            "items": {
+              "$ref": "#/components/schemas/FotoVideo"
+            },
+            "title": "Fotos",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "indisponivelDesde": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indisponiveldesde"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "marcos": {
+            "$ref": "#/components/schemas/Marcos"
+          },
+          "miniaturaUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Miniaturaurl"
+          },
+          "origem": {
+            "enum": [
+              "corte",
+              "video_proprio",
+              "fora",
+              "anonima"
+            ],
+            "title": "Origem",
+            "type": "string"
+          },
+          "perfil": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PerfilRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "publicadoEm": {
+            "format": "date-time",
+            "title": "Publicadoem",
+            "type": "string"
+          },
+          "rede": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "serieRotulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serierotulo"
+          },
+          "ultima": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FotoVideo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "velocidade": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Velocidade"
+          },
+          "views24h": {
+            "$ref": "#/components/schemas/MarcoValor"
+          },
+          "views7d": {
+            "$ref": "#/components/schemas/MarcoValor"
+          },
+          "vinculoMetodo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "envio",
+                  "casamento",
+                  "link",
+                  "escolha"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vinculometodo"
+          }
+        },
+        "required": [
+          "id",
+          "rede",
+          "contaId",
+          "conta",
+          "serieRotulo",
+          "perfil",
+          "origem",
+          "publicadoEm",
+          "duracaoS",
+          "legenda",
+          "url",
+          "disponivel",
+          "indisponivelDesde",
+          "conteudoId",
+          "destinoId",
+          "vinculoMetodo",
+          "miniaturaUrl",
+          "ultima",
+          "views24h",
+          "views7d",
+          "engajamento",
+          "velocidade",
+          "fotos",
+          "marcos",
+          "coletaParadaEm"
+        ],
+        "title": "VideoDetalhe",
+        "type": "object"
+      },
       "VideoDetalheOut": {
         "properties": {
           "metricas": {
@@ -10749,7 +11609,466 @@
         "title": "VideoLive",
         "type": "string"
       },
-      "VideosList": {
+      "VideoResumo": {
+        "properties": {
+          "conta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContaRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "conteudoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conteudoid"
+          },
+          "destinoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destinoid"
+          },
+          "disponivel": {
+            "title": "Disponivel",
+            "type": "boolean"
+          },
+          "duracaoS": {
+            "title": "Duracaos",
+            "type": "integer"
+          },
+          "engajamento": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engajamento"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "indisponivelDesde": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indisponiveldesde"
+          },
+          "legenda": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legenda"
+          },
+          "miniaturaUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Miniaturaurl"
+          },
+          "origem": {
+            "enum": [
+              "corte",
+              "video_proprio",
+              "fora",
+              "anonima"
+            ],
+            "title": "Origem",
+            "type": "string"
+          },
+          "perfil": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PerfilRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "publicadoEm": {
+            "format": "date-time",
+            "title": "Publicadoem",
+            "type": "string"
+          },
+          "rede": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "serieRotulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serierotulo"
+          },
+          "ultima": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FotoVideo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "velocidade": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Velocidade"
+          },
+          "views24h": {
+            "$ref": "#/components/schemas/MarcoValor"
+          },
+          "views7d": {
+            "$ref": "#/components/schemas/MarcoValor"
+          },
+          "vinculoMetodo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "envio",
+                  "casamento",
+                  "link",
+                  "escolha"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vinculometodo"
+          }
+        },
+        "required": [
+          "id",
+          "rede",
+          "contaId",
+          "conta",
+          "serieRotulo",
+          "perfil",
+          "origem",
+          "publicadoEm",
+          "duracaoS",
+          "legenda",
+          "url",
+          "disponivel",
+          "indisponivelDesde",
+          "conteudoId",
+          "destinoId",
+          "vinculoMetodo",
+          "miniaturaUrl",
+          "ultima",
+          "views24h",
+          "views7d",
+          "engajamento",
+          "velocidade"
+        ],
+        "title": "VideoResumo",
+        "type": "object"
+      },
+      "Vinculo": {
+        "properties": {
+          "ancora": {
+            "anyOf": [
+              {
+                "enum": [
+                  "entrega",
+                  "postado"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ancora"
+          },
+          "ancoraEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ancoraem"
+          },
+          "automatico": {
+            "title": "Automatico",
+            "type": "boolean"
+          },
+          "bloqueado": {
+            "title": "Bloqueado",
+            "type": "boolean"
+          },
+          "busca": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Busca"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidatos": {
+            "items": {
+              "$ref": "#/components/schemas/Candidato"
+            },
+            "title": "Candidatos",
+            "type": "array"
+          },
+          "estado": {
+            "enum": [
+              "vinculado",
+              "buscando",
+              "a_confirmar",
+              "sem_vinculo",
+              "indisponivel"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "metodo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "envio",
+                  "casamento",
+                  "link",
+                  "escolha"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metodo"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "podeVincular": {
+            "title": "Podevincular",
+            "type": "boolean"
+          },
+          "video": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VideoResumo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vinculadoEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vinculadoem"
+          },
+          "vinculadoPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "estado",
+          "video",
+          "metodo",
+          "vinculadoPor",
+          "vinculadoEm",
+          "busca",
+          "ancora",
+          "ancoraEm",
+          "candidatos",
+          "bloqueado",
+          "automatico",
+          "podeVincular",
+          "motivo"
+        ],
+        "title": "Vinculo",
+        "type": "object"
+      },
+      "VinculoIn": {
+        "description": "Exatamente um de `videoId` (escolher) ou `link` (colar).",
+        "properties": {
+          "link": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          },
+          "videoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Videoid"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "VinculoIn",
+        "type": "object"
+      },
+      "VinculoOut": {
+        "properties": {
+          "destino": {
+            "$ref": "#/components/schemas/Destino"
+          },
+          "vinculo": {
+            "$ref": "#/components/schemas/Vinculo"
+          }
+        },
+        "required": [
+          "destino",
+          "vinculo"
+        ],
+        "title": "VinculoOut",
+        "type": "object"
+      },
+      "WatermarkImageOut": {
+        "properties": {
+          "image": {
+            "$ref": "#/components/schemas/ImageRef"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "title": "WatermarkImageOut",
+        "type": "object"
+      },
+      "WatermarkImagesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImageRef"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "WatermarkImagesList",
+        "type": "object"
+      },
+      "sociman_api__canais__schemas__VideosList": {
         "properties": {
           "items": {
             "items": {
@@ -10782,32 +12101,37 @@
         "title": "VideosList",
         "type": "object"
       },
-      "WatermarkImageOut": {
-        "properties": {
-          "image": {
-            "$ref": "#/components/schemas/ImageRef"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "title": "WatermarkImageOut",
-        "type": "object"
-      },
-      "WatermarkImagesList": {
+      "sociman_api__metricas__schemas__VideosList": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/ImageRef"
+              "$ref": "#/components/schemas/VideoResumo"
             },
             "title": "Items",
             "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
           }
         },
         "required": [
-          "items"
+          "items",
+          "nextCursor",
+          "total"
         ],
-        "title": "WatermarkImagesList",
+        "title": "VideosList",
         "type": "object"
       }
     }
@@ -14181,7 +15505,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/DesconectarIn"
               }
             }
           },
@@ -14410,6 +15734,125 @@
           }
         },
         "summary": "Conexao Versions"
+      }
+    },
+    "/api/contas/{conta_id}/metricas": {
+      "get": {
+        "operationId": "metricas_conta",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conta Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resolucao",
+            "required": false,
+            "schema": {
+              "default": "auto",
+              "enum": [
+                "auto",
+                "hora",
+                "dia"
+              ],
+              "title": "Resolucao",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContaMetricasOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Metricas Conta"
       }
     },
     "/api/contas/{conta_id}/modos": {
@@ -15252,6 +16695,87 @@
         "summary": "Update Conteudo"
       }
     },
+    "/api/conteudos/{conteudo_id}/aprovar-todas": {
+      "post": {
+        "description": "Spec 018: aprova todas as contas pendentes do conteúdo (só dono humano).",
+        "operationId": "conteudos_aprovar_todas",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conteudo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conteudo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodasResultado"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Aprovar Todas"
+      }
+    },
     "/api/conteudos/{conteudo_id}/archive": {
       "post": {
         "operationId": "conteudos_archive",
@@ -15340,6 +16864,97 @@
           }
         },
         "summary": "Archive Conteudo"
+      }
+    },
+    "/api/conteudos/{conteudo_id}/desaprovar-todas": {
+      "post": {
+        "description": "Spec 018: aprovados e agendados voltam a pendente; cancela os agendamentos (com\n`confirmo`). Só dono humano.",
+        "operationId": "conteudos_desaprovar_todas",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conteudo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conteudo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesaprovarTodasIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodasResultado"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Desaprovar Todas"
       }
     },
     "/api/conteudos/{conteudo_id}/destinos": {
@@ -17295,6 +18910,76 @@
         "summary": "Enviar Agora"
       }
     },
+    "/api/destinos/{destino_id}/metricas": {
+      "get": {
+        "operationId": "destinos_metricas",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "destino_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Destino Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DestinoMetricasOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Destinos Metricas"
+      }
+    },
     "/api/destinos/{destino_id}/pedir-aprovacao": {
       "post": {
         "operationId": "destinos_pedir_aprovacao",
@@ -17973,6 +19658,264 @@
           }
         },
         "summary": "Destino Versions"
+      }
+    },
+    "/api/destinos/{destino_id}/vinculo": {
+      "get": {
+        "operationId": "destinos_vinculo_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "destino_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Destino Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vinculo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Vinculo Get"
+      },
+      "post": {
+        "operationId": "destinos_vinculo_criar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "destino_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Destino Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VinculoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinculoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          }
+        },
+        "summary": "Vinculo Criar"
+      }
+    },
+    "/api/destinos/{destino_id}/vinculo/desfazer": {
+      "post": {
+        "operationId": "destinos_vinculo_desfazer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "destino_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Destino Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinculoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Vinculo Desfazer"
       }
     },
     "/api/envios": {
@@ -19966,6 +21909,427 @@
           }
         },
         "summary": "Get Integracoes"
+      }
+    },
+    "/api/metricas/export": {
+      "get": {
+        "operationId": "metricas_export",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "formato",
+            "required": false,
+            "schema": {
+              "default": "csv",
+              "enum": [
+                "csv",
+                "jsonl"
+              ],
+              "title": "Formato",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "incluirAnonimas",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Incluiranonimas",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/zip": {}
+            },
+            "description": "ZIP com o dataset"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Metricas Export"
+      }
+    },
+    "/api/metricas/videos": {
+      "get": {
+        "operationId": "metricas_videos_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "origem",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Origem"
+            }
+          },
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ordem",
+            "required": false,
+            "schema": {
+              "default": "views24h",
+              "enum": [
+                "views24h",
+                "views7d",
+                "engajamento",
+                "velocidade",
+                "publicadoEm"
+              ],
+              "title": "Ordem",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direcao",
+            "required": false,
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "desc",
+                "asc"
+              ],
+              "title": "Direcao",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limite",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limite",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/sociman_api__metricas__schemas__VideosList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Metricas Videos List"
+      }
+    },
+    "/api/metricas/videos/{video_id}": {
+      "get": {
+        "operationId": "metricas_videos_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VideoDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Metricas Videos Get"
       }
     },
     "/api/midia/links": {
@@ -24710,7 +27074,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VideosList"
+                  "$ref": "#/components/schemas/sociman_api__canais__schemas__VideosList"
                 }
               }
             },

@@ -139,7 +139,8 @@ def test_volta_com_erro_faz_rollback(rodar, db):
 
 def test_trilhas_padrao_e_ociosidade(monkeypatch):
     nomes = [t.nome for t in agendador_mod.trilhas_padrao()]
-    assert nomes == ["sync", "openshorts", "importacao", "lembretes", "publicacao"]  # + 015
+    assert nomes == ["sync", "openshorts", "importacao", "lembretes", "publicacao",  # + 015
+                     "metricas"]  # + 016
 
     trilhas = {t.nome: t for t in agendador_mod.trilhas_padrao()}
     # Stack de teste sem YOUTUBE_API_KEY: a sync fica ociosa com motivo claro, sem vazar valor.
@@ -177,3 +178,36 @@ def test_trilha_publicacao_ociosa_na_ordem(monkeypatch):
     monkeypatch.setattr(s, "sociman_tokens_key", chave)
     monkeypatch.setattr(agendador_mod.datadir, "status", lambda: _SemHd())
     assert "sentinela" in (trilha.ociosa() or "")
+
+
+def test_trilha_metricas_ociosa_e_independente_da_publicacao(monkeypatch):
+    """Spec 016 (R3, T031): ociosa com `METRICAS_COLETA_HABILITADA=false`, sem o app da TikTok
+    ou sem a chave dos tokens; **ativa** com a publicação desligada e o botão desligado."""
+    from pydantic import SecretStr
+
+    from sociman_api.config import get_settings
+
+    trilha = {t.nome: t for t in agendador_mod.trilhas_padrao()}["metricas"]
+    s = get_settings()
+    monkeypatch.setattr(s, "tiktok_client_key", SecretStr("chave-de-teste"))
+    monkeypatch.setattr(s, "tiktok_client_secret", SecretStr("segredo-de-teste"))
+    monkeypatch.setattr(s, "publicacao_habilitada", False)  # o botão já nasce desligado
+
+    class _SemHd:
+        reason = "sem_sentinela"
+
+    monkeypatch.setattr(agendador_mod.datadir, "status", lambda: _SemHd())
+    assert trilha.ociosa() is None  # só lê: não depende da publicação nem do HD
+
+    monkeypatch.setattr(s, "metricas_coleta_habilitada", False)
+    assert "METRICAS_COLETA_HABILITADA" in (trilha.ociosa() or "")
+    monkeypatch.setattr(s, "metricas_coleta_habilitada", True)
+
+    chave = s.sociman_tokens_key
+    monkeypatch.setattr(s, "sociman_tokens_key", SecretStr(""))
+    motivo = trilha.ociosa() or ""
+    assert "SOCIMAN_TOKENS_KEY" in motivo and "=" not in motivo
+    monkeypatch.setattr(s, "sociman_tokens_key", chave)
+
+    monkeypatch.setattr(s, "tiktok_client_key", SecretStr(""))
+    assert "app da TikTok" in (trilha.ociosa() or "")

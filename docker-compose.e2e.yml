@@ -67,6 +67,9 @@ x-tiktok-env: &tiktok-env
   TIKTOK_CLIENT_SECRET: e2e-client-secret-de-teste
   SOCIMAN_TOKENS_KEY: ZTJlLWVmZW1lcm8tY2hhdmUtZG9zLXRva2Vucy0zMmI=
   PUBLICACAO_HABILITADA: "true"
+  # Spec 016 (T079): coleta de métricas ligada na API e no agendador (a trilha roda a cada 2 s,
+  # abaixo). A cadência por idade não muda: o e2e adianta a fila pelo banco da stack efêmera.
+  METRICAS_COLETA_HABILITADA: "true"
   TIKTOK_APP_SITUACAO: sandbox
   TIKTOK_API_URL: http://openshorts-fake:8000/tiktok
   TIKTOK_UPLOAD_HOSTS: openshorts-fake
@@ -167,6 +170,7 @@ services:
       AGENDADOR_IMPORTACAO_S: "1"
       AGENDADOR_LEMBRETES_S: "2"
       AGENDADOR_PUBLICACAO_S: "2"
+      AGENDADOR_METRICAS_S: "2"   # spec 016 (T079)
     extra_hosts: *tiktok-hosts
     volumes:
       - sociman-data:/srv/sociman-data

@@ -14,8 +14,12 @@
  * Fonte: Roboto variável servida da própria origem (@fontsource-variable/roboto,
  * importada em main.tsx) — sem CDN.
  *
- * Só tema claro: o variant `dark:` fica preso à classe .dark (que o app não usa),
- * para o tema do sistema operacional não ativar estilos escuros pela metade.
+ * Tema (spec 018, US1): ESCURO por padrão. O variant `dark:` e os tokens escuros ficam
+ * presos à classe .dark no <html> (index.html nasce com ela; src/lib/tema.ts troca para
+ * claro/sistema). :root guarda o tema claro; .dark sobrescreve só os tokens.
+ * No escuro, as cores de estado (primary/success/warning/info/destructive/dark) ficam
+ * claras e o texto sobre elas escuro: a mesma cor serve de fundo de selo e de texto sobre
+ * o cartão com contraste AA (>= 4.5:1) nos dois usos.
  */
 @custom-variant dark (&:is(.dark *));
 
@@ -65,6 +69,60 @@
   --sidebar-light: oklch(0.31 0.02 262);
   --sidebar-foreground: oklch(0.97 0 0);
   --sidebar-muted-foreground: oklch(0.75 0.01 262);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(1 0 0 / 0.1);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 0.14);
+  --sidebar-ring: var(--primary);
+}
+
+.dark {
+  color-scheme: dark; /* <select> nativo, datas, barras de rolagem */
+
+  --background: #0f172a; /* = theme-color do index.html e do manifest */
+  --foreground: oklch(0.93 0.01 262);
+  --card: oklch(0.255 0.035 263);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.275 0.035 263);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.72 0.14 266);
+  --primary-light: oklch(0.8 0.11 258);
+  --primary-foreground: oklch(0.2 0.04 266);
+  --secondary: oklch(0.33 0.03 263);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.33 0.03 263);
+  --muted-foreground: oklch(0.74 0.02 262);
+  --accent: oklch(0.36 0.035 263);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.72 0.16 25);
+  --destructive-light: oklch(0.78 0.13 22);
+  --destructive-foreground: oklch(0.2 0.03 25);
+  --success: oklch(0.74 0.15 150);
+  --success-light: oklch(0.82 0.13 145);
+  --success-foreground: oklch(0.2 0.03 150);
+  --warning: oklch(0.8 0.15 70);
+  --warning-light: oklch(0.86 0.12 80);
+  --warning-foreground: oklch(0.22 0.04 60);
+  --info: oklch(0.74 0.12 230);
+  --info-light: oklch(0.82 0.1 225);
+  --info-foreground: oklch(0.2 0.03 235);
+  /* neutro de contraste: no escuro, invertido (selo claro, texto escuro) */
+  --dark: oklch(0.82 0.015 262);
+  --dark-light: oklch(0.9 0.01 262);
+  --dark-foreground: oklch(0.2 0.02 262);
+
+  --border: oklch(1 0 0 / 0.12);
+  --input: oklch(1 0 0 / 0.2);
+  --ring: var(--primary);
+
+  /* menu lateral: um pouco mais escuro que o fundo, com borda para destacar */
+  --sidebar: oklch(0.17 0.03 264);
+  --sidebar-light: oklch(0.25 0.035 264);
+  --sidebar-foreground: oklch(0.95 0.005 262);
+  --sidebar-muted-foreground: oklch(0.76 0.015 262);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: oklch(1 0 0 / 0.1);
@@ -171,4 +229,16 @@
   body {
     @apply bg-background font-sans text-foreground antialiased;
   }
+}
+
+/* Tema escuro: a lista aberta do <select> nativo (Chrome/Linux) pinta as opções de branco se o
+   select tiver fundo transparente. Fundo e texto das opções vêm dos tokens do popover. */
+.dark select {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+}
+.dark select option,
+.dark select optgroup {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
 }

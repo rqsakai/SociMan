@@ -69,11 +69,26 @@ def _publicacao_ociosa() -> str | None:
     return None
 
 
+def _metricas_ociosa() -> str | None:
+    """Spec 016 (R3): a trilha `metricas` só lê. Não depende de `PUBLICACAO_HABILITADA`, do
+    botão "Envios automáticos" nem do HD; só do próprio interruptor, do app e da chave."""
+    from sociman_api.publicacao import cifra, conexoes
+
+    if not get_settings().metricas_coleta_habilitada:
+        return "METRICAS_COLETA_HABILITADA desligada no servidor: nenhuma métrica é coletada"
+    if not conexoes.app_configurado():
+        return "app da TikTok não configurado: nenhuma métrica é coletada"
+    if not cifra.chave_configurada():
+        return "chave dos tokens ausente (SOCIMAN_TOKENS_KEY): nenhuma métrica é coletada"
+    return None
+
+
 def trilhas_padrao() -> list[Trilha]:
     """As trilhas de R1 e a `publicacao` da 015, com os intervalos da config (import tardio
     dos módulos)."""
     from sociman_api.canais import sync
     from sociman_api.envios import acompanhamento, importacao
+    from sociman_api.metricas import coleta as metricas
     from sociman_api.postagem import lembretes
     from sociman_api.publicacao import trilha as publicacao
 
@@ -84,6 +99,7 @@ def trilhas_padrao() -> list[Trilha]:
         Trilha("importacao", s.agendador_importacao_s, importacao.rodar, _sem_hd),
         Trilha("lembretes", s.agendador_lembretes_s, lembretes.rodar),
         Trilha("publicacao", s.agendador_publicacao_s, publicacao.rodar, _publicacao_ociosa),
+        Trilha("metricas", s.agendador_metricas_s, metricas.rodar, _metricas_ociosa),  # 016
     ]
 
 
@@ -96,6 +112,7 @@ def _registrar_modelos() -> None:
     from sociman_api.cortes import models as _cortes  # noqa: F401
     from sociman_api.envios import models as _envios  # noqa: F401
     from sociman_api.marca import models as _marca  # noqa: F401
+    from sociman_api.metricas import models as _metricas  # noqa: F401 — spec 016
     from sociman_api.notificacoes import models as _notificacoes  # noqa: F401
     from sociman_api.perfis import models as _perfis  # noqa: F401
     from sociman_api.postagem import models as _postagem  # noqa: F401

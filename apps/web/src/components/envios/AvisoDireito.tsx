@@ -20,8 +20,8 @@ export interface AvisoItem {
   direito: Direito | "avulso";
 }
 
-// Aviso de direito antes de enviar vídeo de canal "Sem acordo" ou avulso (FR-009, princípio II):
-// não bloqueia; quem confirma (dono ou membro) fica no histórico do envio. AlertDialog com
+// Aviso de direito antes de gerar cortes de vídeo de canal "Sem acordo" ou avulso (FR-009, princípio II):
+// não bloqueia; quem confirma (dono ou membro) fica no histórico da geração. AlertDialog com
 // role "alertdialog".
 export function AvisoDireito({
   open,
@@ -43,8 +43,8 @@ export function AvisoDireito({
             {AVISO_DIREITO}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {items.length === 1 ? "Este vídeo é" : `Estes ${items.length} vídeos são`} de canal sem acordo registrado ou envio
-            avulso. O SociMan não bloqueia o envio: ao confirmar, o seu nome, a data e o status de direito ficam no histórico.
+            {items.length === 1 ? "Este vídeo é" : `Estes ${items.length} vídeos são`} de canal sem acordo registrado ou
+            avulso. O SociMan não bloqueia a geração: ao confirmar, o seu nome, a data e o status de direito ficam no histórico.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <ul className="max-h-48 space-y-2 overflow-y-auto text-sm">
@@ -57,7 +57,7 @@ export function AvisoDireito({
         </ul>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Confirmo e quero enviar</AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm}>Confirmo e quero gerar</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

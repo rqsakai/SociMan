@@ -8,12 +8,12 @@ export type { Notificacao, NotificacaoTipo } from "@sociman/contract";
 export const notificacoesKey = ["notificacoes"] as const;
 
 export const tipoLabel: Record<NotificacaoTipo, string> = {
-  envio_pronto: "Envio pronto",
+  envio_pronto: "Cortes prontos",
   envio_sem_clipes: "Sem clipes",
-  envio_falhou: "Envio falhou",
+  envio_falhou: "Geração falhou",
   envio_confirmar_qualidade: "Confirmar qualidade",
   envio_momentos: "Momentos escolhidos",
-  openshorts_fora: "OpenShorts fora do ar",
+  openshorts_fora: "SociShorts fora do ar",
   hora_de_postar: "Hora de postar",
   cota_youtube: "Cota do YouTube",
   canal_erro: "Erro no canal",
@@ -26,6 +26,9 @@ export const tipoLabel: Record<NotificacaoTipo, string> = {
   envio_rede_falhou: "Envio para a rede falhou",
   envio_aguardando_vaga: "Aguardando vaga na rede",
   conexao_precisa_reconectar: "Conta precisa reconectar",
+  // spec 016 (o link vem da API: /app/conteudos/{conteudoId}?conta={contaId})
+  post_detectado: "Post detectado",
+  vinculo_a_confirmar: "Escolha o post",
 };
 
 // Polling (R11): 20 s com a aba visível e 60 s em segundo plano.

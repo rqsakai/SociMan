@@ -250,7 +250,7 @@ def test_clipes_expirados_mantem_os_importados(client, owner, perfil, db, fake, 
     _importar(db, fake)
     row = envio_row(db, e["id"])
     assert row.status == EnvioStatus.falhou and row.error_code == "clips_expired"
-    assert row.error_message == "Os clipes expiraram no OpenShorts"
+    assert row.error_message == "Os clipes expiraram no SociShorts"
     assert row.clips_importados == 1
     assert [c.clip_index for c in _cortes(db, e["id"])] == [0]
     ns = list(db.scalars(select(Notificacao).where(

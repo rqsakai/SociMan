@@ -89,9 +89,9 @@ def proc(*logs: list[str], **extra) -> dict:
 def test_na_fila_com_posicao():
     p = interpretar({"status": "queued", "logs": [f"Job {JOB} queued."],
                      "queue": {"position": 2, "ahead": 1, "eta_seconds": 600}})
-    assert p == Progresso(Etapa.fila, posicao_fila=2, mensagem="Na fila do OpenShorts (2º)",
+    assert p == Progresso(Etapa.fila, posicao_fila=2, mensagem="Na fila do SociShorts (2º)",
                           progresso_geral=0)
-    assert interpretar({"status": "queued", "queue": None}).mensagem == "Na fila do OpenShorts"
+    assert interpretar({"status": "queued", "queue": None}).mensagem == "Na fila do SociShorts"
 
 
 def test_processando_sem_marco_e_preparando():
@@ -192,7 +192,7 @@ def test_concluido_e_falhou():
     p = interpretar({"status": "completed", "logs": [], "result": {"clips": [{}, {}, {}]}})
     assert (p.etapa, p.clipes_previstos, p.progresso_geral) == (Etapa.importando, 3, 90)
     p = interpretar({"status": "failed", "logs": ["Job x queued.", "Process failed with exit code 1", ""]})
-    assert (p.etapa, p.mensagem) == (Etapa.erro, "O OpenShorts falhou: Process failed with exit code 1")
+    assert (p.etapa, p.mensagem) == (Etapa.erro, "O SociShorts falhou: Process failed with exit code 1")
 
 
 def test_reenfileirado_depois_de_queda():
@@ -240,10 +240,10 @@ def test_gravar_nao_volta_o_geral():
 
 def test_publico():
     assert publico(_envio(status="pronto", clips_importados=3, clips_total=3)).mensagem == "Pronto: 3 clipes"
-    assert publico(_envio(status="falhou", error_message="O OpenShorts falhou")).etapa == Etapa.erro
+    assert publico(_envio(status="falhou", error_message="O SociShorts falhou")).etapa == Etapa.erro
     assert publico(_envio(status="na_fila")).etapa == Etapa.fila
     assert publico(_envio(status="selecionado")).etapa is None
-    assert publico(_envio(openshorts_queue_pos=3)).mensagem == "Na fila do OpenShorts (3º)"
+    assert publico(_envio(openshorts_queue_pos=3)).mensagem == "Na fila do SociShorts (3º)"
     e = _envio(etapa="processando_clipes", etapa_pct=11, clipe_atual=2, clipes_previstos=9,
                etapa_mensagem="Cortando clipe 2 de 9")
     assert publico(e).mensagem == "Cortando clipe 2 de 9" and publico(e).etapa_pct == 11

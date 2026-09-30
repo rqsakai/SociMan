@@ -6,12 +6,14 @@ import {
   TriangleAlertIcon,
 } from "lucide-react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { useTema } from "@/lib/tema"
 
 const Toaster = ({ ...props }: ToasterProps) => {
+  // tema do app (src/lib/tema.ts; sem next-themes)
+  const { efetivo } = useTema()
   return (
     <Sonner
-      // o SociMan só tem tema claro (sem next-themes)
-      theme="light"
+      theme={efetivo === "escuro" ? "dark" : "light"}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

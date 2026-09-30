@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 type EnvioLike = Pick<Envio, "status" | "queuePosition" | "progress" | "clipsTotal" | "clipsImportados">;
 type EnvioComEtapa = EnvioLike & Pick<Envio, "etapa" | "etapaMensagem">;
 
-// Status do envio (US3): "Na fila (2º)", "Pronto: 3 clipes", "Sem clipes", "Falhou".
+// Status da geração (US3): "Na fila (2º)", "Pronto: 3 clipes", "Sem clipes", "Falhou".
 export function EnvioStatusBadge({ envio, className }: { envio: EnvioLike; className?: string }) {
   return (
     <Badge className={cn(envioStatusTone[envio.status], className)}>
@@ -71,12 +71,12 @@ export function EnvioStatus({ envio, className }: { envio: EnvioComEtapa; classN
   return (
     <div className={cn("min-w-32 space-y-1", className)}>
       {andamento ? <EnvioEtapaLinha envio={envio} /> : <EnvioStatusBadge envio={envio} />}
-      {andamento && <ProgressBar value={envio.progress / 100} label="Progresso do envio" className="h-1.5" />}
+      {andamento && <ProgressBar value={envio.progress / 100} label="Progresso da geração" className="h-1.5" />}
     </div>
   );
 }
 
-// Detalhe do envio: as etapas em ordem, com check nas concluídas e a atual destacada.
+// Detalhe da geração: as etapas em ordem, com check nas concluídas e a atual destacada.
 export function EnvioEtapas({ envio, legendaKit, className }: { envio: EnvioComEtapa; legendaKit: boolean; className?: string }) {
   const lista = envioEtapasLista(legendaKit);
   const atual: EnvioEtapa | null =
@@ -84,7 +84,7 @@ export function EnvioEtapas({ envio, legendaKit, className }: { envio: EnvioComE
   if (!emAndamento(envio) && envio.status !== "pronto") return null;
   const idx = atual ? lista.indexOf(atual) : -1;
   return (
-    <ol aria-label="Etapas do envio" className={cn("space-y-1 text-sm", className)}>
+    <ol aria-label="Etapas da geração" className={cn("space-y-1 text-sm", className)}>
       {lista.map((etapa, i) => {
         const feita = i < idx || (etapa === "concluido" && atual === "concluido");
         const corrente = i === idx && etapa !== "concluido";

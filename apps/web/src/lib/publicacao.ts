@@ -4,7 +4,7 @@ import { api } from "./api";
 
 export type { Conexao, ConexaoEstado, Criador, PublicacaoConfig, Tentativa, TentativaFase } from "@sociman/contract";
 
-// Envio automático para a rede (spec 015): conexão da conta, interruptor "Envios automáticos",
+// Envio automático para a rede (spec 015): conexão da conta, interruptor "Publicação automática",
 // fases das tentativas e rótulos em pt-BR. Tudo o que conecta, agenda em modo automático, tenta
 // de novo ou confirma envio é só do dono humano (a API recusa o resto com 403).
 
@@ -26,7 +26,7 @@ export const conexaoEstadoLabel: Record<ConexaoEstado, string> = {
 export const conexaoEstadoTone: Record<ConexaoEstado, string> = {
   nao_conectada: "bg-secondary text-secondary-foreground",
   conectada: "bg-success text-success-foreground",
-  precisa_reconectar: "bg-destructive text-white",
+  precisa_reconectar: "bg-destructive text-destructive-foreground",
 };
 
 // Título do erro do login (a mensagem detalhada vem da API, em pt-BR).
@@ -99,7 +99,7 @@ export function abrirEm(err: unknown): string | null {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Interruptor "Envios automáticos"
+// Interruptor "Publicação automática"
 
 export const situacaoAppLabel: Record<string, string> = {
   sandbox: "Sandbox (sem auditoria da TikTok)",
@@ -114,8 +114,8 @@ export function usePublicacaoConfig() {
 export const enviosLigados = (c: PublicacaoConfig | undefined) => Boolean(c?.servidorHabilitado && c?.enviosHabilitados);
 
 export function enviosDesligadosTexto(c: PublicacaoConfig): string {
-  if (!c.servidorHabilitado) return "O servidor está com os envios desligados (PUBLICACAO_HABILITADA no .env).";
-  return "O interruptor \"Envios automáticos\" está desligado.";
+  if (!c.servidorHabilitado) return "O servidor está com a publicação desligada (PUBLICACAO_HABILITADA no .env).";
+  return "O interruptor \"Publicação automática\" está desligado.";
 }
 
 export const AVISO_SANDBOX =
@@ -144,7 +144,7 @@ export const faseTone: Record<TentativaFase, string> = {
   processando: "bg-info text-info-foreground",
   entregue: "bg-success text-success-foreground",
   publicada: "bg-success text-success-foreground",
-  recusada: "bg-destructive text-white",
+  recusada: "bg-destructive text-destructive-foreground",
   incerta: "bg-warning text-warning-foreground",
   sem_vaga: "bg-warning text-warning-foreground",
 };
@@ -202,7 +202,7 @@ export const conexaoFieldLabel: Record<string, string> = {
   desconectado_por: "Desconectada por",
 };
 
-export const publicacaoConfigFieldLabel: Record<string, string> = { envios_habilitados: "Envios automáticos" };
+export const publicacaoConfigFieldLabel: Record<string, string> = { envios_habilitados: "Publicação automática" };
 
 // ---------------------------------------------------------------------------------------------
 // Publicar no horário (US3, research R13): a tela obrigatória da TikTok.

@@ -109,7 +109,7 @@ export function ClipReview({
         </label>
         <div className="flex items-center gap-1.5">
           {corte.openshortsScore !== null && corte.openshortsScore !== undefined && (
-            <Badge variant="outline" title="Pontuação do OpenShorts">
+            <Badge variant="outline" title="Pontuação do SociShorts">
               {Math.round(corte.openshortsScore)}
             </Badge>
           )}

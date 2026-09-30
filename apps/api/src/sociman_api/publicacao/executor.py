@@ -8,6 +8,9 @@ OAuth de cada rede é um módulo (`publicacao/<rede>/oauth.py`), exposto por `ex
 
 A máquina de estados (R7, R8), o interruptor, os vencidos, o histórico e os avisos ficam na
 trilha e valem para qualquer rede.
+
+Spec 016 (R2): o `LeitorRede` de cada rede (só leitura: stats da conta, lista e consulta de
+vídeos, post id de um envio) vem de `registro.leitor_para(platform)`, com os tipos daqui.
 """
 
 import enum
@@ -172,3 +175,73 @@ class ExecutorRede(Protocol):
     def consultar_criador(self, ctx: Contexto) -> Any: ...
 
     def traduzir(self, codigo: str | None) -> Motivo: ...
+
+
+# ---- leitura das métricas (spec 016, R2): nada aqui envia nada à rede ----
+
+class SemPermissaoLeitura(RecusaRede):
+    """A conta não autorizou a leitura (`scope_not_authorized`): a coleta para até reconectar,
+    e a conexão **não** muda (a publicação pode continuar, R1)."""
+
+
+@dataclass(frozen=True)
+class VideoLido:
+    """Um vídeo público como a rede devolveu. `id` é sempre texto (pode passar de 2^53).
+    Os contadores ficam None quando a rede omite o campo."""
+
+    id: str
+    criado_em: datetime
+    url: str | None
+    legenda: str | None
+    titulo: str | None
+    duracao_s: int
+    largura: int | None = None
+    altura: int | None = None
+    views: int | None = None
+    likes: int | None = None
+    comments: int | None = None
+    shares: int | None = None
+
+
+@dataclass(frozen=True)
+class StatsConta:
+    seguidores: int | None
+    seguindo: int | None
+    curtidas: int | None
+    videos: int | None  # só os públicos
+
+
+@dataclass(frozen=True)
+class PostId:
+    """O envio virou post público: o id do post (texto)."""
+
+    id: str
+
+
+@dataclass(frozen=True)
+class Pendente:
+    """Ainda na caixa do app ou processando (`status` cru da rede)."""
+
+    status: str
+
+
+@dataclass(frozen=True)
+class Falhou:
+    codigo: str
+
+
+class LeitorRede(Protocol):
+    rede: Platform
+
+    def stats_conta(self, ctx: Contexto) -> StatsConta: ...
+
+    def listar(self, ctx: Contexto, cursor: int | None = None, max_count: int = 20
+               ) -> tuple[list[VideoLido], int | None, bool]:
+        """(vídeos, próximo cursor, tem mais), do mais novo ao mais antigo."""
+        ...
+
+    def consultar(self, ctx: Contexto, ids: Sequence[str]) -> list[VideoLido]:
+        """Até 20 ids; devolve só os que vieram (privado ou apagado não volta)."""
+        ...
+
+    def post_publicado(self, ctx: Contexto, publish_id: str) -> PostId | Pendente | Falhou: ...

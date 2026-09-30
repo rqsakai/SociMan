@@ -43,6 +43,9 @@ import Conteudos from "./pages/conteudos/Conteudos";
 // 015-tiktok-rascunho
 import ConexaoRetorno from "./pages/conexoes/Retorno";
 import PublicacaoConfig from "./pages/configuracoes/Publicacao";
+// 016-metricas-tiktok
+import Metricas from "./pages/metricas/Metricas";
+import VideoMetricas from "./pages/metricas/VideoMetricas";
 
 // Vitrine dos componentes da spec 005 (só em dev; o build de produção descarta o import).
 const Showcase = import.meta.env.DEV ? lazy(() => import("./pages/_Showcase")) : null;
@@ -123,6 +126,8 @@ export default function App() {
                 <Route path="/app/calendario" element={<Calendario />} />
                 <Route path="/app/conteudos" element={<Conteudos />} />
                 <Route path="/app/conteudos/:id" element={<ConteudoDetalhe />} />
+                <Route path="/app/metricas" element={<Metricas />} />
+                <Route path="/app/metricas/videos/:id" element={<VideoMetricas />} />
                 <Route path="/app/assistente-ia" element={<AssistenteIa />} />
                 <Route path="/app/assistente-ia/regras/:tipo" element={<RegraDetalhe />} />
                 <Route

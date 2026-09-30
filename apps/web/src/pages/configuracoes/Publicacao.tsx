@@ -1,5 +1,5 @@
 /*
- * "Envios automáticos" (spec 015, US4; T068; research R11). Só para o dono.
+ * "Publicação automática" (spec 015, US4; T068; research R11). Só para o dono.
  *
  * O envio para a rede só acontece com os dois níveis ligados: PUBLICACAO_HABILITADA no .env do
  * servidor (só leitura aqui) e o interruptor desta tela. Ligar pede confirmação e avisa quantos
@@ -60,11 +60,11 @@ export default function Publicacao() {
       if (enviosHabilitados) {
         toast.success(
           r.config.vencidos > 0
-            ? `Envios automáticos ligados. ${r.config.vencidos} agendamento(s) vencido(s) pedem sua confirmação.`
-            : "Envios automáticos ligados.",
+            ? `Publicação automática ligada. ${r.config.vencidos} agendamento(s) vencido(s) pedem sua confirmação.`
+            : "Publicação automática ligada.",
         );
       } else {
-        toast.success("Envios automáticos desligados. Nada sai para a rede até ligar de novo.");
+        toast.success("Publicação automática desligada. Nada sai para a rede até ligar de novo.");
       }
     } catch (err) {
       setError(err);
@@ -76,7 +76,7 @@ export default function Publicacao() {
 
   return (
     <div className="space-y-6">
-      <PageHeading title="Envios automáticos" description="Controle geral do envio de rascunhos para as redes. Desligado, nada sai do SociMan." />
+      <PageHeading title="Publicação automática" description="Controle geral do envio de rascunhos para as redes. Desligado, nada sai do SociMan." />
       {config.isPending && (
         <p aria-live="polite" className="text-sm text-muted-foreground">
           Carregando…
@@ -97,7 +97,7 @@ export default function Publicacao() {
               <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
                 <div>
                   <p id="envios-label" className="font-medium">
-                    Envios automáticos
+                    Publicação automática
                   </p>
                   <p className="text-sm text-muted-foreground">{c.enviosHabilitados ? "Ligado" : "Desligado"}</p>
                 </div>
@@ -212,7 +212,7 @@ export default function Publicacao() {
       <AlertDialog open={confirmarLigar} onOpenChange={(o) => !busy && setConfirmarLigar(o)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Ligar os envios automáticos?</AlertDialogTitle>
+            <AlertDialogTitle>Ligar a publicação automática?</AlertDialogTitle>
             <AlertDialogDescription>
               {c && !c.servidorHabilitado
                 ? "O servidor continua desligado (PUBLICACAO_HABILITADA): nada sai até ele ser ligado também. "

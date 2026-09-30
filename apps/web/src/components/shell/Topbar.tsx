@@ -9,7 +9,8 @@
  * À esquerda: só a trilha (Início › … › página), vinda de usePageMeta (./page-meta.tsx) ou,
  * sem ele, do item do menu que casa com a URL. O título fica só no <h1> da página (pedido do
  * dono: sem título repetido no topo).
- * À direita: busca, sino de notificações (spec 006), menu de conta ("Minha conta" e "Sair") e o botão "Sair" (o e2e usa
+ * À direita: busca, sino de notificações (spec 006), menu de conta ("Minha conta", "Tema" escuro/claro/do sistema
+ * da spec 018 e "Sair") e o botão "Sair" (o e2e usa
  * getByRole("button", { name: "Sair" })).
  */
 import { CircleUser, LogOut, Menu, Search } from "lucide-react";
@@ -29,12 +30,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { logout } from "@/lib/authActions";
 import { useAuth } from "@/lib/authStore";
+import { setTema, useTema, type Tema } from "@/lib/tema";
 import { Sino } from "../notificacoes/Sino";
 import { navItemFor } from "./nav";
 import { useCurrentPageMeta, type Crumb } from "./page-meta";
@@ -67,6 +71,7 @@ export function Topbar({ onOpenMenu, search }: TopbarProps) {
   const user = useAuth((s) => s.user);
   const [loggingOut, setLoggingOut] = useState(false);
   const { title, crumbs } = useTrail();
+  const { tema } = useTema();
 
   async function onLogout() {
     setLoggingOut(true);
@@ -145,6 +150,14 @@ export function Topbar({ onOpenMenu, search }: TopbarProps) {
                   Minha conta
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Tema</DropdownMenuLabel>
+              <DropdownMenuRadioGroup value={tema} onValueChange={(v) => setTema(v as Tema)}>
+                <DropdownMenuRadioItem value="escuro">Escuro</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="claro">Claro</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="sistema">Do sistema</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+              <DropdownMenuSeparator />
               <DropdownMenuItem disabled={loggingOut} onSelect={() => void onLogout()}>
                 <LogOut aria-hidden="true" />
                 Sair

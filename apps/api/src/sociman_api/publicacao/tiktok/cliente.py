@@ -1,7 +1,8 @@
 """Cliente HTTP da TikTok (research R4, R16.3 e R21 da spec 015; princípio I).
 
 O **único** arquivo de `src/` que cita o endereço da API da TikTok (guarda R16.1: exceção por
-pasta, `publicacao/tiktok/`). Lista fechada `ALLOWED`: exatamente os pedidos de R21. Cada pedido
+pasta, `publicacao/tiktok/`). Lista fechada `ALLOWED`: exatamente os pedidos de R21 mais a
+`LEITURA_016` (spec 016: `video/list` e `video/query`, só leitura). Cada pedido
 passa por `_conferir`, que recusa o resto com `PedidoProibido`:
 - os caminhos da API (OAuth, `user/info`, `creator_info`, os dois `init` e `status/fetch`);
 - `PUT` das partes só para `https://` em host `*.tiktokapis.com` (ou os hosts de
@@ -49,7 +50,7 @@ AVATAR_MAX_BYTES = 1024 * 1024
 UPLOAD = "<upload_url>"
 AVATAR = "<avatar>"
 
-ALLOWED = frozenset({
+R21 = frozenset({
     ("POST", "/v2/oauth/token/"),
     ("POST", "/v2/oauth/revoke/"),
     ("GET", "/v2/user/info/"),
@@ -60,6 +61,13 @@ ALLOWED = frozenset({
     ("PUT", UPLOAD),
     ("GET", AVATAR),
 })
+# Spec 016 (R2): leitura das métricas (a `user/info` e o `status/fetch` já estavam no R21).
+LEITURA_016 = frozenset({
+    ("POST", "/v2/video/list/"),
+    ("POST", "/v2/video/query/"),
+})
+# As listas só crescem por spec.
+ALLOWED = R21 | LEITURA_016
 INIT_INBOX = "/v2/post/publish/inbox/video/init/"
 
 TIMEOUT = httpx.Timeout(20.0, connect=5.0)

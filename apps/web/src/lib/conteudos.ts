@@ -77,7 +77,7 @@ export const estadoEfetivoTone: Record<EstadoEfetivo, string> = {
   aprovado: "bg-primary/15 text-primary ring-1 ring-primary/30",
   agendado: "bg-info text-info-foreground",
   a_postar: "bg-primary text-primary-foreground",
-  atrasado: "bg-destructive text-white",
+  atrasado: "bg-destructive text-destructive-foreground",
   atencao: "bg-warning text-warning-foreground",
   pausado: "bg-secondary text-secondary-foreground ring-1 ring-border",
   vencido: "bg-warning text-warning-foreground",
@@ -86,7 +86,7 @@ export const estadoEfetivoTone: Record<EstadoEfetivo, string> = {
   postado: "bg-success text-success-foreground",
   rascunho_criado: "bg-info text-info-foreground",
   publicado: "bg-success text-success-foreground",
-  falhou: "bg-destructive text-white",
+  falhou: "bg-destructive text-destructive-foreground",
   arquivado: "bg-dark text-dark-foreground",
 };
 

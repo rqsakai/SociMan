@@ -241,7 +241,9 @@ def test_sem_identidade(client, db, c):
 
 
 def test_ja_conectada(client, c):
-    conectar(client, c["h"], c["conta"], c["fake"])
+    from fakes.tiktok_fake import ESCOPOS_016  # spec 016: sem as métricas, reconectar amplia
+
+    conectar(client, c["h"], c["conta"], c["fake"], escopos=ESCOPOS_016)
     r = client.post(f"/api/contas/{c['conta']['id']}/conexao/iniciar",
                     headers={**c["h"], **HOST_WEB})
     assert r.status_code == 409 and _err(r) == "ja_conectada"
@@ -260,6 +262,7 @@ def test_desconectar_revoga_apaga_e_historico(client, db, c, dono):  # noqa: F81
     _sem_segredo(r)
     assert r.json()["conexao"]["estado"] == "nao_conectada"
     assert r.json()["agendamentosEmAtencao"] == 1
+    assert r.json()["metricasAnonimizadas"] is None  # spec 016: sem série de métricas
     assert c["fake"].revogados == ["open-atavernanerd"]
     assert _creds(db) == 0
     [conexao] = _conexoes(db)
@@ -405,3 +408,37 @@ def test_criador_precisa_reconectar(client, db, c):
     db.commit()
     r = _criador(client, c)
     assert r.status_code == 409 and _err(r) == "precisa_reconectar"
+
+
+def test_desconectar_com_serie_de_metricas(client, db, c):
+    """Spec 016 (T053, R13): com fotos, só com `confirmoAnonimizar`; a série é anonimizada na
+    mesma transação e a conexão ganha a versão `metricas_anonimizadas`."""
+    from datetime import UTC, datetime, timedelta
+
+    from fakes.tiktok_fake import ESCOPOS_016
+
+    from sociman_api.metricas import coleta
+    from sociman_api.metricas.models import Serie
+
+    cx = conectar(client, c["h"], c["conta"], c["fake"], escopos=ESCOPOS_016)["conexao"]
+    agora = datetime.now(UTC)
+    c["fake"].video("atavernanerd", 7_400_000_000_000_000_002, agora - timedelta(minutes=20))
+    coleta.rodar(db, client=c["fake"].client(), agora=agora)
+    url = f"/api/contas/{c['conta']['id']}/conexao/desconectar"
+    r = client.post(url, headers=c["h"], json={"version": cx["version"]})
+    assert r.status_code == 409 and _err(r) == "confirmar_anonimizacao"
+    assert r.json()["error"]["details"] == {"videos": 1, "fotos": 2, "conta": "@atavernanerd"}
+    assert _creds(db) == 1  # nada mudou
+    r = client.post(url, headers=c["h"], json={"version": cx["version"],
+                                                "confirmoAnonimizar": True})
+    assert r.status_code == 200, r.text
+    assert r.json()["metricasAnonimizadas"] == {"videos": 1, "fotos": 2}
+    assert _creds(db) == 0
+    db.expire_all()
+    [serie] = db.scalars(select(Serie))
+    assert serie.conta_id is None and serie.rotulo.startswith("Conta anônima")
+    [conexao] = _conexoes(db)
+    acoes = [v.details["acao"] for v in db.scalars(
+        select(EntityVersion).where(EntityVersion.entity_id == conexao.id)
+        .order_by(EntityVersion.version))]
+    assert acoes == ["conectada", "desconectada", "metricas_anonimizadas"]

@@ -73,6 +73,10 @@ _TABLES += ("ia_regras",)
 _TABLES += ("conteudos",)
 # Spec 015 (a linha única de `publicacao_config` volta desligada em `_clean_state`).
 _TABLES += ("conexoes", "conexao_credenciais", "publicacao_tentativas")
+# Spec 016: as 5 tabelas `metricas_*`, na ordem das FKs (o trigger de linha só de inserção não
+# dispara no TRUNCATE, research R7).
+_TABLES += ("metricas_buscas_post", "metricas_conta_fotos", "metricas_video_fotos",
+            "metricas_videos", "metricas_series")
 
 
 @pytest.fixture(autouse=True)

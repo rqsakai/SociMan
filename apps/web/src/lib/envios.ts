@@ -10,7 +10,7 @@ export type { Envio, EnvioConfig, EnvioEtapa, EnvioStatus, PadroesCorte } from "
 export const envioStatusLabel: Record<EnvioStatus, string> = {
   selecionado: "Selecionado",
   na_fila: "Na fila",
-  aguardando_openshorts: "Aguardando o OpenShorts",
+  aguardando_openshorts: "Aguardando o SociShorts",
   confirmar_qualidade: "Confirmar qualidade",
   processando: "Processando",
   importando: "Importando",
@@ -43,7 +43,7 @@ export function envioStatusText(e: Pick<Envio, "status" | "queuePosition" | "pro
 // Etapa real do OpenShorts (FR-010a). O detalhe com o % da etapa e o "clipe N de M" vem pronto da
 // API (`etapaMensagem`); o rótulo é o fallback e o nome na lista de etapas do detalhe.
 export const envioEtapaLabel: Record<EnvioEtapa, string> = {
-  fila: "Na fila do OpenShorts",
+  fila: "Na fila do SociShorts",
   baixando: "Baixando o vídeo",
   transcrevendo: "Transcrevendo o vídeo",
   escolhendo_momentos: "Escolhendo os momentos",
@@ -80,7 +80,7 @@ export const envioStatusTone: Record<EnvioStatus, string> = {
   importando: "bg-info text-info-foreground",
   pronto: "bg-success text-success-foreground",
   sem_clipes: "bg-muted text-muted-foreground",
-  falhou: "bg-destructive text-white",
+  falhou: "bg-destructive text-destructive-foreground",
   descartado: "bg-muted text-muted-foreground",
 };
 
@@ -97,7 +97,7 @@ export const layoutLabel: Record<PadroesCorte["layout"], string> = {
 export const formatoLabel: Record<PadroesCorte["formato"], string> = { vertical: "Vertical (9:16)", square: "Quadrado (1:1)" };
 export const legendaLabel: Record<PadroesCorte["legenda"], string> = {
   kit: "Legenda do kit do perfil",
-  gerador: "Legenda do OpenShorts",
+  gerador: "Legenda do SociShorts",
   nenhuma: "Sem legenda",
 };
 
@@ -113,7 +113,7 @@ export const padroesFieldLabel: Record<string, string> = {
 };
 
 export function formatPadroesValue(field: string, value: unknown): string {
-  if (value === null || value === undefined) return field === "quantidade" ? "O OpenShorts decide" : "—";
+  if (value === null || value === undefined) return field === "quantidade" ? "O SociShorts decide" : "—";
   if (field === "layout") return layoutLabel[value as PadroesCorte["layout"]] ?? String(value);
   if (field === "formato") return formatoLabel[value as PadroesCorte["formato"]] ?? String(value);
   if (field === "legenda") return legendaLabel[value as PadroesCorte["legenda"]] ?? String(value);
@@ -145,7 +145,7 @@ export const padroesApiField: Record<string, string> = {
 export const envioFieldLabel: Record<string, string> = {
   status: "Status",
   config: "Configuração",
-  direito_no_envio: "Direito no envio",
+  direito_no_envio: "Direito na geração",
   aviso_confirmado: "Aviso confirmado",
   source_title: "Título da fonte",
   source_url: "Link da fonte",

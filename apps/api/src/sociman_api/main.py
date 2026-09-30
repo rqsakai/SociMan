@@ -23,6 +23,7 @@ from sociman_api.marca.router import router as kit_router
 from sociman_api.marca.router_fontes import router as fontes_router
 from sociman_api.marca.router_fundos import router as fundos_router
 from sociman_api.marca.router_marca_dagua import router as marca_dagua_router
+from sociman_api.metricas.router import router as metricas_router  # spec 016
 from sociman_api.notificacoes.router import router as notificacoes_router
 from sociman_api.perfis.router_contas import router as contas_router
 from sociman_api.perfis.router_imagens import router as imagens_router
@@ -59,6 +60,7 @@ app.include_router(ia_router)
 app.include_router(conteudos_router)  # spec 014
 app.include_router(conteudos_video_router)  # spec 014: vídeo próprio
 app.include_router(publicacao_router)  # spec 015: conexões, interruptor e execução
+app.include_router(metricas_router)  # spec 016: métricas, vínculo e exportação
 install_openapi_error_contract(app)
 
 

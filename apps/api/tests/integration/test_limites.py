@@ -86,4 +86,20 @@ def test_taxa_estoura_e_volta_no_minuto_seguinte():
     assert limites.consumir(conexao, "status", minuto)  # outro endpoint, outro contador
     assert limites.consumir(uuid.uuid4(), "init", minuto)  # outra conexão
     assert limites.consumir(conexao, "init", minuto + 60)  # minuto seguinte
-    assert limites.TAXAS == {"init": 5, "status": 29, "creator_info": 19}
+    assert limites.TAXAS == {"init": 5, "status": 29, "creator_info": 19, "leitura": 120}
+
+
+def test_leitura_da_016_com_contador_por_endpoint():
+    """Spec 016 (R18): 120 por minuto, por token e por endpoint de leitura; o `status/fetch`
+    do vínculo continua na chave "status" da 015, compartilhada com a trilha."""
+    conexao = uuid.uuid4()
+    minuto = 2_000_000 * 60.0
+    assert set(limites.LEITURA) == {"user_info", "video_list", "video_query"}
+    assert all(limites.consumir(conexao, "video_list", minuto)
+               for _ in range(limites.TAXAS["leitura"]))
+    assert not limites.consumir(conexao, "video_list", minuto + 1)
+    assert limites.consumir(conexao, "video_query", minuto)  # outro endpoint de leitura
+    assert limites.consumir(conexao, "user_info", minuto)
+    assert limites.consumir(conexao, "video_list", minuto + 60)  # minuto seguinte
+    usados = [limites.consumir(conexao, "status", minuto) for _ in range(30)]
+    assert usados.count(True) == limites.TAXAS["status"]  # o limite da 015, não o de leitura

@@ -256,7 +256,7 @@ export function SequenciaDialog({
                         <button
                           type="button"
                           aria-label={`Tirar ${h}`}
-                          className="rounded-full hover:bg-black/10"
+                          className="rounded-full hover:bg-foreground/10"
                           onClick={() => {
                             setHorarios((cur) => cur.filter((x) => x !== h));
                             setPrevia(null);

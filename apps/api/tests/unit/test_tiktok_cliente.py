@@ -20,6 +20,22 @@ def test_pedido_fora_do_allowed_e_recusado(tiktok_fake):
     assert tiktok_fake.requests == []  # nada saiu
 
 
+def test_leitura_da_016_passa_e_o_resto_continua_recusado(tiktok_fake):
+    """Spec 016 (R2): só `video/list` e `video/query` entram (`LEITURA_016`)."""
+    assert cliente.LEITURA_016 == {("POST", "/v2/video/list/"), ("POST", "/v2/video/query/")}
+    assert cliente.ALLOWED == cliente.R21 | cliente.LEITURA_016
+    c = tiktok_fake.client()
+    access, _ = tiktok_fake.emitir_tokens("open-um")
+    c.api("POST", "/v2/video/list/", token=access, json={"max_count": 20})
+    c.api("POST", "/v2/video/query/", token=access, json={"filters": {"video_ids": ["1"]}})
+    assert [e for _, e, _ in tiktok_fake.requests] == ["video_list", "video_query"]
+    for metodo, caminho in (("GET", "/v2/video/list/"), ("POST", "/v2/video/upload/"),
+                            ("POST", "/v2/video/delete/"), ("POST", "/v2/research/video/query/")):
+        with pytest.raises(executor.PedidoProibido):
+            c.api(metodo, caminho, token=access)
+    assert len(tiktok_fake.requests) == 2
+
+
 @pytest.mark.parametrize("url", [
     "https://evil.example.com/upload/?upload_token=x",
     "http://open-upload.tiktokapis.com/upload/",  # sem https

@@ -1,7 +1,7 @@
 import type { components } from "./generated/schema";
 
 // O OpenAPI tipa `ErrorBody.code` como string; a lista fechada vem do contrato
-// (specs/001-auth, 003-contas-sociais, 004-kit-de-marca, 007, 006, 008, 014 e 015, contracts/http-api.md).
+// (specs/001-auth, 003-contas-sociais, 004-kit-de-marca, 007, 006, 008, 014, 015 e 016, contracts/http-api.md).
 export const errorCodes = [
   "validation_error",
   "invalid_credentials",
@@ -100,6 +100,17 @@ export const errorCodes = [
   "confirmacao_necessaria",
   "legenda_obrigatoria",
   "legenda_longa",
+  // 016-metricas-tiktok
+  "confirmar_anonimizacao",
+  "video_ja_vinculado",
+  "destino_ja_vinculado",
+  "destino_sem_post",
+  "sem_vinculo",
+  "link_invalido",
+  "link_outra_conta",
+  "post_nao_encontrado",
+  "metricas_indisponiveis",
+  "periodo_invalido",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

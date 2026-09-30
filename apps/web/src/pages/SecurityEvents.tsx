@@ -48,7 +48,7 @@ const columns = col.columns([
         className={
           c.row.original.outcome === "ok"
             ? "bg-success text-success-foreground uppercase"
-            : "bg-destructive text-white uppercase"
+            : "bg-destructive text-destructive-foreground uppercase"
         }
       >
         {c.getValue()}

@@ -52,21 +52,21 @@ OCUPADO_S = 60
 FORA_AVISO = timedelta(minutes=30)
 PROGRESSO_TETO = 90
 
-JOB_PERDIDO = "O OpenShorts não tem mais este job; envie de novo"
-SEM_CLIPES = "O OpenShorts não encontrou clipes neste vídeo"
+JOB_PERDIDO = "O SociShorts não tem mais este job; envie de novo"
+SEM_CLIPES = "O SociShorts não encontrou clipes neste vídeo"
 BAIXA_QUALIDADE = ("O vídeo só está disponível em baixa resolução ({altura}p); "
                    "envie mesmo assim ou descarte")
 
 # Trechos conhecidos do `detail` do OpenShorts → mensagem em pt-BR.
 MOTIVOS: tuple[tuple[str, str], ...] = (
     ("clip generation needs at least",
-     "Vídeo curto demais: o OpenShorts precisa de pelo menos 45 segundos"),
+     "Vídeo curto demais: o SociShorts precisa de pelo menos 45 segundos"),
     ("Paste the link of one video", "O link não é de um vídeo (playlist, canal ou busca)"),
-    ("can't be processed", "O OpenShorts não aceita este link"),
-    ("URL ingest is disabled", "O OpenShorts está configurado para não baixar links do YouTube"),
-    ("File too large", "Arquivo grande demais para o OpenShorts"),
+    ("can't be processed", "O SociShorts não aceita este link"),
+    ("URL ingest is disabled", "O SociShorts está configurado para não baixar links do YouTube"),
+    ("File too large", "Arquivo grande demais para o SociShorts"),
     ("private", "O vídeo é privado ou exige login"),
-    ("Unknown or expired upload_id", "O upload expirou no OpenShorts; tente de novo"),
+    ("Unknown or expired upload_id", "O upload expirou no SociShorts; tente de novo"),
 )
 
 
@@ -74,7 +74,7 @@ def traduzir(detail: str) -> str:
     for trecho, mensagem in MOTIVOS:
         if trecho.lower() in detail.lower():
             return mensagem
-    return f"O OpenShorts recusou o vídeo: {detail}" if detail else "O OpenShorts recusou o vídeo"
+    return f"O SociShorts recusou o vídeo: {detail}" if detail else "O SociShorts recusou o vídeo"
 
 
 def _agora() -> datetime:
@@ -238,7 +238,7 @@ def acompanhar(db: Session, client: OpenShortsClient, envio: Envio, agora: datet
             _sem_clipes(db, envio)
         else:
             _falhar(db, envio, "openshorts_failed",
-                    f"O OpenShorts falhou: {linha}" if linha else "O OpenShorts falhou")
+                    f"O SociShorts falhou: {linha}" if linha else "O SociShorts falhou")
 
 
 def _sem_clipes(db: Session, envio: Envio) -> None:

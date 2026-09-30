@@ -4,7 +4,7 @@
  * <ColarLinkDialog open onOpenChange perfilId onCreated />   link (YouTube ou outro) + título opcional
  * <EnviarArquivoDialog open onOpenChange perfilId onCreated /> arquivo de até 2 GB, 45 s a 3 h, com
  *                                                               barra de progresso e cancelar
- * Avulso sempre mostra o aviso de direito na hora de enviar para corte (princípio II).
+ * Avulso sempre mostra o aviso de direito na hora de gerar cortes (princípio II).
  */
 import { ApiError } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,7 +28,7 @@ function AvisoAvulso() {
     <Alert>
       <ShieldAlert aria-hidden="true" />
       <AlertTitle>{AVISO_DIREITO}</AlertTitle>
-      <AlertDescription>Vídeo avulso não tem status de direito: o envio para corte pede sua confirmação e fica no histórico.</AlertDescription>
+      <AlertDescription>Vídeo avulso não tem status de direito: a geração de cortes pede sua confirmação e fica no histórico.</AlertDescription>
     </Alert>
   );
 }

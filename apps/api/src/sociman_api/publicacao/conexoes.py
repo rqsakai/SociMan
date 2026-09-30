@@ -61,6 +61,8 @@ MARGEM_RENOVACAO = timedelta(minutes=5)
 AVISO_VENCIMENTO = timedelta(days=30)
 ESCOPO_OBRIGATORIO = "video.upload"
 ESCOPO_PUBLICAR = "video.publish"
+# Spec 016 (R1): opcionais para a conexão; sem eles a conta publica e só não coleta.
+ESCOPOS_METRICAS = frozenset({"user.info.stats", "video.list"})
 AVATAR_MAX = 1024 * 1024
 LOCALHOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
 REDE = Platform.tiktok  # a 015 só conecta TikTok
@@ -70,6 +72,12 @@ NAO_CONFIGURADA = ("A publicação não está configurada no servidor (app da Ti
                    "tokens)")
 STATE_INVALIDO = "O pedido de conexão expirou; clique em Conectar de novo"
 MOTIVO_REFRESH = "A autorização da TikTok venceu ou foi revogada"
+
+
+def metricas_liberadas(conexao: Conexao | None) -> bool:
+    """A **única** regra dos escopos de métricas (spec 016, R1): coleta, `EstadoColeta` e
+    `iniciar` usam esta função."""
+    return conexao is not None and ESCOPOS_METRICAS <= set(conexao.escopos or ())
 
 
 def _executor(platform: Platform):
@@ -122,7 +130,8 @@ def conexao_out(db: Session, conta: Conta, conexao: Conexao | None) -> schemas.C
         return schemas.Conexao(
             conta_id=conta.id, rede=conta.platform, estado="nao_conectada", username=None,
             display_name=None, avatar_url=None, escopos=[], conectado_por=None,
-            conectado_em=None, motivo=None, refresh_expira_em=None, modos=modos, version=None)
+            conectado_em=None, motivo=None, refresh_expira_em=None, modos=modos, version=None,
+            metricas=_metricas(db, conta, None))
     users = user_refs(db, [viva.conectado_por])
     avatar = imaging.image_urls(viva.avatar_key)["medium"] if viva.avatar_key else None
     return schemas.Conexao(
@@ -130,7 +139,17 @@ def conexao_out(db: Session, conta: Conta, conexao: Conexao | None) -> schemas.C
         display_name=viva.display_name, avatar_url=avatar, escopos=list(viva.escopos),
         conectado_por=users.get(viva.conectado_por), conectado_em=viva.conectado_em,
         motivo=viva.motivo, refresh_expira_em=viva.refresh_expira_em, modos=modos,
-        version=viva.version)
+        version=viva.version, metricas=_metricas(db, conta, viva))
+
+
+def _metricas(db: Session, conta: Conta, viva: Conexao | None
+              ) -> schemas.EstadoColeta | None:
+    """Spec 016 (T025): `EstadoColeta`, ou None em rede sem leitor."""
+    if registro.leitor_para(conta.platform) is None:
+        return None
+    from sociman_api.metricas import consulta  # local: metricas importa conexoes
+
+    return consulta.estado_coleta(db, conta, viva)
 
 
 def get_conta_or_404(db: Session, conta_id: uuid.UUID, lock: bool = False) -> Conta:
@@ -220,7 +239,12 @@ def iniciar(db: Session, actor: Actor, conta_id: uuid.UUID, host: str | None
     conta = _conta_valida(db, conta_id)
     viva = conexao_viva(db, conta.id)
     if viva is not None and viva.estado == ConexaoEstado.conectada:
-        raise ApiError(409, "ja_conectada", "Esta conta já está conectada")
+        # Spec 016 (R1): conectada sem os escopos de métricas → reconectar para ampliar.
+        if metricas_liberadas(viva):
+            raise ApiError(409, "ja_conectada", "Esta conta já está conectada")
+        if _destinos_automaticos(db, conta.id, DestinoEstado.enviando):
+            raise ApiError(409, "envio_em_andamento",
+                           "Há um envio em andamento para esta conta; espere terminar")
     _exigir_configurado()
     plataforma, redirect_uri = escolher_endereco(host)
     oauth = _executor(conta.platform).oauth
@@ -369,8 +393,6 @@ def _validar_e_gravar(db: Session, actor: Actor, conta: Conta, tokens: Any, clie
     if anterior is not None and anterior.open_id != open_id:
         raise _conta_diferente(username, conta.handle)
     viva = conexao_viva(db, conta.id, lock=True)
-    if viva is not None and viva.estado == ConexaoEstado.conectada:
-        raise ApiError(409, "ja_conectada", "Esta conta já está conectada")
     outra = db.scalar(select(Conexao.id).where(
         Conexao.rede == conta.platform, Conexao.open_id == open_id,
         Conexao.estado != ConexaoEstado.desconectada, Conexao.conta_id != conta.id))
@@ -379,7 +401,11 @@ def _validar_e_gravar(db: Session, actor: Actor, conta: Conta, tokens: Any, clie
 
     agora = datetime.now(UTC)
     if viva is not None:  # precisa_reconectar → reusa a linha (mesmo open_id, R3)
-        conexao, before, acao, action = viva, history.snapshot(viva), "reconectada", "updated"
+        # Spec 016 (R1): `conectada` + mesmo open_id = ampliação dos escopos (mesma linha).
+        acao = "ampliada" if viva.estado == ConexaoEstado.conectada else "reconectada"
+        conexao, before, action = viva, history.snapshot(viva), "updated"
+        if acao == "ampliada":  # troca a credencial sob FOR UPDATE (a trilha pode estar lendo)
+            db.get(ConexaoCredencial, viva.id, with_for_update=True)
     else:
         conexao = Conexao(id=uuid.uuid4(), conta_id=conta.id, rede=conta.platform,
                           open_id=open_id, created_by=actor.user_id)
@@ -403,8 +429,21 @@ def _validar_e_gravar(db: Session, actor: Actor, conta: Conta, tokens: Any, clie
     gravar_avatar(conexao, client, avatar)
     history.record(db, actor, ENTITY, conexao, action, before, history.snapshot(conexao),
                    {"acao": acao})
+    _liberar_serie(db, conta.id)
     db.flush()
     return conexao
+
+
+def _liberar_serie(db: Session, conta_id: uuid.UUID) -> None:
+    """Spec 016 (R1): a nova autorização limpa o `sem_permissao_desde` da série viva."""
+    from sociman_api.metricas.models import Serie  # local: metricas importa conexoes
+
+    serie = db.scalar(select(Serie).where(Serie.conta_id == conta_id,
+                                          Serie.anonimizada_em.is_(None)).with_for_update())
+    if serie is not None and serie.sem_permissao_desde is not None:
+        serie.sem_permissao_desde = None
+        if serie.ultimo_erro_codigo == "scope_not_authorized":
+            serie.ultimo_erro_codigo = serie.ultimo_erro_motivo = serie.ultimo_erro_em = None
 
 
 def _conta_diferente(autorizado: str, esperado: str) -> ApiError:
@@ -429,9 +468,10 @@ def _destinos_automaticos(db: Session, conta_id: uuid.UUID, estado: DestinoEstad
         Postagem.modo != Modo.lembrete, Postagem.archived_at.is_(None))) or 0
 
 
-def desconectar(db: Session, actor: Actor, conta_id: uuid.UUID, version: int, client: Any
-                ) -> tuple[Conta, int]:
-    """Devolve a conta e quantos destinos automáticos agendados ficaram em atenção."""
+def desconectar(db: Session, actor: Actor, conta_id: uuid.UUID, version: int, client: Any,
+                confirmo_anonimizar: bool = False) -> tuple[Conta, int, tuple[int, int] | None]:
+    """Devolve a conta, quantos destinos automáticos agendados ficaram em atenção e, quando a
+    conta tinha série de métricas, `(vídeos, fotos)` anonimizados (spec 016, R13)."""
     conta = get_conta_or_404(db, conta_id, lock=True)
     conexao = conexao_viva(db, conta.id, lock=True)
     if conexao is None:
@@ -440,6 +480,7 @@ def desconectar(db: Session, actor: Actor, conta_id: uuid.UUID, version: int, cl
     if _destinos_automaticos(db, conta.id, DestinoEstado.enviando):
         raise ApiError(409, "envio_em_andamento",
                        "Há um envio em andamento para esta conta; espere terminar")
+    serie = _serie_para_anonimizar(db, conta, confirmo_anonimizar)
     cred = db.get(ConexaoCredencial, conexao.id, with_for_update=True)
     if cred is not None:
         try:
@@ -458,9 +499,37 @@ def desconectar(db: Session, actor: Actor, conta_id: uuid.UUID, version: int, cl
     conexao.updated_by = actor.user_id
     history.record(db, actor, ENTITY, conexao, "updated", before, history.snapshot(conexao),
                    {"acao": "desconectada"})
+    anonimizadas = None
+    if serie is not None:  # spec 016 (R13): na mesma transação, depois de apagar a credencial
+        from sociman_api.metricas import anonimizar  # local: metricas importa conexoes
+
+        anonimizadas = anonimizar.serie(db, serie, actor)
+        antes = history.snapshot(conexao)
+        history.record(db, actor, ENTITY, conexao, "updated", antes, history.snapshot(conexao),
+                       {"acao": "metricas_anonimizadas", "videos": anonimizadas[0],
+                        "fotos": anonimizadas[1]})
     em_atencao = _destinos_automaticos(db, conta.id, DestinoEstado.agendado)
     db.flush()
-    return conta, em_atencao
+    return conta, em_atencao, anonimizadas
+
+
+def _serie_para_anonimizar(db: Session, conta: Conta, confirmo: bool) -> Any:
+    """A série viva da conta (spec 016, R13). Com alguma foto, desconectar exige
+    `confirmoAnonimizar`: sem ele, 409 `confirmar_anonimizacao` e nada muda."""
+    from sociman_api.metricas import anonimizar  # local: metricas importa conexoes
+    from sociman_api.metricas.models import Serie
+
+    serie = db.scalar(select(Serie).where(Serie.conta_id == conta.id,
+                                          Serie.anonimizada_em.is_(None)).with_for_update())
+    if serie is None:
+        return None
+    videos, fotos = anonimizar.contagem(db, serie)
+    if fotos and not confirmo:
+        handle = f"@{normalize_handle(conta.handle)}"
+        raise ApiError(409, "confirmar_anonimizacao",
+                       f"As métricas de {handle} serão anonimizadas. Confirme para desconectar",
+                       details={"videos": videos, "fotos": fotos, "conta": handle})
+    return serie
 
 
 # ---- renovação (R5) ----

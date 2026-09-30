@@ -26,7 +26,7 @@ export function VideoThumb({ video, className }: { video: Pick<VideoFonte, "thum
 
 // Cartão do vídeo-fonte (US2-1): miniatura, título (link para o YouTube), canal com o selo de
 // direito, publicação, views e views por hora; avisos de indisponível, ao vivo, > 3 h e < 45 s; e
-// o selo "Já cortado" quando o perfil do filtro já tem envio desse vídeo.
+// o selo "Já cortado" quando o perfil do filtro já tem geração desse vídeo.
 export function VideoCard({ video, jaCortado, className }: { video: VideoFonte; jaCortado?: string | null; className?: string }) {
   const warning = videoWarning(video);
   return (

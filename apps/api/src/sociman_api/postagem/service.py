@@ -1359,6 +1359,90 @@ def lote_pedir_aprovacao(db: Session, actor: Actor,
     return _lote_destinos(db, actor, conta, body.conteudo_ids, "aprovacao_pedida", aplicar)
 
 
+# ---- spec 018 (US2): aprovar e desaprovar todas as contas do conteúdo ----
+
+_MOTIVO_ESTADO = {
+    DestinoEstado.pendente: "Ainda não está aprovado",
+    DestinoEstado.aprovacao_pedida: "Ainda não está aprovado",
+    DestinoEstado.aprovado: "Já está aprovado",
+    DestinoEstado.agendado: "Já está aprovado e agendado",
+    DestinoEstado.enviando: EM_ANDAMENTO,
+    DestinoEstado.postado: "Já foi marcado como postado",
+    DestinoEstado.rascunho_criado: "O rascunho já chegou ao app da rede",
+    DestinoEstado.publicado: "Já foi publicado",
+    DestinoEstado.falhou: "O envio falhou: use Tentar de novo ou Cancelar no bloco da conta",
+}
+
+
+def _destinos_ativos(db: Session, conteudo_id: uuid.UUID) -> list[Postagem]:
+    """Os destinos não arquivados do conteúdo, travados em ordem de id."""
+    return list(db.scalars(
+        select(Postagem).where(Postagem.conteudo_id == conteudo_id,
+                               Postagem.archived_at.is_(None))
+        .order_by(Postagem.id).with_for_update()))
+
+
+def _ignorado(destino: Postagem, code: str = "nao_elegivel") -> schemas.LoteFalha:
+    return schemas.LoteFalha(conteudo_id=destino.conteudo_id, destino_id=destino.id, code=code,
+                             message=_MOTIVO_ESTADO[destino.estado])
+
+
+def aprovar_todas(db: Session, actor: Actor, conteudo_id: uuid.UUID) -> schemas.TodasResultado:
+    """Aprova os destinos `pendente`/`aprovacao_pedida` do conteúdo (só dono humano, pela
+    rota); os outros voltam em `ignorados`, com o motivo. Nada é agendado nem enviado."""
+    info = _conteudo_info(db, conteudo_id)
+    _check_pronto(info)
+    ok: list[Postagem] = []
+    ignorados: list[schemas.LoteFalha] = []
+    for destino in _destinos_ativos(db, conteudo_id):
+        if destino.estado not in (DestinoEstado.pendente, DestinoEstado.aprovacao_pedida):
+            ignorados.append(_ignorado(destino))
+            continue
+        _aprovar(db, actor, destino, info, {"acao": "aprovado", "loteAcao": "aprovar_todas"})
+        ok.append(destino)
+    db.flush()
+    return schemas.TodasResultado(ok=destinos_out(db, ok), ignorados=ignorados)
+
+
+def desaprovar_todas(db: Session, actor: Actor, conteudo_id: uuid.UUID,
+                     confirmo: bool) -> schemas.TodasResultado:
+    """Revoga a aprovação: `aprovado`/`agendado` → `pendente` (o agendamento é cancelado na
+    mesma versão). Com algum destino `enviando`, nada muda (409 `envio_em_andamento`); com
+    agendados, exige `confirmo` (409 `confirmacao_necessaria`). Os que já saíram (`postado`,
+    `rascunho_criado`, `publicado`) e os `falhou` não mudam e voltam em `ignorados`."""
+    _conteudo_info(db, conteudo_id)
+    destinos = _destinos_ativos(db, conteudo_id)
+    if any(d.estado == DestinoEstado.enviando for d in destinos):
+        raise ApiError(409, "envio_em_andamento", EM_ANDAMENTO)
+    agendados = [d for d in destinos if d.estado == DestinoEstado.agendado]
+    if agendados and not confirmo:
+        raise ApiError(409, "confirmacao_necessaria",
+                       "Desaprovar cancela os agendamentos: confirme para continuar",
+                       details={"destinoIds": [str(d.id) for d in agendados]})
+    ok: list[Postagem] = []
+    ignorados: list[schemas.LoteFalha] = []
+    for destino in destinos:
+        if destino.estado not in (DestinoEstado.aprovado, DestinoEstado.agendado):
+            ignorados.append(_ignorado(destino))
+            continue
+        cancelou = destino.estado == DestinoEstado.agendado
+        before = history.snapshot(destino)
+        destino.estado = DestinoEstado.pendente
+        destino.planned_at = None
+        destino.lembrado_em = None
+        destino.modo = Modo.lembrete
+        destino.antecedencia_min = None
+        destino.envio_snapshot = None
+        destino.opcoes_rede = None
+        destino.falha_incerta = False
+        destino.aprovado_por = destino.aprovado_em = destino.aprovado_video_ref = None
+        _record(db, actor, destino, "updated", before,
+                {"acao": "desaprovado", "agendamentoCancelado": cancelou})
+        ok.append(destino)
+    db.flush()
+    return schemas.TodasResultado(ok=destinos_out(db, ok), ignorados=ignorados)
+
+
 def _travar(db: Session, ids: Iterable[uuid.UUID]) -> dict[uuid.UUID, Postagem]:
     rows = db.scalars(select(Postagem).where(Postagem.id.in_(list(set(ids))))
                       .order_by(Postagem.id).with_for_update())
@@ -1563,3 +1647,62 @@ def aplicar_sequencia(db: Session, actor: Actor,
         except IntegrityError:
             falhas.append(_falha(_destino_exists(), conteudo_id=slot.conteudo_id))
     return schemas.LoteResultado(ok=destinos_out(db, ok), falhas=falhas)
+
+
+# ======================================================================================
+# Spec 016: o destino pelo vínculo com o post observado na rede (research R12).
+# ======================================================================================
+
+VINCULO_FEITO = "vinculo_feito"
+VINCULO_DESFEITO = "vinculo_desfeito"
+SEM_POST = "Este destino ainda não pode ser ligado a um post"
+# Estados de onde o vínculo leva o destino a `publicado` (R12); o `falhou` só com a incerteza.
+PELO_VINCULO = (DestinoEstado.rascunho_criado, DestinoEstado.falhou)
+# Estados em que o vínculo só é gravado, sem mudar o estado.
+SO_VINCULO = (DestinoEstado.publicado, DestinoEstado.postado)
+
+
+def _publicado_pelo_vinculo(db: Session, destino: Postagem) -> str | None:
+    """O estado anterior se a **última** ida a `publicado` veio de `vinculo_feito`; senão None
+    (um `publicado` da trilha da 015 nunca volta)."""
+    for v in history.list_versions(db, ENTITY, destino.id):
+        antes = (v.before or {}).get("estado")
+        if v.after.get("estado") == DestinoEstado.publicado.value \
+                and antes != DestinoEstado.publicado.value:
+            if (v.details or {}).get("acao") == VINCULO_FEITO \
+                    and antes in {e.value for e in PELO_VINCULO}:
+                return antes
+            return None
+    return None
+
+
+def publicacao_pelo_vinculo(db: Session, actor: Actor, destino: Postagem, vinculado: bool,
+                            *, conta_do_video: uuid.UUID, metodo: str) -> None:
+    """A única transição do destino pelo vínculo (R12; guarda de AST da 016). Grava a versão
+    do destino com `details` **sem** id nem link da rede (R11).
+
+    Ligar: `rascunho_criado → publicado` ou `falhou` (incerto) `→ publicado`; em `publicado`
+    (post direto da 015) e `postado` só o vínculo é registrado. Desfazer: `publicado →`
+    o estado anterior, e só se foi o vínculo que o levou a `publicado`. O vídeo precisa ser da
+    mesma conta do destino. O lembrete antes do clique vai a `postado` só por `marcar_postado`
+    (o chamador faz isso antes).
+    """
+    if conta_do_video != destino.conta_id:
+        raise ApiError(409, "conflict", "O post é de outra conta")
+    before = history.snapshot(destino)
+    if vinculado:
+        if destino.archived or destino.estado not in PELO_VINCULO + SO_VINCULO \
+                or (destino.estado == DestinoEstado.falhou and not destino.falha_incerta):
+            raise ApiError(409, "destino_sem_post", SEM_POST)
+        if destino.estado in PELO_VINCULO:
+            destino.estado = DestinoEstado.publicado
+        details = {"acao": VINCULO_FEITO, "metodo": metodo,
+                   "automatico": actor.kind != "user"}
+    else:
+        if destino.estado == DestinoEstado.publicado:
+            anterior = _publicado_pelo_vinculo(db, destino)
+            if anterior is not None:
+                destino.estado = DestinoEstado(anterior)
+        details = {"acao": VINCULO_DESFEITO, "metodo_anterior": metodo}
+    _record(db, actor, destino, "updated", before, details)
+    db.flush()

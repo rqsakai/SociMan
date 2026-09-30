@@ -140,6 +140,27 @@ export type Tentativa = components["schemas"]["Tentativa"];
 export type TentativaFase = Tentativa["fase"];
 export type OpcoesTikTok = components["schemas"]["OpcoesTikTok"];
 export type RetornoRequest = components["schemas"]["RetornoIn"];
+// 016-metricas-tiktok
+export type EstadoColeta = components["schemas"]["EstadoColeta"];
+export type PermissaoColeta = EstadoColeta["permissao"];
+export type FotoVideo = components["schemas"]["FotoVideo"];
+export type FotoConta = components["schemas"]["FotoConta"];
+export type MarcoValor = components["schemas"]["MarcoValor"];
+export type MarcoMetricas = components["schemas"]["MarcoMetricas"];
+export type Marcos = components["schemas"]["Marcos"];
+export type VideoResumo = components["schemas"]["VideoResumo"];
+export type VideoDetalhe = components["schemas"]["VideoDetalhe"];
+export type OrigemMetricas = VideoResumo["origem"];
+export type VinculoMetodo = NonNullable<VideoResumo["vinculoMetodo"]>;
+export type Candidato = components["schemas"]["Candidato"];
+export type Vinculo = components["schemas"]["Vinculo"];
+export type VinculoEstado = Vinculo["estado"];
+export type VinculoRequest = components["schemas"]["VinculoIn"];
+export type ContaMetricas = components["schemas"]["ContaMetricasOut"];
+export type DestinoMetricas = components["schemas"]["DestinoMetricasOut"];
+export type MetricasContaFilters = NonNullable<paths["/api/contas/{conta_id}/metricas"]["get"]["parameters"]["query"]>;
+export type MetricasVideosFilters = NonNullable<paths["/api/metricas/videos"]["get"]["parameters"]["query"]>;
+export type MetricasExportFilters = NonNullable<paths["/api/metricas/export"]["get"]["parameters"]["query"]>;
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -489,17 +510,34 @@ export function createApiClient(options: ApiClientOptions = {}) {
       iniciar: (contaId: string) =>
         unwrap(client.POST("/api/contas/{conta_id}/conexao/iniciar", { params: { path: { conta_id: contaId } } })),
       retorno: (body: RetornoRequest) => unwrap(client.POST("/api/conexoes/retorno", { body })),
-      desconectar: (contaId: string, version: number) =>
+      // spec 016: com métricas guardadas, sem `confirmoAnonimizar` → 409 `confirmar_anonimizacao`
+      desconectar: (contaId: string, version: number, confirmoAnonimizar = false) =>
         unwrap(
           client.POST("/api/contas/{conta_id}/conexao/desconectar", {
             params: { path: { conta_id: contaId } },
-            body: { version },
+            body: { version, confirmoAnonimizar },
           }),
         ),
       criador: (contaId: string) =>
         unwrap(client.GET("/api/contas/{conta_id}/conexao/criador", { params: { path: { conta_id: contaId } } })),
       versions: (contaId: string) =>
         unwrap(client.GET("/api/contas/{conta_id}/conexao/versions", { params: { path: { conta_id: contaId } } })),
+    },
+    // Métricas da TikTok (spec 016): só leitura; a exportação é só do dono (ZIP por Blob).
+    metricas: {
+      conta: (contaId: string, query: MetricasContaFilters = {}) =>
+        unwrap(client.GET("/api/contas/{conta_id}/metricas", { params: { path: { conta_id: contaId }, query } })),
+      videos: (query: MetricasVideosFilters = {}) => unwrap(client.GET("/api/metricas/videos", { params: { query } })),
+      video: (videoId: string) =>
+        unwrap(client.GET("/api/metricas/videos/{video_id}", { params: { path: { video_id: videoId } } })),
+      // O arquivo com o nome que a API manda (Content-Disposition: sociman-metricas-AAAAMMDD-AAAAMMDD.zip).
+      exportFile: async (query: MetricasExportFilters): Promise<{ blob: Blob; filename: string }> => {
+        const { data, error, response } = await client.GET("/api/metricas/export", { params: { query }, parseAs: "blob" });
+        if (!response.ok || !data) throw toApiError(response.status, error);
+        const disposition = response.headers.get("content-disposition") ?? "";
+        const filename = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? "sociman-metricas.zip";
+        return { blob: data, filename };
+      },
     },
     // Interruptor "Envios automáticos" (spec 015): só o dono humano muda; o nível do servidor é leitura.
     publicacao: {
@@ -629,6 +667,12 @@ export function createApiClient(options: ApiClientOptions = {}) {
         ),
       addDestino: (conteudoId: string, body: CreateDestinoRequest) =>
         unwrap(client.POST("/api/conteudos/{conteudo_id}/destinos", { params: { path: { conteudo_id: conteudoId } }, body })),
+      // spec 018: todas as contas do conteúdo de uma vez (só dono humano). Desaprovar com agendados
+      // exige `confirmo` (sem ele, 409 `confirmacao_necessaria`).
+      aprovarTodas: (conteudoId: string) =>
+        unwrap(client.POST("/api/conteudos/{conteudo_id}/aprovar-todas", { params: { path: { conteudo_id: conteudoId } } })),
+      desaprovarTodas: (conteudoId: string, confirmo: boolean) =>
+        unwrap(client.POST("/api/conteudos/{conteudo_id}/desaprovar-todas", { params: { path: { conteudo_id: conteudoId } }, body: { confirmo } })),
     },
     // Destino = conteúdo × conta. Aprovar, recusar, aprovar em lote e reverter são só do dono.
     destinos: {
@@ -675,6 +719,15 @@ export function createApiClient(options: ApiClientOptions = {}) {
         unwrap(client.POST("/api/destinos/{destino_id}/enviar-agora", { params: { path: { destino_id: destinoId } }, body: { modo: "criar_rascunho", ...body } })),
       confirmarEnvio: (destinoId: string, version: number) =>
         unwrap(client.POST("/api/destinos/{destino_id}/confirmar-envio", { params: { path: { destino_id: destinoId } }, body: { version } })),
+      // spec 016: desempenho e vínculo com o post (ligar, escolher, colar e desfazer: só dono humano)
+      metricas: (destinoId: string) =>
+        unwrap(client.GET("/api/destinos/{destino_id}/metricas", { params: { path: { destino_id: destinoId } } })),
+      vinculo: (destinoId: string) =>
+        unwrap(client.GET("/api/destinos/{destino_id}/vinculo", { params: { path: { destino_id: destinoId } } })),
+      vincular: (destinoId: string, body: VinculoRequest) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/vinculo", { params: { path: { destino_id: destinoId } }, body })),
+      desfazerVinculo: (destinoId: string, version: number) =>
+        unwrap(client.POST("/api/destinos/{destino_id}/vinculo/desfazer", { params: { path: { destino_id: destinoId } }, body: { version } })),
     },
     // Agendamento no destino (spec 014): só o modo lembrete executa. 409 intervalo_conflito → reenviar
     // com ignorarIntervalo: true.

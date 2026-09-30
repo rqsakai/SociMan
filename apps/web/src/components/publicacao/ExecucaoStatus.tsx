@@ -133,10 +133,10 @@ export function ExecucaoStatus({
         <CirclePause aria-hidden="true" />
         <AlertTitle>{destino.estado === "enviando" ? "Envio pausado no meio" : "Pausado: nada foi enviado"}</AlertTitle>
         <AlertDescription>
-          <p>{cfg ? enviosDesligadosTexto(cfg) : "Os envios automáticos estão desligados."} Ao ligar, o envio segue sem duplicar.</p>
+          <p>{cfg ? enviosDesligadosTexto(cfg) : "A publicação automática está desligada."} Ao ligar, o envio segue sem duplicar.</p>
           {dono && (
             <Button asChild size="sm" variant="outline" className="mt-2">
-              <Link to="/app/configuracoes/publicacao">Envios automáticos</Link>
+              <Link to="/app/configuracoes/publicacao">Publicação automática</Link>
             </Button>
           )}
         </AlertDescription>

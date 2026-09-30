@@ -44,6 +44,9 @@ class NotificacaoTipo(enum.StrEnum):
     envio_rede_falhou = "envio_rede_falhou"
     envio_aguardando_vaga = "envio_aguardando_vaga"
     conexao_precisa_reconectar = "conexao_precisa_reconectar"
+    # 0011 (spec 016): vínculo do post, para os donos ativos (dedupe por destino).
+    post_detectado = "post_detectado"
+    vinculo_a_confirmar = "vinculo_a_confirmar"
 
 
 class Notificacao(Base):

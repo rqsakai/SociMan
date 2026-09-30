@@ -12,6 +12,7 @@ from pydantic import Field, StringConstraints
 
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.conteudos.models import Modo
+from sociman_api.metricas.estado import EstadoColeta
 from sociman_api.perfis.models import Platform
 from sociman_api.perfis.schemas import UserRef, VersionNumber
 
@@ -53,15 +54,29 @@ class Conexao(CamelModel):
     refresh_expira_em: datetime | None
     modos: list[ModoInfo]  # os mesmos de GET /contas/{id}/modos
     version: int | None  # da conexão viva (para desconectar); null sem conexão
+    metricas: EstadoColeta | None  # spec 016: null em rede sem leitor
 
 
 class ConexaoOut(CamelModel):
     conexao: Conexao
 
 
+class DesconectarIn(CamelModel):
+    """Spec 016 (R13): com a série de métricas com dados, `confirmoAnonimizar` é obrigatório."""
+
+    version: VersionNumber
+    confirmo_anonimizar: bool = False
+
+
+class MetricasAnonimizadas(CamelModel):
+    videos: int
+    fotos: int
+
+
 class DesconectarOut(CamelModel):
     conexao: Conexao
     agendamentos_em_atencao: int  # destinos automáticos agendados que ficaram em atenção
+    metricas_anonimizadas: MetricasAnonimizadas | None  # spec 016: null sem série
 
 
 class IniciarOut(CamelModel):

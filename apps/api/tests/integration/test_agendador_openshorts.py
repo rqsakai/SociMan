@@ -109,7 +109,7 @@ def test_etapas_reais_em_sequencia(client, owner, envio, db, openshorts_fake):
         vistos.append((e["etapa"], e["etapaPct"], e["etapaMensagem"], e["progress"],
                        e["clipeAtual"], e["clipesPrevistos"]))
     assert vistos == [
-        ("fila", None, "Na fila do OpenShorts (2º)", 0, None, None),
+        ("fila", None, "Na fila do SociShorts (2º)", 0, None, None),
         ("baixando", 100, "Vídeo baixado, preparando", 5, None, None),
         ("transcrevendo", 0, "Aguardando a vez de transcrever", 5, None, None),
         ("transcrevendo", 50, "Transcrevendo o vídeo 50%", 20, None, None),
@@ -118,7 +118,7 @@ def test_etapas_reais_em_sequencia(client, owner, envio, db, openshorts_fake):
         ("processando_clipes", 33, "Cortando clipe 2 de 3", 56, 2, 3),
     ]
     avisos = _notificacoes(db, NotificacaoTipo.envio_momentos)
-    assert len(avisos) == 1 and avisos[0].corpo == "3 clipes em produção no OpenShorts"
+    assert len(avisos) == 1 and avisos[0].corpo == "3 clipes em produção no SociShorts"
     assert avisos[0].titulo.startswith("Momentos escolhidos: ")
 
     volta(db, fake)  # completed
@@ -210,7 +210,7 @@ def test_recusa_vira_falhou_traduzido_e_notifica(client, owner, member, perfil, 
     volta(db, openshorts_fake)
     row = envio_row(db, e["id"])
     assert row.status == EnvioStatus.falhou and row.error_code == "source_invalid"
-    assert row.error_message == ("Vídeo curto demais: o OpenShorts precisa de pelo menos "
+    assert row.error_message == ("Vídeo curto demais: o SociShorts precisa de pelo menos "
                                  "45 segundos")
     ns = _notificacoes(db, NotificacaoTipo.envio_falhou)
     # autor (o membro) e o dono, uma para cada, notificados na mesma volta (SC-003)
@@ -261,7 +261,7 @@ def test_404_no_polling_vira_falhou(envio, db, openshorts_fake):
     volta(db, fake)
     row = envio_row(db, envio["id"])
     assert row.status == EnvioStatus.falhou and row.error_code == "openshorts_lost"
-    assert row.error_message == "O OpenShorts não tem mais este job; envie de novo"
+    assert row.error_message == "O SociShorts não tem mais este job; envie de novo"
     assert len(_notificacoes(db, NotificacaoTipo.envio_falhou)) == 1
 
 
@@ -274,7 +274,7 @@ def test_sem_clipes_e_falha_do_job(client, owner, perfil, db, openshorts_fake):
     volta(db, fake)
     row = envio_row(db, e1["id"])
     assert row.status == EnvioStatus.sem_clipes
-    assert row.error_message == "O OpenShorts não encontrou clipes neste vídeo"
+    assert row.error_message == "O SociShorts não encontrou clipes neste vídeo"
     assert len(_notificacoes(db, NotificacaoTipo.envio_sem_clipes)) == 1
 
     fake.resultado = "falhou"
@@ -283,7 +283,7 @@ def test_sem_clipes_e_falha_do_job(client, owner, perfil, db, openshorts_fake):
     volta(db, fake)
     row = envio_row(db, e2["id"])
     assert row.status == EnvioStatus.falhou
-    assert row.error_message == "O OpenShorts falhou: Download failed: 403"
+    assert row.error_message == "O SociShorts falhou: Download failed: 403"
 
 
 def test_reinicio_continua_o_polling(envio, openshorts_fake):

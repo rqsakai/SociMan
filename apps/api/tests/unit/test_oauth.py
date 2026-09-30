@@ -22,7 +22,8 @@ def test_url_web_sem_pkce():
     q = {k: v[0] for k, v in parse_qs(parsed.query).items()}
     assert q == {
         "client_key": "chave-de-teste", "response_type": "code",
-        "scope": "user.info.basic,user.info.profile,video.upload,video.publish",
+        "scope": ("user.info.basic,user.info.profile,video.upload,video.publish,"
+                  "user.info.stats,video.list"),  # spec 016 (R1)
         "redirect_uri": "https://casa/app/conexoes/retorno", "state": "st",
     }
 

@@ -1,8 +1,8 @@
 /*
  * /app/envios (spec 006, US3; T054).
- * - Aba "Selecionados": os vídeos escolhidos, por perfil, com "Enviar para corte" (todos ou os
+ * - Aba "Selecionados": os vídeos escolhidos, por perfil, com "Gerar cortes" (todos ou os
  *   marcados), "Descartar", "Colar link" e "Enviar arquivo".
- * - Aba "Envios": status ao vivo ("Na fila (2º)", "Processando: 3 clipes prontos", "Importando
+ * - Aba "Gerações": status ao vivo ("Na fila (2º)", "Processando: 3 clipes prontos", "Importando
  *   4/6", "Pronto", "Sem clipes", "Falhou" com "Tentar de novo"; "Confirmar qualidade" com "Enviar
  *   mesmo assim"/"Descartar"), com polling de 5 s enquanto houver envio em andamento.
  * Perfil e aba ficam na URL (?perfil=…&aba=envios).
@@ -34,7 +34,7 @@ import { usePerfisAtivos } from "../../lib/usePerfis";
 const ENVIOS_STATUS: Status[] = ["na_fila", "aguardando_openshorts", "confirmar_qualidade", "processando", "importando", "pronto", "sem_clipes", "falhou"];
 
 export default function EnviosList() {
-  usePageMeta({ title: "Envios" });
+  usePageMeta({ title: "Geração de cortes" });
   const [params, setParams] = useSearchParams();
   const perfis = usePerfisAtivos();
   const perfilId = params.get("perfil") ?? "";
@@ -54,7 +54,7 @@ export default function EnviosList() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeading title="Envios para corte" description="Dos vídeos selecionados ao OpenShorts e de volta como cortes do perfil." />
+      <PageHeading title="Geração de cortes" description="Dos vídeos selecionados ao SociShorts e de volta como cortes do perfil." />
       <div className="flex flex-wrap items-end gap-3">
         <Field label="Perfil" className="w-full sm:w-72">
           {({ id }) => (
@@ -70,9 +70,9 @@ export default function EnviosList() {
         </Field>
       </div>
       <Tabs value={aba} onValueChange={(v) => set("aba", v === "selecionados" ? "" : v)} className="gap-2">
-        <TabsList aria-label="Seções dos envios">
+        <TabsList aria-label="Seções da geração de cortes">
           <TabsTrigger value="selecionados">Selecionados</TabsTrigger>
-          <TabsTrigger value="envios">Envios</TabsTrigger>
+          <TabsTrigger value="envios">Gerações</TabsTrigger>
         </TabsList>
         <TabsContent value="selecionados">
           <Selecionados perfilId={perfilId} perfilName={perfilName} perfisIds={perfis.data?.map((p) => p.id) ?? []} />
@@ -154,9 +154,9 @@ function GrupoSelecionados({ perfilId, perfilName, envios }: { perfilId: string;
             <Upload aria-hidden="true" />
             Enviar arquivo
           </Button>
-          <Button size="sm" className="bg-white text-foreground hover:bg-white/90" disabled={envios.length === 0} onClick={() => setEnviar(escolhidos)}>
+          <Button size="sm" className="bg-card text-card-foreground hover:bg-card/90" disabled={envios.length === 0} onClick={() => setEnviar(escolhidos)}>
             <Scissors aria-hidden="true" />
-            {marcados.length > 0 ? `Enviar ${marcados.length} para corte` : "Enviar para corte"}
+            {marcados.length > 0 ? `${marcados.length} ${marcados.length === 1 ? "selecionado" : "selecionados"} → Gerar cortes` : "Gerar cortes"}
           </Button>
         </>
       }
@@ -273,7 +273,7 @@ function EnviosTabela({ perfilId, perfilName }: { perfilId: string; perfilName: 
     }),
     col.accessor((e) => e.sentAt ?? e.createdAt, {
       id: "data",
-      header: "Enviado em",
+      header: "Iniciada em",
       enableGlobalFilter: false,
       cell: (c) => <time dateTime={c.getValue()}>{formatDateTime(c.getValue())}</time>,
       meta: { className: "hidden lg:table-cell whitespace-nowrap", headerClassName: "hidden lg:table-cell" },
@@ -288,19 +288,19 @@ function EnviosTabela({ perfilId, perfilName }: { perfilId: string; perfilName: 
           return (
             <div className="flex flex-wrap justify-end gap-2">
               <ConfirmButton
-                label="Enviar mesmo assim"
+                label="Gerar mesmo assim"
                 size="sm"
                 busy={b("q")}
-                title="Enviar mesmo com qualidade baixa?"
-                description="O OpenShorts avisou que o vídeo tem qualidade baixa. Os clipes podem sair piores."
-                onConfirm={() => act(e, "q", () => api.envios.confirmarQualidade(e.id, { version: e.version, enviar: true }), "Enviado de novo.")}
+                title="Gerar mesmo com qualidade baixa?"
+                description="O SociShorts avisou que o vídeo tem qualidade baixa. Os clipes podem sair piores."
+                onConfirm={() => act(e, "q", () => api.envios.confirmarQualidade(e.id, { version: e.version, enviar: true }), "Geração retomada.")}
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 disabled={busy !== null}
-                onClick={() => void act(e, "d", () => api.envios.confirmarQualidade(e.id, { version: e.version, enviar: false }), "Envio descartado.")}
+                onClick={() => void act(e, "d", () => api.envios.confirmarQualidade(e.id, { version: e.version, enviar: false }), "Geração descartada.")}
               >
                 Descartar
               </Button>
@@ -310,7 +310,7 @@ function EnviosTabela({ perfilId, perfilName }: { perfilId: string; perfilName: 
         if (e.status === "falhou") {
           return (
             <div className="flex justify-end">
-              <Button type="button" variant="outline" size="sm" disabled={busy !== null} aria-busy={b("r")} onClick={() => void act(e, "r", () => api.envios.retry(e.id, e.version), "Envio de volta na fila.")}>
+              <Button type="button" variant="outline" size="sm" disabled={busy !== null} aria-busy={b("r")} onClick={() => void act(e, "r", () => api.envios.retry(e.id, e.version), "Geração de volta na fila.")}>
                 {b("r") ? <Loader2 className="animate-spin" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />}
                 Tentar de novo
               </Button>
@@ -336,18 +336,18 @@ function EnviosTabela({ perfilId, perfilName }: { perfilId: string; perfilName: 
   ]);
 
   return (
-    <HeaderCard title="Envios" description="Atualiza sozinho enquanto há envio em andamento. O acompanhamento continua com o app fechado.">
+    <HeaderCard title="Gerações" description="Atualiza sozinho enquanto há geração em andamento. O acompanhamento continua com o app fechado.">
       {query.isError ? (
         <ApiErrorAlert error={query.error} />
       ) : (
         <DataTable
-          label="Envios"
+          label="Gerações"
           columns={columns}
           data={query.data?.items}
           loading={query.isPending}
           getRowId={(e) => e.id}
-          search={{ placeholder: "Filtrar envios" }}
-          emptyMessage="Nenhum envio ainda."
+          search={{ placeholder: "Filtrar gerações" }}
+          emptyMessage="Nenhuma geração ainda."
           toolbar={
             <NativeSelect aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} className="w-52">
               <option value="">Todos os status</option>

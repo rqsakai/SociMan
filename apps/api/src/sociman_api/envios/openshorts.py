@@ -98,12 +98,12 @@ def _raise_for(resp: httpx.Response, what: str) -> None:
         return
     detail = _detail(resp)
     if status >= 500:
-        raise OpenShortsFora(f"{what}: OpenShorts respondeu {status}", status, detail)
+        raise OpenShortsFora(f"{what}: SociShorts respondeu {status}", status, detail)
     if status == 429:
-        raise OpenShortsOcupado(f"{what}: OpenShorts ocupado", status, detail)
+        raise OpenShortsOcupado(f"{what}: SociShorts ocupado", status, detail)
     if status == 404:
-        raise OpenShortsNaoEncontrado(f"{what}: não encontrado no OpenShorts", status, detail)
-    raise OpenShortsRecusou(f"{what}: OpenShorts recusou ({status})", status, detail)
+        raise OpenShortsNaoEncontrado(f"{what}: não encontrado no SociShorts", status, detail)
+    raise OpenShortsRecusou(f"{what}: SociShorts recusou ({status})", status, detail)
 
 
 def video_path(video_url: str) -> str:
@@ -116,7 +116,7 @@ def video_path(video_url: str) -> str:
     if parts.scheme or parts.netloc:
         base = urlsplit(get_settings().openshorts_url)
         if (parts.scheme, parts.netloc) != (base.scheme, base.netloc):
-            raise ValueError("download fora do OpenShorts")
+            raise ValueError("download fora do SociShorts")
     path = parts.path
     if not path.startswith("/videos/") or ".." in path.split("/"):
         raise ValueError("download só de /videos/")
@@ -139,11 +139,11 @@ class OpenShortsClient:
 
     def _request(self, method: str, path: str, what: str, **kwargs: Any) -> httpx.Response:
         if not _allowed(method, path):
-            raise ValueError(f"pedido fora da lista do OpenShorts: {method} {path}")
+            raise ValueError(f"pedido fora da lista do SociShorts: {method} {path}")
         try:
             resp = self._http.request(method, path, **kwargs)
         except httpx.TransportError as exc:  # conexão recusada, DNS, timeout
-            raise OpenShortsFora(f"{what}: OpenShorts fora do ar ({type(exc).__name__})") from exc
+            raise OpenShortsFora(f"{what}: SociShorts fora do ar ({type(exc).__name__})") from exc
         _raise_for(resp, what)
         return resp
 
@@ -152,9 +152,9 @@ class OpenShortsClient:
         try:
             data = resp.json()
         except ValueError as exc:
-            raise OpenShortsFora(f"{what}: resposta inválida do OpenShorts") from exc
+            raise OpenShortsFora(f"{what}: resposta inválida do SociShorts") from exc
         if not isinstance(data, dict):
-            raise OpenShortsFora(f"{what}: resposta inválida do OpenShorts")
+            raise OpenShortsFora(f"{what}: resposta inválida do SociShorts")
         return data
 
     # ---- a lista fechada ----
@@ -217,7 +217,7 @@ class OpenShortsClient:
         """Baixa o clipe em streaming para `dest` (no HD). Devolve os bytes."""
         path = video_path(video_url)
         if not _allowed("GET", path):
-            raise ValueError(f"pedido fora da lista do OpenShorts: GET {path}")
+            raise ValueError(f"pedido fora da lista do SociShorts: GET {path}")
         size = 0
         try:
             with self._http.stream("GET", path) as resp:
@@ -229,7 +229,7 @@ class OpenShortsClient:
                         fh.write(chunk)
                         size += len(chunk)
         except httpx.TransportError as exc:
-            raise OpenShortsFora(f"download: OpenShorts fora do ar ({type(exc).__name__})") from exc
+            raise OpenShortsFora(f"download: SociShorts fora do ar ({type(exc).__name__})") from exc
         return size
 
 

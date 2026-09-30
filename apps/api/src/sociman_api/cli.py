@@ -140,10 +140,24 @@ def reset_db(
         _fail("reset-db é proibido com ENV=production")
     if not yes:
         _fail("isso apaga todos os dados; confirme com --yes")
-    with get_engine().begin() as conn:
-        conn.execute(
-            text("TRUNCATE users, one_time_tokens, security_events RESTART IDENTITY CASCADE")
-        )
+    # O CASCADE trava quase todas as tabelas; o agendador (trilhas de publicação e métricas) pode
+    # estar lendo algumas delas e o Postgres acusa deadlock. A transação perdedora já foi desfeita,
+    # então repetir é seguro.
+    import time
+
+    from sqlalchemy.exc import OperationalError
+
+    for tentativa in range(1, 6):
+        try:
+            with get_engine().begin() as conn:
+                conn.execute(
+                    text("TRUNCATE users, one_time_tokens, security_events RESTART IDENTITY CASCADE")
+                )
+            break
+        except OperationalError as exc:
+            if "deadlock detected" not in str(exc) or tentativa == 5:
+                raise
+            time.sleep(0.5 * tentativa)
     get_redis().flushdb()
     typer.echo("Banco e Redis zerados.")
 

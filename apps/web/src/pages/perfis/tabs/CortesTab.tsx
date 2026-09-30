@@ -43,13 +43,13 @@ const columns = col.columns([
     ),
   }),
   // spec 006: clipes do OpenShorts mostram a origem e o canal
-  col.accessor((c) => (c.origem === "openshorts" ? `OpenShorts${c.canal ? ` · ${c.canal.title}` : ""}` : "Upload"), {
+  col.accessor((c) => (c.origem === "openshorts" ? `SociShorts${c.canal ? ` · ${c.canal.title}` : ""}` : "Upload"), {
     id: "origem",
     header: "Origem",
     cell: (c) =>
       c.row.original.origem === "openshorts" ? (
         <span className="text-sm">
-          <Badge variant="outline">OpenShorts</Badge>
+          <Badge variant="outline">SociShorts</Badge>
           {c.row.original.canal && <span className="mt-0.5 block max-w-40 truncate text-xs text-muted-foreground">{c.row.original.canal.title}</span>}
         </span>
       ) : (
@@ -163,7 +163,7 @@ export function CortesTab({ perfil }: { perfil: Perfil }) {
               <>
                 <NativeSelect aria-label="Origem" value={origem} onChange={(e) => setOrigem(e.target.value as typeof origem)} className="w-44">
                   <option value="">Todas as origens</option>
-                  <option value="openshorts">OpenShorts</option>
+                  <option value="openshorts">SociShorts</option>
                   <option value="upload">Upload</option>
                 </NativeSelect>
                 <label className="flex items-center gap-2 text-sm">

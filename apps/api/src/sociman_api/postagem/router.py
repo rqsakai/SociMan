@@ -2,7 +2,8 @@
 da 014, "Destinos", "Agendamentos" e "Calendário"; as rotas de postagem da 006 saíram no T045).
 
 Dono e membro (`RequireUser`), menos aprovar, recusar, aprovar em lote e reverter
-(`RequireOwner`, princípios I e VII). `postado` só muda pela rota humana; nada aqui publica.
+(`RequireOwner`, princípios I e VII), e aprovar/desaprovar todas (spec 018, `RequireHumanOwner`).
+`postado` só muda pela rota humana; nada aqui publica.
 Não existe rota DELETE.
 """
 
@@ -85,6 +86,24 @@ def lote_aprovar(body: schemas.LoteAprovarIn, actor: RequireOwner,
 def lote_pedir_aprovacao(body: schemas.LotePedirIn, actor: RequireUser,
                          db: DbSession) -> schemas.LoteResultado:
     return service.lote_pedir_aprovacao(db, actor, body)
+
+
+@router.post("/conteudos/{conteudo_id}/aprovar-todas", operation_id="conteudos_aprovar_todas",
+             response_model=schemas.TodasResultado, responses=_errors(401, 403, 404, 409))
+def aprovar_todas(conteudo_id: UUID, actor: RequireHumanOwner,
+                  db: DbSession) -> schemas.TodasResultado:
+    """Spec 018: aprova todas as contas pendentes do conteúdo (só dono humano)."""
+    return service.aprovar_todas(db, actor, conteudo_id)
+
+
+@router.post("/conteudos/{conteudo_id}/desaprovar-todas",
+             operation_id="conteudos_desaprovar_todas", response_model=schemas.TodasResultado,
+             responses=_errors(400, 401, 403, 404, 409))
+def desaprovar_todas(conteudo_id: UUID, body: schemas.DesaprovarTodasIn,
+                     actor: RequireHumanOwner, db: DbSession) -> schemas.TodasResultado:
+    """Spec 018: aprovados e agendados voltam a pendente; cancela os agendamentos (com
+    `confirmo`). Só dono humano."""
+    return service.desaprovar_todas(db, actor, conteudo_id, body.confirmo)
 
 
 @router.post("/conteudos/{conteudo_id}/destinos", operation_id="conteudos_add_destino",

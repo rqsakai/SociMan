@@ -96,6 +96,8 @@ services:
       # permitidos do check:secrets) e publicação desligada (os testes ligam por override).
       SOCIMAN_TOKENS_KEY: dGVzdGUtZWZlbWVyby1jaGF2ZS1kby10b2tlbi0zMmI=
       PUBLICACAO_HABILITADA: "false"
+      # Spec 016: coleta ligada (os testes desligam por override de Settings).
+      METRICAS_COLETA_HABILITADA: "true"
       # Os testes usam MemoryEmailSender; um host inexistente faz qualquer envio real falhar.
       SMTP_HOST: smtp.invalido.test
       SMTP_PORT: "1025"

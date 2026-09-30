@@ -6,6 +6,10 @@
  *   quem conectou, e os modos que a conta oferece (com o `aviso` ou o motivo). Conectar, Reconectar
  *   e Desconectar aparecem só para o dono: o membro vê só o estado. Conectar leva ao login oficial
  *   da TikTok (a volta é a página /app/conexoes/retorno).
+ * spec 016: o <ColetaStatus> mostra a coleta de métricas; sem as permissões de métricas, o dono vê
+ *   "Reconectar para liberar métricas" (o mesmo login). Desconectar uma conta com métricas
+ *   guardadas anonimiza a série (irreversível): a confirmação explica antes, ou depois do 409
+ *   `confirmar_anonimizacao`, e o pedido é repetido com `confirmoAnonimizar`.
  */
 import type { Conta } from "@sociman/contract";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,12 +18,24 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { ColetaStatus } from "@/components/metricas/ColetaStatus";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { invalidarConteudos, useEhDono } from "@/lib/conteudos";
+import { anonimizacaoPendente, invalidarMetricas, textoAnonimizacao } from "@/lib/metricas";
 import { modoDescricao, modoLabel, modosKey, MODOS } from "@/lib/postagem";
 import { abrirEm, conexaoEstadoLabel, conexaoEstadoTone, conexaoKey, conexaoVersionsKey, iniciarConexao, useConexao } from "@/lib/publicacao";
 import { formatDateTime } from "@/lib/tz";
@@ -31,7 +47,10 @@ export function ConexaoCard({ conta, perfilId }: { conta: Conta; perfilId: strin
   const conexao = useConexao(conta.id);
   const [busy, setBusy] = useState<"conectar" | "desconectar" | null>(null);
   const [error, setError] = useState<unknown>(null);
+  // spec 016: confirmação da anonimização das métricas (antes, pelos números da coleta, ou depois do 409)
+  const [anonimizar, setAnonimizar] = useState<{ videos: number; fotos: number; conta: string | null } | null>(null);
   const c = conexao.data?.conexao;
+  const metricas = c?.metricas ?? null;
   const bloqueada = conta.archived || conta.status === "encerrada";
 
   async function conectar() {
@@ -46,25 +65,30 @@ export function ConexaoCard({ conta, perfilId }: { conta: Conta; perfilId: strin
     }
   }
 
-  async function desconectar() {
+  async function desconectar(confirmoAnonimizar = false) {
     if (!c) return;
     setError(null);
     setBusy("desconectar");
     try {
-      const r = await api.conexoes.desconectar(conta.id, c.version ?? 0);
+      const r = await api.conexoes.desconectar(conta.id, c.version ?? 0, confirmoAnonimizar);
+      setAnonimizar(null);
+      const anon = r.metricasAnonimizadas ? ` As métricas (${r.metricasAnonimizadas.videos} vídeo(s)) foram anonimizadas.` : "";
       toast.success(
         r.agendamentosEmAtencao > 0
-          ? `@${conta.handle} desconectada. ${r.agendamentosEmAtencao} agendamento(s) automático(s) ficaram em atenção.`
-          : `@${conta.handle} desconectada.`,
+          ? `@${conta.handle} desconectada. ${r.agendamentosEmAtencao} agendamento(s) automático(s) ficaram em atenção.${anon}`
+          : `@${conta.handle} desconectada.${anon}`,
       );
       await Promise.all([
+        invalidarMetricas(queryClient, { contaId: conta.id }),
         queryClient.invalidateQueries({ queryKey: conexaoKey(conta.id) }),
         queryClient.invalidateQueries({ queryKey: conexaoVersionsKey(conta.id) }),
         queryClient.invalidateQueries({ queryKey: modosKey(conta.id) }),
         invalidarConteudos(queryClient),
       ]);
     } catch (err) {
-      setError(err);
+      const pendente = anonimizacaoPendente(err);
+      if (pendente) setAnonimizar(pendente);
+      else setError(err);
     } finally {
       setBusy(null);
     }
@@ -130,6 +154,14 @@ export function ConexaoCard({ conta, perfilId }: { conta: Conta; perfilId: strin
         </ul>
       )}
 
+      {c?.estado === "conectada" && (
+        <ColetaStatus
+          coleta={metricas}
+          busy={busy !== null}
+          {...(dono && !bloqueada ? { onReconectar: () => void conectar() } : {})}
+        />
+      )}
+
       {c?.estado === "nao_conectada" && (
         <p className="text-sm text-muted-foreground">
           {dono
@@ -170,7 +202,20 @@ export function ConexaoCard({ conta, perfilId }: { conta: Conta; perfilId: strin
               Reconectar
             </Button>
           )}
-          {c.estado !== "nao_conectada" && (
+          {c.estado !== "nao_conectada" && (metricas?.fotos ?? 0) > 0 && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={busy !== null}
+              aria-busy={busy === "desconectar"}
+              onClick={() => setAnonimizar({ videos: metricas?.videos ?? 0, fotos: metricas?.fotos ?? 0, conta: `@${conta.handle}` })}
+            >
+              {busy === "desconectar" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Link2Off aria-hidden="true" />}
+              Desconectar
+            </Button>
+          )}
+          {c.estado !== "nao_conectada" && (metricas?.fotos ?? 0) === 0 && (
             <ConfirmButton
               label="Desconectar"
               icon={Link2Off}
@@ -185,6 +230,37 @@ export function ConexaoCard({ conta, perfilId }: { conta: Conta; perfilId: strin
           )}
         </div>
       )}
+
+      <AlertDialog open={anonimizar !== null} onOpenChange={(open) => !open && busy === null && setAnonimizar(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desconectar @{conta.handle} e anonimizar as métricas?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>{anonimizar && textoAnonimizacao(anonimizar.conta ?? `@${conta.handle}`, anonimizar.videos, anonimizar.fotos)}</p>
+                <p>
+                  A autorização é apagada do SociMan e os agendamentos automáticos desta conta ficam em atenção. Para só pausar a coleta, sem perder o elo, peça
+                  para desligar METRICAS_COLETA_HABILITADA no servidor.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy !== null}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              disabled={busy !== null}
+              onClick={(e) => {
+                e.preventDefault();
+                void desconectar(true);
+              }}
+            >
+              {busy === "desconectar" && <Loader2 className="animate-spin" aria-hidden="true" />}
+              Desconectar e anonimizar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

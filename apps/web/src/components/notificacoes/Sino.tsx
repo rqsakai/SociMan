@@ -42,6 +42,9 @@ const tipoTone: Record<NotificacaoTipo, string> = {
   envio_rede_falhou: "bg-destructive",
   envio_aguardando_vaga: "bg-warning",
   conexao_precisa_reconectar: "bg-destructive",
+  // spec 016
+  post_detectado: "bg-success",
+  vinculo_a_confirmar: "bg-warning",
 };
 
 export function Sino() {
@@ -70,7 +73,7 @@ export function Sino() {
           {naoLidas > 0 && (
             <span
               aria-hidden="true"
-              className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[0.65rem] font-bold text-white"
+              className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[0.65rem] font-bold text-destructive-foreground"
             >
               {naoLidas > 99 ? "99+" : naoLidas}
             </span>

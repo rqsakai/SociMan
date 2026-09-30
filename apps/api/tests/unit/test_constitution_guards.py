@@ -274,6 +274,9 @@ OPERATION_PREFIXOS_014 = ("conteudos_", "destinos_", "agendamentos_")
 # Estados que só a trilha da 015 grava (R16.4): o único lugar é `_concluir` da trilha.
 ESTADOS_015 = ("rascunho_criado", "publicado", "falhou")
 ESTADOS_015_PERMITIDOS = {("publicacao/trilha.py", "_concluir")}
+# Spec 016 (guarda 4, R12): o vínculo com o post move `rascunho_criado ↔ publicado` e
+# `falhou → publicado`, só por esta função.
+ESTADOS_015_PERMITIDOS |= {("postagem/service.py", "publicacao_pelo_vinculo")}
 # `enviando` só ao reivindicar (spec 015, R16.4).
 ENVIANDO_PERMITIDO = {("publicacao/trilha.py", "_reivindicar")}
 
@@ -313,7 +316,8 @@ def test_estados_da_015_nunca_atribuidos():
     achados = _lugares(_e_estado_015)
     fora = [a for a in achados if (a[0], a[1]) not in ESTADOS_015_PERMITIDOS]
     assert not fora, f"estado da execução atribuído fora da trilha (princípio I): {fora}"
-    assert any((a[0], a[1]) in ESTADOS_015_PERMITIDOS for a in achados)  # guarda vivo
+    # Guarda vivo: cada lugar permitido existe e é encontrado (a trilha e o vínculo da 016).
+    assert {(a[0], a[1]) for a in achados} >= ESTADOS_015_PERMITIDOS
 
 
 def test_enviando_so_ao_reivindicar():
@@ -339,12 +343,12 @@ def executor(p, db):
 
 
 def test_agendador_sem_trilha_nova():
-    """Guarda 6 (R16.6): a única trilha nova é a `publicacao` da 015 (a lista só cresce por
-    spec)."""
+    """Guarda 6 (R16.6): as trilhas novas são a `publicacao` da 015 e a `metricas` da 016 (a
+    lista só cresce por spec; guarda 5 da 016)."""
     from sociman_api.agendador import trilhas_padrao
 
     assert {t.nome for t in trilhas_padrao()} == {"sync", "openshorts", "importacao",
-                                                  "lembretes", "publicacao"}
+                                                  "lembretes", "publicacao", "metricas"}
 
 
 # ---- spec 015 (publicação no TikTok), parte 1: R16.1, R16.2, R16.3 e R16.8 ----
@@ -362,6 +366,11 @@ TIKTOK_ALLOWED_R21 = {
     ("GET", "<avatar>"),
 }
 PUBLICACAO = SRC / "publicacao"
+# Spec 016 (R2, guarda 1): só leitura, exatamente estes dois (a lista só cresce por spec).
+LEITURA_016_ESPERADA = {
+    ("POST", "/v2/video/list/"),
+    ("POST", "/v2/video/query/"),
+}
 
 
 def test_permitido_em_so_libera_a_pasta_da_rede():
@@ -420,10 +429,12 @@ def test_guarda_de_import_pega_os_jeitos_de_importar():
 
 
 def test_cliente_da_tiktok_com_lista_fechada_do_r21():
-    """R16.3: `ALLOWED` exatamente igual ao de R21; nada fora dele sai do cliente."""
+    """R16.3: `ALLOWED` exatamente igual ao de R21 mais a leitura da 016 (guarda 1 da 016);
+    nada fora dele sai do cliente."""
     from sociman_api.publicacao.tiktok import cliente
 
-    assert set(cliente.ALLOWED) == TIKTOK_ALLOWED_R21
+    assert set(cliente.ALLOWED) == TIKTOK_ALLOWED_R21 | LEITURA_016_ESPERADA
+    assert set(cliente.LEITURA_016) == LEITURA_016_ESPERADA
     assert cliente.UPLOAD_SUFIXO == ".tiktokapis.com"
     assert set(cliente.CDN_SUFIXOS) == {".tiktokcdn.com", ".tiktokcdn-us.com"}
 
@@ -496,3 +507,110 @@ def test_httpx_na_publicacao_so_na_pasta_da_rede():
     fora = [str(p.relative_to(SRC)) for p in sorted(PUBLICACAO.glob("*.py"))
             if _importa(ast.parse(p.read_text()), "httpx")]
     assert not fora, f"httpx fora de publicacao/<rede>/: {fora}"
+
+
+# ---- spec 016 (métricas do TikTok): guardas 2 e 3 (o 1 está no teste da lista fechada) ----
+
+METRICAS = SRC / "metricas"
+LEITOR = PUBLICACAO / "tiktok" / "leitor.py"
+# `metricas/` só chega a `publicacao/` por estes módulos (o `legenda` é texto puro: a legenda
+# que o SociMan manda, usada no casamento, R10). Nunca a rede, a trilha, o service nem o executor.
+PUBLICACAO_PARA_METRICAS = {"registro", "conexoes", "models", "limites", "legenda"}
+PUBLICACAO_PROIBIDA_EM_METRICAS = {"tiktok", "trilha", "service", "executor"}
+CHAMADAS_DE_ENVIO = {"put_parte", "iniciar", "enviar_parte"}
+CAMINHOS_DO_LEITOR = {c for _, c in LEITURA_016_ESPERADA} | {
+    "/v2/user/info/", "/v2/post/publish/status/fetch/"}
+
+
+def _modulos_de_publicacao(tree: ast.AST) -> set[str]:
+    """Os submódulos de `sociman_api.publicacao` que o código importa (`registro`, …)."""
+    out = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                if a.name.startswith("sociman_api.publicacao."):
+                    out.add(a.name.split(".")[2])
+                elif a.name == "sociman_api.publicacao":
+                    out.add("")
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            if node.module == "sociman_api.publicacao":
+                out |= {a.name for a in node.names}
+            elif node.module.startswith("sociman_api.publicacao."):
+                out.add(node.module.split(".")[2])
+    return out
+
+
+def _fontes_metricas() -> list[Path]:
+    return sorted(METRICAS.rglob("*.py"))
+
+
+def test_metricas_chega_a_publicacao_so_pelo_registro():
+    """Guarda 2 (R2): `metricas/` não importa a rede, a trilha, o service nem o executor de
+    publicação; só `registro`, `conexoes`, `models`, `limites` (e `legenda`). E não fala HTTP."""
+    fontes = _fontes_metricas()
+    assert fontes and (METRICAS / "models.py") in fontes  # o guarda está vivo
+    fora, proibidos, http = [], [], []
+    for path in fontes:
+        tree = ast.parse(path.read_text())
+        rel = str(path.relative_to(SRC))
+        mods = _modulos_de_publicacao(tree)
+        fora += [f"{rel}: publicacao.{m}" for m in mods - PUBLICACAO_PARA_METRICAS]
+        proibidos += [f"{rel}: publicacao.{m}" for m in mods & PUBLICACAO_PROIBIDA_EM_METRICAS]
+        if _importa(tree, "httpx"):
+            http.append(rel)
+    assert not proibidos, f"metricas/ importa a publicação (princípio I): {proibidos}"
+    assert not fora, f"metricas/ importa publicação fora da lista: {fora}"
+    assert not http, f"metricas/ fala HTTP (só o leitor da rede fala): {http}"
+    assert not PUBLICACAO_PARA_METRICAS & PUBLICACAO_PROIBIDA_EM_METRICAS
+
+
+def test_guarda_de_import_da_016_pega_os_jeitos_de_importar():
+    for codigo, esperado in (
+        ("from sociman_api.publicacao import registro, trilha", {"registro", "trilha"}),
+        ("import sociman_api.publicacao.executor", {"executor"}),
+        ("from sociman_api.publicacao.tiktok.leitor import LeitorTikTok", {"tiktok"}),
+        ("from sociman_api.publicacao.service import x", {"service"}),
+        ("from sociman_api.metricas import models", set()),
+    ):
+        assert _modulos_de_publicacao(ast.parse(codigo)) == esperado, codigo
+
+
+def _chamadas_de_envio(tree: ast.AST) -> list[tuple[int, str]]:
+    """`x.iniciar(`, `x.enviar_parte(`, `x.put_parte(` e qualquer menção a `put_parte`."""
+    achados = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                and node.func.attr in CHAMADAS_DE_ENVIO:
+            achados.append((node.lineno, node.func.attr))
+        elif isinstance(node, ast.Name) and node.id in CHAMADAS_DE_ENVIO:
+            achados.append((node.lineno, node.id))
+        elif isinstance(node, ast.Attribute) and node.attr == "put_parte":
+            achados.append((node.lineno, node.attr))
+    return sorted(set(achados))
+
+
+def test_metricas_e_leitor_sem_chamada_de_envio():
+    """Guarda 3 (R2): nada de `iniciar`, `enviar_parte` nem `put_parte` em `metricas/` nem no
+    leitor; o leitor só cita os caminhos de leitura."""
+    alvos = [*_fontes_metricas(), LEITOR]
+    assert LEITOR.exists()
+    achados = [(str(p.relative_to(SRC)), *a) for p in alvos
+               for a in _chamadas_de_envio(ast.parse(p.read_text()))]
+    assert not achados, f"chamada de envio na leitura (princípio I): {achados}"
+    caminhos = {t for t in _strings_de_codigo(ast.parse(LEITOR.read_text()))
+                if t.startswith("/v2/")}
+    assert caminhos, "o leitor não cita nenhum caminho (guarda morto)"
+    assert caminhos <= CAMINHOS_DO_LEITOR, caminhos - CAMINHOS_DO_LEITOR
+    assert "open.tiktokapis.com" not in LEITOR.read_text()  # o host fica só no cliente
+
+
+def test_guarda_de_envio_da_016_pega_os_jeitos_de_chamar():
+    codigo = """
+def f(ex, c, ctx):
+    ex.iniciar(ctx, t, None)
+    ex.enviar_parte(ctx, t, "u", 0, 0, b"")
+    c.put_parte("u", b"", 0, 1)
+    g = c.put_parte
+    ex.consultar(ctx, t)
+"""
+    assert [linha for linha, _ in _chamadas_de_envio(ast.parse(codigo))] == [3, 4, 5, 6]

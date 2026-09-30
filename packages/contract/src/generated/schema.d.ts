@@ -755,6 +755,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/contas/{conta_id}/metricas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metricas Conta */
+        get: operations["metricas_conta"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/contas/{conta_id}/modos": {
         parameters: {
             query?: never;
@@ -875,6 +892,26 @@ export interface paths {
         patch: operations["conteudos_update"];
         trace?: never;
     };
+    "/api/conteudos/{conteudo_id}/aprovar-todas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aprovar Todas
+         * @description Spec 018: aprova todas as contas pendentes do conteúdo (só dono humano).
+         */
+        post: operations["conteudos_aprovar_todas"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conteudos/{conteudo_id}/archive": {
         parameters: {
             query?: never;
@@ -886,6 +923,27 @@ export interface paths {
         put?: never;
         /** Archive Conteudo */
         post: operations["conteudos_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conteudos/{conteudo_id}/desaprovar-todas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Desaprovar Todas
+         * @description Spec 018: aprovados e agendados voltam a pendente; cancela os agendamentos (com
+         *     `confirmo`). Só dono humano.
+         */
+        post: operations["conteudos_desaprovar_todas"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1250,6 +1308,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/destinos/{destino_id}/metricas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Destinos Metricas */
+        get: operations["destinos_metricas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/destinos/{destino_id}/pedir-aprovacao": {
         parameters: {
             query?: never;
@@ -1380,6 +1455,41 @@ export interface paths {
         get: operations["destinos_versions"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/destinos/{destino_id}/vinculo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Vinculo Get */
+        get: operations["destinos_vinculo_get"];
+        put?: never;
+        /** Vinculo Criar */
+        post: operations["destinos_vinculo_criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/destinos/{destino_id}/vinculo/desfazer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Vinculo Desfazer */
+        post: operations["destinos_vinculo_desfazer"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1828,6 +1938,57 @@ export interface paths {
         };
         /** Get Integracoes */
         get: operations["integracoes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/metricas/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metricas Export */
+        get: operations["metricas_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/metricas/videos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metricas Videos List */
+        get: operations["metricas_videos_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/metricas/videos/{video_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metricas Videos Get */
+        get: operations["metricas_videos_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2990,6 +3151,23 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** Busca */
+        Busca: {
+            /**
+             * Ate
+             * Format: date-time
+             */
+            ate: string;
+            /** Consultas */
+            consultas: number;
+            /**
+             * Entregueem
+             * Format: date-time
+             */
+            entregueEm: string;
+            /** Fim */
+            fim: ("vinculado" | "prazo" | "falhou" | "desfeito" | "anonimizada" | "cancelada") | null;
+        };
         /** CalendarioItem */
         CalendarioItem: {
             /** Agendadoem */
@@ -3165,6 +3343,19 @@ export interface components {
          * @enum {string}
          */
         CanalSync: "pendente" | "sincronizando" | "ok" | "pausado_cota" | "erro";
+        /** Candidato */
+        Candidato: {
+            /** Duracaodiferencas */
+            duracaoDiferencaS: number;
+            /**
+             * Legenda
+             * @enum {string}
+             */
+            legenda: "compativel" | "neutra" | "incompativel";
+            /** Minutosdaancora */
+            minutosDaAncora: number | null;
+            video: components["schemas"]["VideoResumo"];
+        };
         /** CardFinal */
         CardFinal: {
             /**
@@ -3243,6 +3434,7 @@ export interface components {
              * @enum {string}
              */
             estado: "nao_conectada" | "conectada" | "precisa_reconectar";
+            metricas: components["schemas"]["EstadoColeta"] | null;
             /** Modos */
             modos: components["schemas"]["ModoInfo"][];
             /** Motivo */
@@ -3316,6 +3508,14 @@ export interface components {
             url: string;
             /** Version */
             version: number;
+        };
+        /** ContaMetricasOut */
+        ContaMetricasOut: {
+            coleta: components["schemas"]["EstadoColeta"];
+            /** Fotos */
+            fotos: components["schemas"]["FotoConta"][];
+            /** Publicacoes */
+            publicacoes: components["schemas"]["Publicacao"][];
         };
         /** ContaOut */
         ContaOut: {
@@ -3707,11 +3907,33 @@ export interface components {
         CriadorOut: {
             criador: components["schemas"]["Criador"];
         };
+        /** DesaprovarTodasIn */
+        DesaprovarTodasIn: {
+            /**
+             * Confirmo
+             * @default false
+             */
+            confirmo: boolean;
+        };
+        /**
+         * DesconectarIn
+         * @description Spec 016 (R13): com a série de métricas com dados, `confirmoAnonimizar` é obrigatório.
+         */
+        DesconectarIn: {
+            /**
+             * Confirmoanonimizar
+             * @default false
+             */
+            confirmoAnonimizar: boolean;
+            /** Version */
+            version: number;
+        };
         /** DesconectarOut */
         DesconectarOut: {
             /** Agendamentosematencao */
             agendamentosEmAtencao: number;
             conexao: components["schemas"]["Conexao"];
+            metricasAnonimizadas: components["schemas"]["MetricasAnonimizadas"] | null;
         };
         /** Destino */
         Destino: {
@@ -3800,6 +4022,11 @@ export interface components {
          * @enum {string}
          */
         DestinoEstado: "pendente" | "aprovacao_pedida" | "aprovado" | "agendado" | "postado" | "rascunho_criado" | "publicado" | "falhou" | "enviando";
+        /** DestinoMetricasOut */
+        DestinoMetricasOut: {
+            video: components["schemas"]["VideoDetalhe"] | null;
+            vinculo: components["schemas"]["Vinculo"];
+        };
         /** DestinoOut */
         DestinoOut: {
             destino: components["schemas"]["Destino"];
@@ -4061,6 +4288,18 @@ export interface components {
             /** Items */
             items: components["schemas"]["Envio"][];
         };
+        /** ErroColeta */
+        ErroColeta: {
+            /** Codigo */
+            codigo: string;
+            /**
+             * Em
+             * Format: date-time
+             */
+            em: string;
+            /** Motivo */
+            motivo: string;
+        };
         /** ErrorBody */
         ErrorBody: {
             /** Code */
@@ -4075,6 +4314,31 @@ export interface components {
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
+        };
+        /** EstadoColeta */
+        EstadoColeta: {
+            /** Coletando */
+            coletando: boolean;
+            erro: components["schemas"]["ErroColeta"] | null;
+            /** Escoposfaltando */
+            escoposFaltando: string[];
+            /** Fotos */
+            fotos: number;
+            /** Habilitada */
+            habilitada: boolean;
+            /**
+             * Permissao
+             * @enum {string}
+             */
+            permissao: "ok" | "faltando" | "sem_conexao";
+            /** Proximacoletaem */
+            proximaColetaEm: string | null;
+            /** Ultimacoletaem */
+            ultimaColetaEm: string | null;
+            /** Varreduraconcluida */
+            varreduraConcluida: boolean;
+            /** Videos */
+            videos: number;
         };
         /**
          * EstadoEfetivo
@@ -4234,6 +4498,47 @@ export interface components {
         ForgotIn: {
             /** Email */
             email: string;
+        };
+        /** FotoConta */
+        FotoConta: {
+            /**
+             * Coletadoem
+             * Format: date-time
+             */
+            coletadoEm: string;
+            /** Curtidas */
+            curtidas: number | null;
+            /**
+             * Janelaem
+             * Format: date-time
+             */
+            janelaEm: string;
+            /** Seguidores */
+            seguidores: number | null;
+            /** Seguindo */
+            seguindo: number | null;
+            /** Videos */
+            videos: number | null;
+        };
+        /** FotoVideo */
+        FotoVideo: {
+            /** Alvoidademin */
+            alvoIdadeMin: number;
+            /**
+             * Coletadoem
+             * Format: date-time
+             */
+            coletadoEm: string;
+            /** Comments */
+            comments: number | null;
+            /** Idades */
+            idadeS: number;
+            /** Likes */
+            likes: number | null;
+            /** Shares */
+            shares: number | null;
+            /** Views */
+            views: number | null;
         };
         /** FundoImageOut */
         FundoImageOut: {
@@ -4832,6 +5137,29 @@ export interface components {
              */
             todas: boolean;
         };
+        /** MarcoMetricas */
+        MarcoMetricas: {
+            comments: components["schemas"]["MarcoValor"];
+            likes: components["schemas"]["MarcoValor"];
+            shares: components["schemas"]["MarcoValor"];
+            views: components["schemas"]["MarcoValor"];
+        };
+        /** MarcoValor */
+        MarcoValor: {
+            /** Estimado */
+            estimado: boolean;
+            /** Motivo */
+            motivo: ("ainda_nao" | "sem_dado") | null;
+            /** Valor */
+            valor: number | null;
+        };
+        /** Marcos */
+        Marcos: {
+            d30: components["schemas"]["MarcoMetricas"];
+            d7: components["schemas"]["MarcoMetricas"];
+            h1: components["schemas"]["MarcoMetricas"];
+            h24: components["schemas"]["MarcoMetricas"];
+        };
         /** Metrica */
         Metrica: {
             /** Comments */
@@ -4845,6 +5173,13 @@ export interface components {
             observedAt: string;
             /** Views */
             views: number | null;
+        };
+        /** MetricasAnonimizadas */
+        MetricasAnonimizadas: {
+            /** Fotos */
+            fotos: number;
+            /** Videos */
+            videos: number;
         };
         /** MidiaItem */
         MidiaItem: {
@@ -4929,7 +5264,7 @@ export interface components {
          * NotificacaoTipo
          * @enum {string}
          */
-        NotificacaoTipo: "envio_pronto" | "envio_sem_clipes" | "envio_falhou" | "envio_confirmar_qualidade" | "envio_momentos" | "openshorts_fora" | "hora_de_postar" | "cota_youtube" | "canal_erro" | "aprovacao_pedida" | "aprovacao_respondida" | "rascunho_criado" | "envio_publicado" | "envio_rede_falhou" | "envio_aguardando_vaga" | "conexao_precisa_reconectar";
+        NotificacaoTipo: "envio_pronto" | "envio_sem_clipes" | "envio_falhou" | "envio_confirmar_qualidade" | "envio_momentos" | "openshorts_fora" | "hora_de_postar" | "cota_youtube" | "canal_erro" | "aprovacao_pedida" | "aprovacao_respondida" | "rascunho_criado" | "envio_publicado" | "envio_rede_falhou" | "envio_aguardando_vaga" | "conexao_precisa_reconectar" | "post_detectado" | "vinculo_a_confirmar";
         /** NotificacoesList */
         NotificacoesList: {
             /** Items */
@@ -5278,6 +5613,21 @@ export interface components {
             score: number | null;
             /** Titulo */
             titulo: string | null;
+        };
+        /** Publicacao */
+        Publicacao: {
+            /** Conteudoid */
+            conteudoId: string | null;
+            /**
+             * Publicadoem
+             * Format: date-time
+             */
+            publicadoEm: string;
+            /**
+             * Videoid
+             * Format: uuid
+             */
+            videoId: string;
         };
         /** PublicacaoConfig */
         PublicacaoConfig: {
@@ -5860,6 +6210,17 @@ export interface components {
             /** Items */
             items: components["schemas"]["TipoCampo"][];
         };
+        /**
+         * TodasResultado
+         * @description Aprovar/desaprovar todas as contas do conteúdo (spec 018): os que mudaram e os que
+         *     ficaram como estavam, com o motivo.
+         */
+        TodasResultado: {
+            /** Ignorados */
+            ignorados: components["schemas"]["LoteFalha"][];
+            /** Ok */
+            ok: components["schemas"]["Destino"][];
+        };
         /** UpdateCanalIn */
         UpdateCanalIn: {
             /** Perfilids */
@@ -6072,6 +6433,61 @@ export interface components {
             /** Items */
             items: components["schemas"]["Version"][];
         };
+        /** VideoDetalhe */
+        VideoDetalhe: {
+            /** Coletaparadaem */
+            coletaParadaEm: string | null;
+            conta: components["schemas"]["ContaRef"] | null;
+            /** Contaid */
+            contaId: string | null;
+            /** Conteudoid */
+            conteudoId: string | null;
+            /** Destinoid */
+            destinoId: string | null;
+            /** Disponivel */
+            disponivel: boolean;
+            /** Duracaos */
+            duracaoS: number;
+            /** Engajamento */
+            engajamento: number | null;
+            /** Fotos */
+            fotos: components["schemas"]["FotoVideo"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Indisponiveldesde */
+            indisponivelDesde: string | null;
+            /** Legenda */
+            legenda: string | null;
+            marcos: components["schemas"]["Marcos"];
+            /** Miniaturaurl */
+            miniaturaUrl: string | null;
+            /**
+             * Origem
+             * @enum {string}
+             */
+            origem: "corte" | "video_proprio" | "fora" | "anonima";
+            perfil: components["schemas"]["PerfilRef"] | null;
+            /**
+             * Publicadoem
+             * Format: date-time
+             */
+            publicadoEm: string;
+            rede: components["schemas"]["Platform"];
+            /** Serierotulo */
+            serieRotulo: string | null;
+            ultima: components["schemas"]["FotoVideo"] | null;
+            /** Url */
+            url: string | null;
+            /** Velocidade */
+            velocidade: number | null;
+            views24h: components["schemas"]["MarcoValor"];
+            views7d: components["schemas"]["MarcoValor"];
+            /** Vinculometodo */
+            vinculoMetodo: ("envio" | "casamento" | "link" | "escolha") | null;
+        };
         /** VideoDetalheOut */
         VideoDetalheOut: {
             /** Metricas */
@@ -6158,14 +6574,101 @@ export interface components {
          * @enum {string}
          */
         VideoLive: "nenhum" | "ao_vivo" | "agendado";
-        /** VideosList */
-        VideosList: {
-            /** Items */
-            items: components["schemas"]["VideoFonte"][];
-            /** Nextcursor */
-            nextCursor: string | null;
-            /** Total */
-            total: number;
+        /** VideoResumo */
+        VideoResumo: {
+            conta: components["schemas"]["ContaRef"] | null;
+            /** Contaid */
+            contaId: string | null;
+            /** Conteudoid */
+            conteudoId: string | null;
+            /** Destinoid */
+            destinoId: string | null;
+            /** Disponivel */
+            disponivel: boolean;
+            /** Duracaos */
+            duracaoS: number;
+            /** Engajamento */
+            engajamento: number | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Indisponiveldesde */
+            indisponivelDesde: string | null;
+            /** Legenda */
+            legenda: string | null;
+            /** Miniaturaurl */
+            miniaturaUrl: string | null;
+            /**
+             * Origem
+             * @enum {string}
+             */
+            origem: "corte" | "video_proprio" | "fora" | "anonima";
+            perfil: components["schemas"]["PerfilRef"] | null;
+            /**
+             * Publicadoem
+             * Format: date-time
+             */
+            publicadoEm: string;
+            rede: components["schemas"]["Platform"];
+            /** Serierotulo */
+            serieRotulo: string | null;
+            ultima: components["schemas"]["FotoVideo"] | null;
+            /** Url */
+            url: string | null;
+            /** Velocidade */
+            velocidade: number | null;
+            views24h: components["schemas"]["MarcoValor"];
+            views7d: components["schemas"]["MarcoValor"];
+            /** Vinculometodo */
+            vinculoMetodo: ("envio" | "casamento" | "link" | "escolha") | null;
+        };
+        /** Vinculo */
+        Vinculo: {
+            /** Ancora */
+            ancora: ("entrega" | "postado") | null;
+            /** Ancoraem */
+            ancoraEm: string | null;
+            /** Automatico */
+            automatico: boolean;
+            /** Bloqueado */
+            bloqueado: boolean;
+            busca: components["schemas"]["Busca"] | null;
+            /** Candidatos */
+            candidatos: components["schemas"]["Candidato"][];
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "vinculado" | "buscando" | "a_confirmar" | "sem_vinculo" | "indisponivel";
+            /** Metodo */
+            metodo: ("envio" | "casamento" | "link" | "escolha") | null;
+            /** Motivo */
+            motivo: string | null;
+            /** Podevincular */
+            podeVincular: boolean;
+            video: components["schemas"]["VideoResumo"] | null;
+            /** Vinculadoem */
+            vinculadoEm: string | null;
+            vinculadoPor: components["schemas"]["UserRef"] | null;
+        };
+        /**
+         * VinculoIn
+         * @description Exatamente um de `videoId` (escolher) ou `link` (colar).
+         */
+        VinculoIn: {
+            /** Link */
+            link?: string | null;
+            /** Version */
+            version: number;
+            /** Videoid */
+            videoId?: string | null;
+        };
+        /** VinculoOut */
+        VinculoOut: {
+            destino: components["schemas"]["Destino"];
+            vinculo: components["schemas"]["Vinculo"];
         };
         /** WatermarkImageOut */
         WatermarkImageOut: {
@@ -6175,6 +6678,24 @@ export interface components {
         WatermarkImagesList: {
             /** Items */
             items: components["schemas"]["ImageRef"][];
+        };
+        /** VideosList */
+        sociman_api__canais__schemas__VideosList: {
+            /** Items */
+            items: components["schemas"]["VideoFonte"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+            /** Total */
+            total: number;
+        };
+        /** VideosList */
+        sociman_api__metricas__schemas__VideosList: {
+            /** Items */
+            items: components["schemas"]["VideoResumo"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+            /** Total */
+            total: number;
         };
     };
     responses: never;
@@ -8904,7 +9425,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["DesconectarIn"];
             };
         };
         responses: {
@@ -9061,6 +9582,68 @@ export interface operations {
                 };
             };
             /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    metricas_conta: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                resolucao?: "auto" | "hora" | "dia";
+            };
+            header?: never;
+            path: {
+                conta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContaMetricasOut"];
+                };
+            };
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -9601,6 +10184,73 @@ export interface operations {
             };
         };
     };
+    conteudos_aprovar_todas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conteudo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TodasResultado"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     conteudos_archive: {
         parameters: {
             query?: never;
@@ -9623,6 +10273,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConteudoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    conteudos_desaprovar_todas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conteudo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesaprovarTodasIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TodasResultado"];
                 };
             };
             /** @description Bad Request */
@@ -11252,6 +11973,64 @@ export interface operations {
             };
         };
     };
+    destinos_metricas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                destino_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DestinoMetricasOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     destinos_pedir_aprovacao: {
         parameters: {
             query?: never;
@@ -11785,6 +12564,215 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    destinos_vinculo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                destino_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Vinculo"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    destinos_vinculo_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                destino_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VinculoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VinculoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    destinos_vinculo_desfazer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                destino_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VinculoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13307,6 +14295,193 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    metricas_export: {
+        parameters: {
+            query?: {
+                formato?: "csv" | "jsonl";
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                incluirAnonimas?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description ZIP com o dataset */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": unknown;
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    metricas_videos_list: {
+        parameters: {
+            query?: {
+                perfilId?: string | null;
+                contaId?: string | null;
+                origem?: string | null;
+                de?: string | null;
+                ate?: string | null;
+                ordem?: "views24h" | "views7d" | "engajamento" | "velocidade" | "publicadoEm";
+                direcao?: "desc" | "asc";
+                cursor?: string | null;
+                limite?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["sociman_api__metricas__schemas__VideosList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    metricas_videos_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                video_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VideoDetalhe"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16758,7 +17933,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["VideosList"];
+                    "application/json": components["schemas"]["sociman_api__canais__schemas__VideosList"];
                 };
             };
             /** @description Bad Request */

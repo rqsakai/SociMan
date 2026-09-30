@@ -1,10 +1,18 @@
 /*
- * /app/conteudos/:id (spec 014, US1–US3, US5): player, título editável, origem (link para o corte
- * ou o envio), "Agendar", uma aba por conta de destino (`?conta=` escolhe a aba; é o link do sino)
- * com o painel do destino, "Adicionar conta", arquivar/restaurar e o histórico do conteúdo.
+ * /app/conteudos/:id (spec 014, US1–US3, US5; layout da spec 018, US2).
+ *
+ * Topo: título editável, situação e as ações do post inteiro: "Aprovar" e "Desaprovar" todas as
+ * contas (só dono; "Desaprovar" confirma e lista os agendamentos que serão cancelados), "Pedir
+ * aprovação" (membro) e arquivar/restaurar.
+ * Esquerda: o bloco "Contas" em destaque (vermelho e "Obrigatório" sem nenhuma conta), com
+ * "Adicionar conta", "Agendar" e uma aba por conta (`?conta=` escolhe a aba; é o link do sino), cada
+ * uma com status, textos e as ações da conta (agendar, enviar, publicar, postado, tentar de novo).
+ * Direita: player, proposta do SociShorts, desempenho (spec 016) e o histórico do conteúdo.
+ * No celular, as contas vêm antes do player.
  */
+import type { Destino } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, ArrowLeft, CalendarClock, ClipboardCopy, Download, ExternalLink, Loader2, Save, TriangleAlert } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, CalendarClock, ClipboardCopy, Download, ExternalLink, Hand, Loader2, Save, ThumbsDown, ThumbsUp, TriangleAlert } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -12,9 +20,21 @@ import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { AgendarDialog } from "@/components/conteudos/AgendarDialog";
 import { DestinosSection } from "@/components/conteudos/DestinoPanel";
+import { DesempenhoDestino, temDesempenho } from "@/components/metricas/DesempenhoDestino";
 import { HistoryHeading, VersionHistory } from "@/components/VersionHistory";
 import { usePageMeta } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -30,11 +50,15 @@ import {
   propostaDe,
   situacaoLabel,
   useConteudo,
+  useEhDono,
   type Conteudo,
 } from "@/lib/conteudos";
 import { formatBytes } from "@/lib/marca";
-import { copyText, TITULO_MAX } from "@/lib/postagem";
+import { contaPlatformText } from "@/lib/perfis";
+import { copyText, modoLabel, TITULO_MAX, type Modo } from "@/lib/postagem";
 import { formatDateTime } from "@/lib/tz";
+
+const contaText = (c: Destino["conta"]) => `${contaPlatformText(c)} @${c.handle.replace(/^@/, "")}`;
 
 export default function ConteudoDetalhe() {
   const { id = "" } = useParams();
@@ -42,6 +66,7 @@ export default function ConteudoDetalhe() {
   const queryClient = useQueryClient();
   const q = useConteudo(id);
   const c = q.data?.conteudo;
+  const [agendarOpen, setAgendarOpen] = useState(false);
 
   usePageMeta({
     title: c ? `Conteúdo: ${(c.titulo || "sem título").slice(0, 40)}` : "Conteúdo",
@@ -71,13 +96,29 @@ export default function ConteudoDetalhe() {
         </Link>
       </Button>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_1fr]">
-        <Player conteudo={c} />
+      <Cabecalho key={`${c.id}-${c.version}`} conteudo={c} onChanged={refresh} />
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
         <div className="min-w-0 space-y-6">
-          <Cabecalho key={`${c.id}-${c.version}`} conteudo={c} onChanged={refresh} />
-          <PropostaCard conteudo={c} />
           <DestinosSection
             conteudo={c}
+            destaque
+            desempenho={false}
+            acoes={
+              !c.archived && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={c.situacao !== "pronto"}
+                  title={c.situacao === "pronto" ? undefined : "Aplique a marca antes de agendar"}
+                  onClick={() => setAgendarOpen(true)}
+                >
+                  <CalendarClock aria-hidden="true" />
+                  Agendar
+                </Button>
+              )
+            }
             conta={params.get("conta")}
             onContaChange={(conta) =>
               setParams(
@@ -91,9 +132,21 @@ export default function ConteudoDetalhe() {
             }
             onChanged={refresh}
           />
+        </div>
+        <div className="min-w-0 space-y-6">
+          <Player conteudo={c} />
+          <PropostaCard conteudo={c} />
+          <Desempenho conteudo={c} onChanged={refresh} />
           <Historico conteudo={c} onReverted={refresh} />
         </div>
       </div>
+      <AgendarDialog
+        open={agendarOpen}
+        onOpenChange={setAgendarOpen}
+        conteudo={{ id: c.id, perfilId: c.perfil.id, titulo: c.titulo, situacao: c.situacao, proposta: propostaDe(c), origem: c.origem, posterUrl: c.posterUrl }}
+        destinos={c.destinos}
+        onDone={refresh}
+      />
     </div>
   );
 }
@@ -143,12 +196,12 @@ function Player({ conteudo: c }: { conteudo: Conteudo }) {
 
 function Cabecalho({ conteudo: c, onChanged }: { conteudo: Conteudo; onChanged: () => Promise<void> }) {
   const [titulo, setTitulo] = useState(c.titulo);
-  const [busy, setBusy] = useState<"titulo" | "arquivo" | null>(null);
+  const [busy, setBusy] = useState<"titulo" | "arquivo" | "aprovar" | "desaprovar" | "pedir" | null>(null);
   const [error, setError] = useState<unknown>(null);
-  const [agendarOpen, setAgendarOpen] = useState(false);
+  const dono = useEhDono();
   useEffect(() => setTitulo(c.titulo), [c.titulo]);
 
-  async function run(kind: "titulo" | "arquivo", fn: () => Promise<unknown>, msg: string) {
+  async function run(kind: NonNullable<typeof busy>, fn: () => Promise<unknown>, msg: string) {
     setError(null);
     setBusy(kind);
     try {
@@ -162,7 +215,52 @@ function Cabecalho({ conteudo: c, onChanged }: { conteudo: Conteudo; onChanged: 
     }
   }
 
-  const agendados = c.destinos.filter((d) => d.estado === "agendado" && !d.archived).length;
+  const ativos = c.destinos.filter((d) => !d.archived);
+  const agendados = ativos.filter((d) => d.estado === "agendado");
+  const aprovaveis = ativos.filter((d) => d.estado === "pendente" || d.estado === "aprovacao_pedida");
+  const desaprovaveis = ativos.filter((d) => d.estado === "aprovado" || d.estado === "agendado");
+  const pediveis = ativos.filter((d) => d.estado === "pendente");
+  const pronto = c.situacao === "pronto";
+  const porId = new Map(ativos.map((d) => [d.id, d]));
+
+  // Os que a API deixou como estavam (já postados, falhou, …), com o motivo, na mensagem.
+  function resumo(verbo: string, r: { ok: unknown[]; ignorados: { destinoId?: string | null; message: string }[] }) {
+    const base = `${r.ok.length} conta(s) ${verbo}.`;
+    if (r.ignorados.length === 0) return base;
+    const outros = r.ignorados.map((i) => {
+      const d = i.destinoId ? porId.get(i.destinoId) : undefined;
+      return `${d ? contaText(d.conta) : "conta"}: ${i.message}`;
+    });
+    return `${base} Sem mudança: ${outros.join("; ")}.`;
+  }
+
+  async function aprovarTodas() {
+    setError(null);
+    setBusy("aprovar");
+    try {
+      const r = await api.conteudos.aprovarTodas(c.id);
+      toast.success(resumo("aprovada(s)", r));
+      await onChanged();
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function desaprovarTodas() {
+    setError(null);
+    setBusy("desaprovar");
+    try {
+      const r = await api.conteudos.desaprovarTodas(c.id, true);
+      toast.success(resumo("voltaram a pendente", r));
+      await onChanged();
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(null);
+    }
+  }
 
   return (
     <Card className="shadow-card">
@@ -183,6 +281,97 @@ function Cabecalho({ conteudo: c, onChanged }: { conteudo: Conteudo; onChanged: 
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Ações do post inteiro (todas as contas); as de cada conta ficam no bloco da conta. */}
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Ações do post">
+          {!c.archived && dono && (
+            <>
+              <Button
+                type="button"
+                disabled={busy !== null || aprovaveis.length === 0 || !pronto}
+                title={!pronto ? "Aplique a marca antes de aprovar" : aprovaveis.length === 0 ? "Nenhuma conta esperando aprovação" : undefined}
+                aria-busy={busy === "aprovar"}
+                onClick={() => void aprovarTodas()}
+              >
+                {busy === "aprovar" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <ThumbsUp aria-hidden="true" />}
+                Aprovar<span className="sr-only"> todas as contas</span>
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button type="button" variant="outline" disabled={busy !== null || desaprovaveis.length === 0} aria-busy={busy === "desaprovar"}>
+                    {busy === "desaprovar" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <ThumbsDown aria-hidden="true" />}
+                    Desaprovar<span className="sr-only"> todas as contas</span>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Desaprovar todas as contas?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {desaprovaveis.length} conta(s) voltam a pendente e precisam de nova aprovação. Nada é apagado; o histórico registra a mudança.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  {agendados.length > 0 && (
+                    <div className="text-sm">
+                      <p className="font-medium">Agendamentos que serão cancelados:</p>
+                      <ul className="mt-1 list-disc space-y-1 pl-5">
+                        {agendados.map((d) => (
+                          <li key={d.id}>
+                            {contaText(d.conta)}: {modoLabel[d.modo as Modo]}
+                            {d.plannedAt ? ` · ${formatDateTime(d.plannedAt)}` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => void desaprovarTodas()}>Desaprovar</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
+          {!c.archived && !dono && pediveis.length > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy !== null || !pronto}
+              aria-busy={busy === "pedir"}
+              onClick={() =>
+                void run(
+                  "pedir",
+                  async () => {
+                    for (const d of pediveis) await api.destinos.pedirAprovacao(d.id, { version: d.version });
+                  },
+                  "Aprovação pedida. Os donos foram avisados.",
+                )
+              }
+            >
+              {busy === "pedir" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Hand aria-hidden="true" />}
+              Pedir aprovação<span className="sr-only"> de todas as contas</span>
+            </Button>
+          )}
+          <ConfirmButton
+            label={c.archived ? "Restaurar" : "Arquivar"}
+            icon={c.archived ? ArchiveRestore : Archive}
+            busy={busy === "arquivo"}
+            title={c.archived ? "Restaurar este conteúdo?" : "Arquivar este conteúdo?"}
+            description={
+              c.archived
+                ? "O conteúdo volta para a lista. Os agendamentos cancelados não voltam sozinhos."
+                : agendados.length > 0
+                  ? `Arquivar cancela ${agendados.length} agendamento(s) deste conteúdo. Nada é apagado e dá para restaurar.`
+                  : "O conteúdo sai da lista; nada é apagado e dá para restaurar."
+            }
+            onConfirm={() =>
+              run(
+                "arquivo",
+                () => (c.archived ? api.conteudos.restore(c.id, c.version) : api.conteudos.archive(c.id, c.version)),
+                c.archived ? "Conteúdo restaurado." : "Conteúdo arquivado.",
+              )
+            }
+          />
+        </div>
+        {error !== null && <ApiErrorAlert error={error} onReload={() => void onChanged()} />}
         {!c.archived && (
           <form
             className="flex flex-wrap items-end gap-2"
@@ -200,36 +389,7 @@ function Cabecalho({ conteudo: c, onChanged }: { conteudo: Conteudo; onChanged: 
             </Button>
           </form>
         )}
-        {error !== null && <ApiErrorAlert error={error} onReload={() => void onChanged()} />}
-        <div className="flex flex-wrap gap-2">
-          {!c.archived && (
-            <Button type="button" disabled={c.situacao !== "pronto"} title={c.situacao === "pronto" ? undefined : "Aplique a marca antes de agendar"} onClick={() => setAgendarOpen(true)}>
-              <CalendarClock aria-hidden="true" />
-              Agendar
-            </Button>
-          )}
-          <ConfirmButton
-            label={c.archived ? "Restaurar" : "Arquivar"}
-            icon={c.archived ? ArchiveRestore : Archive}
-            busy={busy === "arquivo"}
-            title={c.archived ? "Restaurar este conteúdo?" : "Arquivar este conteúdo?"}
-            description={
-              c.archived
-                ? "O conteúdo volta para a lista. Os agendamentos cancelados não voltam sozinhos."
-                : agendados > 0
-                  ? `Arquivar cancela ${agendados} agendamento(s) deste conteúdo. Nada é apagado e dá para restaurar.`
-                  : "O conteúdo sai da lista; nada é apagado e dá para restaurar."
-            }
-            onConfirm={() =>
-              run(
-                "arquivo",
-                () => (c.archived ? api.conteudos.restore(c.id, c.version) : api.conteudos.archive(c.id, c.version)),
-                c.archived ? "Conteúdo restaurado." : "Conteúdo arquivado.",
-              )
-            }
-          />
-        </div>
-        <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+        <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
           <Detail label="Origem">
             {c.corteId ? (
               <Link to={`/app/cortes/${c.corteId}`} className="inline-flex items-center gap-1 underline">
@@ -259,18 +419,29 @@ function Cabecalho({ conteudo: c, onChanged }: { conteudo: Conteudo; onChanged: 
           <Detail label="Alterado por">{c.updatedBy?.name ?? "—"}</Detail>
         </dl>
       </CardContent>
-      <AgendarDialog
-        open={agendarOpen}
-        onOpenChange={setAgendarOpen}
-        conteudo={{ id: c.id, perfilId: c.perfil.id, titulo: c.titulo, situacao: c.situacao, proposta: propostaDe(c), origem: c.origem, posterUrl: c.posterUrl }}
-        destinos={c.destinos}
-        onDone={onChanged}
-      />
     </Card>
   );
 }
 
-// T075: o que o OpenShorts propôs (título, descrição, gancho e nota), para o operador conferir e
+// spec 016 na coluna da direita: o desempenho de cada conta TikTok com post (ou para escolher o post).
+function Desempenho({ conteudo: c, onChanged }: { conteudo: Conteudo; onChanged: () => Promise<void> }) {
+  const comDesempenho = c.destinos.filter((d) => temDesempenho(d));
+  if (comDesempenho.length === 0) return null;
+  return (
+    <>
+      {comDesempenho.map((d) => (
+        <Card key={d.id} className="gap-2 shadow-card">
+          <CardContent className="space-y-2">
+            <p className="text-sm text-muted-foreground">{contaText(d.conta)}</p>
+            <DesempenhoDestino destino={d} onChanged={onChanged} />
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+// T075: o que o SociShorts propôs (título, descrição, gancho e nota), para o operador conferir e
 // copiar; os textos vazios dos destinos já vêm com esta proposta.
 function PropostaCard({ conteudo }: { conteudo: Conteudo }) {
   const p = propostaDe(conteudo);
@@ -287,13 +458,13 @@ function PropostaCard({ conteudo }: { conteudo: Conteudo }) {
   }
 
   return (
-    <Card className="shadow-card" aria-labelledby="proposta-openshorts">
+    <Card className="shadow-card" aria-labelledby="proposta-sociShorts">
       <CardHeader>
         <CardTitle>
-          <h2 id="proposta-openshorts">Proposta do OpenShorts</h2>
+          <h2 id="proposta-sociShorts">Proposta do SociShorts</h2>
         </CardTitle>
         <CardDescription>
-          O que o OpenShorts sugeriu para este corte{p.score !== null && p.score !== undefined ? ` (nota ${p.score})` : ""}. Confira antes de usar.
+          O que o SociShorts sugeriu para este corte{p.score !== null && p.score !== undefined ? ` (nota ${p.score})` : ""}. Confira antes de usar.
         </CardDescription>
       </CardHeader>
       <CardContent>

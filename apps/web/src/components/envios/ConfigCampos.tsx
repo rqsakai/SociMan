@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { formatoLabel, layoutLabel, legendaLabel, type PadroesCorte } from "@/lib/envios";
 
 // Campos da configuração do corte (FR-008): usados pela aba "Padrões de corte" do perfil e pelo
-// diálogo "Enviar para corte" (padrões do perfil, ajustáveis envio a envio). O gancho automático do
+// diálogo "Gerar cortes" (padrões do perfil, ajustáveis geração a geração). O gancho automático do
 // OpenShorts não é campo: fica sempre desligado (quem queima o gancho é o SociMan, com o kit).
 export interface ConfigValues {
   clipMinS: number;
@@ -75,7 +75,7 @@ export function ConfigCampos({
           />
         )}
       </Field>
-      <Field label="Quantidade de clipes" error={errors.quantidade} hint="Vazio: o OpenShorts decide.">
+      <Field label="Quantidade de clipes" error={errors.quantidade} hint="Vazio: o SociShorts decide.">
         {({ id, describedBy, invalid }) => (
           <Input
             id={id}

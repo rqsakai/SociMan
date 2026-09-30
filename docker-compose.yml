@@ -80,7 +80,10 @@ services:
       TIKTOK_UPLOAD_HOSTS: ${TIKTOK_UPLOAD_HOSTS:-}
       TIKTOK_REDIRECT_WEB: ${TIKTOK_REDIRECT_WEB:-}
       TIKTOK_REDIRECT_DESKTOP: ${TIKTOK_REDIRECT_DESKTOP:-}
-      TIKTOK_SCOPES: ${TIKTOK_SCOPES:-user.info.basic,user.info.profile,video.upload,video.publish}
+      TIKTOK_SCOPES: ${TIKTOK_SCOPES:-user.info.basic,user.info.profile,video.upload,video.publish,user.info.stats,video.list}
+      # Spec 016: métricas (só leitura). false pausa a coleta sem desconectar.
+      METRICAS_COLETA_HABILITADA: ${METRICAS_COLETA_HABILITADA:-true}
+      AGENDADOR_METRICAS_S: ${AGENDADOR_METRICAS_S:-60}
     extra_hosts:
       - "host.docker.internal:host-gateway"   # OpenShorts roda no host (:8000)
     volumes:
@@ -169,6 +172,9 @@ services:
       TIKTOK_API_URL: ${TIKTOK_API_URL:-}
       TIKTOK_UPLOAD_HOSTS: ${TIKTOK_UPLOAD_HOSTS:-}
       AGENDADOR_PUBLICACAO_S: ${AGENDADOR_PUBLICACAO_S:-15}
+      # Spec 016: métricas (só leitura). false pausa a coleta sem desconectar.
+      METRICAS_COLETA_HABILITADA: ${METRICAS_COLETA_HABILITADA:-true}
+      AGENDADOR_METRICAS_S: ${AGENDADOR_METRICAS_S:-60}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

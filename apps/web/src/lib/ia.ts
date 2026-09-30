@@ -61,7 +61,7 @@ export const desfechoTone: Record<IaDesfecho, string> = {
   aplicada: "bg-success text-success-foreground",
   editada: "bg-info text-info-foreground",
   descartada: "bg-muted text-muted-foreground",
-  erro: "bg-destructive text-white",
+  erro: "bg-destructive text-destructive-foreground",
 };
 
 export const idiomaLabel: Record<TipoCampo["idioma"], string> = { en: "Inglês", perfil: "Idioma do perfil" };

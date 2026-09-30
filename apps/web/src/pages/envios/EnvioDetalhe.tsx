@@ -1,7 +1,7 @@
 /*
- * /app/envios/:id (spec 006, US4; T059): o envio e a revisão dos clipes lado a lado.
- * Status ao vivo (polling de 5 s enquanto o envio anda ou há clipe na fila da marca), configuração
- * usada, direito no envio e as ações do status ("Tentar de novo", "Enviar mesmo assim"). Nos clipes:
+ * /app/envios/:id (spec 006, US4; T059): a geração e a revisão dos clipes lado a lado.
+ * Status ao vivo (polling de 5 s enquanto a geração anda ou há clipe na fila da marca), configuração
+ * usada, direito na geração e as ações do status ("Tentar de novo", "Gerar mesmo assim"). Nos clipes:
  * player, trecho, gancho editável, título e pontuação do OpenShorts, "Arquivar", "mostrar
  * arquivados" e "Aplicar marca" em um, nos marcados ou em todos (lotes de até 30).
  */
@@ -91,8 +91,8 @@ export default function EnvioDetalhe() {
   const perfil = useQuery({ queryKey: perfilKey(envio?.perfilId ?? ""), queryFn: () => api.perfis.get(envio!.perfilId), enabled: Boolean(envio) });
   const perfilName = perfil.data?.perfil.name;
   usePageMeta({
-    title: envio ? envioTitulo(envio).slice(0, 50) : "Envio",
-    breadcrumbs: [{ label: "Envios", to: "/app/envios?aba=envios" }],
+    title: envio ? envioTitulo(envio).slice(0, 50) : "Geração de cortes",
+    breadcrumbs: [{ label: "Geração de cortes", to: "/app/envios?aba=envios" }],
   });
 
   // Links de 1 h (players): o original em revisão; o marcado quando pronto.
@@ -161,7 +161,7 @@ export default function EnvioDetalhe() {
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
         <Link to="/app/envios?aba=envios">
           <ArrowLeft aria-hidden="true" />
-          Envios
+          Geração de cortes
         </Link>
       </Button>
 
@@ -190,8 +190,8 @@ export default function EnvioDetalhe() {
           {envio.status === "aguardando_openshorts" && (
             <Alert>
               <CircleAlert aria-hidden="true" />
-              <AlertTitle>Aguardando o OpenShorts</AlertTitle>
-              <AlertDescription>O OpenShorts está fora do ar. O envio é retomado sozinho quando ele voltar.</AlertDescription>
+              <AlertTitle>Aguardando o SociShorts</AlertTitle>
+              <AlertDescription>O SociShorts está fora do ar. A geração é retomada sozinha quando ele voltar.</AlertDescription>
             </Alert>
           )}
           {(envio.status === "falhou" || envio.status === "sem_clipes") && (
@@ -199,7 +199,7 @@ export default function EnvioDetalhe() {
               <CircleAlert aria-hidden="true" />
               <AlertTitle>{envioStatusLabel[envio.status]}</AlertTitle>
               <AlertDescription>
-                <p>{envio.errorMessage ?? (envio.status === "sem_clipes" ? "O OpenShorts não gerou clipes deste vídeo." : "O envio falhou.")}</p>
+                <p>{envio.errorMessage ?? (envio.status === "sem_clipes" ? "O SociShorts não gerou clipes deste vídeo." : "A geração falhou.")}</p>
                 {envio.status === "falhou" && (
                   <Button
                     type="button"
@@ -208,7 +208,7 @@ export default function EnvioDetalhe() {
                     className="mt-2"
                     disabled={busy !== null}
                     aria-busy={busy === "retry"}
-                    onClick={() => void act("retry", () => api.envios.retry(envio.id, envio.version), "Envio de volta na fila.")}
+                    onClick={() => void act("retry", () => api.envios.retry(envio.id, envio.version), "Geração de volta na fila.")}
                   >
                     {busy === "retry" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <RotateCcw aria-hidden="true" />}
                     Tentar de novo
@@ -220,24 +220,24 @@ export default function EnvioDetalhe() {
           {envio.status === "confirmar_qualidade" && (
             <Alert>
               <CircleAlert aria-hidden="true" />
-              <AlertTitle>O OpenShorts pediu confirmação</AlertTitle>
+              <AlertTitle>O SociShorts pediu confirmação</AlertTitle>
               <AlertDescription>
                 <p>{envio.errorMessage ?? "O vídeo tem qualidade baixa."}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <ConfirmButton
-                    label="Enviar mesmo assim"
+                    label="Gerar mesmo assim"
                     size="sm"
                     busy={busy === "q"}
-                    title="Enviar mesmo com qualidade baixa?"
+                    title="Gerar mesmo com qualidade baixa?"
                     description="Os clipes podem sair piores."
-                    onConfirm={() => act("q", () => api.envios.confirmarQualidade(envio.id, { version: envio.version, enviar: true }), "Enviado de novo.")}
+                    onConfirm={() => act("q", () => api.envios.confirmarQualidade(envio.id, { version: envio.version, enviar: true }), "Geração retomada.")}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     disabled={busy !== null}
-                    onClick={() => void act("d", () => api.envios.confirmarQualidade(envio.id, { version: envio.version, enviar: false }), "Envio descartado.")}
+                    onClick={() => void act("d", () => api.envios.confirmarQualidade(envio.id, { version: envio.version, enviar: false }), "Geração descartada.")}
                   >
                     Descartar
                   </Button>
@@ -246,8 +246,8 @@ export default function EnvioDetalhe() {
             </Alert>
           )}
           <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-            <Detail label="Enviado por">{envio.createdBy?.name ?? "—"}</Detail>
-            <Detail label="Enviado em">{envio.sentAt ? formatDateTime(envio.sentAt) : "—"}</Detail>
+            <Detail label="Iniciada por">{envio.createdBy?.name ?? "—"}</Detail>
+            <Detail label="Iniciada em">{envio.sentAt ? formatDateTime(envio.sentAt) : "—"}</Detail>
             <Detail label="Concluído em">{envio.finishedAt ? formatDateTime(envio.finishedAt) : "—"}</Detail>
             <Detail label="Clipes">{envio.clipsTotal === null || envio.clipsTotal === undefined ? "—" : `${envio.clipsImportados} de ${envio.clipsTotal}`}</Detail>
             {config && (
@@ -277,7 +277,7 @@ export default function EnvioDetalhe() {
             </h2>
             <p className="text-sm text-muted-foreground">
               {cortes.length === 0
-                ? "Os clipes aparecem aqui quando o OpenShorts terminar."
+                ? "Os clipes aparecem aqui quando o SociShorts terminar."
                 : `${emRevisao.length} em revisão. Arquive os ruins e aplique a marca do kit nos bons.`}
             </p>
           </div>
@@ -326,8 +326,8 @@ export default function EnvioDetalhe() {
 
       <Card className="shadow-card">
         <CardHeader>
-          <HistoryHeading>Histórico do envio</HistoryHeading>
-          <CardDescription>Quem selecionou, quem enviou (e confirmou o aviso de direito) e as mudanças de status.</CardDescription>
+          <HistoryHeading>Histórico da geração</HistoryHeading>
+          <CardDescription>Quem selecionou, quem mandou gerar (e confirmou o aviso de direito) e as mudanças de status.</CardDescription>
         </CardHeader>
         <CardContent>
           <EnvioHistorico id={envio.id} />

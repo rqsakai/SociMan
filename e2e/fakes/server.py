@@ -30,6 +30,9 @@ tem o ffmpeg) e atende, na porta 8000:
   `{handle, endpoint, falha}`: a próxima chamada de `endpoint` para `handle` falha com
   `sem_resposta` (cria e não responde), `5xx` ou um código da TikTok; no `status`, a falha é o
   `fail_reason` do `FAILED`. O e2e nunca chama a TikTok.
+- leitura de métricas (spec 016, T078): `video/list`, `video/query`, os stats no `user/info` e o
+  `publicaly_available_post_id` de um rascunho que o dono "finalizou" no app, com contadores que
+  evoluem no tempo e rotas de controle próprias (ver o bloco "leitura de métricas" abaixo).
 
 Nada aqui publica: não existe `/api/social` (princípio I).
 """
@@ -470,8 +473,10 @@ def _tt_tokens(open_id: str) -> tuple[int, dict]:
     refresh = f"rft.e2e-{n}-{secrets.token_hex(6)}"
     TT["access"][access] = open_id
     TT["refresh"][refresh] = open_id
+    escopos = TT_MET["escopos"].get(_handle_de(open_id), TT_ESCOPOS)  # spec 016: o que o dono marcou
+    TT_MET["token_escopos"][access] = escopos
     return 200, {"access_token": access, "refresh_token": refresh, "open_id": open_id,
-                 "scope": TT_ESCOPOS, "expires_in": 86400, "refresh_expires_in": 31536000,
+                 "scope": escopos, "expires_in": 86400, "refresh_expires_in": 31536000,
                  "token_type": "Bearer"}
 
 
@@ -565,6 +570,8 @@ def _tt_status(corpo: dict, handle: str | None) -> tuple[int, dict]:
         if envio["direto"]:
             dados.update(status="PUBLISH_COMPLETE",
                          publicaly_available_post_id=[7_000_000_000_000_000_000 + envio["consultas"]])
+        elif envio.get("post_id") is not None:  # spec 016: o dono finalizou o rascunho no app
+            dados.update(status="PUBLISH_COMPLETE", publicaly_available_post_id=[envio["post_id"]])
         else:
             dados["status"] = "SEND_TO_USER_INBOX"
     return _tt_ok(dados)
@@ -599,7 +606,10 @@ def tiktok_api(metodo: str, caminho: str, headers, corpo: bytes) -> tuple[int, d
     if endpoint == "user_info":
         resposta = _tt_ok({"user": {
             "open_id": open_id, "username": handle, "display_name": f"Apelido {handle}",
-            "avatar_url": f"http://{TT_HOST}/tiktok/avatar/{handle}.png"}})
+            "avatar_url": f"http://{TT_HOST}/tiktok/avatar/{handle}.png",
+            **_tt_stats_conta(handle, token)}})
+    elif endpoint in ("video_list", "video_query"):  # spec 016: leitura
+        resposta = _tt_videos(endpoint, handle, token, dados)
     elif endpoint == "creator_info":
         resposta = _tt_ok({
             "creator_avatar_url": f"http://{TT_HOST}/tiktok/avatar/{handle}.png",
@@ -670,7 +680,180 @@ def tiktok_controle(metodo: str, caminho: str, query: str, corpo: bytes) -> tupl
             TT["falhas"].append({"handle": f["handle"], "endpoint": f["endpoint"],
                                  "falha": f["falha"]})
         return 200, {"falhas": len(TT["falhas"])}
+    if metodo == "POST" and caminho in TT_CONTROLE_016:
+        return TT_CONTROLE_016[caminho](json.loads(corpo or b"{}"))
     return 404, {"detail": "Not Found"}
+
+
+# ---- TikTok: leitura de métricas (spec 016, T078; research R17) ----
+#
+# `POST /v2/video/list/` (cursor em ms, `max_count` ≤ 20, só públicos, do mais novo para o mais
+# antigo) e `POST /v2/video/query/` (até 20 ids, só os vídeos públicos da conta do token), com o
+# escopo `video.list`; os stats da conta no `user/info`, com `user.info.stats`. Os contadores
+# EVOLUEM no tempo: valor = base + ritmo por minuto × minutos desde o último ajuste (o ajuste
+# pode baixar o número, como a TikTok faz ao corrigir). Os escopos concedidos vêm do que o dono
+# "marcou" na tela da TikTok (`/tiktok-e2e/escopos`); sem isso, os da 015 (sem métricas).
+# Controle, só do e2e:
+# - `POST /tiktok-e2e/escopos {handle, escopos}`: escopos dos próximos logins da conta;
+# - `POST /tiktok-e2e/videos {acao: "criar", handle, duracao, legenda, idade_s?, publico?,
+#   views?, likes?, comments?, shares?, ritmo?}` → `{video}`; `{acao: "contadores", id, ...}`;
+#   `{acao: "privado"|"publico", id}`;
+# - `POST /tiktok-e2e/conta {handle, seguidores?, seguindo?, curtidas?, ritmo?}`;
+# - `POST /tiktok-e2e/publicar-rascunho {handle, duracao, legenda, publish_id?, informar_id?}`:
+#   o dono finaliza o último rascunho entregue (ou o `publish_id`) como post público; o `status`
+#   passa a `PUBLISH_COMPLETE` com o `publicaly_available_post_id` (sem ele com
+#   `informar_id=false`, para o casamento pela lista).
+# Os ids são texto (passam de 2^53, como na TikTok).
+
+TT_CAMINHOS.update({
+    ("POST", "/v2/video/list/"): "video_list",
+    ("POST", "/v2/video/query/"): "video_query",
+})
+TT_ESCOPOS_METRICAS = TT_ESCOPOS + ",user.info.stats,video.list"
+TT_CONTADORES = ("views", "likes", "comments", "shares")
+TT_CAMPOS_CONTADORES = {"views": "view_count", "likes": "like_count", "comments": "comment_count",
+                        "shares": "share_count"}
+TT_RITMO = {"views": 120.0, "likes": 12.0, "comments": 2.0, "shares": 1.0}  # por minuto
+TT_MET = {"escopos": {}, "token_escopos": {}, "videos": {}, "contas": {}}
+_TT_VIDEO_SEQ = itertools.count(1)
+
+
+def _tt_escopo(token: str, escopo: str) -> bool:
+    return escopo in TT_MET["token_escopos"].get(token, TT_ESCOPOS).split(",")
+
+
+def _tt_valor(item: dict, nome: str) -> int:
+    minutos = (time.time() - item["desde"]) / 60
+    return max(0, int(item["base"][nome] + item["ritmo"].get(nome, 0) * minutos))
+
+
+def _tt_ajustar(item: dict, dados: dict, nomes: tuple[str, ...]) -> None:
+    """Novo ponto de partida dos contadores: os informados valem agora, os outros seguem de onde
+    estavam; `ritmo` troca a velocidade (0 congela)."""
+    base = {n: dados[n] if dados.get(n) is not None else _tt_valor(item, n) for n in nomes}
+    item.update(base=base, desde=time.time())
+    if isinstance(dados.get("ritmo"), dict):
+        item["ritmo"] = {**item["ritmo"], **dados["ritmo"]}
+
+
+def _tt_stats_conta(handle: str | None, token: str) -> dict:
+    if not handle or not _tt_escopo(token, "user.info.stats"):
+        return {}
+    with LOCK:
+        conta = TT_MET["contas"].setdefault(handle, {
+            "base": {"seguidores": 1000, "seguindo": 50, "curtidas": 20000}, "desde": time.time(),
+            "ritmo": {"seguidores": 5.0, "curtidas": 40.0}})
+        publicos = sum(1 for v in TT_MET["videos"].values() if v["handle"] == handle and v["publico"])
+        return {"follower_count": _tt_valor(conta, "seguidores"),
+                "following_count": _tt_valor(conta, "seguindo"),
+                "likes_count": _tt_valor(conta, "curtidas"), "video_count": publicos}
+
+
+def _tt_video_json(v: dict) -> dict:
+    return {"id": v["id"], "create_time": v["create_time"],
+            "share_url": f"https://www.tiktok.com/@{v['handle']}/video/{v['id']}",
+            "video_description": v["legenda"], "title": v["legenda"][:30], "duration": v["duracao"],
+            "width": 1080, "height": 1920,
+            **{campo: _tt_valor(v, n) for n, campo in TT_CAMPOS_CONTADORES.items()}}
+
+
+def _tt_videos(endpoint: str, handle: str | None, token: str, dados: dict) -> tuple[int, dict]:
+    if not _tt_escopo(token, "video.list"):
+        return _tt_erro("scope_not_authorized")
+    with LOCK:
+        da_conta = sorted((v for v in TT_MET["videos"].values()
+                           if v["handle"] == handle and v["publico"]),
+                          key=lambda v: (v["create_time"], v["id"]), reverse=True)
+        if endpoint == "video_query":
+            ids = ((dados.get("filters") or {}).get("video_ids") or [])
+            if not isinstance(ids, list) or not ids or len(ids) > 20:
+                return _tt_erro("invalid_params")
+            pedidos = {str(i) for i in ids}
+            return _tt_ok({"videos": [_tt_video_json(v) for v in da_conta if v["id"] in pedidos]})
+        max_count = int(dados.get("max_count") or 20)
+        if not 1 <= max_count <= 20:
+            return _tt_erro("invalid_params")
+        cursor = dados.get("cursor")
+        restantes = [v for v in da_conta if cursor is None or v["create_time"] * 1000 < int(cursor)]
+        pagina = restantes[:max_count]
+        return _tt_ok({"videos": [_tt_video_json(v) for v in pagina],
+                       "cursor": pagina[-1]["create_time"] * 1000 if pagina else int(cursor or 0),
+                       "has_more": len(restantes) > max_count})
+
+
+def _tt_novo_video(handle: str, dados: dict, criado: float) -> dict:
+    video = {"id": str(7_560_000_000_000_000 + next(_TT_VIDEO_SEQ) * 7919),
+             "handle": handle, "create_time": int(criado), "duracao": int(dados.get("duracao", 3)),
+             "legenda": str(dados.get("legenda", "")), "publico": bool(dados.get("publico", True)),
+             "ritmo": dict(TT_RITMO), "base": {n: 0 for n in TT_CONTADORES}, "desde": time.time()}
+    _tt_ajustar(video, {n: dados.get(n, 0) for n in TT_CONTADORES} | {"ritmo": dados.get("ritmo")},
+                TT_CONTADORES)
+    TT_MET["videos"][video["id"]] = video
+    return video
+
+
+def _tt_resumo(v: dict) -> dict:
+    return {"id": v["id"], "handle": v["handle"], "create_time": v["create_time"],
+            "duracao": v["duracao"], "legenda": v["legenda"], "publico": v["publico"],
+            "share_url": f"https://www.tiktok.com/@{v['handle']}/video/{v['id']}",
+            **{n: _tt_valor(v, n) for n in TT_CONTADORES}}
+
+
+def _ctl_escopos(dados: dict) -> tuple[int, dict]:
+    with LOCK:
+        TT_MET["escopos"][dados["handle"]] = dados.get("escopos") or TT_ESCOPOS_METRICAS
+    return 200, {"handle": dados["handle"], "escopos": TT_MET["escopos"][dados["handle"]]}
+
+
+def _ctl_videos(dados: dict) -> tuple[int, dict]:
+    acao = dados.get("acao")
+    with LOCK:
+        if acao == "criar":
+            video = _tt_novo_video(dados["handle"], dados, time.time() - float(dados.get("idade_s", 0)))
+            return 200, {"video": _tt_resumo(video)}
+        video = TT_MET["videos"].get(str(dados.get("id")))
+        if video is None:
+            return 404, {"detail": "vídeo desconhecido"}
+        if acao == "contadores":
+            _tt_ajustar(video, dados, TT_CONTADORES)
+        elif acao in ("privado", "publico"):
+            video["publico"] = acao == "publico"
+        else:
+            return 400, {"detail": f"ação desconhecida: {acao}"}
+        return 200, {"video": _tt_resumo(video)}
+
+
+def _ctl_conta(dados: dict) -> tuple[int, dict]:
+    with LOCK:
+        conta = TT_MET["contas"].setdefault(dados["handle"], {
+            "base": {"seguidores": 1000, "seguindo": 50, "curtidas": 20000}, "desde": time.time(),
+            "ritmo": {"seguidores": 5.0, "curtidas": 40.0}})
+        _tt_ajustar(conta, dados, ("seguidores", "seguindo", "curtidas"))
+        return 200, {"conta": {n: _tt_valor(conta, n) for n in ("seguidores", "seguindo", "curtidas")}}
+
+
+def _ctl_publicar_rascunho(dados: dict) -> tuple[int, dict]:
+    handle = dados["handle"]
+    with LOCK:
+        rascunhos = [(pid, e) for pid, e in TT["envios"].items()
+                     if not e["direto"] and _handle_de(e["open_id"]) == handle
+                     and e["recebidos"] == e["video_size"] and e["fail_reason"] is None
+                     and (dados.get("publish_id") in (None, pid))]
+        if not rascunhos:
+            return 404, {"detail": f"nenhum rascunho entregue de @{handle}"}
+        publish_id, envio = rascunhos[-1]
+        video = _tt_novo_video(handle, dados, time.time())
+        if dados.get("informar_id", True):
+            envio["post_id"] = int(video["id"])
+        return 200, {"publish_id": publish_id, "video": _tt_resumo(video)}
+
+
+TT_CONTROLE_016 = {
+    "/tiktok-e2e/escopos": _ctl_escopos,
+    "/tiktok-e2e/videos": _ctl_videos,
+    "/tiktok-e2e/conta": _ctl_conta,
+    "/tiktok-e2e/publicar-rascunho": _ctl_publicar_rascunho,
+}
 
 
 class Handler(BaseHTTPRequestHandler):

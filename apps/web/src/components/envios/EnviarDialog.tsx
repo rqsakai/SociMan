@@ -1,6 +1,6 @@
 /*
- * "Enviar para corte" (spec 006, US3; T054). Mostra os vídeos selecionados de um perfil, a
- * configuração pré-preenchida pelos padrões de corte do perfil (ajustável só para este envio) e
+ * "Gerar cortes" (spec 006, US3; T054). Mostra os vídeos selecionados de um perfil, a
+ * configuração pré-preenchida pelos padrões de corte do perfil (ajustável só para esta geração) e
  * envia tudo de uma vez (POST /api/envios/enviar, tudo ou nada, até 20).
  *
  * <EnviarDialog open onOpenChange perfilId envios onSent />
@@ -113,7 +113,7 @@ export function EnviarDialog({
         confirmarAviso: flags.confirmarAviso || undefined,
         confirmarDuplicado: flags.confirmarDuplicado || undefined,
       });
-      toast.success(res.items.length === 1 ? "Vídeo enviado para corte." : `${res.items.length} vídeos enviados para corte.`, {
+      toast.success(res.items.length === 1 ? "Geração de cortes iniciada: 1 vídeo." : `Geração de cortes iniciada: ${res.items.length} vídeos.`, {
         description: "Você recebe uma notificação no sino quando terminar.",
       });
       await queryClient.invalidateQueries({ queryKey: ["envios"] });
@@ -136,15 +136,15 @@ export function EnviarDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Enviar para corte</DialogTitle>
+            <DialogTitle>Gerar cortes</DialogTitle>
             <DialogDescription>
               {items.length === 1 ? "1 vídeo" : `${items.length} vídeos`}
               {perfilName ? ` para ${perfilName}` : ""}. A configuração vem dos padrões de corte do perfil; mudar aqui vale só para
-              este envio.
+              esta geração.
             </DialogDescription>
           </DialogHeader>
 
-          <ul aria-label="Vídeos do envio" className="max-h-48 space-y-1.5 overflow-y-auto rounded-md border p-2">
+          <ul aria-label="Vídeos da geração" className="max-h-48 space-y-1.5 overflow-y-auto rounded-md border p-2">
             {items.map((e) => (
               <li key={e.id} className="flex items-center gap-2 text-sm">
                 <span className="min-w-0 flex-1 truncate">{envioTitulo(e)}</span>
@@ -155,7 +155,7 @@ export function EnviarDialog({
                     variant="ghost"
                     size="icon"
                     className="size-7"
-                    aria-label={`Tirar do envio: ${envioTitulo(e)}`}
+                    aria-label={`Tirar da geração: ${envioTitulo(e)}`}
                     onClick={() => setRemoved((r) => [...r, e.id])}
                   >
                     <X aria-hidden="true" />
@@ -165,7 +165,7 @@ export function EnviarDialog({
             ))}
           </ul>
           {envios.length > MAX_LOTE && (
-            <p className="text-xs text-muted-foreground">Vão os {MAX_LOTE} primeiros; envie o resto em seguida.</p>
+            <p className="text-xs text-muted-foreground">Vão os {MAX_LOTE} primeiros; gere o resto em seguida.</p>
           )}
 
           {padroes.isError && <ApiErrorAlert error={padroes.error} />}
@@ -174,7 +174,7 @@ export function EnviarDialog({
           ) : (
             <Skeleton className="h-40 w-full" />
           )}
-          <p className="text-xs text-muted-foreground">O gancho automático do OpenShorts fica desligado: o gancho vem do kit do perfil.</p>
+          <p className="text-xs text-muted-foreground">O gancho automático do SociShorts fica desligado: o gancho vem do kit do perfil.</p>
 
           {error !== null && <ApiErrorAlert error={error} />}
 
@@ -184,7 +184,7 @@ export function EnviarDialog({
             </Button>
             <Button type="button" disabled={!config || sending || items.length === 0} aria-busy={sending} onClick={start}>
               {sending ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Scissors aria-hidden="true" />}
-              {items.length === 1 ? "Enviar 1 vídeo" : `Enviar ${items.length} vídeos`}
+              {items.length === 1 ? "Gerar cortes de 1 vídeo" : `Gerar cortes de ${items.length} vídeos`}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -204,9 +204,9 @@ export function EnviarDialog({
       <AlertDialog open={duplicado} onOpenChange={setDuplicado}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Vídeo já enviado para este perfil</AlertDialogTitle>
+            <AlertDialogTitle>Cortes já gerados neste perfil</AlertDialogTitle>
             <AlertDialogDescription>
-              Pelo menos um destes vídeos já foi enviado para corte neste perfil. Enviar de novo gera outro job no OpenShorts.
+              Pelo menos um destes vídeos já passou pela geração de cortes neste perfil. Gerar de novo cria outro job no SociShorts.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -218,7 +218,7 @@ export function EnviarDialog({
                 void send(flags);
               }}
             >
-              Enviar mesmo assim
+              Gerar mesmo assim
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
