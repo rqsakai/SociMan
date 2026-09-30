@@ -99,6 +99,15 @@ Portas: edge 8180/8543, console do MinIO 9101 (minioadmin/minioadmin, **só dev*
 - **Login:** Web pelo IP da casa (`https://192.168.86.47:8543/app/conexoes/retorno`, aceito pelo portal) e Desktop com PKCE pelo `localhost` (`http://localhost:8180/app/conexoes/retorno`, reserva). A API escolhe pelo `Host`.
 - **Testes:** pytest com `tests/fakes/tiktok_fake.py`; no e2e, a TikTok falsa é o `openshorts-fake` (`/tiktok/v2/...`, inspeção e falhas em `/tiktok-e2e/*`), o login do navegador é interceptado (`interceptarLoginTikTok`) e os hosts reais da TikTok apontam para 127.0.0.1 na stack e2e. O teste real é **manual, com o dono** (quickstart §2 a §4).
 
+## Métricas (desde a spec 016)
+- **Só leitura:** a trilha `metricas` do agendador (`AGENDADOR_METRICAS_S`, padrão 60 s) lê a TikTok pelo `LeitorTikTok` (`publicacao/tiktok/leitor.py`, alcançado só por `registro.leitor_para`), e a lista fechada ganhou só `LEITURA_016` (`video/list`, `video/query`). Não depende de `PUBLICACAO_HABILITADA` nem do botão "Envios automáticos". Pacote `metricas/` (genérico, sem HTTP da rede); SPA em `/app/metricas`.
+- **Pausar sem desconectar:** `METRICAS_COLETA_HABILITADA=false` no `.env`. Nada é apagado nem anonimizado.
+- **Escopos:** `user.info.stats` e `video.list` são opcionais na conexão. Sem eles, a conta mostra "Reconectar para liberar métricas" (só dono); o reconectar **amplia** a mesma conexão (`acao: "ampliada"`), sem desconectar.
+- **Fotos só de inserção:** `metricas_video_fotos` e `metricas_conta_fotos` têm o trigger `metricas_so_insercao` (UPDATE/DELETE levantam erro; `TRUNCATE` do `reset-db` e dos testes continua valendo). Cadência por idade em constantes de `metricas/agenda.py` (1 h até 48 h, 1 dia até 30 d, 7 d até 90 d, 30 d até 365 d; depois para).
+- **Desconectar anonimiza, sem volta:** com fotos, a API pede `confirmoAnonimizar` (409 `confirmar_anonimizacao`) e a série vira "Conta anônima N", só com números e características não textuais. Reconectar começa outra série.
+- **Vínculo em 3 níveis:** post id do `status/fetch` (busca por até 14 dias depois da entrega) → casamento pela lista (data, duração ±1 s, legenda; único nos dois sentidos, ambíguo nunca liga) → link colado ou escolha do dono. No **lembrete**, a âncora é o clique em "Marcar como postado" (post até 24 h antes ou 1 h depois); antes do clique, só candidatos. Desfazer bloqueia o automático para aquele destino. Nada da TikTok vai para o histórico do destino.
+- **e2e:** a TikTok falsa concede os escopos da 015 até o teste chamar `escoposTikTok(handle)`; `criarVideoTikTok`, `publicarRascunhoTikTok` e contadores que crescem no tempo ficam em `/tiktok-e2e/*`. A cadência é a real: o teste adianta a agenda pelo banco efêmero (`adiantarColeta`, `adiantarBusca`) e semeia histórico por INSERT (`sqlE2e`).
+
 ## Armadilhas
 1. **Containers rodam como UID 1000.** Se uma pasta de bind mount não existir, o Docker a cria como root (foi o que aconteceu com `docker/certs`). Crie antes.
 2. **CSP estrita em produção** (herdada do volans). `check:csp` compara `apps/web/vite.config.ts` com `docker/nginx/05-edge-mode.envsh`. Mudou um, mude o outro.
