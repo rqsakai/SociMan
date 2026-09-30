@@ -92,6 +92,10 @@ services:
       TMPDIR: /srv/sociman-data/work/tmp
       # Fixo e público: só assina tokens da stack efêmera (não é segredo).
       JWT_SECRET: ${TEST_JWT_SECRET:-teste-efemero-nao-e-segredo-0123456789abcdef}
+      # Spec 015: chave FIXA de teste (base64url de um texto óbvio; está na lista de valores
+      # permitidos do check:secrets) e publicação desligada (os testes ligam por override).
+      SOCIMAN_TOKENS_KEY: dGVzdGUtZWZlbWVyby1jaGF2ZS1kby10b2tlbi0zMmI=
+      PUBLICACAO_HABILITADA: "false"
       # Os testes usam MemoryEmailSender; um host inexistente faz qualquer envio real falhar.
       SMTP_HOST: smtp.invalido.test
       SMTP_PORT: "1025"
