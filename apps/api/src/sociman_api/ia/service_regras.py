@@ -48,7 +48,7 @@ def _tipo_out(tipo: TipoCampo, row: IaRegra | None, users: dict) -> schemas.Tipo
     lim = tipo.limites
     return schemas.TipoCampo(
         id=tipo.id, rotulo=tipo.rotulo, onde=tipo.onde, entidade=tipo.entidade,
-        idioma=tipo.idioma, formato=tipo.formato,
+        idioma=tipo.idioma, formato=tipo.formato, usa_guia=tipo.usa_guia,
         limites=schemas.Limites(
             max_chars=lim.max_chars, min_chars=lim.min_chars, uma_linha=lim.uma_linha,
             max_itens=lim.max_itens, min_itens=lim.min_itens,
@@ -60,7 +60,8 @@ def _tipo_out(tipo: TipoCampo, row: IaRegra | None, users: dict) -> schemas.Tipo
 def listar(db: Session) -> list[schemas.TipoCampo]:
     rows = {r.tipo_campo: r for r in db.scalars(select(IaRegra))}
     users = user_refs(db, [r.updated_by for r in rows.values()])
-    return [_tipo_out(t, rows.get(t.id), users) for t in TIPOS.values()]
+    # Spec 017: o `guia.testar` usa as regras de `postagem.textos` e não aparece aqui.
+    return [_tipo_out(t, rows.get(t.id), users) for t in TIPOS.values() if t.listar_regras]
 
 
 def obter(db: Session, tipo_id: str) -> schemas.TipoCampo:
@@ -76,9 +77,17 @@ def _saved(db: Session, tipo: TipoCampo, row: IaRegra) -> schemas.TipoCampo:
     return _tipo_out(tipo, row, user_refs(db, [row.updated_by]))
 
 
+def _com_regras(tipo_id: str) -> TipoCampo:
+    """Tipo com regra própria (o `guia.testar` usa as de `postagem.textos`, spec 017)."""
+    tipo = tipo_or_404(tipo_id)
+    if tipo.regras_de is not None:
+        raise ApiError(404, "ia_tipo_not_found", "Este tipo usa as regras de outro campo")
+    return tipo
+
+
 def _mudar(db: Session, actor: Actor, tipo_id: str, version: int, texto: str | None,
            details: dict | None = None) -> schemas.TipoCampo:
-    tipo = tipo_or_404(tipo_id)
+    tipo = _com_regras(tipo_id)
     row = _row(db, tipo.id, lock=True)
     if row is None:
         if version != 0:
@@ -127,7 +136,7 @@ def versoes(db: Session, tipo_id: str) -> VersionsList:
 def revert(db: Session, actor: Actor, tipo_id: str, version: int,
            to_version: int) -> schemas.TipoCampo:
     """Volta o texto da versão alvo numa versão nova `reverted` (só o dono, princípio VII)."""
-    tipo = tipo_or_404(tipo_id)
+    tipo = _com_regras(tipo_id)
     row = _row(db, tipo.id, lock=True)
     if row is None:
         raise ApiError(404, "not_found", "Versão não encontrada")

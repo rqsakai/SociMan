@@ -1,7 +1,7 @@
 """Rotas do assistente de IA (contracts/http-api.md da spec 008), sob `/api/ia`.
 
-Gerar e descartar: dono e membro (`RequireUser`). Editar regras, registro e resumo: só o dono
-(`RequireOwner`). Nada aqui publica nem salva entidade (princípio I e VII): gerar só devolve a
+Gerar e descartar: dono e membro (`RequireUser`). Editar regras, registro e resumo, montar e
+testar o guia de comunicação (spec 017): só o dono (`RequireOwner`). Nada aqui publica nem salva entidade (princípio I e VII): gerar só devolve a
 proposta; quem salva é o save de cada tela, no clique humano. Não existe rota DELETE.
 """
 
@@ -17,6 +17,7 @@ from sociman_api.errors import ErrorEnvelope
 from sociman_api.ia import schemas, service, service_regras
 from sociman_api.ia.cliente import IaClient, get_ia_client
 from sociman_api.ia.models import IaDesfecho
+from sociman_api.ia.schemas_guia import MontarIn, TestarIn
 from sociman_api.perfis.schemas import RevertIn, VersionsList
 
 router = APIRouter(prefix="/api/ia")
@@ -85,6 +86,24 @@ def gerar(body: schemas.GerarIn, actor: RequireUser, db: DbSession,
 def descartar(chamada_id: UUID, actor: RequireUser, db: DbSession) -> Response:
     service.descartar(db, actor, chamada_id)
     return Response(status_code=204)
+
+
+# ---- montar e testar o guia de comunicação (spec 017; só o dono) ----
+
+@router.post("/guia/montar", operation_id="ia_guia_montar", response_model=schemas.ChamadaOut,
+             responses=_errors(400, 401, 403, 404, 409, 502, 503, 504))
+def guia_montar(body: MontarIn, actor: RequireOwner, db: DbSession,
+                client: Cliente) -> schemas.ChamadaOut:
+    row = service.montar_guia(db, actor, body, client)
+    return schemas.ChamadaOut(chamada=service.chamada_out(db, row))
+
+
+@router.post("/guia/testar", operation_id="ia_guia_testar", response_model=schemas.ChamadaOut,
+             responses=_errors(400, 401, 403, 404, 409, 502, 503, 504))
+def guia_testar(body: TestarIn, actor: RequireOwner, db: DbSession,
+                client: Cliente) -> schemas.ChamadaOut:
+    row = service.testar_guia(db, actor, body, client)
+    return schemas.ChamadaOut(chamada=service.chamada_out(db, row))
 
 
 # ---- registro e resumo (dono) ----

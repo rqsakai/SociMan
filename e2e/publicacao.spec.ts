@@ -394,8 +394,8 @@ test("US2: rascunho criado no horário, com Copiar textos e Postado", async ({ p
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
   await page.goto(`/app/cortes/${corte}`);
-  await page.getByRole("button", { name: "Agendar" }).first().click();
-  const dlg = page.getByRole("dialog", { name: "Agendar" });
+  await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
+  const dlg = page.getByRole("dialog", { name: "Agendar ou publicar" });
   const conta = dlg.getByLabel("Conta").and(page.locator("select")).first();
   const opcao = conta.locator("option").filter({ hasText: p.handle }).first();
   await conta.selectOption((await opcao.getAttribute("value"))!);
@@ -696,8 +696,8 @@ test("US3: publicar no horário exige a tela da TikTok e chega a Publicado", asy
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
   await page.goto(`/app/conteudos/${conteudo}`);
-  await page.getByRole("button", { name: "Agendar" }).first().click();
-  const dlg = page.getByRole("dialog", { name: "Agendar" });
+  await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
+  const dlg = page.getByRole("dialog", { name: "Agendar ou publicar" });
   const conta = dlg.getByLabel("Conta").and(page.locator("select")).first();
   const opcao = conta.locator("option").filter({ hasText: p.handle }).first();
   await conta.selectOption((await opcao.getAttribute("value"))!);
@@ -734,7 +734,8 @@ test("US3: publicar no horário exige a tela da TikTok e chega a Publicado", asy
   await dlg.getByRole("textbox", { name: /^Legenda/ }).fill("");
   await expect(dlg).toContainText("Descreva o post: na TikTok a legenda (descrição + hashtags) é obrigatória.");
   await expect(agendar).toBeDisabled();
-  await expect(dlg.getByRole("button", { name: "Publicar agora" })).toBeDisabled();
+  // spec 018: em "Agendar", a única ação é agendar ("Publicar agora" é a outra opção de "Quando")
+  await expect(dlg.getByRole("button", { name: "Publicar agora" })).toHaveCount(0);
   await dlg.getByRole("textbox", { name: /^Legenda/ }).fill(`Legenda publicada ${sfx}`);
   const hashtags = dlg.getByLabel("Hashtags", { exact: true });
   await hashtags.fill("#publicado");
@@ -771,10 +772,14 @@ test("US3: publicar no horário exige a tela da TikTok e chega a Publicado", asy
   // ---- "Publicar agora" (só dono): mesma tela obrigatória, confirmação com o aviso do sandbox ----
   const agora = await videoProprio(request, auth, p.perfilId, readFileSync(video), `Agora ${sfx}`);
   await page.goto(`/app/conteudos/${agora}`);
-  await page.getByRole("button", { name: "Agendar" }).first().click();
-  const dlgA = page.getByRole("dialog", { name: "Agendar" });
+  await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
+  const dlgA = page.getByRole("dialog", { name: "Agendar ou publicar" });
   const contaA = dlgA.getByLabel("Conta").and(page.locator("select")).first();
   await contaA.selectOption((await contaA.locator("option").filter({ hasText: p.handle }).first().getAttribute("value"))!);
+  // spec 018: "Quando" → "Publicar agora" tira a data; o modo Publicar abre a tela da TikTok
+  await dlgA.getByRole("radio", { name: "Publicar agora" }).click();
+  await expect(dlgA.getByLabel(/Data e hora/)).toHaveCount(0);
+  await expect(dlgA.getByLabel("Modo", { exact: true }).locator("option[value=lembrete]")).toBeDisabled();
   await dlgA.getByLabel("Modo", { exact: true }).selectOption("publicar");
   const publicarAgora = dlgA.getByRole("button", { name: "Publicar agora" });
   await expect(publicarAgora).toBeDisabled();

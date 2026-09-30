@@ -140,7 +140,8 @@
               "kit",
               "postagem",
               "corte",
-              "conteudo"
+              "conteudo",
+              "guia"
             ],
             "title": "Entitytype",
             "type": "string"
@@ -150,6 +151,29 @@
           "entityType"
         ],
         "title": "Alvo",
+        "type": "object"
+      },
+      "AlvoTeste": {
+        "properties": {
+          "entityId": {
+            "format": "uuid",
+            "title": "Entityid",
+            "type": "string"
+          },
+          "entityType": {
+            "enum": [
+              "corte",
+              "conteudo"
+            ],
+            "title": "Entitytype",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entityType",
+          "entityId"
+        ],
+        "title": "AlvoTeste",
         "type": "object"
       },
       "AplicarMarcaIn": {
@@ -2272,6 +2296,40 @@
           "enviar"
         ],
         "title": "ConfirmarQualidadeIn",
+        "type": "object"
+      },
+      "Conflito": {
+        "properties": {
+          "campo": {
+            "enum": [
+              "emojis",
+              "faca",
+              "naoFaca",
+              "hashtagsFixas"
+            ],
+            "title": "Campo",
+            "type": "string"
+          },
+          "conta": {
+            "title": "Conta",
+            "type": "string"
+          },
+          "mensagem": {
+            "title": "Mensagem",
+            "type": "string"
+          },
+          "perfil": {
+            "title": "Perfil",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campo",
+          "perfil",
+          "conta",
+          "mensagem"
+        ],
+        "title": "Conflito",
         "type": "object"
       },
       "Consentimento": {
@@ -5093,6 +5151,30 @@
         "title": "EstadoFiltro",
         "type": "string"
       },
+      "Exemplo": {
+        "properties": {
+          "texto": {
+            "maxLength": 5000,
+            "title": "Texto",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "titulo",
+              "legenda",
+              "bordao"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "texto"
+        ],
+        "title": "Exemplo",
+        "type": "object"
+      },
       "Existente": {
         "properties": {
           "id": {
@@ -5860,7 +5942,9 @@
               "postagem.titulo",
               "postagem.descricao",
               "postagem.hashtags",
-              "postagem.textos"
+              "postagem.textos",
+              "guia.montar",
+              "guia.testar"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -5876,6 +5960,391 @@
           "sessaoId"
         ],
         "title": "GerarIn",
+        "type": "object"
+      },
+      "Guia": {
+        "properties": {
+          "campos": {
+            "$ref": "#/components/schemas/GuiaCampos"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "limites": {
+            "$ref": "#/components/schemas/GuiaLimites"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "tamanho": {
+            "title": "Tamanho",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "contaId",
+          "campos",
+          "tamanho",
+          "version",
+          "updatedAt",
+          "updatedBy"
+        ],
+        "title": "Guia",
+        "type": "object"
+      },
+      "GuiaCampos": {
+        "properties": {
+          "emojis": {
+            "anyOf": [
+              {
+                "enum": [
+                  "nao",
+                  "moderado",
+                  "livre"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emojis"
+          },
+          "emojisPreferidos": {
+            "items": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "maxItems": 60,
+            "title": "Emojispreferidos",
+            "type": "array"
+          },
+          "exemplos": {
+            "items": {
+              "$ref": "#/components/schemas/Exemplo"
+            },
+            "maxItems": 60,
+            "title": "Exemplos",
+            "type": "array"
+          },
+          "faca": {
+            "items": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "maxItems": 60,
+            "title": "Faca",
+            "type": "array"
+          },
+          "hashtagsFixas": {
+            "items": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "maxItems": 60,
+            "title": "Hashtagsfixas",
+            "type": "array"
+          },
+          "maxHashtagsFixas": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxhashtagsfixas"
+          },
+          "naoFaca": {
+            "items": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "maxItems": 60,
+            "title": "Naofaca",
+            "type": "array"
+          },
+          "proibidas": {
+            "items": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "maxItems": 60,
+            "title": "Proibidas",
+            "type": "array"
+          },
+          "tom": {
+            "default": "",
+            "maxLength": 5000,
+            "title": "Tom",
+            "type": "string"
+          },
+          "vocabulario": {
+            "items": {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            "maxItems": 60,
+            "title": "Vocabulario",
+            "type": "array"
+          }
+        },
+        "title": "GuiaCampos",
+        "type": "object"
+      },
+      "GuiaContaOut": {
+        "properties": {
+          "conflitos": {
+            "items": {
+              "$ref": "#/components/schemas/Conflito"
+            },
+            "title": "Conflitos",
+            "type": "array"
+          },
+          "efetivo": {
+            "$ref": "#/components/schemas/GuiaEfetivo"
+          },
+          "guia": {
+            "$ref": "#/components/schemas/Guia"
+          },
+          "perfil": {
+            "$ref": "#/components/schemas/Guia"
+          }
+        },
+        "required": [
+          "guia",
+          "perfil",
+          "efetivo",
+          "conflitos"
+        ],
+        "title": "GuiaContaOut",
+        "type": "object"
+      },
+      "GuiaEfetivo": {
+        "properties": {
+          "emojis": {
+            "anyOf": [
+              {
+                "enum": [
+                  "nao",
+                  "moderado",
+                  "livre"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emojis"
+          },
+          "emojisPreferidos": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Emojispreferidos",
+            "type": "array"
+          },
+          "hashtagsFixas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hashtagsfixas",
+            "type": "array"
+          },
+          "maxHashtagsFixas": {
+            "title": "Maxhashtagsfixas",
+            "type": "integer"
+          },
+          "proibidas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Proibidas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "proibidas",
+          "hashtagsFixas",
+          "emojis",
+          "emojisPreferidos",
+          "maxHashtagsFixas"
+        ],
+        "title": "GuiaEfetivo",
+        "type": "object"
+      },
+      "GuiaIn": {
+        "properties": {
+          "campos": {
+            "$ref": "#/components/schemas/GuiaCampos"
+          },
+          "ia": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IaAplicacao"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ia"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "campos"
+        ],
+        "title": "GuiaIn",
+        "type": "object"
+      },
+      "GuiaLimites": {
+        "properties": {
+          "emojiMax": {
+            "default": 16,
+            "title": "Emojimax",
+            "type": "integer"
+          },
+          "emojisItens": {
+            "default": 10,
+            "title": "Emojisitens",
+            "type": "integer"
+          },
+          "exemploMax": {
+            "default": 500,
+            "title": "Exemplomax",
+            "type": "integer"
+          },
+          "exemplos": {
+            "default": 5,
+            "title": "Exemplos",
+            "type": "integer"
+          },
+          "hashtagsFixasPadrao": {
+            "default": 5,
+            "title": "Hashtagsfixaspadrao",
+            "type": "integer"
+          },
+          "hashtagsFixasPerfil": {
+            "default": 5,
+            "title": "Hashtagsfixasperfil",
+            "type": "integer"
+          },
+          "hashtagsFixasTeto": {
+            "default": 8,
+            "title": "Hashtagsfixasteto",
+            "type": "integer"
+          },
+          "proibidasItens": {
+            "default": 30,
+            "title": "Proibidasitens",
+            "type": "integer"
+          },
+          "regraMax": {
+            "default": 200,
+            "title": "Regramax",
+            "type": "integer"
+          },
+          "regrasItens": {
+            "default": 10,
+            "title": "Regrasitens",
+            "type": "integer"
+          },
+          "termoMax": {
+            "default": 60,
+            "title": "Termomax",
+            "type": "integer"
+          },
+          "tomMax": {
+            "default": 500,
+            "title": "Tommax",
+            "type": "integer"
+          },
+          "totalMax": {
+            "default": 4000,
+            "title": "Totalmax",
+            "type": "integer"
+          },
+          "vocabularioItens": {
+            "default": 30,
+            "title": "Vocabularioitens",
+            "type": "integer"
+          }
+        },
+        "title": "GuiaLimites",
+        "type": "object"
+      },
+      "GuiaOut": {
+        "properties": {
+          "guia": {
+            "$ref": "#/components/schemas/Guia"
+          }
+        },
+        "required": [
+          "guia"
+        ],
+        "title": "GuiaOut",
         "type": "object"
       },
       "HookIn": {
@@ -5938,7 +6407,9 @@
               "postagem.titulo",
               "postagem.descricao",
               "postagem.hashtags",
-              "postagem.textos"
+              "postagem.textos",
+              "guia.montar",
+              "guia.testar"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -6094,6 +6565,43 @@
             "title": "Explicacao",
             "type": "string"
           },
+          "guiaContaVersion": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guiacontaversion"
+          },
+          "guiaPerfilVersion": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guiaperfilversion"
+          },
+          "guiaRascunho": {
+            "anyOf": [
+              {
+                "enum": [
+                  "perfil",
+                  "conta"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guiarascunho"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
@@ -6156,6 +6664,13 @@
           },
           "perfil": {
             "$ref": "#/components/schemas/PerfilRef"
+          },
+          "proibidas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Proibidas",
+            "type": "array"
           },
           "proposta": {
             "anyOf": [
@@ -6226,7 +6741,11 @@
           "custoUsd",
           "durationMs",
           "createdAt",
-          "createdBy"
+          "createdBy",
+          "guiaPerfilVersion",
+          "guiaContaVersion",
+          "guiaRascunho",
+          "proibidas"
         ],
         "title": "IaChamada",
         "type": "object"
@@ -7654,6 +8173,57 @@
           "modos"
         ],
         "title": "ModosOut",
+        "type": "object"
+      },
+      "MontarIn": {
+        "properties": {
+          "anteriores": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Anteriores",
+            "type": "array"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "descricao": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Descricao",
+            "type": "string"
+          },
+          "guiaAtual": {
+            "$ref": "#/components/schemas/GuiaCampos"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "sessaoId": {
+            "format": "uuid",
+            "title": "Sessaoid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "perfilId",
+          "descricao",
+          "sessaoId"
+        ],
+        "title": "MontarIn",
         "type": "object"
       },
       "NaoLidasOut": {
@@ -10166,6 +10736,43 @@
         "title": "TentativasList",
         "type": "object"
       },
+      "TestarIn": {
+        "properties": {
+          "alvo": {
+            "$ref": "#/components/schemas/AlvoTeste"
+          },
+          "contaId": {
+            "format": "uuid",
+            "title": "Contaid",
+            "type": "string"
+          },
+          "guia": {
+            "$ref": "#/components/schemas/GuiaCampos"
+          },
+          "nivel": {
+            "enum": [
+              "perfil",
+              "conta"
+            ],
+            "title": "Nivel",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "perfilId",
+          "nivel",
+          "contaId",
+          "alvo",
+          "guia"
+        ],
+        "title": "TestarIn",
+        "type": "object"
+      },
       "Textos": {
         "properties": {
           "descricao": {
@@ -10220,7 +10827,8 @@
               "asset",
               "perfil",
               "kit",
-              "postagem"
+              "postagem",
+              "guia"
             ],
             "title": "Entidade",
             "type": "string"
@@ -10230,7 +10838,9 @@
               "texto",
               "lista",
               "sugestoes",
-              "textos_postagem"
+              "textos_postagem",
+              "guia",
+              "variacoes"
             ],
             "title": "Formato",
             "type": "string"
@@ -10249,7 +10859,9 @@
               "postagem.titulo",
               "postagem.descricao",
               "postagem.hashtags",
-              "postagem.textos"
+              "postagem.textos",
+              "guia.montar",
+              "guia.testar"
             ],
             "title": "Id",
             "type": "string"
@@ -10275,6 +10887,14 @@
           "rotulo": {
             "title": "Rotulo",
             "type": "string"
+          },
+          "usaGuia": {
+            "enum": [
+              "completo",
+              "so_proibidas"
+            ],
+            "title": "Usaguia",
+            "type": "string"
           }
         },
         "required": [
@@ -10284,6 +10904,7 @@
           "entidade",
           "idioma",
           "formato",
+          "usaGuia",
           "limites",
           "regras"
         ],
@@ -10885,7 +11506,7 @@
         "type": "object"
       },
       "Valor": {
-        "description": "Um formato por tipo: `texto`, `itens` ou os três da postagem.",
+        "description": "Um formato por tipo: `texto`, `itens`, os três da postagem, o `guia` (proposta e\nentrada do \"montar\"; entrada do \"testar\") ou as `variacoes` (proposta do \"testar\").",
         "properties": {
           "descricao": {
             "anyOf": [
@@ -10898,6 +11519,16 @@
               }
             ],
             "title": "Descricao"
+          },
+          "guia": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GuiaCampos"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "hashtags": {
             "anyOf": [
@@ -10954,9 +11585,49 @@
               }
             ],
             "title": "Titulo"
+          },
+          "variacoes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Variacao"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variacoes"
           }
         },
         "title": "Valor",
+        "type": "object"
+      },
+      "Variacao": {
+        "properties": {
+          "descricao": {
+            "title": "Descricao",
+            "type": "string"
+          },
+          "hashtags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hashtags",
+            "type": "array"
+          },
+          "titulo": {
+            "title": "Titulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "titulo",
+          "descricao",
+          "hashtags"
+        ],
+        "title": "Variacao",
         "type": "object"
       },
       "VerifyIn": {
@@ -15734,6 +16405,324 @@
           }
         },
         "summary": "Conexao Versions"
+      }
+    },
+    "/api/contas/{conta_id}/guia": {
+      "get": {
+        "operationId": "guias_conta_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conta Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuiaContaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Conta Get"
+      },
+      "put": {
+        "operationId": "guias_conta_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conta Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuiaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuiaContaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Conta Update"
+      }
+    },
+    "/api/contas/{conta_id}/guia/revert": {
+      "post": {
+        "operationId": "guias_conta_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conta Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuiaContaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Conta Revert"
+      }
+    },
+    "/api/contas/{conta_id}/guia/versions": {
+      "get": {
+        "operationId": "guias_conta_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conta Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Conta Versions"
       }
     },
     "/api/contas/{conta_id}/metricas": {
@@ -21363,6 +22352,222 @@
         "summary": "Gerar"
       }
     },
+    "/api/ia/guia/montar": {
+      "post": {
+        "operationId": "ia_guia_montar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MontarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChamadaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        },
+        "summary": "Guia Montar"
+      }
+    },
+    "/api/ia/guia/testar": {
+      "post": {
+        "operationId": "ia_guia_testar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChamadaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        },
+        "summary": "Guia Testar"
+      }
+    },
     "/api/ia/resumo": {
       "get": {
         "operationId": "ia_resumo",
@@ -24916,6 +26121,324 @@
           }
         },
         "summary": "Upload"
+      }
+    },
+    "/api/perfis/{perfil_id}/guia": {
+      "get": {
+        "operationId": "guias_perfil_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuiaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Perfil Get"
+      },
+      "put": {
+        "operationId": "guias_perfil_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GuiaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuiaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Perfil Update"
+      }
+    },
+    "/api/perfis/{perfil_id}/guia/revert": {
+      "post": {
+        "operationId": "guias_perfil_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuiaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Perfil Revert"
+      }
+    },
+    "/api/perfis/{perfil_id}/guia/versions": {
+      "get": {
+        "operationId": "guias_perfil_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Perfil Versions"
       }
     },
     "/api/perfis/{perfil_id}/kit": {

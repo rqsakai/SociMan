@@ -16,6 +16,9 @@
  *   desabilitado), aviso do sandbox e de "Publicação automática" desligada (fica pausado), avisos da
  *   rede depois de agendar e, num envio que falhou, "Reagendar" com a caixa "Conferi no app e o
  *   rascunho não chegou" quando a falha é incerta. "Publicar no horário" fica para a US3.
+ * - spec 018 (emenda do dono): a primeira escolha é "Quando": "Agendar" (padrão) ou "Publicar agora".
+ *   Em "Publicar agora" a data some, o lembrete fica indisponível e a ação final é "Publicar agora"
+ *   (modo Publicar, com a tela da TikTok) ou "Enviar rascunho agora" (modo Criar rascunho), só dono.
  */
 import { ApiError, type Destino, type DestinoResumo, type IaAplicacao, type Modo, type OpcoesTikTok, type Origem, type Situacao } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -42,6 +45,7 @@ import { LegendaFinal } from "@/components/publicacao/LegendaFinal";
 import { TikTokPostForm } from "@/components/publicacao/TikTokPostForm";
 import { AVISO_SANDBOX, problemasDaApi, ehAutomatico, enviosDesligadosTexto, enviosLigados, usePublicacaoConfig } from "@/lib/publicacao";
 import { addDays, formatDateTime, fromLocalInput, localDateKey, toLocalInput } from "@/lib/tz";
+import { cn } from "@/lib/utils";
 import { HashtagsInput } from "./HashtagsInput";
 import { ModoSelect } from "./ModoSelect";
 
@@ -63,6 +67,7 @@ export interface AgendarConteudo {
 }
 
 const APROVADOS = ["aprovado", "agendado", "falhou"];
+const LEMBRETE_SO_AGENDAR: Partial<Record<Modo, string>> = { lembrete: "O lembrete é só para \"Agendar\"." };
 // Já saiu (ou está saindo) para a rede: nada a agendar nesta conta.
 const FINAIS = ["postado", "rascunho_criado", "publicado"];
 
@@ -104,6 +109,7 @@ export function AgendarDialog({
   const [busy, setBusy] = useState<"agendar" | "pedir" | null>(null);
   const [naoChegou, setNaoChegou] = useState(false);
   const [opcoes, setOpcoes] = useState<OpcoesTikTok | null>(null);
+  const [quando, setQuando] = useState<"agendar" | "agora">("agendar");
   const config = usePublicacaoConfig();
   const dataRef = useRef<HTMLInputElement>(null);
 
@@ -116,6 +122,7 @@ export function AgendarDialog({
     setConflito(null);
     setIa([]);
     setNaoChegou(false);
+    setQuando("agendar");
   }, [open, plannedInicial]);
   useEffect(() => {
     if (!open || contas.length === 0) return;
@@ -185,6 +192,14 @@ export function AgendarDialog({
   });
   const videoUrl = video.data?.items[0]?.url ?? null;
   const publicar = modo === "publicar";
+  const agora = quando === "agora";
+
+  // "Publicar agora" não tem lembrete: troca para o primeiro modo automático.
+  function escolherQuando(q: "agendar" | "agora") {
+    setQuando(q);
+    setConflito(null);
+    if (q === "agora" && !ehAutomatico(modo)) setModo("criar_rascunho");
+  }
 
   async function agendar(ignorarIntervalo = false) {
     setError(null);
@@ -274,7 +289,7 @@ export function AgendarDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{reagendar ? "Reagendar" : "Agendar"}</DialogTitle>
+          <DialogTitle>{reagendar ? "Reagendar ou publicar" : "Agendar ou publicar"}</DialogTitle>
           <DialogDescription className="line-clamp-2">{conteudo.titulo || "Conteúdo sem título"}</DialogDescription>
         </DialogHeader>
 
@@ -287,6 +302,33 @@ export function AgendarDialog({
         )}
 
         <div className="space-y-4">
+          <div className="space-y-2">
+            <span id="agendar-quando" className="text-sm font-medium">
+              Quando
+            </span>
+            <div className="flex w-fit rounded-lg border bg-muted p-1" role="radiogroup" aria-labelledby="agendar-quando">
+              {(
+                [
+                  ["agendar", reagendar ? "Reagendar" : "Agendar"],
+                  ["agora", "Publicar agora"],
+                ] as const
+              ).map(([valor, rotulo]) => (
+                <button
+                  key={valor}
+                  type="button"
+                  role="radio"
+                  aria-checked={quando === valor}
+                  onClick={() => escolherQuando(valor)}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    quando === valor && "bg-background text-foreground shadow-sm",
+                  )}
+                >
+                  {rotulo}
+                </button>
+              ))}
+            </div>
+          </div>
           <Field label="Conta de destino">
             {({ id }) => (
               <NativeSelect id={id} value={contaId} onChange={(e) => setContaId(e.target.value)}>
@@ -319,6 +361,7 @@ export function AgendarDialog({
             </Alert>
           ) : (
             <>
+              {!agora && (
               <Field label="Data e hora (horário de Brasília)" error={dataErro ?? undefined}>
                 {({ id, describedBy, invalid }) => (
                   <Input
@@ -337,7 +380,9 @@ export function AgendarDialog({
                   />
                 )}
               </Field>
-              <ModoSelect contaId={contaId || null} value={modo} onChange={setModo} dono={dono} />
+              )}
+              <ModoSelect contaId={contaId || null} value={modo} onChange={setModo} dono={dono} bloqueados={agora ? LEMBRETE_SO_AGENDAR : {}} />
+              {agora && !dono && <p className="text-sm text-muted-foreground">Só um dono publica ou envia agora. Use "Agendar" para um lembrete.</p>}
               {/* spec 015 (US3): a tela obrigatória da TikTok, consultada ao escolher "Publicar" */}
               {modo === "publicar" && contaId && (
                 <TikTokPostForm
@@ -364,8 +409,8 @@ export function AgendarDialog({
                   <AlertDescription>{enviosDesligadosTexto(cfg)} No horário, o envio fica "Pausado" até os envios serem ligados.</AlertDescription>
                 </Alert>
               )}
-              {incerta && <ConfirmoNaoChegou checked={naoChegou} onChange={setNaoChegou} />}
-              {!reagendar && (
+              {incerta && !agora && <ConfirmoNaoChegou checked={naoChegou} onChange={setNaoChegou} />}
+              {(!reagendar || agora) && (
                 <fieldset className="space-y-3 rounded-lg border p-3">
                   <legend className="px-1 text-sm font-medium">Textos</legend>
                   {destino && destino.titulo === undefined && (
@@ -482,8 +527,8 @@ export function AgendarDialog({
                 </Button>
               )
             ) : (
-              <>
-              {conta && (
+              agora ? (
+                conta && ehAutomatico(modo) && (
                 <EnviarAgora
                   contaId={conta.id}
                   handle={conta.handle}
@@ -497,13 +542,15 @@ export function AgendarDialog({
                     onOpenChange(false);
                   }}
                   size="default"
+                  variant="default"
                 />
-              )}
+                )
+              ) : (
               <Button type="button" disabled={busy !== null || !contaId || !pronto || conflito !== null || (incerta && !naoChegou) || (publicar && !opcoes) || semLegenda || legendaLonga} aria-busy={busy === "agendar"} onClick={() => void agendar()}>
                 {busy === "agendar" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <CalendarClock aria-hidden="true" />}
                 {reagendar ? "Reagendar" : aprovado ? "Agendar" : "Aprovar e agendar"}
               </Button>
-              </>
+              )
             ))}
         </DialogFooter>
       </DialogContent>

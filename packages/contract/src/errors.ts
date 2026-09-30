@@ -1,7 +1,7 @@
 import type { components } from "./generated/schema";
 
 // O OpenAPI tipa `ErrorBody.code` como string; a lista fechada vem do contrato
-// (specs/001-auth, 003-contas-sociais, 004-kit-de-marca, 007, 006, 008, 014, 015 e 016, contracts/http-api.md).
+// (specs/001-auth, 003-contas-sociais, 004-kit-de-marca, 007, 006, 008, 014, 015, 016 e 017, contracts/http-api.md).
 export const errorCodes = [
   "validation_error",
   "invalid_credentials",
@@ -111,6 +111,8 @@ export const errorCodes = [
   "post_nao_encontrado",
   "metricas_indisponiveis",
   "periodo_invalido",
+  // 017-guia-de-comunicacao
+  "ia_proibida",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

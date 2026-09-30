@@ -7,12 +7,16 @@
 - Gerar **não muda nenhuma entidade** (princípio VII): quem salva é o save de cada tela, no
   clique humano, com o campo `ia` (`ia/aplicacao.py`).
 - `executar` é a parte comum, usada também pelas rotas da 006 (`postagem.textos`).
+- Spec 017: `executar` carrega os guias em vigor (o do perfil sempre; o da conta só quando o
+  alvo tem conta; nos tipos `so_proibidas`, só as proibidas do perfil), manda ao prompt e às
+  garantias da saída e grava as versões usadas e as proibidas encontradas. `montar_guia` e
+  `testar_guia` são os dois usos novos (R9, R10).
 """
 
 import base64
 import uuid
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, time, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -26,10 +30,12 @@ from sociman_api.config import get_settings
 from sociman_api.cortes.models import Corte
 from sociman_api.errors import ApiError
 from sociman_api.ia import contexto as ctx_mod
+from sociman_api.ia import guia as guia_mod
 from sociman_api.ia import prompt, saida, schemas
 from sociman_api.ia.cliente import IaClient, Resultado
 from sociman_api.ia.custo import PRECOS_VERSAO
 from sociman_api.ia.models import IaChamada, IaDesfecho, IaRegra
+from sociman_api.ia.schemas_guia import GuiaCampos, MontarIn, TestarIn
 from sociman_api.ia.tipos import TIPOS, TipoCampo
 from sociman_api.perfis.models import Conta, Perfil
 from sociman_api.perfis.service_perfis import get_perfil_or_404, user_refs
@@ -260,14 +266,38 @@ def _erro_api(status: int | None) -> ApiError:
     return ApiError(502, "claude_error", msg)
 
 
+def _efetivo(tipo: TipoCampo, guias: guia_mod.GuiasEmVigor) -> guia_mod.GuiaEfetivo:
+    """O guia das garantias: nos `so_proibidas`, só as proibidas do perfil (Q1)."""
+    if tipo.usa_guia == "so_proibidas":
+        perfil = guias.perfil
+        return guia_mod.GuiaEfetivo(
+            proibidas=tuple(perfil.campos.proibidas) if perfil is not None else ())
+    return guia_mod.fundir(guias.perfil, guias.conta)
+
+
 def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: AlvoResolvido,
              valor_atual: dict[str, Any], instrucao: str, client: IaClient | None, *,
              sessao_id: uuid.UUID | None = None, anteriores: Sequence[IaChamada] = (),
-             aceitos: Sequence[str] = (), rejeitados: Sequence[str] = ()) -> IaChamada:
-    """Monta o contexto, chama o Claude e grava a chamada. Com erro, commita e levanta."""
-    regras = regras_em_vigor(db, tipo)
+             aceitos: Sequence[str] = (), rejeitados: Sequence[str] = (),
+             guias: guia_mod.GuiasEmVigor | None = None,
+             guia_rascunho: str | None = None) -> IaChamada:
+    """Monta o contexto, chama o Claude e grava a chamada. Com erro, commita e levanta.
+
+    `guias`: só no montar e no testar (spec 017); nos outros, os em vigor do perfil e da conta
+    do alvo."""
+    regras = regras_em_vigor(db, TIPOS[tipo.regras_de] if tipo.regras_de else tipo)
+    if guias is None:
+        guias = guia_mod.em_vigor(db, perfil.id, alvo.conta.id if alvo.conta is not None
+                                  else None)
+    efetivo = _efetivo(tipo, guias)
+    enviado_perfil, enviado_conta = prompt.guias_enviados(tipo, guias)
     contexto = ctx_mod.montar(db, tipo, perfil, asset=alvo.asset, corte=alvo.corte,
                               conta=alvo.conta, postagem=alvo.postagem, conteudo=alvo.conteudo)
+    if tipo.entidade == "guia":  # spec 017: de quem é o guia que está sendo montado
+        dono = "o perfil inteiro (vale para todas as contas)" if alvo.conta is None else (
+            "a conta " + ctx_mod.plataforma_label(alvo.conta.platform, alvo.conta.platform_name)
+            + f" @{alvo.conta.handle}")
+        contexto = replace(contexto, entidade=(("Guia de comunicação de", dono),))
     row = IaChamada(
         id=uuid.uuid4(), tipo_campo=tipo.id, perfil_id=perfil.id,
         entity_type=alvo.entity_type, entity_id=alvo.entity_id,
@@ -279,7 +309,9 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: A
         rejeitados=list(rejeitados), instrucao=instrucao, entrada=valor_atual or None,
         contexto_faltante=list(contexto.faltante), prompt_version=prompt.PROMPT_VERSION,
         regras_version=regras.version, padrao_versao=regras.padrao_versao,
-        created_by=actor.user_id,
+        guia_perfil_version=enviado_perfil.version if enviado_perfil is not None else None,
+        guia_conta_version=enviado_conta.version if enviado_conta is not None else None,
+        guia_rascunho=guia_rascunho, created_by=actor.user_id,
     )
     if client is None:
         row.model, row.duration_ms = get_settings().textos_model, 0
@@ -289,12 +321,14 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: A
         raise ApiError(503, "claude_unconfigured",
                        "O Claude não está configurado (ANTHROPIC_API_KEY); escreva à mão")
 
-    system = prompt.montar_system(tipo, regras.texto, contexto)
+    system = prompt.montar_system(tipo, regras.texto, contexto, guias,
+                                  fixas=len(efetivo.hashtags_fixas))
     propostas = [a.proposta for a in anteriores if a.proposta]
     excluir = saida.Excluir(atuais=tuple(valor_atual.get("itens") or ()),
                             aceitos=tuple(aceitos), rejeitados=tuple(rejeitados))
     res = client.gerar(tipo, system, lambda erro: prompt.montar_user(
-        tipo, contexto, valor_atual, instrucao, propostas, aceitos, rejeitados, erro), excluir)
+        tipo, contexto, valor_atual, instrucao, propostas, aceitos, rejeitados, erro), excluir,
+        efetivo)
     _preencher(row, res, contexto.faltante)
     db.add(row)
     if res.erro_code is not None:
@@ -324,12 +358,15 @@ def _preencher(row: IaChamada, res: Resultado, faltante: Sequence[str]) -> None:
     assert v is not None
     row.proposta = v.proposta
     row.explicacao, row.excede, row.ajustes = v.explicacao, v.excede, v.ajustes
+    row.proibidas = list(v.proibidas)
     row.avisos = [*v.avisos, *(_AVISOS_FALTANTE[f] for f in faltante if f in _AVISOS_FALTANTE)]
 
 
 def gerar(db: Session, actor: Actor, body: schemas.GerarIn,
           client: IaClient | None) -> IaChamada:
     tipo = tipo_or_404(body.tipo_campo)
+    if tipo.entidade == "guia" or tipo.formato == "variacoes":
+        raise invalid("Use as rotas do guia de comunicação (montar e testar)")
     perfil = get_perfil_or_404(db, body.perfil_id)
     if perfil.archived:
         raise _arquivado("Este perfil")
@@ -340,6 +377,75 @@ def gerar(db: Session, actor: Actor, body: schemas.GerarIn,
     return executar(db, actor, tipo, perfil, alvo, valor_atual, body.instrucao.strip(), client,
                     sessao_id=body.sessao_id, anteriores=anteriores, aceitos=aceitos,
                     rejeitados=rejeitados)
+
+
+# ---- montar e testar o guia de comunicação (spec 017, R9 e R10; só o dono) ----
+
+def _perfil_e_conta(db: Session, perfil_id: uuid.UUID, conta_id: uuid.UUID | None
+                    ) -> tuple[Perfil, Conta | None]:
+    perfil = get_perfil_or_404(db, perfil_id)
+    if perfil.archived:
+        raise _arquivado("Este perfil")
+    if conta_id is None:
+        return perfil, None
+    conta = db.get(Conta, conta_id)
+    if conta is None:
+        raise ApiError(404, "not_found", "Conta não encontrada")
+    if conta.perfil_id != perfil.id:
+        raise invalid("A conta é de outro perfil")
+    if conta.archived:
+        raise _arquivado("Esta conta")
+    return perfil, conta
+
+
+def montar_guia(db: Session, actor: Actor, body: MontarIn, client: IaClient | None
+                ) -> IaChamada:
+    """Proposta de guia que só preenche o formulário: nada é salvo além da chamada. No guia
+    da conta, o do perfil salvo vai como `<guia_perfil>` (a regra pede só o que a conta
+    acrescenta)."""
+    tipo = TIPOS["guia.montar"]
+    perfil, conta = _perfil_e_conta(db, body.perfil_id, body.conta_id)
+    row = guia_mod.linha(db, perfil.id, conta.id if conta is not None else None)
+    alvo = AlvoResolvido("guia", row.id if row is not None else None, conta=conta)
+    guias = guia_mod.GuiasEmVigor(
+        perfil=guia_mod.em_vigor(db, perfil.id, None).perfil if conta is not None else None,
+        conta=None)
+    anteriores = _anteriores(db, actor, tipo, perfil, alvo, body.sessao_id, body.anteriores)
+    if conta is None and any(a.conta_id is not None for a in anteriores):
+        raise ApiError(400, "ia_anteriores_invalidas",
+                       "As versões anteriores precisam ser desta sessão, deste campo e sua")
+    valor_atual = {"guia": body.guia_atual.model_dump(by_alias=True, mode="json")}
+    return executar(db, actor, tipo, perfil, alvo, valor_atual, body.descricao.strip(), client,
+                    sessao_id=body.sessao_id, anteriores=anteriores, guias=guias)
+
+
+INSTRUCAO_TESTAR = ("Escreva 3 versões diferentes dos textos da postagem deste conteúdo, "
+                    "seguindo o guia de comunicação.")
+
+
+def testar_guia(db: Session, actor: Actor, body: TestarIn, client: IaClient | None
+                ) -> IaChamada:
+    """3 textos de postagem com o guia do formulário (o nível em teste) e o salvo do outro
+    nível. Valida o formulário como o PUT **antes** de chamar o Claude; grava só a chamada
+    (`sem_acao`), sem versão e sem mudar conteúdo."""
+    from sociman_api.ia import service_guia  # import tardio (ciclo)
+
+    tipo = TIPOS["guia.testar"]
+    perfil, conta = _perfil_e_conta(db, body.perfil_id, body.conta_id)
+    assert conta is not None
+    campos = service_guia.validar_campos(db, perfil, conta if body.nivel == "conta" else None,
+                                         body.guia.dominio())
+    alvo = _resolver_postagem(db, perfil, schemas.Alvo(
+        entity_type=body.alvo.entity_type, entity_id=body.alvo.entity_id, conta_id=conta.id))
+    base = guia_mod.linha(db, perfil.id, conta.id if body.nivel == "conta" else None)
+    rascunho = guia_mod.como_rascunho(campos, body.nivel, base.version if base else 0)
+    salvos = guia_mod.em_vigor(db, perfil.id, conta.id)
+    guias = guia_mod.GuiasEmVigor(
+        perfil=rascunho if body.nivel == "perfil" else salvos.perfil,
+        conta=rascunho if body.nivel == "conta" else salvos.conta)
+    valor_atual = {"guia": body.guia.model_dump(by_alias=True, mode="json")}
+    return executar(db, actor, tipo, perfil, alvo, valor_atual, INSTRUCAO_TESTAR, client,
+                    guias=guias, guia_rascunho=body.nivel)
 
 
 def descartar(db: Session, actor: Actor, chamada_id: uuid.UUID) -> None:
@@ -360,7 +466,19 @@ def descartar(db: Session, actor: Actor, chamada_id: uuid.UUID) -> None:
 
 def _valor(dados: dict[str, Any] | None) -> schemas.Valor | None:
     # Sem validar: uma proposta marcada `excede` pode passar dos limites de entrada.
-    return schemas.Valor.model_construct(**dados) if dados else None
+    if not dados:
+        return None
+    dados = dict(dados)
+    if dados.get("guia") is not None:  # spec 017: os submodelos, para serializar sem aviso
+        dados["guia"] = GuiaCampos.model_construct(**{
+            _SNAKE.get(k, k): v for k, v in dados["guia"].items()})
+    if dados.get("variacoes") is not None:
+        dados["variacoes"] = [schemas.Variacao.model_construct(**v) for v in dados["variacoes"]]
+    return schemas.Valor.model_construct(**dados)
+
+
+_SNAKE = {"naoFaca": "nao_faca", "emojisPreferidos": "emojis_preferidos",
+          "hashtagsFixas": "hashtags_fixas", "maxHashtagsFixas": "max_hashtags_fixas"}
 
 
 def chamadas_out(db: Session, rows: Sequence[IaChamada]) -> list[schemas.IaChamada]:
@@ -392,6 +510,8 @@ def chamadas_out(db: Session, rows: Sequence[IaChamada]) -> list[schemas.IaChama
             custo_usd=float(r.custo_usd) if r.custo_usd is not None else None,
             duration_ms=r.duration_ms, created_at=r.created_at,
             created_by=users.get(r.created_by) if r.created_by else None,
+            guia_perfil_version=r.guia_perfil_version, guia_conta_version=r.guia_conta_version,
+            guia_rascunho=r.guia_rascunho, proibidas=list(r.proibidas or []),
         ))
     return out
 

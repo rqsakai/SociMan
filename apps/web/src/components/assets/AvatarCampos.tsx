@@ -1,6 +1,9 @@
+import { BookText } from "lucide-react";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { guiaPerfilPath } from "@/lib/guia";
 import type { IaAlvo, IaOnSave, TipoCampoId } from "@/lib/ia";
 import { IaAssist } from "../ia/IaAssist";
 import { CopyButton } from "./CopyButton";
@@ -61,6 +64,19 @@ export function AvatarCampos({
   const copyLabel = avatar ? "Copiar descrição para prompt" : "Copiar prompt";
   return (
     <div className="space-y-4">
+      {/* Spec 017 (Q1): os campos visuais recebem só as palavras proibidas do guia do perfil; um link
+          só, para os e2e acharem pelo nome sem ambiguidade. */}
+      {ia && (
+        <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
+          <BookText className="size-3.5" aria-hidden="true" />
+          {avatar
+            ? "As palavras proibidas do guia valem na descrição para prompts e nas regras de imagem."
+            : "As palavras proibidas do guia valem no prompt do ambiente."}
+          <Link to={guiaPerfilPath(ia.perfilId)} className="text-primary underline-offset-4 hover:underline">
+            Ver guia de comunicação do perfil
+          </Link>
+        </p>
+      )}
       {comIa(
         "prompt",
         avatar ? "avatar.descricao_prompt" : "cenario.prompt_ambiente",

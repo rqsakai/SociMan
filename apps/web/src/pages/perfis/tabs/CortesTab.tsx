@@ -85,9 +85,9 @@ function AgendarCorte({ corte }: { corte: Corte }) {
   const titulo = corte.hookText || corte.openshortsTitle || "Clipe sem gancho";
   return (
     <>
-      <Button type="button" size="sm" variant="outline" aria-label={`Agendar ${titulo}`} onClick={() => setOpen(true)}>
+      <Button type="button" size="sm" variant="outline" aria-label={`Agendar / Publicar ${titulo}`} onClick={() => setOpen(true)}>
         <CalendarClock aria-hidden="true" />
-        Agendar
+        Agendar / Publicar
       </Button>
       {open && (
         <AgendarDialog

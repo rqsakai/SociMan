@@ -5,7 +5,7 @@
  * contas (só dono; "Desaprovar" confirma e lista os agendamentos que serão cancelados), "Pedir
  * aprovação" (membro) e arquivar/restaurar.
  * Esquerda: o bloco "Contas" em destaque (vermelho e "Obrigatório" sem nenhuma conta), com
- * "Adicionar conta", "Agendar" e uma aba por conta (`?conta=` escolhe a aba; é o link do sino), cada
+ * "Adicionar conta", "Agendar / Publicar" e uma aba por conta (`?conta=` escolhe a aba; é o link do sino), cada
  * uma com status, textos e as ações da conta (agendar, enviar, publicar, postado, tentar de novo).
  * Direita: player, proposta do SociShorts, desempenho (spec 016) e o histórico do conteúdo.
  * No celular, as contas vêm antes do player.
@@ -115,7 +115,7 @@ export default function ConteudoDetalhe() {
                   onClick={() => setAgendarOpen(true)}
                 >
                   <CalendarClock aria-hidden="true" />
-                  Agendar
+                  Agendar / Publicar
                 </Button>
               )
             }

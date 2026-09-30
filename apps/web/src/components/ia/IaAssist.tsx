@@ -12,10 +12,15 @@
  * - A sessão (propostas "Versão N", instrução, edição) sobrevive à remontagem do formulário; some
  *   ao aplicar, descartar ou fechar. As chamadas sem aplicação são descartadas (melhor esforço).
  * - Erro no `onSave` (409, 400, rede): a proposta continua no painel e nada muda no formulário.
+ * - Spec 017: a proposta com palavra proibida pelo guia (`chamada.proibidas`) vem marcada, o
+ *   "Aplicar" fica desabilitado e o "Editar e aplicar" continua liberado (editado por um humano, a
+ *   decisão é dele). "Guia usado" mostra as versões dos guias que entraram no pedido.
  */
 import type { IaAlvo, IaChamada, TipoCampo, TipoCampoId } from "@sociman/contract";
-import { Loader2, PencilLine, RefreshCw, Save, Sparkles, X } from "lucide-react";
+import { ApiError } from "@sociman/contract";
+import { Loader2, PencilLine, RefreshCw, Save, Sparkles, TriangleAlert, X } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -25,6 +30,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { guiaContaPath, guiaPerfilPath } from "@/lib/guia";
 import {
   descartarChamadas,
   iaErroRepetivel,
@@ -41,6 +47,7 @@ import {
 } from "@/lib/ia";
 import { DESCRICAO_MAX, HASHTAGS_MAX, parseHashtags, TITULO_MAX } from "@/lib/postagem";
 import { cn } from "@/lib/utils";
+import { ProibidasMarcadas } from "../guia/ProibidasMarcadas";
 import { IaBotao } from "./IaBotao";
 import { IaDiff } from "./IaDiff";
 
@@ -99,6 +106,8 @@ export function IaAssist<V extends IaValorCampo>({
   const chamada = s.chamadas.find((c) => c.id === s.atual) ?? null;
   const proposta = chamada ? (propostaValor(formato, chamada) as V) : null;
   const mostrado = s.edicao ?? proposta;
+  // Spec 017: proibidas que ficaram na proposta final (a API já tentou de novo uma vez).
+  const proibidas = chamada?.proibidas ?? [];
   const excede =
     mostrado !== null && (s.edicao !== null ? excedeLimite(info, s.edicao) : Boolean(chamada?.excede) || excedeLimite(info, mostrado));
 
@@ -251,7 +260,7 @@ export function IaAssist<V extends IaValorCampo>({
             {s.edicao === null ? (
               <IaDiff
                 antes={mostrar(value)}
-                depois={mostrar(mostrado)}
+                depois={mostrar(mostrado, proibidas)}
                 rotuloDepois={s.chamadas.length > 1 ? `Versão ${idx + 1}` : "Proposta"}
               />
             ) : (
@@ -259,10 +268,19 @@ export function IaAssist<V extends IaValorCampo>({
             )}
             <Contador info={info} valor={mostrado} excede={excede} />
 
+            {proibidas.length > 0 && (
+              <Alert className="border-warning/60">
+                <TriangleAlert className="text-warning" aria-hidden="true" />
+                <AlertTitle>Palavra proibida pelo guia</AlertTitle>
+                <AlertDescription>
+                  A proposta usa uma palavra proibida pelo guia ({proibidas.join(", ")}); edite antes de aplicar.
+                </AlertDescription>
+              </Alert>
+            )}
             {chamada.explicacao && <p className="text-sm">{chamada.explicacao}</p>}
-            {chamada.avisos.length > 0 && (
+            {avisosSemProibida(chamada).length > 0 && (
               <ul aria-label="Avisos da IA" className="list-disc space-y-0.5 pl-5 text-sm text-warning-foreground">
-                {chamada.avisos.map((a) => (
+                {avisosSemProibida(chamada).map((a) => (
                   <li key={a}>{a}</li>
                 ))}
               </ul>
@@ -270,13 +288,25 @@ export function IaAssist<V extends IaValorCampo>({
             {chamada.contextoFaltante.length > 0 && (
               <p className="text-xs text-muted-foreground">Faltou contexto: {chamada.contextoFaltante.join(", ")}.</p>
             )}
+            <GuiaUsado chamada={chamada} />
             {excede && (
               <p role="alert" className="text-sm text-destructive">
                 Acima do limite do campo. Edite antes de aplicar.
               </p>
             )}
 
-            {erroSalvar !== null && <ApiErrorAlert error={erroSalvar} onReload={onReload} />}
+            {erroSalvar !== null &&
+              (erroSalvar instanceof ApiError && erroSalvar.code === "ia_proibida" ? (
+                <Alert variant="destructive">
+                  <AlertTitle>Não foi aplicado</AlertTitle>
+                  <AlertDescription>
+                    <p>{erroSalvar.message}</p>
+                    <p>Use "Editar e aplicar" e troque a palavra; o texto editado por você pode ser salvo.</p>
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <ApiErrorAlert error={erroSalvar} onReload={onReload} />
+              ))}
 
             <div className="flex flex-wrap gap-2">
               {s.edicao === null ? (
@@ -284,7 +314,7 @@ export function IaAssist<V extends IaValorCampo>({
                   <Button
                     type="button"
                     size="sm"
-                    disabled={ocupado || disabled || excede}
+                    disabled={ocupado || disabled || excede || proibidas.length > 0}
                     aria-busy={salvando}
                     onClick={() => void aplicar(mostrado)}
                   >
@@ -354,22 +384,53 @@ function propostaValor(formato: TipoCampo["formato"], c: IaChamada): IaValorCamp
   return p.itens ?? [];
 }
 
-function mostrar(v: IaValorCampo): ReactNode {
-  if (typeof v === "string") return v;
-  if (Array.isArray(v)) return v.join(" ");
+// Spec 017: o aviso da proibida já sai no alerta próprio; os outros avisos seguem na lista.
+const avisosSemProibida = (c: IaChamada) =>
+  c.proibidas.length > 0 ? c.avisos.filter((a) => !a.startsWith("A proposta usa uma palavra proibida")) : c.avisos;
+
+// "Guia usado: perfil vN · conta vM" (spec 017, FR-006), com link para o guia (e o histórico) de cada nível.
+function GuiaUsado({ chamada }: { chamada: IaChamada }) {
+  const { guiaPerfilVersion: vp, guiaContaVersion: vc } = chamada;
+  const contaId = chamada.alvo.contaId;
+  if (vp == null && vc == null) return null;
+  return (
+    <p className="text-xs text-muted-foreground">
+      Guia usado:{" "}
+      {vp != null && (
+        <Link to={guiaPerfilPath(chamada.perfil.id)} className="underline-offset-4 hover:underline">
+          perfil v{vp}
+        </Link>
+      )}
+      {vp != null && vc != null && " · "}
+      {vc != null &&
+        (contaId ? (
+          <Link to={guiaContaPath(contaId)} className="underline-offset-4 hover:underline">
+            conta v{vc}
+          </Link>
+        ) : (
+          `conta v${vc}`
+        ))}
+    </p>
+  );
+}
+
+function mostrar(v: IaValorCampo, proibidas: string[] = []): ReactNode {
+  const m = (t: string) => <ProibidasMarcadas texto={t} proibidas={proibidas} />;
+  if (typeof v === "string") return proibidas.length > 0 && v ? m(v) : v;
+  if (Array.isArray(v)) return proibidas.length > 0 && v.length > 0 ? m(v.join(" ")) : v.join(" ");
   return (
     <dl className="space-y-1.5">
       <div>
         <dt className="text-xs font-semibold text-muted-foreground">Título</dt>
-        <dd>{v.titulo || "—"}</dd>
+        <dd>{v.titulo ? m(v.titulo) : "—"}</dd>
       </div>
       <div>
         <dt className="text-xs font-semibold text-muted-foreground">Descrição</dt>
-        <dd>{v.descricao || "—"}</dd>
+        <dd>{v.descricao ? m(v.descricao) : "—"}</dd>
       </div>
       <div>
         <dt className="text-xs font-semibold text-muted-foreground">Hashtags</dt>
-        <dd>{v.hashtags.join(" ") || "—"}</dd>
+        <dd>{v.hashtags.length > 0 ? m(v.hashtags.join(" ")) : "—"}</dd>
       </div>
     </dl>
   );

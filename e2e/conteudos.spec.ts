@@ -502,8 +502,8 @@ test("US3: agendar direto no corte pronto, com o modo certo e o intervalo mínim
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
   await page.goto(`/app/cortes/${corte}`);
-  await page.getByRole("button", { name: "Agendar" }).first().click();
-  const dlg = page.getByRole("dialog", { name: "Agendar" });
+  await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
+  const dlg = page.getByRole("dialog", { name: "Agendar ou publicar" });
   await escolherConta(dlg.getByLabel("Conta"), p.handle);
   await dlg.getByLabel(/Data e hora/).fill(`${amanha}T19:00`);
   const modo = dlg.getByLabel("Modo", { exact: true });
@@ -544,8 +544,8 @@ test("US3: agendar direto no corte pronto, com o modo certo e o intervalo mínim
 
   // ---- intervalo mínimo: outro às 19:10 na mesma conta avisa; "Manter mesmo assim" grava ----
   await page.goto(`/app/conteudos/${outro}`);
-  await page.getByRole("button", { name: "Agendar" }).first().click();
-  const dlg2 = page.getByRole("dialog", { name: "Agendar" });
+  await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
+  const dlg2 = page.getByRole("dialog", { name: "Agendar ou publicar" });
   await escolherConta(dlg2.getByLabel("Conta"), p.handle);
   await dlg2.getByLabel(/Data e hora/).fill(`${amanha}T19:10`);
   await dlg2.getByRole("textbox", { name: /^Legenda/ }).fill(`Vizinho agendado ${sfx}`);
@@ -630,8 +630,8 @@ test("US3: agendar direto no corte pronto, com o modo certo e o intervalo mínim
   await login(page, member.email, member.final);
   await expect(page).toHaveURL(/\/app$/);
   await page.goto(`/app/cortes/${doMembro}`);
-  await page.getByRole("button", { name: "Agendar" }).first().click();
-  const dlgM = page.getByRole("dialog", { name: "Agendar" });
+  await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
+  const dlgM = page.getByRole("dialog", { name: "Agendar ou publicar" });
   await escolherConta(dlgM.getByLabel("Conta"), p.handle);
   await expect(dlgM.getByRole("button", { name: "Aprovar e agendar" })).toHaveCount(0);
   await expect(dlgM.getByRole("button", { name: "Pedir aprovação" })).toBeVisible();
@@ -814,8 +814,8 @@ test("US5: vídeo próprio entra pronto, filtra por origem e agenda em lembrete"
 
   // aprovar e agendar em lembrete (o dono aprova e agenda no mesmo passo)
   await page.goto(`/app/conteudos/${proprioId}`);
-  await page.getByRole("button", { name: "Agendar" }).first().click();
-  const ag = page.getByRole("dialog", { name: "Agendar" });
+  await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
+  const ag = page.getByRole("dialog", { name: "Agendar ou publicar" });
   await escolherConta(ag.getByLabel("Conta"), p.handle);
   await ag.getByLabel(/Data e hora/).fill(`${spDay(2)}T12:00`);
   await ag.getByRole("textbox", { name: /^Legenda/ }).fill(`Próprio agendado ${sfx}`);

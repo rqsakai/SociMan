@@ -359,6 +359,30 @@ def _ja_no_pedido(item: str, texto: str) -> bool:
     return re.search(rf"(?<!\w){re.escape(item.casefold())}(?!\w)", texto.casefold()) is not None
 
 
+def _proibida_do_guia(system: str) -> str:
+    """A 1ª palavra de "Palavras proibidas:" do `system` (bloco `<guia_*>`, spec 017), inclusive
+    no `parte="proibidas"` dos tipos `so_proibidas`."""
+    achou = re.search(r"^Palavras proibidas: (.+)$", system, re.MULTILINE)
+    return achou.group(1).split(",")[0].strip() if achou else ""
+
+
+def _com_proibida(dados: dict, palavra: str) -> None:
+    """Põe a palavra proibida no 1º texto da proposta (título e descrição, que é a legenda da
+    TikTok, onde não há título; item; ou a 1ª variação)."""
+    if "variacoes" in dados:
+        dados["variacoes"][0]["titulo"] = f"{dados['variacoes'][0]['titulo']} {palavra}"
+    elif "titulo" in dados:
+        dados["titulo"] = f"{dados['titulo']} {palavra}"
+        dados["descricao"] = f"{dados['descricao']} Sem {palavra} aqui."
+    elif "itens" in dados:
+        item = "#" + re.sub(r"\W+", "", palavra) if dados["itens"][0].startswith("#") else palavra
+        dados["itens"] = [item, *dados["itens"][1:]]
+    else:
+        campo = next((k for k, v in dados.items() if isinstance(v, str)), None)
+        if campo:
+            dados[campo] = f"{dados[campo]} {palavra}"
+
+
 def claude(body: dict) -> tuple[int, dict]:
     system = "\n".join(_textos(body.get("system")))
     user = "\n".join(_textos(body.get("messages")))
@@ -404,6 +428,22 @@ def claude(body: dict) -> tuple[int, dict]:
                 proposta += f" ({instrucao[:30]})"
             proposta += emoji
         dados = {campo: proposta}
+    # Spec 017 (T044): formatos `variacoes` (3 textos, sem as fixas: quem inclui é o
+    # servidor) e `guia` (sem fixas, máximo e exemplos); gatilho "proibida" na instrução.
+    if "variacoes" in props:
+        dados = {"variacoes": [{"titulo": f"Variação {v} sugerida pela IA {n}",
+                                "descricao": f"Descrição da variação {v}, versão {n}.",
+                                "hashtags": ["#achadinhos", f"#variacao{v}", f"#dica{n}"]}
+                               for v in (1, 2, 3)]}
+    elif "tom" in props:
+        dados = {"tom": f"Descontraído e direto, versão {n} do Claude falso.",
+                 "faca": ["Fale com o público de você", "Comece pelo gancho"],
+                 "nao_faca": ["Não prometa milagre"],
+                 "vocabulario": ["achadinho", "taverna"], "proibidas": ["clickbait"],
+                 "emojis": "moderado", "emojis_preferidos": ["\u2728"]}
+    proibida = _proibida_do_guia(system) if "proibida" in instrucao.lower() else ""
+    if proibida:  # nas duas tentativas: a 2ª também vem com a palavra
+        _com_proibida(dados, proibida)
     dados |= {"explicacao": explicacao, "avisos": avisos}
     return 200, {
         "id": f"msg_fake_{n}", "type": "message", "role": "assistant",

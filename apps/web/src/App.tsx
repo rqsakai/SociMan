@@ -46,6 +46,8 @@ import PublicacaoConfig from "./pages/configuracoes/Publicacao";
 // 016-metricas-tiktok
 import Metricas from "./pages/metricas/Metricas";
 import VideoMetricas from "./pages/metricas/VideoMetricas";
+// 017-guia-de-comunicacao
+import ContaGuia from "./pages/perfis/ContaGuia";
 
 // Vitrine dos componentes da spec 005 (só em dev; o build de produção descarta o import).
 const Showcase = import.meta.env.DEV ? lazy(() => import("./pages/_Showcase")) : null;
@@ -115,6 +117,7 @@ export default function App() {
                 <Route path="/app/perfis/:id" element={<PerfilDetalhe />} />
                 <Route path="/app/perfis/:id/kit/historico" element={<KitHistorico />} />
                 <Route path="/app/contas/:id/historico" element={<ContaHistorico />} />
+                <Route path="/app/contas/:id/guia" element={<ContaGuia />} />
                 <Route path="/app/cortes/:id" element={<CorteDetalhe />} />
                 <Route path="/app/assets/:id" element={<AssetDetalhe />} />
                 <Route path="/app/assets/:id/historico" element={<AssetHistorico />} />

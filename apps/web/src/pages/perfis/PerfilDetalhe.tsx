@@ -38,11 +38,13 @@ import { FontesTab } from "./tabs/FontesTab";
 import { MarcaTab } from "./tabs/MarcaTab";
 import { AssetsTab } from "./tabs/AssetsTab";
 import { PadroesCorteTab } from "./tabs/PadroesCorteTab";
+import { GuiaTab } from "./tabs/GuiaTab";
 
 const tabs = [
   { id: "dados", label: "Dados" },
   { id: "contas", label: "Contas" },
   { id: "marca", label: "Marca" },
+  { id: "guia", label: "Guia" },
   { id: "fontes", label: "Fontes" },
   { id: "cortes", label: "Cortes" },
   { id: "padroes", label: "Padrões de corte" },
@@ -52,7 +54,7 @@ const tabs = [
 type TabId = (typeof tabs)[number]["id"];
 
 // /app/perfis/:id: cabeçalho "profile" (banner, logo e abas em pílula), abas Dados, Contas, Marca,
-// Fontes, Cortes e Histórico, e as ações Arquivar/Restaurar. A aba fica na URL (?aba=contas) para o voltar do
+// Guia, Fontes, Cortes e Histórico, e as ações Arquivar/Restaurar. A aba fica na URL (?aba=contas) para o voltar do
 // navegador e o link direto funcionarem. Sucesso vira toast; erro da API fica num Alert.
 export default function PerfilDetalhe() {
   const { id = "" } = useParams();
@@ -184,6 +186,9 @@ export default function PerfilDetalhe() {
         </TabsContent>
         <TabsContent value="marca">
           <MarcaTab perfil={perfil} contas={contas} />
+        </TabsContent>
+        <TabsContent value="guia">
+          <GuiaTab perfil={perfil} contas={contas} />
         </TabsContent>
         <TabsContent value="fontes">
           <FontesTab perfil={perfil} />

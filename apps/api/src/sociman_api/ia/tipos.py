@@ -11,14 +11,15 @@ from typing import Literal
 
 from sociman_api.ia.regras_padrao import PADROES
 
-Entidade = Literal["asset", "perfil", "kit", "postagem"]
+Entidade = Literal["asset", "perfil", "kit", "postagem", "guia"]
 Idioma = Literal["en", "perfil"]
-Formato = Literal["texto", "lista", "sugestoes", "textos_postagem"]
+UsaGuia = Literal["completo", "so_proibidas"]
+Formato = Literal["texto", "lista", "sugestoes", "textos_postagem", "guia", "variacoes"]
 TipoCampoId = Literal[
     "avatar.descricao_prompt", "avatar.tom_de_voz", "avatar.regras_imagem",
     "cenario.prompt_ambiente", "asset.nome", "asset.descricao", "perfil.bio", "kit.bordoes",
     "kit.series", "postagem.titulo", "postagem.descricao", "postagem.hashtags",
-    "postagem.textos",
+    "postagem.textos", "guia.montar", "guia.testar",
 ]
 
 MAX_SUGESTOES = 10
@@ -49,14 +50,18 @@ class TipoCampo:
     formato: Formato
     limites: Limites
     tipos_asset: frozenset[str] | None = None  # só quando a entidade é asset
+    # Spec 017 (Q1): "so_proibidas" recebe só as palavras proibidas do guia do perfil.
+    usa_guia: UsaGuia = "completo"
+    regras_de: str | None = None  # usa as regras de outro tipo (não tem regra própria)
+    listar_regras: bool = True  # False: não aparece em "Assistente de IA › Regras"
 
     @property
     def padrao(self) -> str:
-        return PADROES[self.id][1]
+        return PADROES[self.regras_de or self.id][1]
 
     @property
     def padrao_versao(self) -> int:
-        return PADROES[self.id][0]
+        return PADROES[self.regras_de or self.id][0]
 
 
 _TEXTO_2000 = Limites(max_chars=2000)
@@ -65,16 +70,16 @@ _PROMPT = Limites(max_chars=2000, trim=False)
 _LISTA: tuple[TipoCampo, ...] = (
     TipoCampo("avatar.descricao_prompt", "Descrição para prompts do avatar", "asset", ("prompt",),
               "Assets › Avatar › Descrição para prompts", "en", "texto", _PROMPT,
-              frozenset({"avatar"})),
+              frozenset({"avatar"}), usa_guia="so_proibidas"),
     TipoCampo("avatar.tom_de_voz", "Tom de voz do avatar", "asset", ("voice_tone",),
               "Assets › Avatar › Tom de voz", "perfil", "texto", Limites(max_chars=500),
               frozenset({"avatar"})),
     TipoCampo("avatar.regras_imagem", "Regras de imagem do avatar", "asset", ("image_rules",),
               "Assets › Avatar › Regras de imagem", "perfil", "texto", _TEXTO_2000,
-              frozenset({"avatar"})),
+              frozenset({"avatar"}), usa_guia="so_proibidas"),
     TipoCampo("cenario.prompt_ambiente", "Prompt do ambiente do cenário", "asset", ("prompt",),
               "Assets › Cenário › Prompt do ambiente", "en", "texto", _PROMPT,
-              frozenset({"cenario"})),
+              frozenset({"cenario"}), usa_guia="so_proibidas"),
     TipoCampo("asset.nome", "Nome do asset", "asset", ("name",), "Assets › Dados › Nome",
               "perfil", "texto", Limites(max_chars=80, min_chars=1, uma_linha=True)),
     TipoCampo("asset.descricao", "Notas do asset", "asset", ("description",),
@@ -102,6 +107,18 @@ _LISTA: tuple[TipoCampo, ...] = (
               "Cortes › Postagem › Sugerir textos", "perfil", "textos_postagem",
               Limites(max_chars=100, max_itens=8, min_itens=3, max_chars_item=50, unicos=True,
                       normalizar="hashtag")),
+    # Spec 017 (R9, R10): montar o guia (proposta que preenche o formulário, só vale ao salvar)
+    # e testar o guia (3 textos de postagem com as regras de `postagem.textos`).
+    TipoCampo("guia.montar", "Guia de comunicação (montar com IA)", "guia",
+              ("tom", "faca", "nao_faca", "vocabulario", "proibidas", "emojis",
+               "emojis_preferidos"),
+              "Perfis › Guia › Montar com IA", "perfil", "guia", Limites()),
+    TipoCampo("guia.testar", "Teste do guia de comunicação (3 textos de postagem)", "postagem",
+              ("titulo", "descricao", "hashtags"), "Perfis › Guia › Testar guia", "perfil",
+              "variacoes",
+              Limites(max_chars=100, max_itens=8, min_itens=3, max_chars_item=50, unicos=True,
+                      normalizar="hashtag"),
+              regras_de="postagem.textos", listar_regras=False),
 )
 
 TIPOS: dict[str, TipoCampo] = {t.id: t for t in _LISTA}

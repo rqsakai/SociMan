@@ -71,6 +71,9 @@ export const formatoLabel: Record<TipoCampo["formato"], string> = {
   lista: "Lista",
   sugestoes: "Sugestões com seleção",
   textos_postagem: "Título, descrição e hashtags",
+  // spec 017
+  guia: "Guia de comunicação",
+  variacoes: "3 variações de título, descrição e hashtags",
 };
 
 export const IA_AUSENTE_TEXTO = "IA não configurada: falta a chave do Claude (ANTHROPIC_API_KEY no .env). O campo continua editável à mão.";

@@ -43,6 +43,7 @@ export function EnviarAgora({
   destino,
   onDone,
   size = "sm",
+  variant = "outline",
 }: {
   contaId: string;
   handle: string;
@@ -54,6 +55,7 @@ export function EnviarAgora({
   destino: () => Promise<{ id: string; version: number }>;
   onDone?: () => Promise<void> | void;
   size?: "sm" | "default";
+  variant?: "outline" | "default";
 }) {
   const queryClient = useQueryClient();
   const dono = useEhDono();
@@ -103,7 +105,7 @@ export function EnviarAgora({
       <Button
         type="button"
         size={size}
-        variant="outline"
+        variant={variant}
         disabled={disabled || busy || (publicar && !opcoes)}
         onClick={() => {
           setError(null);

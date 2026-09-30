@@ -218,8 +218,8 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
   await page.goto(corteUrl);
-  await page.getByRole("button", { name: "Agendar", exact: true }).first().click();
-  const agendar = page.getByRole("dialog", { name: "Agendar" });
+  await page.getByRole("button", { name: "Agendar / Publicar", exact: true }).first().click();
+  const agendar = page.getByRole("dialog", { name: "Agendar ou publicar" });
   const contaOpt = agendar.getByLabel("Conta").and(page.locator("select")).locator("option").filter({ hasText: `cortese2e${sfx}` }).first();
   await agendar.getByLabel("Conta").and(page.locator("select")).selectOption((await contaOpt.getAttribute("value"))!);
   // spec 015 (T103): na TikTok não há título, só a legenda (descrição + hashtags), obrigatória

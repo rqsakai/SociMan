@@ -38,7 +38,8 @@ def test_lista_os_13_tipos_no_padrao(client, membro):
     r = client.get("/api/ia/tipos", headers=membro[1])
     assert r.status_code == 200
     items = r.json()["items"]
-    assert [t["id"] for t in items] == list(TIPOS)
+    # Spec 017: o `guia.testar` usa as regras de `postagem.textos` e fica fora da lista.
+    assert [t["id"] for t in items] == [t for t in TIPOS if TIPOS[t].listar_regras]
     for t in items:
         assert t["regras"]["personalizada"] is False and t["regras"]["version"] == 0
         assert t["regras"]["texto"] == t["regras"]["padrao"] == TIPOS[t["id"]].padrao

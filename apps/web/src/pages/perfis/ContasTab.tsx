@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Conta, CreateContaRequest, Perfil, UpdateContaRequest } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, ExternalLink, History, Loader2, Pencil, Plus, Save, X } from "lucide-react";
+import { Archive, ArchiveRestore, ExternalLink, History, Loader2, MessageSquareQuote, Pencil, Plus, Save, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
@@ -20,6 +20,7 @@ import { HistoryHeading, VersionHistory } from "../../components/VersionHistory"
 import { ConexaoCard } from "../../components/publicacao/ConexaoCard";
 import { api } from "../../lib/api";
 import { useEhDono } from "../../lib/conteudos";
+import { guiaContaPath } from "../../lib/guia";
 import { INTERVALO_MAX } from "../../lib/postagem";
 import { contaForm, isUrl, type ContaForm } from "../../lib/forms";
 import {
@@ -119,6 +120,13 @@ export function ContasTab({ perfil, contas, onChanged, onError, onActionStart }:
         <Button type="button" variant="ghost" size="sm" onClick={() => setPanel({ kind: "history", conta })}>
           <History aria-hidden="true" />
           Histórico
+        </Button>
+        {/* spec 017: guia de comunicação da conta (complementa o do perfil) */}
+        <Button asChild variant="ghost" size="sm">
+          <Link to={guiaContaPath(conta.id)}>
+            <MessageSquareQuote aria-hidden="true" />
+            Guia de comunicação
+          </Link>
         </Button>
       </>
     );

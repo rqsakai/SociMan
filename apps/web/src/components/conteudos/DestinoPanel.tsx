@@ -512,7 +512,7 @@ export function DestinoPanel({
                 onClick={() => setAgendarOpen(true)}
               >
                 <CalendarClock aria-hidden="true" />
-                {aprovado ? "Agendar" : "Aprovar e agendar"}
+                {aprovado ? "Agendar / Publicar" : "Aprovar e agendar"}
               </Button>
             )
           )}

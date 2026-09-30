@@ -3,10 +3,13 @@
  * com filtros por perfil, tipo de campo, desfecho e período (datas no horário de Brasília) e
  * paginação por cursor. "Ver" abre a chamada num Sheet: instrução, entrada, proposta, explicação,
  * avisos, aceitos/rejeitados/aplicados nas sugestões, erro, modelo e tokens. Inclui as da 006.
+ * Spec 017: as versões dos guias usadas (com link para cada guia), o rascunho do "Testar guia" e as
+ * palavras proibidas que ficaram na proposta.
  */
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Eye } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { DataTable, dataTableColumns } from "@/components/data-table";
 import { HeaderCard } from "@/components/shell";
@@ -16,6 +19,7 @@ import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { api } from "../../lib/api";
+import { emojisLabel, exemploTipoLabel, guiaContaPath, guiaPerfilPath } from "../../lib/guia";
 import {
   custoText,
   desfechoLabel,
@@ -212,6 +216,8 @@ function ChamadaSheet({
               <Valor v={c.proposta} />
             </Item>
             {c.explicacao && <Item titulo="Explicação">{c.explicacao}</Item>}
+            <GuiaDaChamada c={c} onNavigate={onClose} />
+            {c.proibidas.length > 0 && <Item titulo="Palavras proibidas na proposta">{c.proibidas.join(" · ")}</Item>}
             {c.avisos.length > 0 && <Item titulo="Avisos">{c.avisos.join(" · ")}</Item>}
             {c.contextoFaltante.length > 0 && <Item titulo="Contexto que faltou">{c.contextoFaltante.join(", ")}</Item>}
             {c.aceitos.length > 0 && <Item titulo="Aceitos enviados">{c.aceitos.join(" · ")}</Item>}
@@ -242,6 +248,37 @@ function Item({ titulo, children }: { titulo: string; children: ReactNode }) {
   );
 }
 
+// "Guia do perfil vN · Guia da conta vM" (SC-003); no "Testar guia", qual nível veio do formulário.
+function GuiaDaChamada({ c, onNavigate }: { c: IaChamada; onNavigate: () => void }) {
+  const vp = c.guiaPerfilVersion;
+  const vc = c.guiaContaVersion;
+  if (vp == null && vc == null && !c.guiaRascunho) return null;
+  const contaId = c.alvo.contaId;
+  return (
+    <Item titulo="Guia usado">
+      {vp != null && (
+        <Link to={guiaPerfilPath(c.perfil.id)} className="text-primary underline-offset-4 hover:underline" onClick={onNavigate}>
+          Guia do perfil v{vp}
+        </Link>
+      )}
+      {vp != null && vc != null && " · "}
+      {vc != null &&
+        (contaId ? (
+          <Link to={guiaContaPath(contaId)} className="text-primary underline-offset-4 hover:underline" onClick={onNavigate}>
+            Guia da conta v{vc}
+          </Link>
+        ) : (
+          `Guia da conta v${vc}`
+        ))}
+      {c.guiaRascunho && (
+        <span className="block text-muted-foreground">
+          Testado com o rascunho {c.guiaRascunho === "perfil" ? "do perfil" : "da conta"} (não salvo)
+        </span>
+      )}
+    </Item>
+  );
+}
+
 function Valor({ v }: { v: IaValor | null }) {
   if (!v) return <span className="text-muted-foreground">—</span>;
   const partes: string[] = [];
@@ -250,5 +287,23 @@ function Valor({ v }: { v: IaValor | null }) {
   if (v.descricao) partes.push(`Descrição: ${v.descricao}`);
   if (v.hashtags && v.hashtags.length > 0) partes.push(v.hashtags.join(" "));
   if (v.itens && v.itens.length > 0) partes.push(v.itens.map((i) => `• ${i}`).join("\n"));
+  // spec 017: guia (montar: proposta; testar: entrada) e as 3 variações do "Testar guia"
+  if (v.guia) {
+    const g = v.guia;
+    const linhas: [string, string][] = [
+      ["Tom", g.tom],
+      ["Faça", (g.faca ?? []).join(" · ")],
+      ["Não faça", (g.naoFaca ?? []).join(" · ")],
+      ["Vocabulário", (g.vocabulario ?? []).join(" · ")],
+      ["Proibidas", (g.proibidas ?? []).join(" · ")],
+      ["Emojis", [g.emojis ? emojisLabel[g.emojis] : "", (g.emojisPreferidos ?? []).join(" ")].filter(Boolean).join(" · ")],
+      ["Hashtags fixas", (g.hashtagsFixas ?? []).join(" ")],
+      ["Exemplos", (g.exemplos ?? []).map((e) => `${exemploTipoLabel[e.tipo]}: ${e.texto}`).join(" | ")],
+    ];
+    partes.push(linhas.filter(([, x]) => x).map(([k, x]) => `${k}: ${x}`).join("\n"));
+  }
+  if (v.variacoes && v.variacoes.length > 0) {
+    partes.push(v.variacoes.map((x, i) => `Variação ${i + 1}\n${x.titulo}\n${x.descricao}\n${x.hashtags.join(" ")}`).join("\n\n"));
+  }
   return partes.length > 0 ? <>{partes.join("\n\n")}</> : <span className="text-muted-foreground italic">(vazio)</span>;
 }

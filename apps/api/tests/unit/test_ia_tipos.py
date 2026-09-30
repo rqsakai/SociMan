@@ -35,11 +35,17 @@ def _aceita(adapter: TypeAdapter, valor) -> bool:
     return True
 
 
-def test_os_13_ids_e_o_literal():
-    assert len(TIPOS) == 13
-    assert set(get_args(TipoCampoId)) == set(TIPOS) == set(PADROES)
+def test_os_15_ids_e_o_literal():
+    # 13 da 008 + guia.montar e guia.testar (spec 017); o testar usa as regras de outro tipo.
+    assert len(TIPOS) == 15
+    assert set(get_args(TipoCampoId)) == set(TIPOS)
+    assert set(PADROES) == set(TIPOS) - {"guia.testar"}
     for tid, tipo in TIPOS.items():
         assert tipo.id == tid and tipo.padrao.strip() and tipo.padrao_versao >= 1
+    testar = TIPOS["guia.testar"]
+    assert testar.regras_de == "postagem.textos" and not testar.listar_regras
+    assert testar.padrao == TIPOS["postagem.textos"].padrao
+    assert TIPOS["guia.montar"].listar_regras and TIPOS["guia.montar"].regras_de is None
 
 
 def test_so_os_prompts_de_imagem_sao_em_ingles():
@@ -96,6 +102,8 @@ def test_campos_existem_no_modelo_e_no_schema():
 
     modelos = {"asset": Asset, "perfil": Perfil, "kit": BrandKit, "postagem": Postagem}
     for tipo in TIPOS.values():
+        if tipo.id.startswith("guia."):
+            continue  # sem entidade salva com esses campos (spec 017; o montar é cruzado abaixo)
         for campo in tipo.campos:
             assert campo in modelos[tipo.entidade].__versioned_fields__, (tipo.id, campo)
             assert campo in SCHEMAS[tipo.entidade].model_fields, (tipo.id, campo)
@@ -122,3 +130,26 @@ def test_tipos_asset_batem_com_o_check_do_banco():
 
 def test_literal_e_tipo_do_typing():
     assert typing.get_origin(TipoCampoId) is typing.Literal
+
+
+def test_usa_guia_so_proibidas_nos_3_campos_visuais():
+    """Spec 017 (Q1): a voz do guia não entra nos prompts de imagem nem nas regras visuais."""
+    visuais = {"avatar.descricao_prompt", "cenario.prompt_ambiente", "avatar.regras_imagem"}
+    assert {t.id for t in TIPOS.values() if t.usa_guia == "so_proibidas"} == visuais
+    assert all(t.usa_guia == "completo" for t in TIPOS.values() if t.id not in visuais)
+
+
+def test_guia_montar_bate_com_o_guia_salvo():
+    """Spec 017: os campos do `guia.montar` existem no modelo do guia e no `GuiaIn` (os do
+    dono, fixas, máximo e exemplos, ficam de fora da proposta)."""
+    from sociman_api.ia.models import IaGuia
+    from sociman_api.ia.saida import PropostaGuia
+    from sociman_api.ia.schemas_guia import GuiaCampos, GuiaIn
+
+    tipo = TIPOS["guia.montar"]
+    assert tipo.entidade == "guia" and tipo.formato == "guia" and "campos" in GuiaIn.model_fields
+    for campo in tipo.campos:
+        assert campo in IaGuia.__versioned_fields__, campo
+        assert campo in GuiaCampos.model_fields, campo
+        assert campo in PropostaGuia.model_fields, campo
+    assert not {"hashtags_fixas", "max_hashtags_fixas", "exemplos"} & set(tipo.campos)

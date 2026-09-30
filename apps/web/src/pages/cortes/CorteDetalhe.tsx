@@ -296,7 +296,7 @@ export default function CorteDetalhe() {
                 {ready && !c.archived && conteudo.data && (
                   <Button type="button" size="sm" onClick={() => setAgendarOpen(true)}>
                     <CalendarClock aria-hidden="true" />
-                    Agendar
+                    Agendar / Publicar
                   </Button>
                 )}
                 <Button type="button" size="sm" variant="ghost" asChild>

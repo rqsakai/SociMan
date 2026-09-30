@@ -149,9 +149,9 @@ export default function Conteudos() {
           header: "",
           cell: (c) =>
             !c.row.original.archived && (
-              <Button type="button" size="sm" variant="outline" onClick={() => setAgendar(c.row.original)} aria-label={`Agendar ${c.row.original.titulo || "conteúdo"}`}>
+              <Button type="button" size="sm" variant="outline" onClick={() => setAgendar(c.row.original)} aria-label={`Agendar / Publicar ${c.row.original.titulo || "conteúdo"}`}>
                 <CalendarClock aria-hidden="true" />
-                Agendar
+                Agendar / Publicar
               </Button>
             ),
           meta: { className: "text-right" },

@@ -78,4 +78,14 @@ Escreva os textos de postagem do corte: título, descrição e hashtags, coerent
 - Hashtags: de 3 a 8, com #, uma palavra só, sem acento e sem pontuação, em minúsculas.
 - Use os bordões e as séries quando couberem de forma natural; sem clickbait enganoso e sem \
 inventar nada que não esteja no clipe."""),
+    "guia.montar": (1, """\
+Monte o guia de comunicação a partir da descrição da pessoa e do contexto do perfil.
+- Tom: 1 a 3 frases dizendo como o perfil fala (registro, ritmo, energia, para quem).
+- Faça e não faça: regras curtas e concretas, uma por item, que dê para conferir num texto.
+- Vocabulário: palavras e expressões da casa; palavras proibidas: termos que nunca podem \
+aparecer (uma palavra ou expressão por item, sem frases).
+- Emojis: "nao", "moderado" ou "livre", e até 10 preferidos quando fizer sentido.
+- Mantenha o que já está no guia atual e mude só o que a descrição pedir.
+- No guia de uma conta, escreva só o que a conta acrescenta ou muda em relação ao \
+<guia_perfil>; não repita o que já está lá."""),
 }

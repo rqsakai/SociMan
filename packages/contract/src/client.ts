@@ -106,6 +106,19 @@ export type IaAplicacao = components["schemas"]["IaAplicacao"];
 export type IaGerarRequest = components["schemas"]["GerarIn"];
 export type IaResumo = components["schemas"]["IaResumo"];
 export type IaChamadaFilters = NonNullable<paths["/api/ia/chamadas"]["get"]["parameters"]["query"]>;
+// 017-guia-de-comunicacao
+export type Guia = components["schemas"]["Guia"];
+export type GuiaCampos = components["schemas"]["GuiaCampos"];
+export type GuiaLimites = components["schemas"]["GuiaLimites"];
+export type GuiaEfetivo = components["schemas"]["GuiaEfetivo"];
+export type GuiaConflito = components["schemas"]["Conflito"];
+export type GuiaContaOut = components["schemas"]["GuiaContaOut"];
+export type GuiaIn = components["schemas"]["GuiaIn"];
+export type GuiaEmojis = NonNullable<GuiaCampos["emojis"]>;
+export type GuiaExemplo = components["schemas"]["Exemplo"];
+export type GuiaMontarRequest = components["schemas"]["MontarIn"];
+export type GuiaTestarRequest = components["schemas"]["TestarIn"];
+export type GuiaVariacao = components["schemas"]["Variacao"];
 // 014-central-de-conteudos
 export type Origem = components["schemas"]["ConteudoOrigem"];
 export type Situacao = components["schemas"]["Situacao"];
@@ -643,6 +656,39 @@ export function createApiClient(options: ApiClientOptions = {}) {
       chamada: (chamadaId: string) =>
         unwrap(client.GET("/api/ia/chamadas/{chamada_id}", { params: { path: { chamada_id: chamadaId } } })),
       resumo: (mes?: string) => unwrap(client.GET("/api/ia/resumo", { params: { query: mes ? { mes } : {} } })),
+      // spec 017: montar e testar o guia (só o dono); nenhum dos dois salva o guia
+      guiaMontar: (body: GuiaMontarRequest) => unwrap(client.POST("/api/ia/guia/montar", { body })),
+      guiaTestar: (body: GuiaTestarRequest) => unwrap(client.POST("/api/ia/guia/testar", { body })),
+    },
+    // Guia de comunicação do perfil e da conta (spec 017). PUT e revert só do dono; sem DELETE
+    // ("limpar" é salvar vazio).
+    guias: {
+      perfil: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/guia", { params: { path: { perfil_id: perfilId } } })),
+      updatePerfil: (perfilId: string, body: GuiaIn) =>
+        unwrap(client.PUT("/api/perfis/{perfil_id}/guia", { params: { path: { perfil_id: perfilId } }, body })),
+      perfilVersions: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/guia/versions", { params: { path: { perfil_id: perfilId } } })),
+      revertPerfil: (perfilId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/perfis/{perfil_id}/guia/revert", {
+            params: { path: { perfil_id: perfilId } },
+            body: { version, toVersion },
+          }),
+        ),
+      conta: (contaId: string) =>
+        unwrap(client.GET("/api/contas/{conta_id}/guia", { params: { path: { conta_id: contaId } } })),
+      updateConta: (contaId: string, body: GuiaIn) =>
+        unwrap(client.PUT("/api/contas/{conta_id}/guia", { params: { path: { conta_id: contaId } }, body })),
+      contaVersions: (contaId: string) =>
+        unwrap(client.GET("/api/contas/{conta_id}/guia/versions", { params: { path: { conta_id: contaId } } })),
+      revertConta: (contaId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/contas/{conta_id}/guia/revert", {
+            params: { path: { conta_id: contaId } },
+            body: { version, toVersion },
+          }),
+        ),
     },
     // Central de conteúdos (spec 014). O vídeo próprio (POST multipart) fica no app, por XHR.
     conteudos: {

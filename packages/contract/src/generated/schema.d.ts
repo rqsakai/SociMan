@@ -755,6 +755,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/contas/{conta_id}/guia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Conta Get */
+        get: operations["guias_conta_get"];
+        /** Conta Update */
+        put: operations["guias_conta_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contas/{conta_id}/guia/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Conta Revert */
+        post: operations["guias_conta_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contas/{conta_id}/guia/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Conta Versions */
+        get: operations["guias_conta_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/contas/{conta_id}/metricas": {
         parameters: {
             query?: never;
@@ -1810,6 +1862,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ia/guia/montar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Guia Montar */
+        post: operations["ia_guia_montar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ia/guia/testar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Guia Testar */
+        post: operations["ia_guia_testar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ia/resumo": {
         parameters: {
             query?: never;
@@ -2355,6 +2441,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/perfis/{perfil_id}/guia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Perfil Get */
+        get: operations["guias_perfil_get"];
+        /** Perfil Update */
+        put: operations["guias_perfil_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/guia/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Perfil Revert */
+        post: operations["guias_perfil_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/guia/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Perfil Versions */
+        get: operations["guias_perfil_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/perfis/{perfil_id}/kit": {
         parameters: {
             query?: never;
@@ -2788,7 +2926,20 @@ export interface components {
              * Entitytype
              * @enum {string}
              */
-            entityType: "asset" | "perfil" | "kit" | "postagem" | "corte" | "conteudo";
+            entityType: "asset" | "perfil" | "kit" | "postagem" | "corte" | "conteudo" | "guia";
+        };
+        /** AlvoTeste */
+        AlvoTeste: {
+            /**
+             * Entityid
+             * Format: uuid
+             */
+            entityId: string;
+            /**
+             * Entitytype
+             * @enum {string}
+             */
+            entityType: "corte" | "conteudo";
         };
         /** AplicarMarcaIn */
         AplicarMarcaIn: {
@@ -3457,6 +3608,20 @@ export interface components {
             enviar: boolean;
             /** Version */
             version: number;
+        };
+        /** Conflito */
+        Conflito: {
+            /**
+             * Campo
+             * @enum {string}
+             */
+            campo: "emojis" | "faca" | "naoFaca" | "hashtagsFixas";
+            /** Conta */
+            conta: string;
+            /** Mensagem */
+            mensagem: string;
+            /** Perfil */
+            perfil: string;
         };
         /** Consentimento */
         Consentimento: {
@@ -4351,6 +4516,16 @@ export interface components {
          * @enum {string}
          */
         EstadoFiltro: "pronto" | "aprovacao_pedida" | "aprovado" | "agendado" | "a_postar" | "atrasado" | "atencao" | "postado" | "rascunho_criado" | "publicado" | "falhou" | "em_revisao" | "arquivado" | "sem_conta" | "enviando" | "pausado" | "vencido" | "aguardando_vaga";
+        /** Exemplo */
+        Exemplo: {
+            /** Texto */
+            texto: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "titulo" | "legenda" | "bordao";
+        };
         /** Existente */
         Existente: {
             /**
@@ -4623,8 +4798,161 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar";
             valorAtual?: components["schemas"]["Valor"];
+        };
+        /** Guia */
+        Guia: {
+            campos: components["schemas"]["GuiaCampos"];
+            /** Contaid */
+            contaId: string | null;
+            /** Id */
+            id: string | null;
+            limites?: components["schemas"]["GuiaLimites"];
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Tamanho */
+            tamanho: number;
+            /** Updatedat */
+            updatedAt: string | null;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Version */
+            version: number;
+        };
+        /** GuiaCampos */
+        GuiaCampos: {
+            /** Emojis */
+            emojis?: ("nao" | "moderado" | "livre") | null;
+            /** Emojispreferidos */
+            emojisPreferidos?: string[];
+            /** Exemplos */
+            exemplos?: components["schemas"]["Exemplo"][];
+            /** Faca */
+            faca?: string[];
+            /** Hashtagsfixas */
+            hashtagsFixas?: string[];
+            /** Maxhashtagsfixas */
+            maxHashtagsFixas?: number | null;
+            /** Naofaca */
+            naoFaca?: string[];
+            /** Proibidas */
+            proibidas?: string[];
+            /**
+             * Tom
+             * @default
+             */
+            tom: string;
+            /** Vocabulario */
+            vocabulario?: string[];
+        };
+        /** GuiaContaOut */
+        GuiaContaOut: {
+            /** Conflitos */
+            conflitos: components["schemas"]["Conflito"][];
+            efetivo: components["schemas"]["GuiaEfetivo"];
+            guia: components["schemas"]["Guia"];
+            perfil: components["schemas"]["Guia"];
+        };
+        /** GuiaEfetivo */
+        GuiaEfetivo: {
+            /** Emojis */
+            emojis: ("nao" | "moderado" | "livre") | null;
+            /** Emojispreferidos */
+            emojisPreferidos: string[];
+            /** Hashtagsfixas */
+            hashtagsFixas: string[];
+            /** Maxhashtagsfixas */
+            maxHashtagsFixas: number;
+            /** Proibidas */
+            proibidas: string[];
+        };
+        /** GuiaIn */
+        GuiaIn: {
+            campos: components["schemas"]["GuiaCampos"];
+            /** Ia */
+            ia?: components["schemas"]["IaAplicacao"][] | null;
+            /** Version */
+            version: number;
+        };
+        /** GuiaLimites */
+        GuiaLimites: {
+            /**
+             * Emojimax
+             * @default 16
+             */
+            emojiMax: number;
+            /**
+             * Emojisitens
+             * @default 10
+             */
+            emojisItens: number;
+            /**
+             * Exemplomax
+             * @default 500
+             */
+            exemploMax: number;
+            /**
+             * Exemplos
+             * @default 5
+             */
+            exemplos: number;
+            /**
+             * Hashtagsfixaspadrao
+             * @default 5
+             */
+            hashtagsFixasPadrao: number;
+            /**
+             * Hashtagsfixasperfil
+             * @default 5
+             */
+            hashtagsFixasPerfil: number;
+            /**
+             * Hashtagsfixasteto
+             * @default 8
+             */
+            hashtagsFixasTeto: number;
+            /**
+             * Proibidasitens
+             * @default 30
+             */
+            proibidasItens: number;
+            /**
+             * Regramax
+             * @default 200
+             */
+            regraMax: number;
+            /**
+             * Regrasitens
+             * @default 10
+             */
+            regrasItens: number;
+            /**
+             * Termomax
+             * @default 60
+             */
+            termoMax: number;
+            /**
+             * Tommax
+             * @default 500
+             */
+            tomMax: number;
+            /**
+             * Totalmax
+             * @default 4000
+             */
+            totalMax: number;
+            /**
+             * Vocabularioitens
+             * @default 30
+             */
+            vocabularioItens: number;
+        };
+        /** GuiaOut */
+        GuiaOut: {
+            guia: components["schemas"]["Guia"];
         };
         /** HookIn */
         HookIn: {
@@ -4650,7 +4978,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar";
         };
         /** IaChamada */
         IaChamada: {
@@ -4688,6 +5016,12 @@ export interface components {
             excede: boolean;
             /** Explicacao */
             explicacao: string;
+            /** Guiacontaversion */
+            guiaContaVersion: number | null;
+            /** Guiaperfilversion */
+            guiaPerfilVersion: number | null;
+            /** Guiarascunho */
+            guiaRascunho: ("perfil" | "conta") | null;
             /**
              * Id
              * Format: uuid
@@ -4706,6 +5040,8 @@ export interface components {
             /** Outputtokens */
             outputTokens: number | null;
             perfil: components["schemas"]["PerfilRef"];
+            /** Proibidas */
+            proibidas: string[];
             proposta: components["schemas"]["Valor"] | null;
             /** Regrasversion */
             regrasVersion: number;
@@ -5235,6 +5571,26 @@ export interface components {
         ModosOut: {
             /** Modos */
             modos: components["schemas"]["ModoInfo"][];
+        };
+        /** MontarIn */
+        MontarIn: {
+            /** Anteriores */
+            anteriores?: string[];
+            /** Contaid */
+            contaId?: string | null;
+            /** Descricao */
+            descricao: string;
+            guiaAtual?: components["schemas"]["GuiaCampos"];
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /**
+             * Sessaoid
+             * Format: uuid
+             */
+            sessaoId: string;
         };
         /** NaoLidasOut */
         NaoLidasOut: {
@@ -6163,6 +6519,26 @@ export interface components {
             /** Items */
             items: components["schemas"]["Tentativa"][];
         };
+        /** TestarIn */
+        TestarIn: {
+            alvo: components["schemas"]["AlvoTeste"];
+            /**
+             * Contaid
+             * Format: uuid
+             */
+            contaId: string;
+            guia: components["schemas"]["GuiaCampos"];
+            /**
+             * Nivel
+             * @enum {string}
+             */
+            nivel: "perfil" | "conta";
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+        };
         /** Textos */
         Textos: {
             /** Descricao */
@@ -6178,17 +6554,17 @@ export interface components {
              * Entidade
              * @enum {string}
              */
-            entidade: "asset" | "perfil" | "kit" | "postagem";
+            entidade: "asset" | "perfil" | "kit" | "postagem" | "guia";
             /**
              * Formato
              * @enum {string}
              */
-            formato: "texto" | "lista" | "sugestoes" | "textos_postagem";
+            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes";
             /**
              * Id
              * @enum {string}
              */
-            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos";
+            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar";
             /**
              * Idioma
              * @enum {string}
@@ -6200,6 +6576,11 @@ export interface components {
             regras: components["schemas"]["Regras"];
             /** Rotulo */
             rotulo: string;
+            /**
+             * Usaguia
+             * @enum {string}
+             */
+            usaGuia: "completo" | "so_proibidas";
         };
         /** TipoOut */
         TipoOut: {
@@ -6372,11 +6753,13 @@ export interface components {
         };
         /**
          * Valor
-         * @description Um formato por tipo: `texto`, `itens` ou os três da postagem.
+         * @description Um formato por tipo: `texto`, `itens`, os três da postagem, o `guia` (proposta e
+         *     entrada do "montar"; entrada do "testar") ou as `variacoes` (proposta do "testar").
          */
         Valor: {
             /** Descricao */
             descricao?: string | null;
+            guia?: components["schemas"]["GuiaCampos"] | null;
             /** Hashtags */
             hashtags?: string[] | null;
             /** Itens */
@@ -6385,6 +6768,17 @@ export interface components {
             texto?: string | null;
             /** Titulo */
             titulo?: string | null;
+            /** Variacoes */
+            variacoes?: components["schemas"]["Variacao"][] | null;
+        };
+        /** Variacao */
+        Variacao: {
+            /** Descricao */
+            descricao: string;
+            /** Hashtags */
+            hashtags: string[];
+            /** Titulo */
+            titulo: string;
         };
         /** VerifyIn */
         VerifyIn: {
@@ -9562,6 +9956,264 @@ export interface operations {
         };
     };
     conexoes_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    guias_conta_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuiaContaOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    guias_conta_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuiaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuiaContaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    guias_conta_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuiaContaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    guias_conta_versions: {
         parameters: {
             query?: never;
             header?: never;
@@ -13850,6 +14502,198 @@ export interface operations {
             };
         };
     };
+    ia_guia_montar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MontarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChamadaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Gateway Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    ia_guia_testar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChamadaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Gateway Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     ia_resumo: {
         parameters: {
             query?: {
@@ -16351,6 +17195,264 @@ export interface operations {
             };
             /** @description Insufficient Storage */
             507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    guias_perfil_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuiaOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    guias_perfil_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuiaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuiaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    guias_perfil_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuiaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    guias_perfil_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

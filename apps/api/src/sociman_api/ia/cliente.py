@@ -26,6 +26,7 @@ from pydantic import BaseModel
 from sociman_api.config import get_settings
 from sociman_api.ia import saida
 from sociman_api.ia.custo import Uso, somar
+from sociman_api.ia.guia import GuiaEfetivo
 from sociman_api.ia.tipos import TipoCampo
 
 log = logging.getLogger(__name__)
@@ -78,8 +79,10 @@ class IaClient:
 
     def gerar(self, tipo: TipoCampo, system: list[dict[str, Any]],
               user: Callable[[str | None], str],
-              excluir: saida.Excluir = saida.NADA) -> Resultado:
-        """`user(erro_anterior)` monta a mensagem do usuário (com o erro na 2ª tentativa)."""
+              excluir: saida.Excluir = saida.NADA,
+              efetivo: GuiaEfetivo = saida.SEM_GUIA) -> Resultado:
+        """`user(erro_anterior)` monta a mensagem do usuário (com o erro na 2ª tentativa).
+        `efetivo`: o guia que vale nas garantias (fixas e proibidas, spec 017)."""
         res = Resultado(model=self.model)
         schema = saida.SCHEMAS[tipo.formato]
         inicio = time.monotonic()
@@ -99,7 +102,7 @@ class IaClient:
                 parsed = getattr(resposta, "parsed_output", None)
                 melhor = parsed or melhor
                 problemas = (["a resposta não veio no formato JSON pedido"] if parsed is None
-                             else saida.problemas(tipo, parsed, excluir))
+                             else saida.problemas(tipo, parsed, excluir, efetivo))
                 pode_repetir = (tentativa == 1
                                 and time.monotonic() - t0 < SEGUNDA_TENTATIVA_ATE_S)
                 if problemas and pode_repetir:
@@ -109,7 +112,7 @@ class IaClient:
                     res.erro_code = "invalid"
                     break
                 try:
-                    res.validada = saida.finalizar(tipo, melhor, excluir)
+                    res.validada = saida.finalizar(tipo, melhor, excluir, efetivo)
                 except saida.Invalida:
                     res.erro_code = "invalid"
                 break

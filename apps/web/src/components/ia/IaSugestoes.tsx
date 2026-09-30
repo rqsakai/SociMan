@@ -9,10 +9,13 @@
  * </IaSugestoes>
  *
  * Depois de aplicar, o painel continua aberto e os aplicados passam a contar como lista.
+ * Spec 017: a sugestão com palavra proibida pelo guia (`chamada.proibidas`) vem marcada e só entra
+ * editada (marcar abre a edição); "Guia usado" mostra as versões dos guias do pedido.
  */
 import type { IaAlvo, IaAplicacao, IaChamada, TipoCampoId } from "@sociman/contract";
 import { Loader2, RefreshCw, Save, Sparkles, X } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,6 +27,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { guiaContaPath, guiaPerfilPath, partesComProibidas } from "@/lib/guia";
 import {
   chaveItem,
   descartarChamadas,
@@ -36,6 +40,7 @@ import {
   type IaOnSave,
 } from "@/lib/ia";
 import { cn } from "@/lib/utils";
+import { ProibidasMarcadas } from "../guia/ProibidasMarcadas";
 import { IaBotao } from "./IaBotao";
 
 interface Item {
@@ -95,8 +100,15 @@ export function IaSugestoes({ tipo, perfilId, alvo, value, onSave, disabled, onR
   const cheia = value.length >= maxLista;
   const repetido = (item: Item) =>
     naLista.has(chaveItem(item.texto)) || marcados.some((m) => m.id !== item.id && chaveItem(m.texto) === chaveItem(item.texto));
+  // Spec 017: proibidas da chamada de onde veio o item; sem editar, o item não entra (FR-004).
+  const proibidasDe = (item: Item) => s.chamadas.find((c) => c.id === item.chamadaId)?.proibidas ?? [];
+  const temProibida = (item: Item) => partesComProibidas(item.original, proibidasDe(item)).some((p) => p.proibida);
+  const semEditar = (item: Item) => temProibida(item) && item.texto.trim() === item.original.trim();
   const invalido = (item: Item) =>
-    item.texto.trim().length === 0 || (maxItem !== null && item.texto.trim().length > maxItem) || repetido(item);
+    item.texto.trim().length === 0 ||
+    (maxItem !== null && item.texto.trim().length > maxItem) ||
+    repetido(item) ||
+    semEditar(item);
   const podeAplicar = marcados.length > 0 && marcados.length <= cabem && !marcados.some(invalido);
 
   function fechar() {
@@ -295,12 +307,17 @@ export function IaSugestoes({ tipo, perfilId, alvo, value, onSave, disabled, onR
                         />
                       ) : (
                         <span className={cn("min-w-0 flex-1 text-sm break-words", item.aplicado && "text-muted-foreground")}>
-                          {item.texto}
+                          <ProibidasMarcadas texto={item.texto} proibidas={item.aplicado ? [] : proibidasDe(item)} />
                         </span>
                       )}
                       {item.aplicado && <Badge variant="secondary">no kit</Badge>}
                       {!item.aplicado && naLista.has(chaveItem(item.texto)) && !item.marcado && (
                         <Badge variant="outline">já na lista</Badge>
+                      )}
+                      {!item.aplicado && temProibida(item) && (
+                        <Badge variant="outline" className="border-destructive/50 text-destructive">
+                          {semEditar(item) ? "proibida: edite" : "editada"}
+                        </Badge>
                       )}
                       {longo && (
                         <span className="shrink-0 text-xs text-destructive">
@@ -318,9 +335,11 @@ export function IaSugestoes({ tipo, perfilId, alvo, value, onSave, disabled, onR
               </p>
             ))}
             {s.chamadas.at(-1)?.explicacao && <p className="text-sm">{s.chamadas.at(-1)!.explicacao}</p>}
+            {s.chamadas.at(-1) && <GuiaUsado chamada={s.chamadas.at(-1)!} />}
             {marcados.some(invalido) && (
               <p role="alert" className="text-sm text-destructive">
-                Ajuste as marcadas: sem repetir a lista{maxItem !== null ? ` e com até ${maxItem} caracteres cada` : ""}.
+                Ajuste as marcadas: sem repetir a lista{maxItem !== null ? ` e com até ${maxItem} caracteres cada` : ""}
+                {marcados.some(semEditar) ? "; as com palavra proibida pelo guia só entram editadas" : ""}.
               </p>
             )}
 
@@ -345,6 +364,32 @@ export function IaSugestoes({ tipo, perfilId, alvo, value, onSave, disabled, onR
         )}
       </CollapsibleContent>
     </Collapsible>
+  );
+}
+
+// "Guia usado: perfil vN · conta vM" (spec 017, FR-006), como no IaAssist.
+function GuiaUsado({ chamada }: { chamada: IaChamada }) {
+  const { guiaPerfilVersion: vp, guiaContaVersion: vc } = chamada;
+  const contaId = chamada.alvo.contaId;
+  if (vp == null && vc == null) return null;
+  return (
+    <p className="text-xs text-muted-foreground">
+      Guia usado:{" "}
+      {vp != null && (
+        <Link to={guiaPerfilPath(chamada.perfil.id)} className="underline-offset-4 hover:underline">
+          perfil v{vp}
+        </Link>
+      )}
+      {vp != null && vc != null && " · "}
+      {vc != null &&
+        (contaId ? (
+          <Link to={guiaContaPath(contaId)} className="underline-offset-4 hover:underline">
+            conta v{vc}
+          </Link>
+        ) : (
+          `conta v${vc}`
+        ))}
+    </p>
   );
 }
 

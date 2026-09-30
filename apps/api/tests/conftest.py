@@ -77,6 +77,8 @@ _TABLES += ("conexoes", "conexao_credenciais", "publicacao_tentativas")
 # dispara no TRUNCATE, research R7).
 _TABLES += ("metricas_buscas_post", "metricas_conta_fotos", "metricas_video_fotos",
             "metricas_videos", "metricas_series")
+# Spec 017: os guias de comunicação (FKs para `perfis`/`contas`; o CASCADE cobre a ordem).
+_TABLES += ("ia_guias",)
 
 
 @pytest.fixture(autouse=True)

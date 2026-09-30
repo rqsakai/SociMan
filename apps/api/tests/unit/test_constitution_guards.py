@@ -614,3 +614,42 @@ def f(ex, c, ctx):
     ex.consultar(ctx, t)
 """
     assert [linha for linha, _ in _chamadas_de_envio(ast.parse(codigo))] == [3, 4, 5, 6]
+
+
+# ---- spec 017 (guia de comunicação) ----
+
+OPERATIONS_017 = {"guias_perfil_get", "guias_perfil_update", "guias_perfil_versions",
+                  "guias_perfil_revert", "guias_conta_get", "guias_conta_update",
+                  "guias_conta_versions", "guias_conta_revert", "ia_guia_montar",
+                  "ia_guia_testar"}
+FONTES_017 = ("ia/guia.py", "ia/service_guia.py", "ia/router_guia.py", "ia/schemas_guia.py")
+
+
+def _rotas_017() -> dict[str, tuple[str, str]]:
+    """operationId → (método, caminho) das rotas do guia e do montar/testar."""
+    return {op["operationId"]: (m.upper(), path)
+            for path, ops in app.openapi()["paths"].items() for m, op in ops.items()
+            if op.get("operationId", "").startswith(("guias_", "ia_guia_"))}
+
+
+def test_rotas_da_017_neutras_e_sem_delete():
+    """Os caminhos e `operationId` do guia passam pelo guarda geral (sem `publish`, `tiktok`…),
+    seguem os prefixos neutros e nenhum caminho com `guia` aceita DELETE (limpar = salvar
+    vazio)."""
+    rotas = _rotas_017()
+    assert set(rotas) == OPERATIONS_017, set(rotas) ^ OPERATIONS_017
+    for op, (_, path) in rotas.items():
+        texto = f"{_norm(path)} {_norm(op)}"
+        assert not [t for t in PUBLISH_TERMS if t in texto], (op, path)
+        assert path.startswith(("/api/perfis/{", "/api/contas/{", "/api/ia/guia/")), path
+    delete = [(m, p) for p, ops in app.openapi()["paths"].items() for m in ops
+              if "guia" in p and m.upper() == "DELETE"]
+    assert not delete, delete
+
+
+def test_modulos_do_guia_nao_importam_a_publicacao():
+    fontes = [SRC / f for f in FONTES_017]
+    assert all(p.exists() for p in fontes), [str(p) for p in fontes if not p.exists()]
+    achados = {str(p.relative_to(SRC)): mods for p in fontes
+               if (mods := _modulos_de_publicacao(ast.parse(p.read_text())))}
+    assert not achados, f"o guia importa a publicação (princípio I): {achados}"

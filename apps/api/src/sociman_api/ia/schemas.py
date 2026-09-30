@@ -14,7 +14,8 @@ from pydantic import Field, StringConstraints
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.canais.schemas import PerfilRef
 from sociman_api.ia.models import REGRAS_MAX, IaDesfecho
-from sociman_api.ia.tipos import Entidade, Formato, Idioma, TipoCampoId
+from sociman_api.ia.schemas_guia import GuiaCampos
+from sociman_api.ia.tipos import Entidade, Formato, Idioma, TipoCampoId, UsaGuia
 from sociman_api.perfis.schemas import UserRef
 
 INSTRUCAO_MAX = 1000
@@ -25,7 +26,8 @@ LISTA_MAX = 40  # itens no valor atual (o limite do tipo é conferido no service
 ITEM_MAX = 400
 
 # Spec 014: "conteudo" (+ conta) antes de o destino existir; "corte" continua (mesmo id).
-AlvoTipo = Literal["asset", "perfil", "kit", "postagem", "corte", "conteudo"]
+# Spec 017: "guia" nas chamadas do "montar guia" (entity_id = a linha do guia, ou null).
+AlvoTipo = Literal["asset", "perfil", "kit", "postagem", "corte", "conteudo", "guia"]
 Item = Annotated[str, StringConstraints(max_length=ITEM_MAX)]
 
 
@@ -58,6 +60,7 @@ class TipoCampo(CamelModel):
     entidade: Entidade
     idioma: Idioma
     formato: Formato
+    usa_guia: UsaGuia  # spec 017: "so_proibidas" nos 3 campos visuais (Q1)
     limites: Limites
     regras: Regras
 
@@ -88,14 +91,23 @@ class Alvo(CamelModel):
     conta_id: UUID | None = None  # conteúdo (ou corte) + conta quando o destino não existe
 
 
+class Variacao(CamelModel):
+    titulo: str
+    descricao: str
+    hashtags: list[str]
+
+
 class Valor(CamelModel):
-    """Um formato por tipo: `texto`, `itens` ou os três da postagem."""
+    """Um formato por tipo: `texto`, `itens`, os três da postagem, o `guia` (proposta e
+    entrada do "montar"; entrada do "testar") ou as `variacoes` (proposta do "testar")."""
 
     texto: Annotated[str, StringConstraints(max_length=4000)] | None = None
     itens: Annotated[list[Item], Field(max_length=LISTA_MAX)] | None = None
     titulo: Annotated[str, StringConstraints(max_length=400)] | None = None
     descricao: Annotated[str, StringConstraints(max_length=4000)] | None = None
     hashtags: Annotated[list[Item], Field(max_length=LISTA_MAX)] | None = None
+    guia: GuiaCampos | None = None
+    variacoes: list[Variacao] | None = None
 
 
 class Selecao(CamelModel):
@@ -150,6 +162,11 @@ class IaChamada(CamelModel):
     duration_ms: int
     created_at: datetime
     created_by: UserRef | None
+    # Spec 017 (R8): as versões dos guias enviados; o rascunho só no "testar guia".
+    guia_perfil_version: int | None
+    guia_conta_version: int | None
+    guia_rascunho: Literal["perfil", "conta"] | None
+    proibidas: list[str]
 
 
 class ChamadaOut(CamelModel):

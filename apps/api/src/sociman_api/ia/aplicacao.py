@@ -6,6 +6,13 @@ para cada item que casa (a chamada existe, é do mesmo perfil e do mesmo alvo, o
 entidade e o campo mudou nesta versão), compara o valor salvo com a proposta e grava o desfecho
 da chamada (`aplicada` ou `editada`). O que não casa é ignorado: o save nunca falha por causa
 do campo `ia`. O retorno é o `details` da versão (`{"ia": [...]}`), com o autor humano de sempre.
+
+Spec 017:
+- **única exceção** ao "nunca falha" (Q2 = A, research R7): antes do laço, se um item casa com
+  uma chamada que tem `proibidas` e algum campo salvo é **igual ao da proposta** e contém uma
+  delas, o save é recusado com 400 `ia_proibida` (`details.palavras`, `details.campos`). Campo
+  editado por um humano passa (desfecho `editada`), mesmo com a palavra;
+- alvo `guia` (o save do guia a partir do "montar guia", `guia.montar`).
 """
 
 import logging
@@ -19,7 +26,9 @@ from pydantic import Field, StringConstraints
 from sqlalchemy.orm import Session
 
 from sociman_api.auth.schemas import CamelModel
+from sociman_api.errors import ApiError
 from sociman_api.history import ActorLike
+from sociman_api.ia import guia as guia_mod
 from sociman_api.ia.models import IaChamada, IaDesfecho
 from sociman_api.ia.tipos import TIPOS, TipoCampo, TipoCampoId
 
@@ -50,7 +59,7 @@ _FINAIS = (IaDesfecho.descartada, IaDesfecho.erro)
 class _Alvo:
     """O que a chamada precisa casar: o perfil e a entidade salva (ou o conteúdo + conta)."""
 
-    entidade: str  # asset | perfil | kit | postagem
+    entidade: str  # asset | perfil | kit | postagem | guia
     perfil_id: uuid.UUID
     entity_id: uuid.UUID
     tipo_asset: str | None = None
@@ -67,6 +76,8 @@ def _alvo(entity_type: str, entidade: Any, perfil_id: uuid.UUID | None,
           plataforma: str | None) -> _Alvo:
     if entity_type == "perfil":
         return _Alvo("perfil", entidade.id, entidade.id)
+    if entity_type == "guia":  # spec 017: a linha de `ia_guias` (perfil ou conta)
+        return _Alvo("guia", entidade.perfil_id, entidade.id, conta_id=entidade.conta_id)
     if entity_type == "postagem":
         assert perfil_id is not None, "postagem: passe o perfil do conteúdo"
         return _Alvo("postagem", perfil_id, entidade.id, conteudo_id=entidade.conteudo_id,
@@ -80,6 +91,10 @@ def _casa_alvo(chamada: Any, tipo: TipoCampo, alvo: _Alvo) -> bool:
         return False
     if tipo.tipos_asset is not None and alvo.tipo_asset not in tipo.tipos_asset:
         return False
+    if alvo.entidade == "guia":
+        # Guia nunca salvo: a chamada foi gerada sem entity_id (a linha nasce neste save).
+        return (chamada.entity_type == "guia" and chamada.conta_id == alvo.conta_id
+                and chamada.entity_id in (None, alvo.entity_id))
     if alvo.entidade == "kit":
         # Kit nunca salvo: a chamada foi gerada sem entity_id (a linha nasce neste save).
         return chamada.entity_type == "kit" and chamada.entity_id in (None, alvo.entity_id)
@@ -120,8 +135,23 @@ def _chave(item: str) -> str:
     return item.strip().casefold()
 
 
+_CAMEL = {"nao_faca": "naoFaca", "emojis_preferidos": "emojisPreferidos"}
+
+
+def _guia_igual(proposta: Mapping[str, Any], depois: Mapping[str, Any], campo: str) -> bool:
+    valor = (proposta.get("guia") or {}).get(_CAMEL.get(campo, campo))
+    salvo = _valor(depois.get(campo))
+    if isinstance(valor, list) or isinstance(salvo, list):
+        return [i.strip() for i in salvo or ()] == [i.strip() for i in valor or ()]
+    if campo == "tom":
+        return (salvo or "").strip() == (valor or "").strip()
+    return salvo == valor
+
+
 def _igual_proposta(tipo: TipoCampo, proposta: Mapping[str, Any],
                     depois: Mapping[str, Any]) -> bool:
+    if tipo.formato == "guia":
+        return all(_guia_igual(proposta, depois, c) for c in tipo.campos)
     if tipo.formato == "texto":
         campo = tipo.campos[0]
         return _texto(tipo, depois.get(campo)) == _texto(tipo, proposta.get("texto"))
@@ -177,7 +207,7 @@ def _aplicar(db: Session, actor: ActorLike, alvo: _Alvo, item: IaAplicacao,
              antes: Mapping[str, Any] | None, depois: Mapping[str, Any],
              versao: int, agora: datetime) -> dict[str, Any] | None:
     tipo = TIPOS.get(item.tipo_campo)
-    if tipo is None:
+    if tipo is None or tipo.formato == "variacoes":  # o "testar guia" nunca é aplicado
         return None
     chamada = db.get(IaChamada, item.chamada_id, with_for_update=True)
     if chamada is None or chamada.tipo_campo != item.tipo_campo:
@@ -212,6 +242,70 @@ def _aplicar(db: Session, actor: ActorLike, alvo: _Alvo, item: IaAplicacao,
     return entrada
 
 
+# ---- palavras proibidas: aplicar sem editar é recusado (spec 017, Q2 = A) ----
+
+def _campos_iguais_com_proibida(tipo: TipoCampo, chamada: Any, item: IaAplicacao,
+                                antes: Mapping[str, Any] | None,
+                                depois: Mapping[str, Any]) -> tuple[list[str], list[str]]:
+    """(campos salvos iguais à proposta que contêm uma proibida da chamada, palavras)."""
+    proposta, termos = chamada.proposta, list(chamada.proibidas)
+    campos: list[str] = []
+    palavras: list[str] = []
+
+    def conferir(campo: str, igual: bool, textos: list[str]) -> None:
+        if not igual or not _mudou(antes, depois, campo):
+            return
+        achadas = guia_mod.achar_proibidas(textos, termos)
+        if achadas:
+            campos.append(campo)
+            palavras.extend(p for p in achadas if p not in palavras)
+
+    if tipo.formato == "texto":
+        campo = tipo.campos[0]
+        valor = proposta.get("texto") or ""
+        conferir(campo, _texto(tipo, depois.get(campo)) == _texto(tipo, valor), [valor])
+    elif tipo.formato == "lista":
+        campo = tipo.campos[0]
+        itens = list(proposta.get("itens") or ())
+        conferir(campo, _lista(depois.get(campo)) == _lista(itens), itens)
+    elif tipo.formato == "textos_postagem":
+        for campo in ("titulo", "descricao"):
+            valor = proposta.get(campo) or ""
+            conferir(campo, (depois.get(campo) or "").strip() == valor.strip(), [valor])
+        hashtags = list(proposta.get("hashtags") or ())
+        conferir("hashtags", _lista(depois.get("hashtags")) == _lista(hashtags), hashtags)
+    elif tipo.formato == "sugestoes":
+        campo = tipo.campos[0]
+        propostas = {i.strip() for i in proposta.get("itens") or ()}
+        salvos = {i.strip() for i in depois.get(campo) or ()}
+        intactos = [t.strip() for t in item.itens or ()
+                    if t.strip() in propostas and t.strip() in salvos]
+        conferir(campo, bool(intactos), intactos)
+    return campos, palavras
+
+
+def _recusar_proibidas(db: Session, alvo: _Alvo, ia: Sequence[IaAplicacao],
+                       antes: Mapping[str, Any] | None, depois: Mapping[str, Any]) -> None:
+    campos: list[str] = []
+    palavras: list[str] = []
+    for item in _agrupar(ia):
+        tipo = TIPOS.get(item.tipo_campo)
+        chamada = db.get(IaChamada, item.chamada_id) if tipo is not None else None
+        if (chamada is None or chamada.tipo_campo != item.tipo_campo
+                or not getattr(chamada, "proibidas", None)
+                or chamada.proposta is None or chamada.desfecho in _FINAIS
+                or not _casa_alvo(chamada, tipo, alvo)):
+            continue
+        c, p = _campos_iguais_com_proibida(tipo, chamada, item, antes, depois)
+        campos.extend(x for x in c if x not in campos)
+        palavras.extend(x for x in p if x not in palavras)
+    if campos:
+        raise ApiError(400, "ia_proibida",
+                       "A proposta usa uma palavra proibida pelo guia "
+                       f"({', '.join(palavras)}); edite antes de aplicar.",
+                       details={"palavras": palavras, "campos": campos})
+
+
 def marcar(db: Session, actor: ActorLike, entity_type: str, entidade: Any,
            antes: Mapping[str, Any] | None, depois: Mapping[str, Any],
            ia: Sequence[IaAplicacao] | None, *, perfil_id: uuid.UUID | None = None,
@@ -227,6 +321,7 @@ def marcar(db: Session, actor: ActorLike, entity_type: str, entidade: Any,
     versao = 1 if antes is None else (entidade.version or 0) + 1
     agora = datetime.now(UTC)
     alvo = _alvo(entity_type, entidade, perfil_id, plataforma)
+    _recusar_proibidas(db, alvo, ia, antes, depois)  # fora do try: é a única recusa (017)
     entradas = []
     for item in _agrupar(ia):
         try:
