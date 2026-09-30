@@ -23,6 +23,12 @@ OpenShorts por SociShorts em todos os lugares."
 - Q: Onde muda o nome? → A: Em todo texto visível (telas, avisos, sino, ajuda, capturas do e2e). Nomes técnicos
   (variáveis, código, endereço do serviço, contrato) não mudam.
 
+- Q: Como achar o "Publicar agora"? → A: **Emenda do dono (2026-09-30):** o botão "Agendar" vira **"Agendar / Publicar"**
+  (bloco Contas e cada conta), e o diálogo começa pela escolha **"Quando: Agendar | Publicar agora"**; em
+  "Publicar agora" some a data e a ação final é "Publicar agora" (modo Publicar) ou "Enviar rascunho agora"
+  (modo Criar rascunho). Teste real de 2026-09-30: Direct Post público recusado pela TikTok sem auditoria
+  (403 `unaudited_client_can_only_post_to_private_accounts`); `TIKTOK_APP_SITUACAO` voltou a `sandbox`.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Dark mode (Priority: P1)

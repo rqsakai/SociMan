@@ -163,3 +163,4 @@ Ao terminar os testes do dia: "Envios automáticos" desligado; se quiser o corte
 | Rascunho no app | ✅ chegou ao **app** (não aparece no TikTok Studio web), com o vídeo **marcado** (gancho, legenda do kit, marca d'água) |
 | Legenda | vem vazia: o modo rascunho da API não aceita texto; o dono cola com "Copiar textos" |
 | SC-005 (publicar em público a partir do rascunho) | a confirmar pelo dono |
+| Direct Post **público** com `TIKTOK_APP_SITUACAO=auditado` (2026-09-30, @atavernanerd) | ❌ `creator_info` ofereceu PUBLIC_TO_EVERYONE, mas `video/init` respondeu 403 `unaudited_client_can_only_post_to_private_accounts`. Confirmado: sem auditoria do app, publicar direto só em conta privada ("Só eu"). O SociMan marcou "Falhou" com o motivo e não repetiu o envio. Configuração volta a `sandbox`. |

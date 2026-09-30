@@ -102,10 +102,10 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    com legenda obrigatória (descrição + hashtags), sem envio duplicado e com interruptor geral. Teste real no
    sandbox: rascunho entregue no app (`SEND_TO_USER_INBOX`). Publicar sai só "Só eu" até a auditoria da TikTok.
    Pesquisa em `docs/pesquisa/publicacao-redes.md`.
-16. `016-metricas-tiktok` 📝 **especificada** (`specs/016-metricas-tiktok/`, 2026-09-30): série temporal das métricas
+16. `016-metricas-tiktok` ✅ **implementada** (`specs/016-metricas-tiktok/`, 2026-09-30): série temporal das métricas
    públicas da conta e dos vídeos (views, curtidas, comentários, compartilhamentos, seguidores), vínculo do post
    com o conteúdo do SociMan, telas de desempenho e exportação do dataset para ML. Etapa 2 (alcance, retenção,
    audiência pela API for Business) fica para depois. Pesquisa em `docs/pesquisa/metricas-tiktok.md`.
-17. `017-guia-de-comunicacao` 📝 **especificada** (`specs/017-guia-de-comunicacao/`, 2026-09-30): guia de voz por perfil e
+17. `017-guia-de-comunicacao` ✅ **implementada** (`specs/017-guia-de-comunicacao/`, 2026-09-30; falta a suíte e2e inteira 2x e a validação com o Claude real): guia de voz por perfil e
    por conta (tom, regras, vocabulário, proibidas, emojis, hashtags fixas, até 5 exemplos) que entra em todo
    pedido do assistente de IA (008); só o dono edita; montar e testar o guia com a IA.
