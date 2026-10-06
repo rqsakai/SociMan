@@ -1,4 +1,4 @@
-import { createApiClient, toApiError } from "@sociman/contract";
+import { createApiClient, toApiError, type User } from "@sociman/contract";
 import { useAuth } from "./authStore";
 
 // Cliente sem interceptor: refresh autentica pelo cookie, e passar pelo
@@ -31,16 +31,56 @@ export async function refreshSession(): Promise<string | null> {
   return result.status === "ok" ? result.token : null;
 }
 
+// Coordenação ENTRE abas (o single-flight acima só vale dentro de uma). O
+// cookie de renovação é do navegador inteiro e gira a cada uso: duas abas (ou
+// aba + PWA) renovando juntas faziam a segunda apresentar o token já girado, e
+// o servidor tratava como roubo. Agora a renovação roda sob um Web Lock, e quem
+// renova publica o access token novo no canal; quem esperava o lock reaproveita
+// esse token em vez de girar de novo. O refresh token continua só no cookie
+// HttpOnly: o canal leva só o access token (que já vive em memória).
+const REFRESH_LOCK = "sociman-refresh";
+type Shared = { token: string; user: User; at: number };
+let shared: Shared | null = null;
+
+const channel: BroadcastChannel | null =
+  typeof BroadcastChannel === "undefined" ? null : new BroadcastChannel("sociman-auth");
+channel?.addEventListener("message", (event: MessageEvent<Shared>) => {
+  const data = event.data;
+  if (data && typeof data.token === "string" && typeof data.at === "number") shared = data;
+});
+
 async function doRefresh(): Promise<RefreshResult> {
+  const startedAt = Date.now();
   const epochAtStart = useAuth.getState().sessionEpoch;
+  const locks = typeof navigator === "undefined" ? undefined : navigator.locks;
+  if (!locks) return refreshFromServer(epochAtStart);
+  return locks.request(REFRESH_LOCK, () => {
+    // Outra aba renovou enquanto esperávamos o lock: o token dela serve.
+    const fresh = shared && shared.at >= startedAt ? shared : null;
+    if (fresh) return adopt(fresh.token, fresh.user, epochAtStart);
+    return refreshFromServer(epochAtStart);
+  });
+}
+
+function adopt(token: string, user: User, epochAtStart: number): RefreshResult {
+  // Logout durante o refresh em voo: o epoch mudou → esta resposta pertence
+  // a uma sessão que o usuário já encerrou. Aplicá-la "des-desfaria" o
+  // logout na UI (até o próximo 401). Descarta.
+  if (useAuth.getState().sessionEpoch !== epochAtStart) return { status: "failed" };
+  useAuth.getState().setSession(token, user);
+  return { status: "ok", token };
+}
+
+async function refreshFromServer(epochAtStart: number): Promise<RefreshResult> {
   try {
     const data = await bareApi.auth.refresh();
-    // Logout durante o refresh em voo: o epoch mudou → esta resposta pertence
-    // a uma sessão que o usuário já encerrou. Aplicá-la "des-desfaria" o
-    // logout na UI (até o próximo 401). Descarta.
-    if (useAuth.getState().sessionEpoch !== epochAtStart) return { status: "failed" };
-    useAuth.getState().setSession(data.accessToken, data.user);
-    return { status: "ok", token: data.accessToken };
+    const result = adopt(data.accessToken, data.user, epochAtStart);
+    if (result.status === "ok") {
+      // Publica antes de soltar o lock: a próxima aba da fila já encontra o token.
+      shared = { token: data.accessToken, user: data.user, at: Date.now() };
+      channel?.postMessage(shared);
+    }
+    return result;
   } catch (err) {
     // fetch rejeita com TypeError quando não há rede (servidor desligado, fora
     // da rede de casa). Resposta de erro do servidor vira ApiError, não TypeError.

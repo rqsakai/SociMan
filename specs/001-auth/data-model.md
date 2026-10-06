@@ -53,7 +53,7 @@ O dono criado pela CLI nasce `verificado` e com `must_change_password = false`.
 |---|---|---|
 | `id` | bigint identity PK | |
 | `occurred_at` | timestamptz not null default now() | índice desc |
-| `type` | text not null | um de: `login_succeeded`, `login_failed`, `logout`, `refresh_reuse_detected`, `password_reset_requested`, `password_reset_completed`, `password_changed`, `password_set_by_owner`, `email_verification_sent`, `email_verified`, `user_created`, `user_updated`, `role_changed`, `email_changed`, `user_deactivated`, `user_reactivated` |
+| `type` | text not null | um de: `login_succeeded`, `login_failed`, `logout`, `refresh_reuse_detected`, `refresh_concorrente` (informativo: token anterior dentro da carência, spec de correção 2026-10-06), `password_reset_requested`, `password_reset_completed`, `password_changed`, `password_set_by_owner`, `email_verification_sent`, `email_verified`, `user_created`, `user_updated`, `role_changed`, `email_changed`, `user_deactivated`, `user_reactivated` |
 | `outcome` | text not null | `ok` ou `denied` |
 | `actor_user_id` | uuid null FK | quem agiu (null = anônimo ou CLI) |
 | `actor_kind` | text not null | `user`, `anonymous` ou `system:cli` (`mcp_client` fica reservado para a 009) |

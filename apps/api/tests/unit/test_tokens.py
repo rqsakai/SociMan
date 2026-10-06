@@ -68,12 +68,38 @@ def test_anterior_na_carencia_passa_sem_estender(r, settings, clock):
     _, t0, fam = tokens.create_family("user-1", r=r, settings=settings)
     t1 = tokens.rotate(t0, r=r, settings=settings)
     assert t1.ok
-    prev_exp = r.hget(f"rt:{fam}", "prevExpiresAt")
+    before = r.hgetall(f"rt:{fam}")
     clock["ms"] += 30_000
     again = tokens.rotate(t0, r=r, settings=settings)
     assert again.ok
-    assert r.hget(f"rt:{fam}", "prevExpiresAt") == prev_exp
+    assert again.concurrent
+    assert r.hgetall(f"rt:{fam}") == before  # nem rotação nova, nem carência estendida
     assert tokens.family_alive(fam, r=r)
+
+
+def test_concorrente_recebe_o_mesmo_token_atual(r, settings):
+    # Cookie do navegador inteiro: as duas abas precisam acabar com o MESMO token, senão o último
+    # Set-Cookie a chegar pode ser um token já fora da família (reuso na renovação seguinte).
+    _, t0, fam = tokens.create_family("user-1", r=r, settings=settings)
+    a = tokens.rotate(t0, r=r, settings=settings)
+    b = tokens.rotate(t0, r=r, settings=settings)
+    assert a.ok and b.ok
+    assert not a.concurrent and b.concurrent
+    assert b.refresh == a.refresh
+    assert b.access != "" and tokens.decode_access(b.access, settings=settings)["fam"] == fam
+    # o token devolvido às duas segue a família normalmente
+    assert tokens.rotate(a.refresh, r=r, settings=settings).ok
+    assert tokens.family_alive(fam, r=r)
+
+
+def test_selo_nao_abre_sem_o_token_anterior(r, settings):
+    _, t0, fam = tokens.create_family("user-1", r=r, settings=settings)
+    t1 = tokens.rotate(t0, r=r, settings=settings)
+    sealed = r.hget(f"rt:{fam}", "nextSealed")
+    assert sealed and t1.refresh not in sealed
+    assert tokens._unseal(sealed, t0, fam) == t1.refresh
+    assert tokens._unseal(sealed, t1.refresh, fam) is None
+    assert tokens._unseal(sealed, t0, "outra-fam") is None
 
 
 def test_anterior_fora_da_carencia_e_reuso(r, settings, clock):
@@ -110,6 +136,8 @@ def test_rotacoes_concorrentes_nao_derrubam_a_familia(r, settings):
     for t in threads:
         t.join()
     assert all(res.ok for res in results), results
+    assert len({res.refresh for res in results}) == 1  # uma rotação só; o resto é concorrente
+    assert sum(not res.concurrent for res in results) == 1
     assert tokens.family_alive(fam, r=r)
 
 

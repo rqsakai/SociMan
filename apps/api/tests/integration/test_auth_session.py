@@ -189,6 +189,66 @@ def test_refresh_replay_within_grace_is_accepted(client, make_user):
     assert _refresh(client, first).status_code == 200
 
 
+@pytest.fixture
+def clock(monkeypatch):
+    now = {"ms": tokens._now_ms()}
+    monkeypatch.setattr(tokens, "_now_ms", lambda: now["ms"])
+    return now
+
+
+def test_concurrent_refresh_within_tolerance_keeps_sessions(client, make_user, db, clock):
+    # Duas abas renovam juntas com o mesmo cookie: as duas ganham 200 e o MESMO token novo.
+    assert get_settings().refresh_grace == 10
+    user = make_user(email="duas-abas@teste.local")
+    other = _rt(_login(client, "duas-abas@teste.local"))  # outra sessão (outro aparelho)
+    first = _rt(_login(client, "duas-abas@teste.local"))
+
+    a = _refresh(client, first)
+    clock["ms"] += 9_000
+    b = _refresh(client, first)
+    assert a.status_code == 200, a.text
+    assert b.status_code == 200, b.text
+    assert _rt(b) == _rt(a)
+    assert b.json()["accessToken"]
+
+    # nada revogado: o token comum segue girando, e a outra sessão também
+    assert _refresh(client, _rt(a)).status_code == 200
+    assert _refresh(client, other).status_code == 200
+    assert _events(db, "refresh_reuse_detected") == []
+    [event] = _events(db, "refresh_concorrente")
+    assert event.outcome == "ok"
+    assert event.subject_user_id == user.id
+    assert event.actor_user_id == user.id
+
+
+def test_previous_token_after_tolerance_is_reuse(client, make_user, db, clock):
+    make_user(email="atrasado@teste.local")
+    other = _rt(_login(client, "atrasado@teste.local"))
+    first = _rt(_login(client, "atrasado@teste.local"))
+    second = _rt(_refresh(client, first))
+    clock["ms"] += 11_000
+
+    assert _refresh(client, first).status_code == 401
+    assert _refresh(client, second).status_code == 401  # a família caiu
+    [event] = _events(db, "refresh_reuse_detected")
+    assert event.outcome == "denied"
+    assert _events(db, "refresh_concorrente") == []
+    # o reuso revoga a família apresentada, não as outras sessões do usuário
+    assert _refresh(client, other).status_code == 200
+
+
+def test_token_two_rotations_back_is_reuse_even_within_tolerance(client, make_user, db, clock):
+    make_user(email="velho@teste.local")
+    t0 = _rt(_login(client, "velho@teste.local"))
+    t1 = _rt(_refresh(client, t0))
+    t2 = _rt(_refresh(client, t1))
+    clock["ms"] += 1_000
+
+    assert _refresh(client, t0).status_code == 401
+    assert _refresh(client, t2).status_code == 401
+    assert len(_events(db, "refresh_reuse_detected")) == 1
+
+
 def test_refresh_without_cookie_is_401_session_missing(client):
     r = _refresh(client, None)
     assert r.status_code == 401

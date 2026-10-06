@@ -6,6 +6,7 @@ export const eventTypeLabel: Record<string, string> = {
   login_failed: "Login recusado",
   logout: "Saída",
   refresh_reuse_detected: "Reuso de sessão detectado",
+  refresh_concorrente: "Renovação simultânea (outra aba)",
   password_reset_requested: "Recuperação pedida",
   password_reset_completed: "Senha redefinida",
   password_changed: "Senha trocada",

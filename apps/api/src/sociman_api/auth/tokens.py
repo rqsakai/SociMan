@@ -3,11 +3,17 @@
 - access: JWT HS256 curto, só em memória no SPA. Carrega `fam` porque o cookie de renovação só vai
   para /api/auth/refresh; o logout revoga a família pela claim.
 - refresh: opaco, `{fam}.{segredo}`. O Redis guarda só o sha256 do token atual da família.
-  Rotação a cada uso; o token imediatamente anterior vale por `refresh_grace` segundos (duas abas
-  renovando juntas ou resposta perdida). Qualquer outro token da família é reuso e revoga tudo.
+  Rotação a cada uso. O token imediatamente anterior, por `refresh_grace` segundos (padrão 10),
+  é renovação concorrente (duas abas renovando juntas ou resposta perdida): recebe o MESMO token
+  atual, sem rotacionar de novo. Por isso a rotação guarda o token novo cifrado com uma chave
+  derivada do token apresentado (`nextSealed`): só quem tem o anterior abre, e o Redis sozinho não
+  revela nada. Dar o mesmo token às duas abas importa porque o cookie é do navegador inteiro: com
+  dois tokens novos, o último Set-Cookie a chegar podia ser o que já saiu da família, e a próxima
+  renovação virava reuso. Qualquer outro token da família é reuso e revoga tudo.
 - a expiração da família é absoluta: a rotação não estende os `refresh_ttl` do login.
 """
 
+import base64
 import hashlib
 import hmac
 import math
@@ -19,6 +25,8 @@ from typing import Any, Literal
 
 import jwt
 import redis
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from sociman_api.config import Settings, get_settings
 from sociman_api.redis import get_redis
@@ -28,8 +36,10 @@ AUDIENCE = "sociman"
 LEEWAY_SECONDS = 30
 
 # Rotação atômica: dois refresh simultâneos com o mesmo token não podem se atropelar.
-# KEYS[1] = rt:{fam}; ARGV = hash apresentado, hash novo, agora (ms), carência (ms).
-# Devolve {"ok", userId, restante_ms} | {"invalid"} | {"reused", userId}.
+# KEYS[1] = rt:{fam}; ARGV = hash apresentado, hash novo, agora (ms), carência (ms), token novo
+# selado com o apresentado.
+# Devolve {"ok", userId, restante_ms} | {"concurrent", userId, restante_ms, selado} | {"invalid"}
+# | {"reused", userId}.
 _ROTATE_LUA = """
 local f = redis.call('HGETALL', KEYS[1])
 if #f == 0 then return {'invalid'} end
@@ -50,11 +60,16 @@ if remaining <= 0 then
   redis.call('DEL', KEYS[1])
   return {'invalid'}
 end
+local sealed = h['nextSealed'] or ''
+if is_prev and sealed ~= '' then
+  -- concorrente: devolve o token atual (selado), sem rotacionar nem estender a carência
+  return {'concurrent', h['userId'], tostring(remaining), sealed}
+end
 if is_current then
   redis.call('HSET', KEYS[1], 'tokenHash', ARGV[2], 'prevTokenHash', ARGV[1],
-    'prevExpiresAt', tostring(now + tonumber(ARGV[4])))
+    'prevExpiresAt', tostring(now + tonumber(ARGV[4])), 'nextSealed', ARGV[5])
 else
-  -- rotação pela carência não estende a janela original
+  -- família rotacionada antes do `nextSealed` existir: gira como antes, sem estender a janela
   redis.call('HSET', KEYS[1], 'tokenHash', ARGV[2])
 end
 redis.call('PEXPIRE', KEYS[1], remaining)
@@ -69,6 +84,7 @@ class RotateOk:
     access: str
     refresh: str
     remaining_seconds: int
+    concurrent: bool = False  # o anterior na carência: `refresh` é o atual, sem nova rotação
     ok: Literal[True] = True
 
 
@@ -99,6 +115,26 @@ def _sha256(token: str) -> str:
 
 def _new_refresh(fam: str) -> str:
     return f"{fam}.{secrets.token_urlsafe(32)}"
+
+
+def _seal_key(refresh: str) -> bytes:
+    # Separação de domínio: o Redis guarda sha256(token), e a chave não pode sair dele.
+    return hashlib.sha256(b"sociman-rt-next:" + refresh.encode()).digest()
+
+
+def _seal(new_refresh: str, presented: str, fam: str) -> str:
+    """Token novo cifrado com o apresentado: só quem renovar com o anterior consegue abrir."""
+    nonce = secrets.token_bytes(12)
+    data = AESGCM(_seal_key(presented)).encrypt(nonce, new_refresh.encode(), fam.encode())
+    return base64.urlsafe_b64encode(nonce + data).decode()
+
+
+def _unseal(sealed: str, presented: str, fam: str) -> str | None:
+    try:
+        raw = base64.urlsafe_b64decode(sealed.encode())
+        return AESGCM(_seal_key(presented)).decrypt(raw[:12], raw[12:], fam.encode()).decode()
+    except (InvalidTag, ValueError):
+        return None
 
 
 def sign_access(user_id: str, fam: str, settings: Settings | None = None) -> str:
@@ -189,13 +225,21 @@ def rotate(
     script = r.register_script(_ROTATE_LUA)
     res = script(
         keys=[_family_key(fam)],
-        args=[presented, _sha256(new_refresh), _now_ms(), settings.refresh_grace * 1000],
+        args=[presented, _sha256(new_refresh), _now_ms(), settings.refresh_grace * 1000,
+              _seal(new_refresh, refresh, fam)],
     )
     status = res[0]
     if status == "reused":
         r.srem(_user_key(res[1]), fam)
         return RotateFailed("reused")
-    if status != "ok":
+    concurrent = status == "concurrent"
+    if concurrent:
+        # O selo só abre com o token apresentado, que o Lua já conferiu como o anterior.
+        current = _unseal(res[3], refresh, fam)
+        if current is None:
+            return RotateFailed("invalid")
+        new_refresh = current
+    elif status != "ok":
         return RotateFailed("invalid")
     user_id = res[1]
     remaining = math.ceil(int(res[2]) / 1000)
@@ -205,6 +249,7 @@ def rotate(
         access=sign_access(user_id, fam, settings),
         refresh=new_refresh,
         remaining_seconds=remaining,
+        concurrent=concurrent,
     )
 
 
