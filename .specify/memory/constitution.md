@@ -106,6 +106,8 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 - **Gráficos do SPA:** **Apache ECharts** (importação modular por `echarts/core`), só em rotas
   carregadas sob demanda, para não pesar no restante do aplicativo; nenhuma outra biblioteca de
   gráficos. Tooltips escapam todo texto vindo de fora (ADR 0002).
+- **Servidor MCP:** SDK oficial `mcp` (Python), dentro da API, atrás do edge (endpoint `/mcp`,
+  Streamable HTTP sem estado; nenhum serviço novo, ADR 0003).
 - **Ferramentas só de dev:** Mailpit captura os e-mails em desenvolvimento e testes e NÃO DEVE ser
   usado em produção.
 - **Redis não é banco de registro:** dado que precisa sobreviver (usuários, eventos de segurança,
@@ -150,4 +152,4 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 - **Conformidade:** toda spec, plano e revisão de código verifica a aderência aos princípios.
   Uma violação dos princípios I, II ou VII bloqueia a entrega.
 
-**Version**: 4.1.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-01
+**Version**: 4.2.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-05
