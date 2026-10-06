@@ -333,3 +333,24 @@ def test_agendador_roda_a_trilha(envio, openshorts_fake):
     t.join(5)
     assert status() == EnvioStatus.importando
     assert fake.pedidos().count(("POST", "/api/process")) == 1
+
+
+def test_polling_reveza_quando_ha_mais_envios_que_o_lote(client, owner, perfil, db,
+                                                         openshorts_fake, relogio, monkeypatch):
+    """Com mais envios em processamento que o lote, todos são consultados: a vez vai para quem
+    foi consultado há mais tempo (antes, o lote ia sempre para os mais antigos por `sent_at` e o
+    último ficava sem polling para sempre)."""
+    fake = openshorts_fake
+    fake.passos_fila = 100  # todos ficam `queued`
+    monkeypatch.setattr(acompanhamento, "LOTE", 2)
+    canal = criar_canal(CanalDireito.proprio)
+    envios = [enviado(client, owner[1], perfil["id"], criar_video(canal)) for _ in range(3)]
+
+    for _ in range(4):  # 2 voltas submetem os 3; as seguintes só acompanham
+        volta(db, fake)
+        relogio.avancar(5)
+
+    for e in envios:
+        row = envio_row(db, e["id"])
+        assert row.status == EnvioStatus.processando
+        assert fake.jobs[row.openshorts_job_id].polls >= 1, row.source_title

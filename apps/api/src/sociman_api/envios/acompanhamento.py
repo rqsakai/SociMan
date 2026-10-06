@@ -81,12 +81,15 @@ def _agora() -> datetime:
     return datetime.now(UTC)
 
 
-def _vencidos(status: tuple[EnvioStatus, ...], agora: datetime):
+def _vencidos(status: tuple[EnvioStatus, ...], agora: datetime, *, revezar: bool = False):
+    """Submissão: ordem de chegada (`sent_at`). Polling (`revezar`): quem foi consultado há mais
+    tempo primeiro, para o lote revezar quando há mais envios em processamento que o LOTE."""
+    ordem = func.coalesce(Envio.last_polled_at, Envio.sent_at) if revezar else Envio.sent_at
     return (
         select(Envio)
         .where(Envio.status.in_(status),
                or_(Envio.next_attempt_at.is_(None), Envio.next_attempt_at <= agora))
-        .order_by(Envio.sent_at, Envio.id)
+        .order_by(ordem, Envio.id)
         .limit(LOTE)
         .with_for_update(skip_locked=True)
         .execution_options(populate_existing=True)
@@ -288,7 +291,7 @@ def rodar(db: Session, client: OpenShortsClient | None = None) -> int:
             fora = fora or envio.status == EnvioStatus.aguardando_openshorts
             db.flush()
             tratados += 1
-        for envio in list(db.scalars(_vencidos((EnvioStatus.processando,), agora))):
+        for envio in list(db.scalars(_vencidos((EnvioStatus.processando,), agora, revezar=True))):
             if envio.id in submetidos:  # acabou de ser submetido: o polling fica para a próxima
                 continue
             try:
