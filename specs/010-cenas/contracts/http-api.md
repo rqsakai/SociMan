@@ -98,7 +98,7 @@ Contém `id`, `nome`, `status`, `duracaoS`, `modo`, `avatar{id,nome}`, `cenario{
 
 ### `Tomada`
 ```json
-{ "id": "uuid", "cenaId": "uuid", "duracaoMs": 8000, "largura": 1080, "altura": 1920,
+{ "id": "uuid", "cenaId": "uuid", "origem": "flow_manual", "duracaoMs": 8000, "largura": 1080, "altura": 1920,
   "naoVertical": false, "bytes": 12345678, "contentType": "video/mp4",
   "thumbUrl": "/img/…", "videoUrl": "/api/midia/… (com validade; omitido no MCP)",
   "promptUsado": "…", "negativeUsado": "…", "nota": "", "escolhida": true,

@@ -15,7 +15,8 @@ caractere. O prompt é calculado ao vivo em `rascunho` e **congelado** (texto + 
 cenário) ao marcar `pronta`; o aviso "mudou" compara as versões e o "Remontar" recongela (Q3).
 
 As **tomadas** (MP4/MOV/WebM de 1 a 30 s) vão para o bucket de vídeos no HD pelo mesmo recebimento em
-streaming do vídeo próprio da 014, com miniatura e o prompt congelado do momento. O **vínculo** cena ×
+streaming do vídeo próprio da 014, com miniatura, o prompt congelado do momento e a `origem` (`flow_manual`; enum extensível para a 021, a
+geração local, sem refazer a 010). O **vínculo** cena ×
 conteúdo vídeo próprio (Q2) é uma tabela de ligação com histórico nos dois lados e define o status
 `usada`. A **IA** da 008 ganha 5 tipos de campo da cena (modo "só proibidas" da 017). O **MCP** da 009 ganha
 as leituras de cena e o tipo de anotação **`proposta_cena`** (Q1); todas as escritas de cena ficam fora ou

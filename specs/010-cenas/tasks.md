@@ -65,14 +65,14 @@ Nada chama serviço real: nem Flow/Veo, nem Claude real, nem OpenClaw.
 
 ## Phase 1: Setup
 
-- [ ] T001 **Gate:**
+- [X] T001 **Gate:**
   - `ls apps/api/migrations/versions/` mostra **0014_mcp** como a última e nenhum `0015_*`. Se já houver
     um `0015_*`, pare e avise o líder;
   - `docker compose exec api uv run alembic heads` mostra só `0014_mcp`;
   - os testes da 009 estão verdes: `npm run test:api -- tests/ -k "mcp or anotacoes" -q`;
   - `git status` só tem o esperado;
   - `.specify/feature.json` aponta para a 010 (o líder cuida).
-- [ ] T002 [P] `docker/nginx/default.conf.template` (acréscimo): `location ~ ^/api/cenas/[^/]+/tomadas$`,
+- [X] T002 [P] `docker/nginx/default.conf.template` (acréscimo): `location ~ ^/api/cenas/[^/]+/tomadas$`,
   com `client_max_body_size 210m`, `proxy_request_buffering off` e os mesmos headers da location do vídeo
   próprio. Rode `docker compose restart edge` (armadilha 13). Confira com um `curl` de 9 MB, que **não**
   deve receber 413 do edge.
@@ -84,9 +84,9 @@ Nada chama serviço real: nem Flow/Veo, nem Claude real, nem OpenClaw.
 **Objetivo:** banco, modelos, montagem pura do prompt e avisos, padrões do perfil, classificação no mapa
 do MCP e helpers.
 
-- [ ] T003 Migration `apps/api/migrations/versions/0015_cenas.py` (`revision = "0015_cenas"`,
+- [X] T003 Migration `apps/api/migrations/versions/0015_cenas.py` (`revision = "0015_cenas"`,
   `down_revision = "0014_mcp"`), na ordem do data-model:
-  - os 4 enums;
+  - os 5 enums (incluindo `tomada_origem` = `flow_manual`, ponto de extensão da 021);
   - as tabelas `cena_padroes`, `cenas`, `cena_tomadas` (com FK deferível de
     `cenas.tomada_escolhida_id`) e `cena_usos`;
   - os CHECKs `ck_cenas_duracao`, `ck_cenas_congelado` e `ck_cenas_produto`;
@@ -94,24 +94,24 @@ do MCP e helpers.
   - os `ALTER TYPE anotacao_alvo/anotacao_tipo ADD VALUE` em `autocommit_block`;
   - a troca de `ck_anotacoes_proposta_em_destino` por `ck_anotacoes_proposta_alvo`;
   - o downgrade, que recusa se houver dados novos nas anotações.
-- [ ] T004 `apps/api/src/sociman_api/cenas/models.py`: `Cena`, `CenaTomada`, `CenaUso` e `CenaPadroes`,
+- [X] T004 `apps/api/src/sociman_api/cenas/models.py`: `Cena`, `CenaTomada`, `CenaUso` e `CenaPadroes`,
   com enums, `__versioned_fields__`/`__immutable_fields__` e a constante `CAMPOS_PROMPT`. Também
   `apps/api/src/sociman_api/anotacoes/models.py` (`AnotacaoAlvo.cena`, `AnotacaoTipo.proposta_cena` e o
   CHECK novo). Depende de T003.
-- [ ] T005 [P] `apps/api/tests/integration/test_migration_0015.py`:
+- [X] T005 [P] `apps/api/tests/integration/test_migration_0015.py`:
   - upgrade e downgrade num banco limpo;
   - os CHECKs recusam duração 5, congelado em rascunho e foto sem nome de produto;
   - o único parcial de `cena_usos`;
   - o CHECK das anotações aceita `proposta_cena` em perfil/cena e recusa em destino;
   - o downgrade recusa quando existe `proposta_cena`.
-- [ ] T006 [P] `apps/api/src/sociman_api/cenas/prompt.py`:
+- [X] T006 [P] `apps/api/src/sociman_api/cenas/prompt.py`:
   - `montar(entrada) -> PromptMontado`, pura (research R2);
   - as tabelas fixas de plano e movimento em inglês;
   - a fala em pt-BR entre aspas com verbo de fala;
   - "exactly as in the reference image" com foto de produto;
   - `Start frame`/`End frame` no modo `quadros`;
   - o negative da cena ou o padrão.
-- [ ] T007 [P] `apps/api/tests/unit/test_cenas_prompt.py` (SC-002):
+- [X] T007 [P] `apps/api/tests/unit/test_cenas_prompt.py` (SC-002):
   - a descrição do avatar sai idêntica, byte a byte, inclusive com espaços e quebras finais;
   - a ordem das partes;
   - funciona sem avatar, sem cenário e sem produto;
@@ -120,33 +120,33 @@ do MCP e helpers.
   - o texto na tela nunca entra;
   - o exemplo de referência do shop-diretor (Achadinhos, Cozinha retrô e a fala "Gente, olha essa
     panela!") bate com o texto esperado (SC-003).
-- [ ] T008 [P] `apps/api/src/sociman_api/cenas/avisos.py`, função pura (research R4), com os avisos
+- [X] T008 [P] `apps/api/src/sociman_api/cenas/avisos.py`, função pura (research R4), com os avisos
   `fala_longa` (proporcional à duração), `duracao_modo`, `produto_sem_foto`, `proibida` (usa
   `ia.guia.achar_proibidas`), `assets_mudaram` (com antes/depois da parte) e `asset_arquivado`.
-- [ ] T009 [P] `apps/api/tests/unit/test_cenas_avisos.py`: cada aviso com borda, como 15 palavras em 8 s,
+- [X] T009 [P] `apps/api/tests/unit/test_cenas_avisos.py`: cada aviso com borda, como 15 palavras em 8 s,
   8 palavras em 4 s, proibida com acento e caixa, e as versões iguais e diferentes.
-- [ ] T010 `apps/api/src/sociman_api/cenas/schemas.py`:
+- [X] T010 `apps/api/src/sociman_api/cenas/schemas.py`:
   - `CenaIn`, `CenaPatch`, `Cena`, `CenaResumo`, `PromptOut`, `Ingrediente`, `Aviso`, `Tomada`,
     `CenaPadroes` e `CamposCena` (subconjunto de `CenaIn` para a proposta), todos com
     `extra="forbid"` na entrada;
   - os limites do data-model.
 
   Depende de T004.
-- [ ] T011 `apps/api/src/sociman_api/cenas/padroes.py` e as rotas `cenas_padroes_get`/`_put`/`_revert` em
+- [X] T011 `apps/api/src/sociman_api/cenas/padroes.py` e as rotas `cenas_padroes_get`/`_put`/`_revert` em
   `cenas/router_perfil.py`:
   - sem linha, devolve `version 0` com o padrão do código;
   - o `PUT` cria ou atualiza com histórico (`cena_padroes`);
   - o revert é **H**.
 
   Também o `include_router` em `main.py` (acréscimo). Depende de T010.
-- [ ] T012 `apps/api/src/sociman_api/mcp/mapa.py`: classificar **todas** as operações novas (research
+- [X] T012 `apps/api/src/sociman_api/mcp/mapa.py`: classificar **todas** as operações novas (research
   R11), deixando o `test_mcp_mapa.py` verde:
   - leituras em `TOOLS` com descrições em pt-BR (`ocultar` o `videoUrl` das tomadas);
   - escritas em `FORA`;
   - os reverts em `PROIBIDAS`.
 
   Repita a cada fase que criar rota (T017, T019, T024, T032, T036).
-- [ ] T013 [P] `apps/api/tests/integration/cenas_helpers.py`:
+- [X] T013 [P] `apps/api/tests/integration/cenas_helpers.py`:
   - o perfil com o avatar "Achadinhos" (descrição de `persona.md`, um look e uma pose), o cenário
     "Cozinha retrô", a imagem de produto e o guia com a proibida "milagre";
   - `mp4_sintetico(segundos, largura, altura)` via ffmpeg `testsrc`, em `tmp_path`;
@@ -163,7 +163,7 @@ do MCP e helpers.
 
 ### Testes (US1)
 
-- [ ] T014 [P] [US1] `apps/api/tests/integration/test_cenas.py` (criar e ler):
+- [X] T014 [P] [US1] `apps/api/tests/integration/test_cenas.py` (criar e ler):
   - criar com todos os campos → 201, `rascunho`, prompt ao vivo com as partes;
   - avatar, cenário ou foto de **outro perfil** → 422;
   - arquivo de look que não é do avatar → 422;
@@ -174,18 +174,18 @@ do MCP e helpers.
 
 ### Implementação (US1)
 
-- [ ] T015 [US1] `apps/api/src/sociman_api/cenas/ingredientes.py` (research R3): resolve o arquivo do
+- [X] T015 [US1] `apps/api/src/sociman_api/cenas/ingredientes.py` (research R3): resolve o arquivo do
   avatar (o escolhido ou o principal), a foto do produto e a imagem do cenário, com os links de mídia
   `imagem` da 007.
-- [ ] T016 [US1] `apps/api/src/sociman_api/cenas/service.py`:
+- [X] T016 [US1] `apps/api/src/sociman_api/cenas/service.py`:
   - `criar`: valida a posse dos assets no perfil e grava o histórico;
   - `obter`: monta o prompt ao vivo ou devolve o congelado, mais os ingredientes, os avisos (com as
     proibidas do guia efetivo do perfil) e os resumos de avatar, cenário e produto;
   - um "Padrões" ausente usa o padrão do código (T011);
   - `editar`: `check_version`, snapshot e `record`.
-- [ ] T017 [US1] Em `cenas/router_perfil.py` e `cenas/router.py`: `cenas_create`, `cenas_get` e
+- [X] T017 [US1] Em `cenas/router_perfil.py` e `cenas/router.py`: `cenas_create`, `cenas_get` e
   `cenas_update`.
-- [ ] T018 [US1] `npm run gen:contract`; `apps/web/src/lib/cenas.ts` (hooks TanStack Query) e
+- [X] T018 [US1] `npm run gen:contract`; `apps/web/src/lib/cenas.ts` (hooks TanStack Query) e
   `apps/web/src/components/cenas/`:
   - `CenaForm`, com `NativeSelect` para avatar, look/pose, cenário, plano, movimento, modo e duração,
     usando os seletores da biblioteca (`LibraryImageDialog`) para a foto do produto;
@@ -193,10 +193,10 @@ do MCP e helpers.
     "Copiar prompt" e "Copiar negative prompt";
   - `Ingredientes`, com miniatura e "Baixar";
   - `Avisos`.
-- [ ] T019 [US1] `apps/web/src/pages/cenas/CenaDetalhe.tsx` e as rotas em `App.tsx` (acréscimo):
+- [X] T019 [US1] `apps/web/src/pages/cenas/CenaDetalhe.tsx` e as rotas em `App.tsx` (acréscimo):
   `/app/cenas/:id` e `/app/perfis/:id/cenas/nova`. Use `usePageMeta` e `HeaderCard`, e repita a
   classificação do T012 para as rotas novas.
-- [ ] T020 [US1] `e2e/cenas.spec.ts` (US1):
+- [X] T020 [US1] `e2e/cenas.spec.ts` (US1):
   - semear o avatar, o cenário e o produto pela API;
   - criar a cena pela tela;
   - conferir que o texto do prompt começa com a descrição do avatar;
@@ -215,7 +215,7 @@ do MCP e helpers.
 
 ### Testes (US2)
 
-- [ ] T021 [P] [US2] `apps/api/tests/integration/test_cenas_prompt_congelado.py` (Q3, FR-006a):
+- [X] T021 [P] [US2] `apps/api/tests/integration/test_cenas_prompt_congelado.py` (Q3, FR-006a):
   - `pronta` congela o texto e as versões;
   - mudar o avatar mantém o congelado e mostra `assets_mudaram` com antes/depois;
   - `remontar` regrava o congelado sem mudar o status, com `details.acao = "remontar"`;
@@ -224,7 +224,7 @@ do MCP e helpers.
   - `pronta` incompleta → 422 `cena_incompleta` com `faltando`;
   - avatar arquivado impede `pronta`;
   - `rascunho` explícito.
-- [ ] T022 [P] [US2] Em `apps/api/tests/integration/test_cenas.py` (lista e ciclo):
+- [X] T022 [P] [US2] Em `apps/api/tests/integration/test_cenas.py` (lista e ciclo):
   - os filtros (status, avatar, cenário, foto do produto, tag e busca sem acento em nome, ação, fala e
     produto);
   - a paginação por cursor;
@@ -237,20 +237,20 @@ do MCP e helpers.
 
 ### Implementação (US2)
 
-- [ ] T023 [US2] `apps/api/src/sociman_api/cenas/service.py`:
+- [X] T023 [US2] `apps/api/src/sociman_api/cenas/service.py`:
   - `listar` (filtros e cursor);
   - `marcar_pronta`, `voltar_rascunho` e `remontar` (research R5);
   - a regra de `CAMPOS_PROMPT` no `editar`;
   - `duplicar`, `arquivar`, `restaurar` e `reverter` (só o dono; recusado em `usada`; um snapshot
     `usada` sem vínculo ativo volta como `pronta`, research R5).
-- [ ] T024 [US2] Rotas `cenas_list`, `cenas_duplicar`, `cenas_pronta`, `cenas_rascunho`,
+- [X] T024 [US2] Rotas `cenas_list`, `cenas_duplicar`, `cenas_pronta`, `cenas_rascunho`,
   `cenas_remontar`, `cenas_archive`, `cenas_restore`, `cenas_versions` e `cenas_revert` (**H**; recusa
   em `usada`, research R5).
   Classifique-as no mapa (T012).
-- [ ] T025 [US2] `apps/api/src/sociman_api/cenas/usos_assets.py`: provedor `cena` em
+- [X] T025 [US2] `apps/api/src/sociman_api/cenas/usos_assets.py`: provedor `cena` em
   `assets.usos.register` (`bloqueia = False`, "N cenas", link para a aba filtrada). Teste em
   `test_cenas.py`: o avatar mostra o uso e arquivar o avatar continua permitido (FR-009).
-- [ ] T026 [US2] `npm run gen:contract`. Na SPA:
+- [X] T026 [US2] `npm run gen:contract`. Na SPA:
   - `apps/web/src/pages/perfis/tabs/CenasTab.tsx`, com `DataTable` (`dataTableColumns`), filtros,
     busca, "Nova cena", "Duplicar" e "Arquivadas";
   - a aba "Cenas" em `PerfilDetalhe.tsx` (`?aba=cenas`);
@@ -258,7 +258,7 @@ do MCP e helpers.
     "Remontar prompt";
   - `CenaHistorico.tsx` (`VersionHistory`), com a rota `/app/cenas/:id/historico`;
   - o painel "Padrões das cenas" (estilo e negative) na aba.
-- [ ] T027 [US2] `e2e/cenas.spec.ts` (US2):
+- [X] T027 [US2] `e2e/cenas.spec.ts` (US2):
   - filtrar, duplicar e arquivar;
   - pronta → editar o avatar pela API → aviso → Remontar;
   - editar a ação → rascunho;
@@ -275,9 +275,9 @@ do MCP e helpers.
 
 ### Testes (US3)
 
-- [ ] T028 [P] [US3] `apps/api/tests/integration/test_cenas_tomadas.py`:
-  - enviar 8 s em 9:16 → 201, com miniatura, `promptUsado` igual ao congelado e a 1ª tomada como
-    escolhida;
+- [X] T028 [P] [US3] `apps/api/tests/integration/test_cenas_tomadas.py`:
+  - enviar 8 s em 9:16 → 201, com miniatura, `origem = flow_manual`, `promptUsado` igual ao
+    congelado e a 1ª tomada como escolhida;
   - 16:9 → `naoVertical`;
   - 0,5 s, 31 s e um arquivo que não é vídeo → recusa sem gravar nada;
   - cena em `rascunho` → 409 `cena_nao_pronta`;
@@ -287,7 +287,7 @@ do MCP e helpers.
   - HD sem sentinela → 503;
   - abaixo do piso → 507;
   - o link de vídeo tem validade e aceita Range.
-- [ ] T029 [P] [US3] `apps/api/tests/integration/test_cenas_usos.py`:
+- [X] T029 [P] [US3] `apps/api/tests/integration/test_cenas_usos.py`:
   - `PUT /api/conteudos/{id}/cenas` com duas cenas `pronta` → as duas viram `usada`, com histórico nas
     cenas e no conteúdo;
   - tirar uma → ela volta a `pronta`;
@@ -300,23 +300,25 @@ do MCP e helpers.
 
 ### Implementação (US3)
 
-- [ ] T030 [US3] `apps/api/src/sociman_api/cenas/tomadas.py` (research R6):
+- [X] T030 [US3] `apps/api/src/sociman_api/cenas/tomadas.py` (research R6):
   - reaproveita `cortes.service.precheck`/`receive` (prefixo `tomada-`, 200 MB), `probe` e a miniatura
     de `conteudos/video_proprio.py`;
+  - separa `registrar_tomada(cena, arquivo, origem)` do transporte HTTP, com `origem = flow_manual` na
+    rota de envio (a 021 vai reaproveitar essa função; nada da 021 é implementado aqui);
   - grava o vídeo em `cenas/<id>/tomadas/<tomada>.<ext>`;
   - `escolher`, `editar_nota`, `arquivar`, `restaurar` e `reverter` (**H**).
-- [ ] T031 [US3] `apps/api/src/sociman_api/cenas/usos.py` (research R7): define o conjunto, recalcula
+- [X] T031 [US3] `apps/api/src/sociman_api/cenas/usos.py` (research R7): define o conjunto, recalcula
   `usada`/`pronta` e grava o histórico nos dois lados. Em `conteudos/consulta.py` e
   `conteudos/schemas.py`, acrescente `cenas` ao detalhe (só leitura).
-- [ ] T032 [US3] Rotas `cenas_tomadas_*` e `conteudos_cenas_get`/`_put`, com a classificação no mapa
+- [X] T032 [US3] Rotas `cenas_tomadas_*` e `conteudos_cenas_get`/`_put`, com a classificação no mapa
   (T012).
-- [ ] T033 [US3] `npm run gen:contract`. Na SPA:
+- [X] T033 [US3] `npm run gen:contract`. Na SPA:
   - `components/cenas/Tomadas.tsx`: envio com progresso (o mesmo componente de envio do vídeo próprio),
     player, "prompt usado" num colapsável, "Escolher", nota e arquivar;
   - no `CenaDetalhe`, o bloco "Usada em";
   - `components/cenas/SeletorCenas.tsx` no `ConteudoDetalhe.tsx`, só para vídeo próprio: as cenas
     `pronta`/`usada` do perfil, com busca.
-- [ ] T034 [US3] `e2e/cenas.spec.ts` (US3):
+- [X] T034 [US3] `e2e/cenas.spec.ts` (US3):
   - enviar uma tomada sintética e escolher;
   - enviar um vídeo próprio sintético;
   - ligar a cena → `usada`;
@@ -330,9 +332,9 @@ do MCP e helpers.
 **Objetivo:** "Melhorar com IA" nos 4 campos e "Ajustar cena com IA" (research R10).
 **Teste independente:** o quickstart §5.1–5.2, com o Claude falso.
 
-- [ ] T035 [P] [US4] `apps/api/tests/unit/test_ia_tipos.py` (acréscimo): os 5 tipos `cena.*` com os limites
+- [X] T035 [P] [US4] `apps/api/tests/unit/test_ia_tipos.py` (acréscimo): os 5 tipos `cena.*` com os limites
   iguais aos de `CenaPatch`, `usa_guia = "so_proibidas"` e formato `campos_cena` só em `cena.ajustar`.
-- [ ] T036 [US4] `apps/api/src/sociman_api/ia/`:
+- [X] T036 [US4] `apps/api/src/sociman_api/ia/`:
   - `tipos.py`: entidade `cena`, os 5 tipos e o formato `campos_cena`;
   - `regras_padrao.py`: as regras do shop-diretor;
   - `contexto.py`: avatar, regras de imagem, cenário, produto, duração, modo e fala, vindos da cena
@@ -342,16 +344,16 @@ do MCP e helpers.
   - `aplicacao.py`: marca `details.ia` no `PATCH`/`POST` da cena.
 
   Rode `npm run gen:contract`. As rotas da IA já estão classificadas no mapa: confira com o T012.
-- [ ] T037 [P] [US4] `apps/api/tests/integration/test_cenas_ia.py` (Claude falso):
+- [X] T037 [P] [US4] `apps/api/tests/integration/test_cenas_ia.py` (Claude falso):
   - gerar `cena.acao` → proposta e explicação;
   - aplicar pelo `PATCH` com `ia` → histórico com `details.ia` e autor humano;
   - `cena.ajustar` → só as 4 chaves, e o prompt montado mantém a descrição do avatar idêntica;
   - o pedido leva só `<guia_perfil parte="proibidas">`;
   - uma proposta com proibida sai marcada, e salvar o valor igual à proposta → 400 `ia_proibida`;
   - cena nova (`entityId` nulo) com `cenaContexto` de outro perfil → 422.
-- [ ] T038 [US4] Na SPA: `IaBotao`/`IaAssist` nos campos ação, câmera, estilo e áudio do `CenaForm`, e o
+- [X] T038 [US4] Na SPA: `IaBotao`/`IaAssist` nos campos ação, câmera, estilo e áudio do `CenaForm`, e o
   botão "Ajustar cena com IA", com prévia por campo (`IaDiff`) e "Aplicar".
-- [ ] T039 [US4] `e2e/cenas.spec.ts` (US4) com o Claude falso:
+- [X] T039 [US4] `e2e/cenas.spec.ts` (US4) com o Claude falso:
   - melhorar a ação e aplicar → o selo "com ajuda da IA" no histórico;
   - ajustar a cena → o prompt ainda começa com a descrição do avatar.
 
@@ -362,7 +364,7 @@ do MCP e helpers.
 **Objetivo:** a anotação `proposta_cena` (Q1), com o aceitar humano.
 **Teste independente:** o quickstart §5.3–5.5.
 
-- [ ] T040 [US5] `apps/api/src/sociman_api/anotacoes/`:
+- [X] T040 [US5] `apps/api/src/sociman_api/anotacoes/`:
   - `schemas.py`: `CamposCena` e `campos` como união discriminada pelo `tipo`;
   - `service.py`:
     - alvo `cena` em `_MODELOS`/`_NOMES`, com link `/app/cenas/{id}`;
@@ -372,7 +374,7 @@ do MCP e helpers.
 
   Em `cenas/service.py`, `criar`/`editar` aceitam `propostaId`, chamam `aplicar_cena` na mesma transação
   e gravam a referência no histórico da cena.
-- [ ] T041 [P] [US5] `apps/api/tests/integration/test_cenas_mcp.py` (SC-004):
+- [X] T041 [P] [US5] `apps/api/tests/integration/test_cenas_mcp.py` (SC-004):
   - um cliente "leitura e propostas" grava `proposta_cena` no perfil → aparece na caixa com o autor
     `mcp_client`;
   - o dono cria a cena com `propostaId` → cena em rascunho, autor humano, proposta `aplicada`;
@@ -384,43 +386,43 @@ do MCP e helpers.
     recusa `escopo_mcp`; os reverts → `somente_humano` mais o evento;
   - o cliente "só leitura" lê `cenas_list`/`cenas_get` sem `videoUrl`;
   - a proposta conta no limite diário de escritas.
-- [ ] T042 [US5] Na SPA:
+- [X] T042 [US5] Na SPA:
   - `components/anotacoes/PropostaCard.tsx` e `pages/propostas/Propostas.tsx` (acréscimo): o tipo
     `proposta_cena` mostra os campos, e "Aceitar" navega para `/app/perfis/:id/cenas/nova?proposta=<id>`
     ou para `/app/cenas/:id?proposta=<id>`;
   - o `CenaForm` preenche a partir da proposta, sem salvar, com a faixa "Proposta de <agente>";
   - `AnotacoesDoItem` no `CenaDetalhe`.
-- [ ] T043 [US5] Em `mcp/mapa.py`, a descrição de `anotacoes_create` explica o formato de `proposta_cena`.
+- [X] T043 [US5] Em `mcp/mapa.py`, a descrição de `anotacoes_create` explica o formato de `proposta_cena`.
   Em `docs/guia-mcp-openclaw.md` (acréscimo), uma seção "Propor cenas (shop-diretor)" com um exemplo
   de chamada.
-- [ ] T044 [US5] `e2e/cenas.spec.ts` (US5): a proposta é gravada pelo cliente MCP de teste (helper da
+- [X] T044 [US5] `e2e/cenas.spec.ts` (US5): a proposta é gravada pelo cliente MCP de teste (helper da
   009) → aparece na caixa → Aceitar → Salvar → a cena aparece na aba, e a proposta fica `aplicada`.
 
 ---
 
 ## Phase 8: Polish & Cross-Cutting
 
-- [ ] T045 [P] `apps/api/tests/integration/test_cenas_permissoes.py`:
+- [X] T045 [P] `apps/api/tests/integration/test_cenas_permissoes.py`:
   - o membro cria, edita, marca pronta, envia tomada e liga ao conteúdo;
   - o membro tenta os 3 reverts → 403 `somente_dono`;
   - `system:*` e o token de agente → 403 `somente_humano` mais o evento `publicacao_recusada` nos 3
     reverts.
-- [ ] T046 [P] `apps/api/tests/unit/test_constitution_guards.py` (acréscimo):
+- [X] T046 [P] `apps/api/tests/unit/test_constitution_guards.py` (acréscimo):
   - `cenas/` não importa `publicacao`, `httpx` nem cliente de rede;
   - não há "tiktok"/"youtube" nas rotas nem nos `operationId` `cenas_*`;
   - os reverts de cena dependem de `require_human_owner`;
   - toda mutação em `cenas/service.py`, `tomadas.py`, `usos.py` e `padroes.py` chama `history.record`
     (varredura como nas specs anteriores).
-- [ ] T047 [P] Teste de desempenho:
+- [X] T047 [P] Teste de desempenho:
   - `cenas_list` com 200 cenas e filtros < 500 ms;
   - `cenas_get` com prompt, ingredientes e avisos < 200 ms.
-- [ ] T048 Documentação (acréscimo):
+- [X] T048 Documentação (acréscimo):
   - `CLAUDE.md`: a seção "Cenas (desde a spec 010)", com o pacote, as rotas, o congelamento, as
     tomadas no HD com a location do edge, o vínculo com o vídeo próprio, os tipos de IA `cena.*` e a
     `proposta_cena` do MCP;
   - `docs/visao.md`: o item 010 no backlog, com a nota "cena = tomada; ambiente = cenário da 007";
   - `../shared/shop/README.md` **não** é alterado (é do gestor/dono). Anote a sugestão no relatório.
-- [ ] T049 Verificação final:
+- [X] T049 Verificação final:
   - `npm run test:api` inteiro, ruff e `npm run gen:contract && npm run check:web`;
   - a suíte e2e inteira (com trava);
   - o quickstart §1–§3 e §5.1–5.2 no dev.

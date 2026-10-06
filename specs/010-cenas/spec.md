@@ -346,7 +346,8 @@ outra escrita em cena pelo agente.
   marca das versões do avatar e do cenário usadas.
 - **Ingrediente**: imagem de referência para o Flow (avatar/pose, cenário, produto), até 3 por cena.
 - **Referência de produto**: nome curto e foto opcional da biblioteca; ponte para o catálogo da 012.
-- **Tomada**: vídeo gerado à mão no Flow e enviado para a cena; uma por cena é a escolhida.
+- **Tomada**: vídeo gerado para a cena, com a origem registrada (hoje só "Flow manual": gerado à mão e
+  enviado); uma por cena é a escolhida.
 - **Uso da cena**: vínculo entre cena e conteúdo vídeo próprio (014), que define o status `usada`.
 - **Proposta de cena**: anotação do MCP (009) com os campos de uma cena, aberta até um humano aceitar ou
   descartar.
@@ -375,6 +376,11 @@ outra escrita em cena pelo agente.
   entra quando o vídeo final vira destino na 014.
 - **Geração manual:** o SociMan não chama o Flow, o Veo nem o HeyGen (sem API do Flow; HeyGen pausado). A
   automação pelo Veo 3.1 na API do Gemini, se vier, é outra spec.
+- **Geração local (trabalho futuro, 021):** os insumos do dono (`docs/insumos/021-geracao-local.md`,
+  `007b-cadastro-padronizado.md`, `012-produtos-shop.md`) apontam para geração local de mídia pelo
+  ComfyUI, com jobs e candidatos. Decisão do dono (2026-10-06): a 010 segue agora com o Flow manual, e a
+  origem da tomada fica registrada para que a 021 acrescente a geração local sem refazer a 010. Nada da
+  021 entra nesta spec.
 - **Idioma do prompt:** inglês para o prompt e o negative prompt; fala e texto na tela em pt-BR, como no
   pacote do shop-diretor.
 - **Limites do Flow** (até 3 ingredientes, 8 s com ingredientes, 4/6/8 s nos outros modos) ficam em

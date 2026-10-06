@@ -11,6 +11,9 @@ das tomadas ficam no MinIO (HD); o banco guarda só as chaves.
 - `cena_modo`: `ingredientes` · `quadros` · `estender`
 - `cena_plano`: `close` · `busto` · `medio` · `americano` · `aberto` · `detalhe_produto`
 - `cena_movimento`: `parada` · `aproximacao` · `afastamento` · `panoramica` · `camera_na_mao`
+- `tomada_origem`: `flow_manual` (único valor nesta spec). **Ponto de extensão:** a 021 (geração local pelo
+  ComfyUI) poderá acrescentar `geracao_local` com `ALTER TYPE … ADD VALUE` e uma coluna nullable
+  `geracao_id`, sem refazer a 010
 
 ## `cenas` (nova, versionada)
 
@@ -69,6 +72,7 @@ das tomadas ficam no MinIO (HD); o banco guarda só as chaves.
 |---|---|---|
 | `id` | uuid PK | |
 | `cena_id` | uuid not null FK → cenas.id | imutável |
+| `origem` | `tomada_origem` not null default `flow_manual` | imutável; como a tomada nasceu (hoje: envio manual do arquivo gerado no Flow) |
 | `video_key` | text not null unique | `cenas/<cena_id>/tomadas/<id>.<ext>` (bucket de vídeos) |
 | `content_type` | text not null | `video/mp4`, `video/quicktime`, `video/webm` |
 | `bytes` | bigint not null | ≤ 200 MB |
@@ -128,9 +132,9 @@ arquivar: qualquer status (uma cena usada continua ligada; arquivada não aceita
 - **Miniatura da cena:** tomada escolhida → imagem do arquivo do avatar → iniciais.
 
 ## Migration `0015_cenas`
-1. enums `cena_status`, `cena_modo`, `cena_plano`, `cena_movimento`;
+1. enums `cena_status`, `cena_modo`, `cena_plano`, `cena_movimento`, `tomada_origem`;
 2. `cena_padroes`; `cenas` (sem a FK de `tomada_escolhida_id`); `cena_tomadas`; FK deferível
    `cenas.tomada_escolhida_id`; `cena_usos` e índices;
 3. `ALTER TYPE … ADD VALUE` (autocommit) e troca do CHECK das anotações;
 4. downgrade: recusa se houver anotação `proposta_cena`/alvo `cena`; recria o CHECK antigo; derruba as
-   4 tabelas e os 4 enums (os valores de enum das anotações ficam).
+   4 tabelas e os 5 enums (os valores de enum das anotações ficam).

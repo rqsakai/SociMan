@@ -117,6 +117,12 @@ do SC-003 é sintético, montado a partir do formato descrito pelo shop-diretor.
   Assistir usa o link `MidiaKind video` com validade e Range (004).
 - **Por quê:** é a Q2 = A. O código de recebimento e de probe já existe, e o tamanho de uma tomada de
   30 s em 1080p fica bem abaixo de 200 MB.
+- **Origem extensível:** toda tomada tem `origem` (enum `tomada_origem`), que nesta spec é sempre
+  `flow_manual`, gravada pelo envio. O serviço de tomadas separa "receber o arquivo e validar"
+  (`registrar_tomada(cena, arquivo, origem)`) do transporte HTTP. Assim, a 021 (jobs de geração local com
+  candidatos, `docs/insumos/021-geracao-local.md`) poderá criar tomadas com `origem = geracao_local` e
+  um `geracao_id` próprio, reaproveitando a validação, o `prompt_usado` e a escolha, sem migrar dados nem
+  mudar rotas. A 010 não cria nada da 021: sem fila, worker, GPU, `geracoes` ou candidatos.
 - **Alternativas:** limite de 2 GB, como o vídeo próprio. Rejeitado: uma tomada é curta, e um limite
   apertado protege o HD.
 
