@@ -18,6 +18,7 @@ import type { OpcoesGrafico } from "@/components/analytics/echarts";
 import { Grafico, type ItemTooltip } from "@/components/analytics/Grafico";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
+import { notaSemVideo } from "@/components/studio/fonteAnalytics";
 import { DireitoBadge } from "@/components/canais/DireitoBadge";
 import {
   formatCompacto,
@@ -267,6 +268,11 @@ export function OQueFunciona({ estado }: { estado: EstadoFiltroAnalytics }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {notaSemVideo(d?.contexto) && (
+        <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground" data-nota-studio>
+          {notaSemVideo(d?.contexto)}
+        </p>
+      )}
       {d && (excluidos > 0 || aguardando > 0) && (
         <p className="text-sm text-muted-foreground" data-excluidos={excluidos}>
           {excluidos > 0 && `Vídeos publicados fora do SociMan (sem vínculo), fora das análises de corte: ${formatNumero(excluidos)}; as hashtags usam todos os posts. `}

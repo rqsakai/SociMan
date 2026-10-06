@@ -9,7 +9,8 @@
   outras contas do perfil, ou de todas): com `contaId`, devolve só o radar daquela conta.
 
 Eixos: `views_por_post` (mediana da medida), `engajamento` (Δinterações ÷ Δviews no período),
-`frequencia` (posts por dia), `crescimento` (seguidores ganhos ÷ seguidores no início, fração),
+`frequencia` (posts por dia), `crescimento` (seguidores ganhos ÷ seguidores no início, fração;
+pelos totais diários, com o Studio, spec 020),
 `velocidade_1h` (mediana do marco de 1 h) e `acima_mediana` (fração dos posts medidos da conta
 acima da mediana de todos os posts medidos das contas do radar). Só leitura.
 """
@@ -17,16 +18,15 @@ acima da mediana de todos os posts medidos das contas do radar). Só leitura.
 import uuid
 from collections.abc import Sequence
 from dataclasses import replace
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from sociman_api.analytics import base, estatistica, schemas, visao_geral
 from sociman_api.analytics.base import Ganho, PostAnalisado
-from sociman_api.analytics.filtros import Filtro, Periodo
+from sociman_api.analytics.filtros import Filtro
 from sociman_api.canais.schemas import PerfilRef
-from sociman_api.metricas.models import FotoConta, Serie
 from sociman_api.perfis.models import Conta, Perfil
 
 ACIMA_DE = 200.0
@@ -43,27 +43,32 @@ def _ganhos_de(ganhos: dict[uuid.UUID, Ganho], conta_de: dict[uuid.UUID, uuid.UU
     return {vid: g for vid, g in ganhos.items() if conta_de.get(vid) in contas}
 
 
-def _seguidores(partes: Sequence[tuple[int | None, int]]) -> tuple[int | None, int]:
-    com = [v for v, _ in partes if v is not None]
-    return (sum(com) if com else None), sum(n for _, n in partes)
+def _das(totais: dict[uuid.UUID, dict[date, base.TotalDia]],
+         conta_da_serie: dict[uuid.UUID, uuid.UUID | None], contas: set[uuid.UUID]
+         ) -> dict[uuid.UUID, dict[date, base.TotalDia]]:
+    return {sid: t for sid, t in totais.items() if conta_da_serie.get(sid) in contas}
 
 
-def crescimento(db: Session, conta_id: uuid.UUID, periodo: Periodo) -> float | None:
-    """Seguidores ganhos ÷ seguidores no início (a última foto antes do início; sem ela, a
-    primeira do período), na série viva da conta. None sem foto ou com base zero."""
-    fotos = [(t, int(n)) for t, n in db.execute(
-        select(FotoConta.coletado_em, FotoConta.seguidores)
-        .join(Serie, Serie.id == FotoConta.serie_id)
-        .where(Serie.conta_id == conta_id, Serie.anonimizada_em.is_(None),
-               FotoConta.coletado_em < periodo.fim, FotoConta.seguidores.is_not(None))
-        .order_by(FotoConta.coletado_em, FotoConta.id))]
-    inicio = base.views_antes(fotos, periodo.ini)
-    if inicio is None:
-        no_periodo = [n for t, n in fotos if t >= periodo.ini]
-        inicio = no_periodo[0] if no_periodo else None
-    if not inicio:
+def crescimento(totais: dict[uuid.UUID, dict[date, base.TotalDia]]) -> float | None:
+    """Seguidores ganhos ÷ seguidores no início, nas séries da conta (spec 020: pelos totais
+    diários, com o Studio nos dias que a coleta não cobre). O início é o total no fim do 1º dia
+    com dado menos o ganho dele (sem Studio: a última foto antes do início ou, sem ela, a 1ª do
+    período). None sem dado ou com base zero."""
+    ganhos, inicio = 0, 0
+    com = False
+    for por_dia in totais.values():
+        dias = [t for _, t in sorted(por_dia.items()) if t.seguidores_dif is not None]
+        if not dias:
+            continue
+        com = True
+        ganhos += sum(t.seguidores_dif for t in dias)  # type: ignore[misc]
+        primeiro = dias[0]
+        if primeiro.seguidores_fim is None:
+            return None
+        inicio += primeiro.seguidores_fim - primeiro.seguidores_dif  # type: ignore[operator]
+    if not com or not inicio:
         return None
-    return (fotos[-1][1] - inicio) / inicio
+    return ganhos / inicio
 
 
 # ---- radar ----
@@ -81,9 +86,11 @@ def eixo(chave: str, valor: float | None, media: float | None) -> schemas.EixoRa
                              indice=min(indice, ACIMA_DE), acima=indice > ACIMA_DE)
 
 
-def radar(db: Session, filtro: Filtro, posts: Sequence[PostAnalisado],
+def radar(filtro: Filtro, posts: Sequence[PostAnalisado],
           posts_h1: Sequence[PostAnalisado], ganhos: dict[uuid.UUID, Ganho],
-          conta_de: dict[uuid.UUID, uuid.UUID | None], rotulos: dict[uuid.UUID, str]
+          conta_de: dict[uuid.UUID, uuid.UUID | None], rotulos: dict[uuid.UUID, str],
+          totais: dict[uuid.UUID, dict[date, base.TotalDia]],
+          conta_da_serie: dict[uuid.UUID, uuid.UUID | None]
           ) -> tuple[list[schemas.RadarConta] | None, str | None]:
     contas = sorted({p.conta_id for p in posts if p.conta_id is not None},
                     key=lambda c: rotulos[c])
@@ -104,7 +111,7 @@ def radar(db: Session, filtro: Filtro, posts: Sequence[PostAnalisado],
             "engajamento": sum(x.likes + x.comments + x.shares for x in g) / views
             if views else None,
             "frequencia": len(dela) / filtro.atual.dias,
-            "crescimento": crescimento(db, c, filtro.atual),
+            "crescimento": crescimento(_das(totais, conta_da_serie, {c})),
             "velocidade_1h": estatistica.mediana(h1),  # type: ignore[arg-type]
             "acima_mediana": sum(v > geral for v in medidos) / len(medidos)  # type: ignore
             if medidos and geral is not None else None,
@@ -127,29 +134,28 @@ def calcular(db: Session, filtro: Filtro, agora: datetime | None = None) -> sche
     ganhos = base.ganhos(db, largo)
     ganhos_ant = base.ganhos(db, largo, largo.anterior)
     conta_de = {v.video_id: v.conta_id for v in base.videos_escopo(db, largo)}
+    series = base.series_escopo(db, largo)
+    conta_da_serie = {s.serie_id: s.conta_id for s in series}
+    totais = base.totais_diarios(db, largo, series=series)
+    totais_ant = base.totais_diarios(db, largo, largo.anterior, series)
     com_dado = {p.conta_id for p in posts if p.conta_id is not None} | {
-        conta_de[vid] for vid, g in ganhos.items()
-        if g.views > 0 and conta_de.get(vid) is not None}
+        conta_da_serie[sid] for sid, por_dia in totais.items()
+        if conta_da_serie[sid] is not None and sum(t.views or 0 for t in por_dia.values()) > 0}
     rows = db.execute(select(Conta, Perfil).join(Perfil, Perfil.id == Conta.perfil_id)
                       .where(Conta.id.in_(com_dado))).all() if com_dado else []
     info = {c.id: (c, p) for c, p in rows}
     rotulos = {cid: f"@{c.handle}" for cid, (c, _) in info.items()}
 
-    def indicadores(contas: set[uuid.UUID],
-                    seg: dict[uuid.UUID, tuple[tuple[int | None, int], ...]]
-                    ) -> list[schemas.Indicador]:
+    def indicadores(contas: set[uuid.UUID]) -> list[schemas.Indicador]:
         atual = visao_geral.valores(_so(posts, contas), _ganhos_de(ganhos, conta_de, contas),
-                                     _seguidores([seg[c][0] for c in contas]))
+                                    _das(totais, conta_da_serie, contas))
         antes = visao_geral.valores(_so(anteriores, contas),
-                                     _ganhos_de(ganhos_ant, conta_de, contas),
-                                     _seguidores([seg[c][1] for c in contas]))
+                                    _ganhos_de(ganhos_ant, conta_de, contas),
+                                    _das(totais_ant, conta_da_serie, contas))
         return visao_geral.indicadores(atual, antes)
 
     na_tabela = sorted((c for c in info if filtro.conta_id in (None, c)),
                        key=lambda c: rotulos[c])
-    seg = {c: (visao_geral.seguidores(db, replace(largo, conta_id=c), largo.atual),
-               visao_geral.seguidores(db, replace(largo, conta_id=c), largo.anterior))
-           for c in na_tabela}
     contas_out = []
     perfis: dict[uuid.UUID, tuple[Perfil, set[uuid.UUID]]] = {}
     for c in na_tabela:
@@ -157,15 +163,16 @@ def calcular(db: Session, filtro: Filtro, agora: datetime | None = None) -> sche
         ref = PerfilRef(id=perfil.id, name=perfil.name, slug=perfil.slug)
         contas_out.append(schemas.ContaLinha(conta_id=c, rotulo=rotulos[c], perfil=ref,
                                              rede=conta.platform,
-                                             indicadores=indicadores({c}, seg)))
+                                             indicadores=indicadores({c})))
         perfis.setdefault(perfil.id, (perfil, set()))[1].add(c)
     perfis_out = [schemas.PerfilLinha(perfil=PerfilRef(id=p.id, name=p.name, slug=p.slug),
-                                      indicadores=indicadores(cs, seg))
+                                      indicadores=indicadores(cs))
                   for p, cs in sorted(perfis.values(), key=lambda x: x[0].name)]
 
     h1 = posts if filtro.medida == "h1" else base.posts(db, replace(largo, medida="h1"),
                                                          agora=agora)
-    radar_out, motivo = radar(db, filtro, posts, h1, ganhos, conta_de, rotulos)
+    radar_out, motivo = radar(filtro, posts, h1, ganhos, conta_de, rotulos, totais,
+                              conta_da_serie)
     contexto = base.contexto(filtro, base.posts(db, filtro, agora=agora)
                              if filtro.conta_id is not None else posts)
     return schemas.ContasOut(contexto=contexto, contas=contas_out, perfis=perfis_out,

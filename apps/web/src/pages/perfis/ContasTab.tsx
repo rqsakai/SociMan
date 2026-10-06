@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Conta, CreateContaRequest, Perfil, UpdateContaRequest } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, ExternalLink, History, Loader2, MessageSquareQuote, Pencil, Plus, Save, X } from "lucide-react";
+import { Archive, ArchiveRestore, ExternalLink, FileClock, History, Loader2, MessageSquareQuote, Pencil, Plus, Save, X } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
@@ -21,6 +21,7 @@ import { ConexaoCard } from "../../components/publicacao/ConexaoCard";
 import { api } from "../../lib/api";
 import { useEhDono } from "../../lib/conteudos";
 import { guiaContaPath } from "../../lib/guia";
+import { studioContaPath } from "../../lib/studio";
 import { INTERVALO_MAX } from "../../lib/postagem";
 import { contaForm, isUrl, type ContaForm } from "../../lib/forms";
 import {
@@ -128,6 +129,15 @@ export function ContasTab({ perfil, contas, onChanged, onError, onActionStart }:
             Guia de comunicação
           </Link>
         </Button>
+        {/* spec 020: histórico importado do TikTok Studio (dono importa; membro só vê) */}
+        {conta.platform === "tiktok" && (
+          <Button asChild variant="ghost" size="sm">
+            <Link to={studioContaPath(conta.id)}>
+              <FileClock aria-hidden="true" />
+              Histórico do Studio
+            </Link>
+          </Button>
+        )}
       </>
     );
   }

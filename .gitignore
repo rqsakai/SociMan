@@ -25,3 +25,11 @@ docker/certs/ca/*
 !docker/certs/ca/.gitkeep
 .playwright-mcp/
 .e2e/
+# spec 020: exportações reais do TikTok Studio (têm o @ e, no Conteúdo, títulos e links)
+Overview_*.zip
+Followers_*.zip
+Content_*.zip
+Viewers_*.zip
+Overview.csv
+FollowerHistory.csv
+Content.csv

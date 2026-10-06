@@ -1,7 +1,7 @@
 """Exportação do dataset de métricas (spec 016, research R16; FR-008, SC-005).
 
-Um ZIP com `fotos_videos`, `videos`, `fotos_conta` (CSV ou JSON Lines), `dicionario.csv` e
-`LEIAME.txt`. Cabeçalhos e ordem vêm de `metricas/dicionario.py` (fonte única).
+Um ZIP com `fotos_videos`, `videos`, `fotos_conta`, `studio_dias` (spec 020; CSV ou JSON Lines),
+`dicionario.csv` e `LEIAME.txt`. Cabeçalhos e ordem vêm de `metricas/dicionario.py` (fonte única).
 
 - CSV em UTF-8 **com BOM**, vírgula, ponto decimal e datas ISO 8601 com o offset de São Paulo;
   JSON Lines com as mesmas chaves;
@@ -37,6 +37,8 @@ from sociman_api.config import get_settings
 from sociman_api.errors import ApiError
 from sociman_api.metricas import anonimizar, consulta, dicionario
 from sociman_api.metricas.models import FotoConta, FotoVideo, Serie, VideoRede
+from sociman_api.metricas.studio import efetivo
+from sociman_api.metricas.studio.models import DiaStudio, Importacao, ImportacaoEstado
 from sociman_api.perfis.models import Conta
 
 Formato = Literal["csv", "jsonl"]
@@ -264,6 +266,40 @@ def _fotos_conta(db: Session, filtro: Filtro) -> Iterator[dict[str, Any]]:
                "videos": f.videos}
 
 
+def _studio_dias(db: Session, filtro: Filtro) -> Iterator[dict[str, Any]]:
+    """Os dias importados do Studio (spec 020, R10) das importações ativas, no período, com o
+    indicador de qual valor vale no analytics (`efetivo_*`)."""
+    linhas = db.execute(
+        select(DiaStudio, Importacao.criada_em, Serie, Conta.handle)
+        .join(Importacao, Importacao.id == DiaStudio.importacao_id)
+        .join(Serie, Serie.id == DiaStudio.serie_id)
+        .outerjoin(Conta, Conta.id == Serie.conta_id)
+        .where(Importacao.estado == ImportacaoEstado.ativa, DiaStudio.dia >= filtro.de,
+               DiaStudio.dia <= filtro.ate, *_series(filtro))
+        .order_by(DiaStudio.serie_id, DiaStudio.dia, Importacao.criada_em, Importacao.id)).all()
+    ids = {d.serie_id for d, *_ in linhas}
+    efetivos = efetivo.dias(db, ids, filtro.de, filtro.ate)
+    primeiros = efetivo.primeiro_dia_coberto(db, ids)
+    for d, importada_em, serie, handle in linhas:
+        anonima = serie.anonimizada_em is not None
+        e = efetivos.get(d.serie_id, {}).get(d.dia)
+        livre = not efetivo.coberto(d.dia, primeiros[d.serie_id])
+        vg = e.visao_geral if e is not None else None
+        seg = e.seguidores if e is not None else None
+        yield {"serie_ref": serie.rotulo if anonima else str(serie.id),
+               "conta": serie.rotulo if anonima or not handle else f"@{handle}",
+               "dia": d.dia.isoformat(), "importacao_id": d.importacao_id,
+               "importada_em": importada_em, "views": d.views,
+               "visitas_perfil": d.visitas_perfil, "likes": d.likes, "comments": d.comments,
+               "shares": d.shares, "seguidores": d.seguidores, "seguidores_dif": d.seguidores_dif,
+               "efetivo_visao_geral": (livre and vg is not None
+                                       and vg.importacao_id == d.importacao_id)
+               if d.tem_visao_geral else None,
+               "efetivo_seguidores": (livre and seg is not None
+                                      and seg.importacao_id == d.importacao_id)
+               if d.tem_seguidores else None}
+
+
 # ---- montagem ----
 
 def estimativa(db: Session, filtro: Filtro) -> int:
@@ -304,6 +340,7 @@ def _leiame(filtro: Filtro, agora: datetime) -> str:
         f"- fotos_videos.{filtro.formato}: uma linha por foto de vídeo",
         f"- videos.{filtro.formato}: uma linha por vídeo (características e rótulos)",
         f"- fotos_conta.{filtro.formato}: uma linha por foto da conta",
+        f"- studio_dias.{filtro.formato}: uma linha por dia importado do TikTok Studio",
         "- dicionario.csv: o significado de cada coluna",
         "",
         "Avisos:",
@@ -320,7 +357,8 @@ def exportar(db: Session, filtro: Filtro, agora: datetime | None = None) -> IO[b
         with zipfile.ZipFile(saida, "w", zipfile.ZIP_DEFLATED) as zf:
             for arquivo, linhas in (("fotos_videos", _fotos_videos(db, filtro)),
                                     ("videos", _videos(db, filtro, agora)),
-                                    ("fotos_conta", _fotos_conta(db, filtro))):
+                                    ("fotos_conta", _fotos_conta(db, filtro)),
+                                    ("studio_dias", _studio_dias(db, filtro))):
                 escritor = _Escritor(zf, arquivo, filtro.formato)
                 for linha in linhas:
                     escritor.linha(linha)

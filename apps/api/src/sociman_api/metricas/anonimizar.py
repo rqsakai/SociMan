@@ -34,6 +34,7 @@ from sociman_api.metricas.models import (
     VideoRede,
     anonima_seq,
 )
+from sociman_api.metricas.studio.models import Importacao
 from sociman_api.perfis.models import Conta, Perfil
 from sociman_api.postagem.models import Postagem
 
@@ -173,6 +174,16 @@ def serie(db: Session, alvo: Serie, actor: ActorLike, agora: datetime | None = N
     alvo.lista_proxima_em = alvo.conta_proxima_em = None
     alvo.ultimo_erro_codigo = alvo.ultimo_erro_motivo = alvo.ultimo_erro_em = None
     alvo.adiar_ate = None
+    # 5. spec 020 (R9): as importações do Studio perdem os nomes dos arquivos (têm o @); os dias
+    # importados ficam (só números e dia; o trigger só de inserção não dispara)
+    db.execute(update(Importacao).where(Importacao.serie_id == alvo.id)
+               .values(nomes_arquivos=None).execution_options(synchronize_session=False))
     db.flush()
     db.expire_all()
     return contagem(db, alvo)
+
+
+def importacoes(db: Session, serie_id: uuid.UUID) -> int:
+    """Quantas importações do Studio a série tem (o `details.importacoes` da anonimização)."""
+    return int(db.scalar(select(func.count()).select_from(Importacao)
+                         .where(Importacao.serie_id == serie_id)) or 0)

@@ -7,6 +7,7 @@ fica preenchida. A série anônima não é mais coletada, e reconectar cria outr
 import uuid
 from datetime import timedelta
 
+from atores import ator_fake
 from sqlalchemy import select, text
 
 from integration.conexao_helpers import app_tiktok, conectar  # noqa: F401
@@ -144,7 +145,7 @@ def test_desconectar_exige_confirmacao_e_anonimiza_na_mesma_transacao(m):  # noq
         EntityVersion.entity_type == "conexao", EntityVersion.entity_id == conexao.id,
         EntityVersion.details["acao"].astext == "metricas_anonimizadas")).one()
     assert versao.details == {"acao": "metricas_anonimizadas", "videos": videos,
-                              "fotos": fotos}
+                              "fotos": fotos, "importacoes": 0}  # spec 020 (R9)
     assert str(serie.id) not in str(versao.details)
 
     # A série anônima não é mais coletada; reconectar cria outra.
@@ -171,8 +172,7 @@ def test_membro_e_mcp_nao_desconectam(m, membro):  # noqa: F811
     _dados(m)
     r = _desconectar(m, h=membro[1], confirmoAnonimizar=True)
     assert r.status_code == 403 and err(r) == "somente_dono"
-    app.dependency_overrides[current_user] = lambda: Actor(kind="mcp_client",
-                                                           user_id=m.dono.id, user=m.dono)
+    app.dependency_overrides[current_user] = lambda: ator_fake("mcp_client", m.dono)
     r = _desconectar(m, confirmoAnonimizar=True)
     del app.dependency_overrides[current_user]
     assert r.status_code == 403 and err(r) == "somente_humano"

@@ -9,6 +9,10 @@ destino ∪ as da legenda, normalizadas por `ia.guia.normalizar`.
 
 Escopo: `contaId` → a série viva da conta; `perfilId` → as contas do perfil; sem os dois, todas
 as séries (as anônimas entram, rotuladas "Conta anônima N"); `rede` filtra a série. Só leitura.
+
+Spec 020: os totais diários da conta (`totais_diarios`) somam por dia e por série e trocam pelo
+histórico importado do Studio os dias que a coleta não cobre inteiros (`metricas.studio.efetivo`,
+só leitura). Sem Studio, a soma por dia dá os mesmos números do delta do período.
 """
 
 import bisect
@@ -16,7 +20,7 @@ import re
 import uuid
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -34,6 +38,7 @@ from sociman_api.envios.models import Envio
 from sociman_api.ia.guia import normalizar
 from sociman_api.metricas import anonimizar, consulta
 from sociman_api.metricas.models import FotoVideo, Serie, VideoRede
+from sociman_api.metricas.studio import efetivo
 from sociman_api.perfis.models import Conta, Platform
 from sociman_api.postagem.models import Postagem
 
@@ -126,7 +131,11 @@ def amostra(n: int, minimo: int) -> schemas.Amostra:
     return schemas.Amostra(n=a.n, minimo=a.minimo, suficiente=a.suficiente, faltam=a.faltam)
 
 
-def contexto(filtro: Filtro, posts: Sequence[PostAnalisado]) -> schemas.Contexto:
+SEM_STUDIO = schemas.ContextoStudio(dias=0, series=0)
+
+
+def contexto(filtro: Filtro, posts: Sequence[PostAnalisado],
+             studio: schemas.ContextoStudio = SEM_STUDIO) -> schemas.Contexto:
     return schemas.Contexto(
         de=filtro.atual.de, ate=filtro.atual.ate, anterior_de=filtro.anterior.de,
         anterior_ate=filtro.anterior.ate, medida=filtro.medida, fuso=fuso(),
@@ -134,7 +143,8 @@ def contexto(filtro: Filtro, posts: Sequence[PostAnalisado]) -> schemas.Contexto
         fora_do_sociman=sum(not p.vinculado and not p.anonima for p in posts),
         minimos=schemas.Minimos(grupo=estatistica.MIN_GRUPO,
                                 correlacao=estatistica.MIN_CORRELACAO,
-                                contas_radar=estatistica.MIN_CONTAS_RADAR))
+                                contas_radar=estatistica.MIN_CONTAS_RADAR),
+        studio=studio)
 
 
 # ---- escopo ----
@@ -329,28 +339,106 @@ def dias(periodo: Periodo) -> list[date]:
     return [periodo.de + timedelta(days=k) for k in range(periodo.dias)]
 
 
-def inicio_do_dia(dia: date) -> datetime:
-    return datetime.combine(dia, time.min, ZoneInfo(fuso()))
+# ---- totais diários da conta, com o Studio (spec 020) ----
+
+@dataclass(frozen=True)
+class SerieEscopo:
+    serie_id: uuid.UUID
+    conta_id: uuid.UUID | None  # null se anônima
+    rotulo: str
+    tem_videos: bool
 
 
-def ganhos_por_dia(db: Session, filtro: Filtro, periodo: Periodo | None = None
-                   ) -> tuple[list[VideoEscopo], dict[date, dict[uuid.UUID, int]]]:
-    """Views ganhas por dia de `APP_TZ` e por vídeo do escopo, com a mesma regra de `ganhos`
-    (última foto antes do fim do dia − última antes do início; 0 sem foto antes; nunca
-    negativo). Vídeo sem foto até o fim do dia não entra naquele dia."""
+@dataclass(frozen=True)
+class TotalDia:
+    """Os totais de um dia de uma série: os ganhos da coleta ou o dia do Studio (FR-013)."""
+
+    views: int | None  # None: sem dado no dia
+    likes: int | None
+    comments: int | None
+    shares: int | None
+    seguidores_dif: int | None
+    seguidores_fim: int | None  # total no fim do dia (base do crescimento)
+    visitas_perfil: int | None  # só o Studio informa
+    fonte: str  # coletado | studio (views, curtidas, comentários, compartilhamentos)
+    fonte_seguidores: str  # coletado | studio
+    comparacao: int | None  # as views da outra fonte, quando existem
+
+
+def series_escopo(db: Session, filtro: Filtro) -> list[SerieEscopo]:
+    """As séries do escopo (conta, perfil e rede), inclusive as sem vídeo."""
+    tem = select(VideoRede.id).where(VideoRede.serie_id == Serie.id).exists()
+    stmt = (select(Serie.id, Serie.rotulo, Serie.anonimizada_em, Conta.id.label("conta_id"),
+                   Conta.handle, tem.label("tem_videos"))
+            .select_from(Serie).outerjoin(Conta, Conta.id == Serie.conta_id))
+    if filtro.conta_id is not None:
+        stmt = stmt.where(Serie.conta_id == filtro.conta_id)
+    elif filtro.perfil_id is not None:
+        stmt = stmt.where(Conta.perfil_id == filtro.perfil_id)
+    if filtro.rede is not None:
+        stmt = stmt.where(Serie.rede == filtro.rede)
+    out = []
+    for r in db.execute(stmt.order_by(Serie.criada_em, Serie.id)):
+        anonima = r.anonimizada_em is not None or r.handle is None
+        out.append(SerieEscopo(r.id, None if anonima else r.conta_id,
+                               (r.rotulo or "Conta anônima") if anonima else f"@{r.handle}",
+                               bool(r.tem_videos)))
+    return out
+
+
+def _total(dia: date, api: efetivo.DiaApi, studio: dict[date, efetivo.DiaEfetivo],
+           primeiro: date | None) -> TotalDia:
+    e = studio.get(dia)
+    vg = e.visao_geral if e is not None else None
+    seg = e.seguidores if e is not None else None
+    livre = not efetivo.coberto(dia, primeiro)
+    api_views = api.views if api.tem_dado else None
+    if livre and vg is not None:
+        fonte, comparacao = efetivo.STUDIO, api_views
+        views, likes, comments, shares = vg.views, vg.likes, vg.comments, vg.shares
+    else:
+        fonte, comparacao = efetivo.COLETADO, vg.views if vg is not None else None
+        views = api_views
+        likes, comments, shares = (api.likes, api.comments, api.shares) if api.tem_dado \
+            else (None, None, None)
+    if livre and seg is not None:
+        fonte_seg = efetivo.STUDIO
+        dif, fim = efetivo.ganho_seguidores(dia, studio), seg.seguidores
+    else:
+        fonte_seg, dif, fim = efetivo.COLETADO, api.seguidores_dif, api.seguidores_fim
+    return TotalDia(views, likes, comments, shares, dif, fim,
+                    vg.visitas_perfil if vg is not None else None, fonte, fonte_seg, comparacao)
+
+
+def totais_diarios(db: Session, filtro: Filtro, periodo: Periodo | None = None,
+                   series: Sequence[SerieEscopo] | None = None
+                   ) -> dict[uuid.UUID, dict[date, TotalDia]]:
+    """Por série do escopo e por dia do período: os ganhos da coleta (`efetivo.api_por_dia`) ou,
+    nos dias que a coleta não cobre inteiros e que têm Studio ativo, o dia do Studio."""
     periodo = periodo or filtro.atual
-    videos = videos_escopo(db, filtro)
-    fotos = fotos_views(db, [v.video_id for v in videos], periodo.fim)
-    out: dict[date, dict[uuid.UUID, int]] = {}
-    for dia in dias(periodo):
-        ini, fim = inicio_do_dia(dia), inicio_do_dia(dia + timedelta(days=1))
-        do_dia: dict[uuid.UUID, int] = {}
-        for vid, fs in fotos.items():
-            depois = views_antes(fs, fim)
-            if depois is not None:
-                do_dia[vid] = _delta(depois, views_antes(fs, ini))
-        out[dia] = do_dia
-    return videos, out
+    series = series_escopo(db, filtro) if series is None else series
+    ids = [s.serie_id for s in series]
+    api = efetivo.api_por_dia(db, ids, periodo.de, periodo.ate)
+    # a véspera entra para o ganho de seguidores do 1º dia quando falta a diferença
+    studio = efetivo.dias(db, ids, periodo.de - timedelta(days=1), periodo.ate)
+    primeiros = efetivo.primeiro_dia_coberto(db, ids)
+    return {sid: {dia: _total(dia, api[sid][dia], studio.get(sid, {}), primeiros[sid])
+                  for dia in dias(periodo)} for sid in ids}
+
+
+def uso_studio(db: Session, filtro: Filtro) -> schemas.ContextoStudio:
+    """Dias distintos do período em que alguma série do escopo usou o Studio, e quantas séries."""
+    ids = [s.serie_id for s in series_escopo(db, filtro)]
+    studio = efetivo.dias(db, ids, filtro.atual.de, filtro.atual.ate)
+    primeiros = efetivo.primeiro_dia_coberto(db, ids)
+    usados: set[date] = set()
+    series: set[uuid.UUID] = set()
+    for sid, por_dia in studio.items():
+        for dia in por_dia:
+            if not efetivo.coberto(dia, primeiros[sid]):
+                usados.add(dia)
+                series.add(sid)
+    return schemas.ContextoStudio(dias=len(usados), series=len(series))
 
 
 def resumo(p: PostAnalisado, views_periodo: int = 0) -> schemas.PostResumo:

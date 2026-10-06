@@ -35,6 +35,8 @@ ChaveEtapa = Literal["enviados", "cortes", "aprovados", "publicados", "acima_pat
 TipoAlerta = Literal["estagnado", "destaque", "sem_coleta", "vinculo_a_confirmar"]
 Severidade = Literal["atencao", "info", "positivo"]
 TipoAlvo = Literal["video", "serie", "destino"]
+FonteDia = Literal["coletado", "studio"]  # spec 020
+FonteCalendario = Literal["coletado", "studio", "misto"]
 
 
 # ---- comuns ----
@@ -43,6 +45,13 @@ class Minimos(CamelModel):
     grupo: int
     correlacao: int
     contas_radar: int
+
+
+class ContextoStudio(CamelModel):
+    """Spec 020: dias distintos do período em que alguma série usou o histórico do Studio."""
+
+    dias: int
+    series: int
 
 
 class Contexto(CamelModel):
@@ -56,6 +65,7 @@ class Contexto(CamelModel):
     aguardando: int  # idade < marco da medida: fora das comparações
     fora_do_sociman: int  # sem vínculo com um destino
     minimos: Minimos
+    studio: ContextoStudio  # spec 020
 
 
 class Amostra(CamelModel):
@@ -79,6 +89,8 @@ class Indicador(CamelModel):
     anterior: float | None
     variacao_pct: float | None  # fração; null = "sem base de comparação"
     n: int
+    dias_studio: int  # spec 020: dias do período vindos do Studio (views, curtidas,
+    # engajamento e seguidores; 0 nos demais)
 
 
 class Insight(CamelModel):
@@ -125,6 +137,11 @@ class ViewsConta(CamelModel):
     conta_id: UUID | None
     rotulo: str
     views: int
+    # Spec 020: a fonte do dia, as views da outra fonte (comparação) e as visitas ao perfil
+    # (só o Studio informa).
+    fonte: FonteDia
+    comparacao: int | None
+    visitas_perfil: int | None
 
 
 class DiaSerie(CamelModel):
@@ -163,6 +180,8 @@ class DiaCalendario(CamelModel):
     dia: date
     posts: int
     views: int
+    fonte: FonteCalendario  # spec 020: `misto` com contas de fontes diferentes
+    contas_studio: int
 
 
 class QuandoPostarOut(CamelModel):

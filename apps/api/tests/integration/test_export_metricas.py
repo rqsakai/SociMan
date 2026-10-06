@@ -9,6 +9,7 @@ import zipfile
 from datetime import timedelta
 
 import pytest
+from atores import ator_fake
 from sqlalchemy import update
 
 from integration.metricas_helpers import _agora, err, semear
@@ -26,7 +27,7 @@ from sociman_api.metricas import anonimizar, dicionario, export
 from sociman_api.metricas.models import Serie, VideoRede, VinculoMetodo
 from sociman_api.postagem.models import DestinoEstado, Postagem
 
-ARQUIVOS = {"fotos_videos", "videos", "fotos_conta"}
+ARQUIVOS = {"fotos_videos", "videos", "fotos_conta"}  # studio_dias: test_studio_export (020)
 
 
 @pytest.fixture
@@ -82,8 +83,7 @@ def _ligar(db, video_id, conteudo_id, conta_id, dono) -> Postagem:
 def test_so_dono_humano_exporta(client, base, membro):  # noqa: F811
     r = _exportar(client, membro[1], formato="csv", **_periodo())
     assert r.status_code == 403
-    app.dependency_overrides[current_user] = lambda: Actor(
-        kind="mcp_client", user_id=base["dono"].id, user=base["dono"])
+    app.dependency_overrides[current_user] = lambda: ator_fake("mcp_client", base["dono"])
     r = _exportar(client, base["h"], formato="csv", **_periodo())
     del app.dependency_overrides[current_user]
     assert r.status_code == 403
@@ -112,7 +112,7 @@ def test_csv_com_cabecalho_do_dicionario_bom_e_datas_de_sp(client, db, base):
         f'attachment; filename="sociman-metricas-{de}-{ate}.zip"'
     zf = _zip(r)
     assert set(zf.namelist()) == {"fotos_videos.csv", "videos.csv", "fotos_conta.csv",
-                                  "dicionario.csv", "LEIAME.txt"}
+                                  "studio_dias.csv", "dicionario.csv", "LEIAME.txt"}
     for arquivo in ARQUIVOS:
         assert _cabecalho(zf, f"{arquivo}.csv") == dicionario.colunas(arquivo)
     leiame = zf.read("LEIAME.txt").decode("utf-8-sig")

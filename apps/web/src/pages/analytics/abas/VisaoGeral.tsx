@@ -12,17 +12,28 @@
  *   sem período na URL. A tabela alternativa e o CSV usam as linhas já carregadas (mesma query).
  */
 import { Film, Hourglass, Lightbulb } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Amostra } from "@/components/analytics/Amostra";
 import { CardAnalytics } from "@/components/analytics/CardAnalytics";
 import { corDoSlot, ROTULO_OUTROS, useOrdemContas, type OrdemContas } from "@/components/analytics/coresContas";
 import type { OpcoesGrafico } from "@/components/analytics/echarts";
-import { Grafico } from "@/components/analytics/Grafico";
+import { Grafico, type ItemTooltip, type LinhaTooltip } from "@/components/analytics/Grafico";
 import { Indicador } from "@/components/analytics/Indicador";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
 import { RankingTable, rankingFilters, type EscopoRanking } from "@/components/metricas/RankingTable";
+import {
+  comparacaoDe,
+  diasStudioDe,
+  fonteDe,
+  fonteLabel,
+  NOTA_FUSO_STUDIO,
+  studioDoContexto,
+  visitasDe,
+  type FonteCalendario,
+} from "@/components/studio/fonteAnalytics";
+import { Button } from "@/components/ui/button";
 import { useFiltroUrl } from "@/components/conteudos/FiltrosConteudos";
 import {
   formatCompacto,
@@ -39,6 +50,8 @@ import {
   type Medida,
 } from "@/lib/analytics";
 import { linkDoVideo, nomeDaConta, origemMetricasLabel, useRanking, type MarcoValor } from "@/lib/metricas";
+import { useAuth } from "@/lib/authStore";
+import { studioContaPath, useCoberturaStudio } from "@/lib/studio";
 import { formatDateTime } from "@/lib/tz";
 import { cn } from "@/lib/utils";
 
@@ -70,62 +83,140 @@ const formatoIndicador = (chave: Chave) => (chave === "engajamento" ? formatEnga
 
 // ---------------------------------------------------------------------------------------------
 // Série diária: uma linha por conta com cor (slot 0..7); o resto (9ª em diante, anônimas) soma em "Outros".
+// Spec 020 (FR-019, R12): uma conta com dias importados do Studio vira duas séries com a mesma cor,
+// "— coletado" (contínua) e "— Studio" (tracejada, opacidade 0,6), com null nos dias da outra fonte.
+// Sem Studio, a série é a mesma da 019. O tooltip traz a fonte e o valor da outra (comparação).
 
 interface SerieConta {
+  conta: string;
   nome: string;
   slot: number | null;
-  valores: number[];
+  studio: boolean;
+  valores: (number | null)[];
+  comparacao: (number | null)[];
 }
 
-function serieDiaria(dados: AnalyticsVisaoGeral | undefined, ordem: OrdemContas, tema: TemaGraficos, de: string, ate: string) {
+const nomeDaSerie = (s: SerieConta, comStudio: Set<string>) => (s.studio ? `${s.nome} — Studio` : comStudio.has(s.conta) ? `${s.nome} — coletado` : s.nome);
+
+function serieDiaria(dados: AnalyticsVisaoGeral | undefined, ordem: OrdemContas, tema: TemaGraficos, de: string, ate: string, comVisitas: boolean) {
   const serie = dados?.serieDiaria ?? [];
+  const chaveConta = (c: { contaId?: string | null }) => {
+    const slot = ordem.slot(c.contaId);
+    return slot === null ? ROTULO_OUTROS : (c.contaId as string);
+  };
+  const comStudio = new Set<string>();
+  for (const d of serie) for (const c of d.porConta) if (fonteDe(c) === "studio") comStudio.add(chaveConta(c));
+
   const contas = new Map<string, SerieConta>();
+  const porConta = new Map<string, { nome: string; slot: number | null; valores: number[] }>();
+  const fontes: string[] = [];
+  const visitas: (number | null)[] = [];
   serie.forEach((d, i) => {
+    const doDia = new Set<string>();
+    let visitasDia: number | null = null;
     for (const c of d.porConta) {
       const slot = ordem.slot(c.contaId);
-      const chave = slot === null ? ROTULO_OUTROS : (c.contaId as string);
+      const conta = chaveConta(c);
+      const nome = slot === null ? ROTULO_OUTROS : c.rotulo;
+      const studio = fonteDe(c) === "studio";
+      const chave = studio ? `${conta}|studio` : conta;
       let s = contas.get(chave);
       if (!s) {
-        s = { nome: slot === null ? ROTULO_OUTROS : c.rotulo, slot, valores: serie.map(() => 0) };
+        // sem Studio na conta, a linha fica em 0 nos dias sem dado (como na 019)
+        const vazio = comStudio.has(conta) ? null : 0;
+        s = { conta, nome, slot, studio, valores: serie.map(() => vazio), comparacao: serie.map(() => null) };
         contas.set(chave, s);
       }
-      s.valores[i]! += c.views;
+      s.valores[i] = (s.valores[i] ?? 0) + c.views;
+      if (slot !== null) s.comparacao[i] = comparacaoDe(c);
+      let t = porConta.get(conta);
+      if (!t) {
+        t = { nome, slot, valores: serie.map(() => 0) };
+        porConta.set(conta, t);
+      }
+      t.valores[i]! += c.views;
+      doDia.add(fonteDe(c));
+      const v = visitasDe(c);
+      if (v !== null) visitasDia = (visitasDia ?? 0) + v;
     }
+    fontes.push(doDia.size > 1 ? "misto" : (doDia.values().next().value ?? "coletado"));
+    visitas.push(visitasDia);
   });
-  // ordem da legenda: pelo slot (estável), "Outros" por último
-  const series = [...contas.values()].sort((a, b) => (a.slot ?? 99) - (b.slot ?? 99));
-  const total = series.reduce((t, s) => t + s.valores.reduce((x, y) => x + y, 0), 0);
+  // ordem da legenda: pelo slot (estável), "Outros" por último; o coletado antes do Studio
+  const series = [...contas.values()].sort((a, b) => (a.slot ?? 99) - (b.slot ?? 99) || Number(a.studio) - Number(b.studio));
+  const colunas = [...porConta.values()].sort((a, b) => (a.slot ?? 99) - (b.slot ?? 99));
+  const total = colunas.reduce((t, s) => t + s.valores.reduce((x, y) => x + y, 0), 0);
+  const temStudio = comStudio.size > 0;
+  const temVisitas = visitas.some((v) => v !== null);
   const tabela: DadosTabela = {
-    colunas: [{ titulo: "Dia" }, ...series.map((s) => ({ titulo: s.nome, numerica: true }))],
-    linhas: serie.map((d, i) => [d.dia, ...series.map((s) => s.valores[i]!)]),
+    colunas: [
+      { titulo: "Dia" },
+      ...colunas.map((s) => ({ titulo: s.nome, numerica: true })),
+      ...(temStudio ? [{ titulo: "Fonte" }] : []),
+      ...(temVisitas ? [{ titulo: "Visitas ao perfil", numerica: true, secundaria: true }] : []),
+    ],
+    linhas: serie.map((d, i) => [d.dia, ...colunas.map((s) => s.valores[i]!), ...(temStudio ? [fontes[i]!] : []), ...(temVisitas ? [visitas[i] ?? null] : [])]),
   };
-  const varios = series.length > 1;
+  const linhasVisiveis = series.length + (comVisitas && temVisitas ? 1 : 0);
+  const varios = linhasVisiveis > 1;
   const opcoes: OpcoesGrafico = {
     grid: { left: 8, right: 16, top: varios ? 36 : 12, bottom: 8, containLabel: true },
     legend: varios ? { top: 0, type: "scroll", icon: "roundRect", itemWidth: 14, itemHeight: 3 } : undefined,
     tooltip: { trigger: "axis" },
     xAxis: { type: "category", boundaryGap: false, data: serie.map((d) => diaCurto(d.dia)) },
     yAxis: { type: "value", axisLabel: { formatter: (v: number) => formatCompacto(v) } },
-    series: series.map((s) => {
-      const cor = corDoSlot(tema, s.slot);
-      return {
-        type: "line",
-        name: s.nome,
-        data: s.valores,
-        showSymbol: serie.length <= 31,
-        symbolSize: 8,
-        lineStyle: { width: 2, color: cor },
-        itemStyle: { color: cor, borderColor: tema.superficie, borderWidth: 2 },
-        emphasis: { focus: "series" },
-      };
-    }),
+    series: [
+      ...series.map((s) => {
+        const cor = corDoSlot(tema, s.slot);
+        return {
+          type: "line" as const,
+          name: nomeDaSerie(s, comStudio),
+          data: s.valores,
+          showSymbol: serie.length <= 31,
+          symbolSize: 8,
+          lineStyle: { width: 2, color: cor, type: s.studio ? ("dashed" as const) : ("solid" as const), opacity: s.studio ? 0.6 : 1 },
+          itemStyle: { color: cor, borderColor: tema.superficie, borderWidth: 2, opacity: s.studio ? 0.6 : 1 },
+          emphasis: { focus: "series" as const },
+        };
+      }),
+      ...(comVisitas && temVisitas
+        ? [
+            {
+              type: "line" as const,
+              name: "Visitas ao perfil",
+              data: visitas,
+              showSymbol: false,
+              lineStyle: { width: 1.5, color: tema.textoFraco, type: "dotted" as const },
+              itemStyle: { color: tema.textoFraco },
+            },
+          ]
+        : []),
+    ],
   };
-  const nomes = series.map((s) => s.nome).join(", ");
+  // tooltip: o valor de cada série no dia, com a fonte e a outra fonte para comparar
+  const tooltip = (itens: ItemTooltip[]) => {
+    const i = itens[0]?.dataIndex;
+    if (i === undefined) return null;
+    const linhas: LinhaTooltip[] = [];
+    for (const p of itens) {
+      if (p.value === null || p.value === undefined) continue;
+      const s = series[p.seriesIndex ?? -1];
+      linhas.push({ rotulo: p.seriesName ?? "", valor: formatNumero(p.value as number), cor: typeof p.color === "string" ? p.color : undefined });
+      const comp = s?.comparacao[i];
+      if (s && comp !== null && comp !== undefined) linhas.push({ rotulo: `  ${s.studio ? "coletado" : "Studio"} (comparação)`, valor: formatNumero(comp) });
+    }
+    const f = fontes[i];
+    return { titulo: serie[i] ? dataBr(serie[i].dia) : undefined, linhas, nota: temStudio ? `Fonte: ${fonteLabel[(f ?? "coletado") as FonteCalendario]}` : undefined };
+  };
+  const nomesContas = colunas.map((s) => s.nome).join(", ");
   return {
     vazia: serie.length === 0 || series.length === 0 || total === 0,
     tabela,
     opcoes,
-    descricao: `Views ganhas por dia, de ${de} a ${ate}, uma linha por conta (${nomes}). Total: ${formatNumero(total)}.`,
+    tooltip,
+    temStudio,
+    temVisitas,
+    descricao: `Views ganhas por dia, de ${de} a ${ate}, uma linha por conta (${nomesContas}). Total: ${formatNumero(total)}.${temStudio ? " Linhas tracejadas: dias importados do Studio." : ""}`,
   };
 }
 
@@ -191,10 +282,18 @@ export function VisaoGeral({ estado }: { estado: EstadoFiltroAnalytics }) {
   const tema = useTemaGraficos();
   const d = dados.data;
   const carregando = dados.isPending;
-  const serie = useMemo(() => serieDiaria(d, ordem, tema, filtro.de, filtro.ate), [d, ordem, tema, filtro.de, filtro.ate]);
+  const [comVisitas, setComVisitas] = useState(false);
+  const serie = useMemo(() => serieDiaria(d, ordem, tema, filtro.de, filtro.ate, comVisitas), [d, ordem, tema, filtro.de, filtro.ate, comVisitas]);
   const medida = (d?.contexto.medida ?? filtro.medida) as Medida;
   const porChave = new Map((d?.indicadores ?? []).map((i) => [i.chave, i]));
   const ctx = d?.contexto;
+  const studio = studioDoContexto(ctx);
+  // spec 020 (R12): com uma conta filtrada e o período começando antes da 1ª coleta, o atalho para
+  // importar o histórico do Studio (só dono; a página fica fora do analytics, que é só leitura)
+  const ehDono = useAuth((s) => s.user?.role === "dono");
+  const cobertura = useCoberturaStudio(ehDono ? filtro.contaId : undefined);
+  const primeiraColeta = cobertura.data?.coleta?.primeiroDia;
+  const atalhoStudio = ehDono && filtro.contaId && cobertura.data && (!primeiraColeta || filtro.de < primeiraColeta);
 
   const insights = d?.insights ?? [];
   const tabelaInsights: DadosTabela = {
@@ -252,7 +351,13 @@ export function VisaoGeral({ estado }: { estado: EstadoFiltroAnalytics }) {
               anterior={ind?.anterior}
               formatar={formatoIndicador(chave)}
               carregando={carregando}
-              dica={chave === "mediana_post" && ctx && ctx.aguardando > 0 ? `${formatNumero(ctx.aguardando)} aguardando o marco` : undefined}
+              dica={
+                chave === "mediana_post" && ctx && ctx.aguardando > 0
+                  ? `${formatNumero(ctx.aguardando)} aguardando o marco`
+                  : diasStudioDe(ind) > 0
+                    ? `inclui ${formatNumero(diasStudioDe(ind))} ${diasStudioDe(ind) === 1 ? "dia importado" : "dias importados"} do Studio`
+                    : undefined
+              }
             />
           );
         })}
@@ -261,13 +366,33 @@ export function VisaoGeral({ estado }: { estado: EstadoFiltroAnalytics }) {
         <p className="text-xs text-muted-foreground" data-contexto>
           Período de {dataBr(ctx.de)} a {dataBr(ctx.ate)}, comparado com {dataBr(ctx.anteriorDe)} a {dataBr(ctx.anteriorAte)}.{" "}
           {ctx.aguardando > 0 && `Aguardando o marco de ${medidaLabel[medida].replace(/^Views em /, "")}: ${formatNumero(ctx.aguardando)}.`}
+          {studio.dias > 0 && ` ${formatNumero(studio.dias)} ${studio.dias === 1 ? "dia veio" : "dias vieram"} do histórico importado do Studio. ${NOTA_FUSO_STUDIO}`}
+        </p>
+      )}
+      {atalhoStudio && (
+        <p className="text-sm" data-atalho-studio>
+          O período começa antes da coleta desta conta.{" "}
+          <Link to={studioContaPath(filtro.contaId!)} className="font-medium text-primary underline-offset-2 hover:underline">
+            Importar histórico do Studio
+          </Link>
         </p>
       )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <CardAnalytics
           titulo="Views por dia"
-          comoLer="views ganhas em cada dia do período, uma linha por conta (cada conta tem sempre a mesma cor)."
+          comoLer={
+            serie.temStudio
+              ? "views ganhas em cada dia do período, uma linha por conta (cada conta tem sempre a mesma cor). Linha tracejada: importado do Studio; contínua: coletado pela API."
+              : "views ganhas em cada dia do período, uma linha por conta (cada conta tem sempre a mesma cor)."
+          }
+          acoes={
+            serie.temVisitas && (
+              <Button type="button" size="sm" variant="outline" aria-pressed={comVisitas} onClick={() => setComVisitas(!comVisitas)}>
+                Visitas ao perfil
+              </Button>
+            )
+          }
           carregando={carregando || !ordem.pronto}
           erro={dados.error}
           vazio={serie.vazia ? "Nenhuma view ganha neste período." : null}
@@ -275,7 +400,7 @@ export function VisaoGeral({ estado }: { estado: EstadoFiltroAnalytics }) {
           tabela={serie.tabela}
           largo
         >
-          <Grafico opcoes={serie.opcoes} descricao={serie.descricao} />
+          <Grafico opcoes={serie.opcoes} descricao={serie.descricao} tooltip={serie.tooltip} />
         </CardAnalytics>
         <CardAnalytics
           titulo="Insights"

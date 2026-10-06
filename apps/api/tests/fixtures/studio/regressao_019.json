@@ -1,0 +1,1534 @@
+{
+ "p0": {
+  "calendario": [
+   {
+    "dia": "D-1",
+    "posts": 0,
+    "views": 0
+   },
+   {
+    "dia": "D-2",
+    "posts": 0,
+    "views": 840
+   },
+   {
+    "dia": "D-3",
+    "posts": 0,
+    "views": 2580
+   },
+   {
+    "dia": "D-4",
+    "posts": 1,
+    "views": 8040
+   },
+   {
+    "dia": "D-5",
+    "posts": 2,
+    "views": 4740
+   },
+   {
+    "dia": "D-6",
+    "posts": 0,
+    "views": 4800
+   },
+   {
+    "dia": "D0",
+    "posts": 0,
+    "views": 0
+   }
+  ],
+  "contas": {
+   "contas": [
+    {
+     "contaId": "conta:@atavernanerd",
+     "indicadores": [
+      {
+       "anterior": 0.096363636,
+       "chave": "engajamento",
+       "n": 3,
+       "valor": 0.046206897,
+       "variacaoPct": -0.52049447
+      },
+      {
+       "anterior": 2.0,
+       "chave": "posts",
+       "n": 1,
+       "valor": 1.0,
+       "variacaoPct": -0.5
+      },
+      {
+       "anterior": 2.0,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 5.0,
+       "variacaoPct": 1.5
+      },
+      {
+       "anterior": 3600.0,
+       "chave": "mediana_post",
+       "n": 1,
+       "valor": 7200.0,
+       "variacaoPct": 1.0
+      },
+      {
+       "anterior": 530.0,
+       "chave": "likes",
+       "n": 3,
+       "valor": 670.0,
+       "variacaoPct": 0.264150943
+      },
+      {
+       "anterior": 6600.0,
+       "chave": "views",
+       "n": 3,
+       "valor": 17400.0,
+       "variacaoPct": 1.636363636
+      }
+     ],
+     "perfil": {
+      "id": "perfil:A Taverna Nerd",
+      "name": "A Taverna Nerd",
+      "slug": "taverna-1"
+     },
+     "rede": "tiktok",
+     "rotulo": "@atavernanerd"
+    },
+    {
+     "contaId": "conta:@contab",
+     "indicadores": [
+      {
+       "anterior": 0.0,
+       "chave": "posts",
+       "n": 2,
+       "valor": 2.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "engajamento",
+       "n": 2,
+       "valor": 0.266666667,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "likes",
+       "n": 2,
+       "valor": 800.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "mediana_post",
+       "n": 2,
+       "valor": 1080.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 3.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "views",
+       "n": 2,
+       "valor": 3600.0,
+       "variacaoPct": null
+      }
+     ],
+     "perfil": {
+      "id": "perfil:Outro Perfil",
+      "name": "Outro Perfil",
+      "slug": "taverna-2"
+     },
+     "rede": "tiktok",
+     "rotulo": "@contab"
+    }
+   ],
+   "perfis": [
+    {
+     "indicadores": [
+      {
+       "anterior": 0.0,
+       "chave": "posts",
+       "n": 2,
+       "valor": 2.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "engajamento",
+       "n": 2,
+       "valor": 0.266666667,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "likes",
+       "n": 2,
+       "valor": 800.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "mediana_post",
+       "n": 2,
+       "valor": 1080.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 3.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "views",
+       "n": 2,
+       "valor": 3600.0,
+       "variacaoPct": null
+      }
+     ],
+     "perfil": {
+      "id": "perfil:Outro Perfil",
+      "name": "Outro Perfil",
+      "slug": "taverna-2"
+     }
+    },
+    {
+     "indicadores": [
+      {
+       "anterior": 0.096363636,
+       "chave": "engajamento",
+       "n": 3,
+       "valor": 0.046206897,
+       "variacaoPct": -0.52049447
+      },
+      {
+       "anterior": 2.0,
+       "chave": "posts",
+       "n": 1,
+       "valor": 1.0,
+       "variacaoPct": -0.5
+      },
+      {
+       "anterior": 2.0,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 5.0,
+       "variacaoPct": 1.5
+      },
+      {
+       "anterior": 3600.0,
+       "chave": "mediana_post",
+       "n": 1,
+       "valor": 7200.0,
+       "variacaoPct": 1.0
+      },
+      {
+       "anterior": 530.0,
+       "chave": "likes",
+       "n": 3,
+       "valor": 670.0,
+       "variacaoPct": 0.264150943
+      },
+      {
+       "anterior": 6600.0,
+       "chave": "views",
+       "n": 3,
+       "valor": 17400.0,
+       "variacaoPct": 1.636363636
+      }
+     ],
+     "perfil": {
+      "id": "perfil:A Taverna Nerd",
+      "name": "A Taverna Nerd",
+      "slug": "taverna-1"
+     }
+    }
+   ],
+   "radar": [
+    {
+     "contaId": "conta:@atavernanerd",
+     "eixos": [
+      {
+       "acima": false,
+       "chave": "acima_mediana",
+       "indice": 200.0,
+       "media": 0.5,
+       "valor": 1.0
+      },
+      {
+       "acima": false,
+       "chave": "crescimento",
+       "indice": 124.90632026,
+       "media": 0.00399501,
+       "valor": 0.00499002
+      },
+      {
+       "acima": false,
+       "chave": "engajamento",
+       "indice": 29.53710507,
+       "media": 0.156436782,
+       "valor": 0.046206897
+      },
+      {
+       "acima": false,
+       "chave": "frequencia",
+       "indice": 66.666666667,
+       "media": 0.214285714,
+       "valor": 0.142857143
+      },
+      {
+       "acima": false,
+       "chave": "velocidade_1h",
+       "indice": 173.913043478,
+       "media": 172.5,
+       "valor": 300.0
+      },
+      {
+       "acima": false,
+       "chave": "views_por_post",
+       "indice": 173.913043478,
+       "media": 4140.0,
+       "valor": 7200.0
+      }
+     ],
+     "rotulo": "@atavernanerd"
+    },
+    {
+     "contaId": "conta:@contab",
+     "eixos": [
+      {
+       "acima": false,
+       "chave": "acima_mediana",
+       "indice": 0.0,
+       "media": 0.5,
+       "valor": 0.0
+      },
+      {
+       "acima": false,
+       "chave": "crescimento",
+       "indice": 75.09367974,
+       "media": 0.00399501,
+       "valor": 0.003
+      },
+      {
+       "acima": false,
+       "chave": "engajamento",
+       "indice": 170.46289493,
+       "media": 0.156436782,
+       "valor": 0.266666667
+      },
+      {
+       "acima": false,
+       "chave": "frequencia",
+       "indice": 133.333333333,
+       "media": 0.214285714,
+       "valor": 0.285714286
+      },
+      {
+       "acima": false,
+       "chave": "velocidade_1h",
+       "indice": 26.086956522,
+       "media": 172.5,
+       "valor": 45.0
+      },
+      {
+       "acima": false,
+       "chave": "views_por_post",
+       "indice": 26.086956522,
+       "media": 4140.0,
+       "valor": 1080.0
+      }
+     ],
+     "rotulo": "@contab"
+    }
+   ],
+   "radarMotivo": null
+  },
+  "visaoGeral": {
+   "indicadores": [
+    {
+     "anterior": 0.096363636,
+     "chave": "engajamento",
+     "n": 5,
+     "valor": 0.084,
+     "variacaoPct": -0.128301887
+    },
+    {
+     "anterior": 2.0,
+     "chave": "posts",
+     "n": 3,
+     "valor": 3.0,
+     "variacaoPct": 0.5
+    },
+    {
+     "anterior": 2.0,
+     "chave": "seguidores",
+     "n": 2,
+     "valor": 8.0,
+     "variacaoPct": 3.0
+    },
+    {
+     "anterior": 3600.0,
+     "chave": "mediana_post",
+     "n": 3,
+     "valor": 1440.0,
+     "variacaoPct": -0.6
+    },
+    {
+     "anterior": 530.0,
+     "chave": "likes",
+     "n": 5,
+     "valor": 1470.0,
+     "variacaoPct": 1.773584906
+    },
+    {
+     "anterior": 6600.0,
+     "chave": "views",
+     "n": 5,
+     "valor": 21000.0,
+     "variacaoPct": 2.181818182
+    }
+   ],
+   "principais": [
+    {
+     "contaId": "conta:@atavernanerd",
+     "engajamento": 0.04,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000002",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 7200.0
+     },
+     "publicadoEm": "D-5 10:00:00-0300",
+     "rotuloConta": "@atavernanerd",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000002",
+     "viewsAtual": 12000,
+     "viewsPeriodo": 12000
+    },
+    {
+     "contaId": "conta:@atavernanerd",
+     "engajamento": 0.06,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000001",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 4800.0
+     },
+     "publicadoEm": "D-7 10:00:00-0300",
+     "rotuloConta": "@atavernanerd",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000001",
+     "viewsAtual": 8000,
+     "viewsPeriodo": 5400
+    },
+    {
+     "contaId": "conta:@contab",
+     "engajamento": 0.2,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000004",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 1440.0
+     },
+     "publicadoEm": "D-4 21:00:00-0300",
+     "rotuloConta": "@contab",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000004",
+     "viewsAtual": 2400,
+     "viewsPeriodo": 2400
+    },
+    {
+     "contaId": "conta:@contab",
+     "engajamento": 0.4,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000003",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 720.0
+     },
+     "publicadoEm": "D-5 15:00:00-0300",
+     "rotuloConta": "@contab",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000003",
+     "viewsAtual": 1200,
+     "viewsPeriodo": 1200
+    }
+   ],
+   "serieDiaria": [
+    {
+     "dia": "D-1",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D-2",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 840
+      }
+     ]
+    },
+    {
+     "dia": "D-3",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 900
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 1680
+      }
+     ]
+    },
+    {
+     "dia": "D-4",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 7200
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 840
+      }
+     ]
+    },
+    {
+     "dia": "D-5",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 4500
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 240
+      }
+     ]
+    },
+    {
+     "dia": "D-6",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 4800
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D0",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "p1": {
+  "calendario": [
+   {
+    "dia": "D-7",
+    "posts": 1,
+    "views": 2900
+   }
+  ],
+  "contas": {
+   "contas": [
+    {
+     "contaId": "conta:@atavernanerd",
+     "indicadores": [
+      {
+       "anterior": 0.0,
+       "chave": "posts",
+       "n": 1,
+       "valor": 1.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": 0.12,
+       "chave": "engajamento",
+       "n": 2,
+       "valor": 0.066206897,
+       "variacaoPct": -0.448275862
+      },
+      {
+       "anterior": 1.0,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 1.0,
+       "variacaoPct": 0.0
+      },
+      {
+       "anterior": 240.0,
+       "chave": "likes",
+       "n": 2,
+       "valor": 160.0,
+       "variacaoPct": -0.333333333
+      },
+      {
+       "anterior": 2400.0,
+       "chave": "views",
+       "n": 2,
+       "valor": 2900.0,
+       "variacaoPct": 0.208333333
+      },
+      {
+       "anterior": null,
+       "chave": "mediana_post",
+       "n": 1,
+       "valor": 4800.0,
+       "variacaoPct": null
+      }
+     ],
+     "perfil": {
+      "id": "perfil:A Taverna Nerd",
+      "name": "A Taverna Nerd",
+      "slug": "taverna-1"
+     },
+     "rede": "tiktok",
+     "rotulo": "@atavernanerd"
+    }
+   ],
+   "perfis": [
+    {
+     "indicadores": [
+      {
+       "anterior": 0.0,
+       "chave": "posts",
+       "n": 1,
+       "valor": 1.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": 0.12,
+       "chave": "engajamento",
+       "n": 2,
+       "valor": 0.066206897,
+       "variacaoPct": -0.448275862
+      },
+      {
+       "anterior": 1.0,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 1.0,
+       "variacaoPct": 0.0
+      },
+      {
+       "anterior": 240.0,
+       "chave": "likes",
+       "n": 2,
+       "valor": 160.0,
+       "variacaoPct": -0.333333333
+      },
+      {
+       "anterior": 2400.0,
+       "chave": "views",
+       "n": 2,
+       "valor": 2900.0,
+       "variacaoPct": 0.208333333
+      },
+      {
+       "anterior": null,
+       "chave": "mediana_post",
+       "n": 1,
+       "valor": 4800.0,
+       "variacaoPct": null
+      }
+     ],
+     "perfil": {
+      "id": "perfil:A Taverna Nerd",
+      "name": "A Taverna Nerd",
+      "slug": "taverna-1"
+     }
+    }
+   ],
+   "radar": null,
+   "radarMotivo": "O radar precisa de pelo menos 2 contas com posts no período (há 1)."
+  },
+  "visaoGeral": {
+   "indicadores": [
+    {
+     "anterior": 0.0,
+     "chave": "posts",
+     "n": 1,
+     "valor": 1.0,
+     "variacaoPct": null
+    },
+    {
+     "anterior": 0.12,
+     "chave": "engajamento",
+     "n": 2,
+     "valor": 0.066206897,
+     "variacaoPct": -0.448275862
+    },
+    {
+     "anterior": 1.0,
+     "chave": "seguidores",
+     "n": 1,
+     "valor": 1.0,
+     "variacaoPct": 0.0
+    },
+    {
+     "anterior": 240.0,
+     "chave": "likes",
+     "n": 2,
+     "valor": 160.0,
+     "variacaoPct": -0.333333333
+    },
+    {
+     "anterior": 2400.0,
+     "chave": "views",
+     "n": 2,
+     "valor": 2900.0,
+     "variacaoPct": 0.208333333
+    },
+    {
+     "anterior": null,
+     "chave": "mediana_post",
+     "n": 1,
+     "valor": 4800.0,
+     "variacaoPct": null
+    }
+   ],
+   "principais": [
+    {
+     "contaId": "conta:@atavernanerd",
+     "engajamento": 0.06,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000001",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 4800.0
+     },
+     "publicadoEm": "D-7 10:00:00-0300",
+     "rotuloConta": "@atavernanerd",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000001",
+     "viewsAtual": 8000,
+     "viewsPeriodo": 2600
+    },
+    {
+     "contaId": "conta:@atavernanerd",
+     "engajamento": 0.12,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000000",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 2400.0
+     },
+     "publicadoEm": "D-9 10:00:00-0300",
+     "rotuloConta": "@atavernanerd",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000000",
+     "viewsAtual": 4000,
+     "viewsPeriodo": 300
+    }
+   ],
+   "serieDiaria": [
+    {
+     "dia": "D-7",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 2900
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "p2": {
+  "calendario": [
+   {
+    "dia": "D-1",
+    "posts": 0,
+    "views": 0
+   },
+   {
+    "dia": "D-10",
+    "posts": 0,
+    "views": 0
+   },
+   {
+    "dia": "D-11",
+    "posts": 0,
+    "views": 0
+   },
+   {
+    "dia": "D-12",
+    "posts": 0,
+    "views": 0
+   },
+   {
+    "dia": "D-13",
+    "posts": 0,
+    "views": 0
+   },
+   {
+    "dia": "D-2",
+    "posts": 0,
+    "views": 840
+   },
+   {
+    "dia": "D-3",
+    "posts": 0,
+    "views": 2580
+   },
+   {
+    "dia": "D-4",
+    "posts": 1,
+    "views": 8040
+   },
+   {
+    "dia": "D-5",
+    "posts": 2,
+    "views": 4740
+   },
+   {
+    "dia": "D-6",
+    "posts": 0,
+    "views": 4800
+   },
+   {
+    "dia": "D-7",
+    "posts": 1,
+    "views": 2900
+   },
+   {
+    "dia": "D-8",
+    "posts": 0,
+    "views": 2400
+   },
+   {
+    "dia": "D-9",
+    "posts": 1,
+    "views": 1300
+   },
+   {
+    "dia": "D0",
+    "posts": 0,
+    "views": 0
+   }
+  ],
+  "contas": {
+   "contas": [
+    {
+     "contaId": "conta:@atavernanerd",
+     "indicadores": [
+      {
+       "anterior": 0.0,
+       "chave": "posts",
+       "n": 3,
+       "valor": 3.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "engajamento",
+       "n": 3,
+       "valor": 0.06,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "likes",
+       "n": 3,
+       "valor": 1200.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "mediana_post",
+       "n": 3,
+       "valor": 4800.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 7.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "views",
+       "n": 3,
+       "valor": 24000.0,
+       "variacaoPct": null
+      }
+     ],
+     "perfil": {
+      "id": "perfil:A Taverna Nerd",
+      "name": "A Taverna Nerd",
+      "slug": "taverna-1"
+     },
+     "rede": "tiktok",
+     "rotulo": "@atavernanerd"
+    },
+    {
+     "contaId": "conta:@contab",
+     "indicadores": [
+      {
+       "anterior": 0.0,
+       "chave": "posts",
+       "n": 2,
+       "valor": 2.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "engajamento",
+       "n": 2,
+       "valor": 0.266666667,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "likes",
+       "n": 2,
+       "valor": 800.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "mediana_post",
+       "n": 2,
+       "valor": 1080.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 3.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "views",
+       "n": 2,
+       "valor": 3600.0,
+       "variacaoPct": null
+      }
+     ],
+     "perfil": {
+      "id": "perfil:Outro Perfil",
+      "name": "Outro Perfil",
+      "slug": "taverna-2"
+     },
+     "rede": "tiktok",
+     "rotulo": "@contab"
+    }
+   ],
+   "perfis": [
+    {
+     "indicadores": [
+      {
+       "anterior": 0.0,
+       "chave": "posts",
+       "n": 2,
+       "valor": 2.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "engajamento",
+       "n": 2,
+       "valor": 0.266666667,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "likes",
+       "n": 2,
+       "valor": 800.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "mediana_post",
+       "n": 2,
+       "valor": 1080.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 3.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "views",
+       "n": 2,
+       "valor": 3600.0,
+       "variacaoPct": null
+      }
+     ],
+     "perfil": {
+      "id": "perfil:Outro Perfil",
+      "name": "Outro Perfil",
+      "slug": "taverna-2"
+     }
+    },
+    {
+     "indicadores": [
+      {
+       "anterior": 0.0,
+       "chave": "posts",
+       "n": 3,
+       "valor": 3.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "engajamento",
+       "n": 3,
+       "valor": 0.06,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "likes",
+       "n": 3,
+       "valor": 1200.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "mediana_post",
+       "n": 3,
+       "valor": 4800.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "seguidores",
+       "n": 1,
+       "valor": 7.0,
+       "variacaoPct": null
+      },
+      {
+       "anterior": null,
+       "chave": "views",
+       "n": 3,
+       "valor": 24000.0,
+       "variacaoPct": null
+      }
+     ],
+     "perfil": {
+      "id": "perfil:A Taverna Nerd",
+      "name": "A Taverna Nerd",
+      "slug": "taverna-1"
+     }
+    }
+   ],
+   "radar": [
+    {
+     "contaId": "conta:@atavernanerd",
+     "eixos": [
+      {
+       "acima": false,
+       "chave": "acima_mediana",
+       "indice": 200.0,
+       "media": 0.333333333,
+       "valor": 0.666666667
+      },
+      {
+       "acima": false,
+       "chave": "crescimento",
+       "indice": 140.0,
+       "media": 0.005,
+       "valor": 0.007
+      },
+      {
+       "acima": false,
+       "chave": "engajamento",
+       "indice": 36.734693878,
+       "media": 0.163333333,
+       "valor": 0.06
+      },
+      {
+       "acima": false,
+       "chave": "frequencia",
+       "indice": 120.0,
+       "media": 0.178571429,
+       "valor": 0.214285714
+      },
+      {
+       "acima": false,
+       "chave": "velocidade_1h",
+       "indice": 163.265306122,
+       "media": 122.5,
+       "valor": 200.0
+      },
+      {
+       "acima": false,
+       "chave": "views_por_post",
+       "indice": 163.265306122,
+       "media": 2940.0,
+       "valor": 4800.0
+      }
+     ],
+     "rotulo": "@atavernanerd"
+    },
+    {
+     "contaId": "conta:@contab",
+     "eixos": [
+      {
+       "acima": false,
+       "chave": "acima_mediana",
+       "indice": 0.0,
+       "media": 0.333333333,
+       "valor": 0.0
+      },
+      {
+       "acima": false,
+       "chave": "crescimento",
+       "indice": 60.0,
+       "media": 0.005,
+       "valor": 0.003
+      },
+      {
+       "acima": false,
+       "chave": "engajamento",
+       "indice": 163.265306122,
+       "media": 0.163333333,
+       "valor": 0.266666667
+      },
+      {
+       "acima": false,
+       "chave": "frequencia",
+       "indice": 80.0,
+       "media": 0.178571429,
+       "valor": 0.142857143
+      },
+      {
+       "acima": false,
+       "chave": "velocidade_1h",
+       "indice": 36.734693878,
+       "media": 122.5,
+       "valor": 45.0
+      },
+      {
+       "acima": false,
+       "chave": "views_por_post",
+       "indice": 36.734693878,
+       "media": 2940.0,
+       "valor": 1080.0
+      }
+     ],
+     "rotulo": "@contab"
+    }
+   ],
+   "radarMotivo": null
+  },
+  "visaoGeral": {
+   "indicadores": [
+    {
+     "anterior": 0.0,
+     "chave": "posts",
+     "n": 5,
+     "valor": 5.0,
+     "variacaoPct": null
+    },
+    {
+     "anterior": null,
+     "chave": "engajamento",
+     "n": 5,
+     "valor": 0.086956522,
+     "variacaoPct": null
+    },
+    {
+     "anterior": null,
+     "chave": "likes",
+     "n": 5,
+     "valor": 2000.0,
+     "variacaoPct": null
+    },
+    {
+     "anterior": null,
+     "chave": "mediana_post",
+     "n": 5,
+     "valor": 2400.0,
+     "variacaoPct": null
+    },
+    {
+     "anterior": null,
+     "chave": "seguidores",
+     "n": 2,
+     "valor": 10.0,
+     "variacaoPct": null
+    },
+    {
+     "anterior": null,
+     "chave": "views",
+     "n": 5,
+     "valor": 27600.0,
+     "variacaoPct": null
+    }
+   ],
+   "principais": [
+    {
+     "contaId": "conta:@atavernanerd",
+     "engajamento": 0.04,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000002",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 7200.0
+     },
+     "publicadoEm": "D-5 10:00:00-0300",
+     "rotuloConta": "@atavernanerd",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000002",
+     "viewsAtual": 12000,
+     "viewsPeriodo": 12000
+    },
+    {
+     "contaId": "conta:@atavernanerd",
+     "engajamento": 0.06,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000001",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 4800.0
+     },
+     "publicadoEm": "D-7 10:00:00-0300",
+     "rotuloConta": "@atavernanerd",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000001",
+     "viewsAtual": 8000,
+     "viewsPeriodo": 8000
+    },
+    {
+     "contaId": "conta:@atavernanerd",
+     "engajamento": 0.12,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000000",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 2400.0
+     },
+     "publicadoEm": "D-9 10:00:00-0300",
+     "rotuloConta": "@atavernanerd",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000000",
+     "viewsAtual": 4000,
+     "viewsPeriodo": 4000
+    },
+    {
+     "contaId": "conta:@contab",
+     "engajamento": 0.2,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000004",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 1440.0
+     },
+     "publicadoEm": "D-4 21:00:00-0300",
+     "rotuloConta": "@contab",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000004",
+     "viewsAtual": 2400,
+     "viewsPeriodo": 2400
+    },
+    {
+     "contaId": "conta:@contab",
+     "engajamento": 0.4,
+     "link": "https://www.tiktok.com/@x/video/7450000000000000003",
+     "medida": {
+      "aguardando": false,
+      "estimado": false,
+      "valor": 720.0
+     },
+     "publicadoEm": "D-5 15:00:00-0300",
+     "rotuloConta": "@contab",
+     "thumbUrl": null,
+     "tituloCurto": "Post de teste #fyp",
+     "videoId": "video:7450000000000000003",
+     "viewsAtual": 1200,
+     "viewsPeriodo": 1200
+    }
+   ],
+   "serieDiaria": [
+    {
+     "dia": "D-1",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D-10",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D-11",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D-12",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D-13",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D-2",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 840
+      }
+     ]
+    },
+    {
+     "dia": "D-3",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 900
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 1680
+      }
+     ]
+    },
+    {
+     "dia": "D-4",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 7200
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 840
+      }
+     ]
+    },
+    {
+     "dia": "D-5",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 4500
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 240
+      }
+     ]
+    },
+    {
+     "dia": "D-6",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 4800
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D-7",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 2900
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D-8",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 2400
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D-9",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 1300
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    },
+    {
+     "dia": "D0",
+     "porConta": [
+      {
+       "contaId": "conta:@atavernanerd",
+       "rotulo": "@atavernanerd",
+       "views": 0
+      },
+      {
+       "contaId": "conta:@contab",
+       "rotulo": "@contab",
+       "views": 0
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

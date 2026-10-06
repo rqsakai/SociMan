@@ -17,6 +17,7 @@ import type { OpcoesGrafico } from "@/components/analytics/echarts";
 import { Grafico } from "@/components/analytics/Grafico";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
+import { notaSemVideo } from "@/components/studio/fonteAnalytics";
 import { Field, NativeSelect } from "@/components/ui/field";
 import {
   formatCompacto,
@@ -170,6 +171,11 @@ export function Curvas({ estado }: { estado: EstadoFiltroAnalytics }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {notaSemVideo(dados.data?.contexto) && (
+        <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground" data-nota-studio>
+          {notaSemVideo(dados.data?.contexto)}
+        </p>
+      )}
       {curvas.length > 0 && (
         <div className="flex flex-wrap items-end gap-3">
           <Field label="Vídeo em destaque" className="w-full sm:w-96">

@@ -15,6 +15,7 @@ import { MapaSemana, mapaTabela } from "@/components/analytics/MapaSemana";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
 import { diasEntre, formatCompacto, formatNumero, medidaLabel, useAnalytics, type AnalyticsQuandoPostar, type EstadoFiltroAnalytics, type Medida } from "@/lib/analytics";
+import { contasStudioDe, fonteDe, fonteLabel, NOTA_FUSO_STUDIO, notaSemVideo } from "@/components/studio/fonteAnalytics";
 import { parseDateKey } from "@/lib/tz";
 
 const compactoInteiro = (v: number) => formatCompacto(Math.round(v));
@@ -70,8 +71,13 @@ function calendario(dados: AnalyticsQuandoPostar | undefined, tema: TemaGraficos
         coordinateSystem: "calendar",
         data: dias.map((d) => {
           const forte = d.views / max > 0.55;
+          // spec 020: dia com dado importado do Studio (só ele ou misturado) ganha contorno tracejado
+          const fonte = fonteDe(d);
           return {
             value: [d.dia, d.views, d.posts],
+            fonte,
+            contasStudio: contasStudioDe(d),
+            ...(fonte !== "coletado" ? { itemStyle: { borderType: "dashed", borderColor: tema.texto, borderWidth: 1.5 } } : {}),
             label: {
               show: vertical && d.posts > 0,
               formatter: String(d.posts),
@@ -83,23 +89,32 @@ function calendario(dados: AnalyticsQuandoPostar | undefined, tema: TemaGraficos
       },
     ],
   } as OpcoesGrafico;
+  const temStudio = dias.some((d) => fonteDe(d) !== "coletado");
   const tabela: DadosTabela = {
-    colunas: [{ titulo: "Dia", formatar: (v) => dataBr(String(v)) }, { titulo: "Posts publicados", numerica: true }, { titulo: "Views ganhas", numerica: true }],
-    linhas: dias.map((d) => [d.dia, d.posts, d.views]),
+    colunas: [
+      { titulo: "Dia", formatar: (v) => dataBr(String(v)) },
+      { titulo: "Posts publicados", numerica: true },
+      { titulo: "Views ganhas", numerica: true },
+      ...(temStudio ? [{ titulo: "Fonte" }] : []),
+    ],
+    linhas: dias.map((d) => [d.dia, d.posts, d.views, ...(temStudio ? [fonteDe(d)] : [])]),
   };
   const posts = dias.reduce((t, d) => t + d.posts, 0);
   const views = dias.reduce((t, d) => t + d.views, 0);
-  return { opcoes, tabela, altura, largura, vazio: posts === 0 && views === 0, vertical, descricao: `Calendário de ${dataBr(de)} a ${dataBr(ate)}: ${formatNumero(posts)} posts e ${formatNumero(views)} views ganhas.` };
+  return { opcoes, tabela, altura, largura, vazio: posts === 0 && views === 0, vertical, temStudio, descricao: `Calendário de ${dataBr(de)} a ${dataBr(ate)}: ${formatNumero(posts)} posts e ${formatNumero(views)} views ganhas.` };
 }
 
 const tooltipCalendario = (itens: ItemTooltip[]) => {
-  const v = (itens[0]?.data as { value: [string, number, number] } | undefined)?.value;
+  const item = itens[0]?.data as { value: [string, number, number]; fonte?: ReturnType<typeof fonteDe>; contasStudio?: number } | undefined;
+  const v = item?.value;
   if (!v) return null;
+  const fonte = item.fonte ?? "coletado";
   return {
     titulo: dataBr(v[0]),
     linhas: [
       { rotulo: "Views ganhas", valor: formatNumero(v[1]) },
       { rotulo: "Posts publicados", valor: formatNumero(v[2]) },
+      ...(fonte !== "coletado" ? [{ rotulo: "Fonte", valor: fonte === "misto" ? `${fonteLabel.misto} (${formatNumero(item.contasStudio ?? 0)} do Studio)` : fonteLabel.studio }] : []),
     ],
   };
 };
@@ -124,6 +139,11 @@ export function QuandoPostar({ estado }: { estado: EstadoFiltroAnalytics }) {
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {notaSemVideo(d?.contexto) && (
+        <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground lg:col-span-2" data-nota-studio>
+          {notaSemVideo(d?.contexto)}
+        </p>
+      )}
       <CardAnalytics
         titulo="Desempenho por horário de publicação"
         comoLer={
@@ -180,7 +200,12 @@ export function QuandoPostar({ estado }: { estado: EstadoFiltroAnalytics }) {
       </CardAnalytics>
       <CardAnalytics
         titulo="Calendário"
-        comoLer={cal.vertical ? "um quadrado por dia: a cor são as views ganhas no dia e o número, os posts publicados." : "um quadrado por dia: a cor são as views ganhas no dia; os posts estão no tooltip e na tabela."}
+        comoLer={
+          <>
+            {cal.vertical ? "um quadrado por dia: a cor são as views ganhas no dia e o número, os posts publicados." : "um quadrado por dia: a cor são as views ganhas no dia; os posts estão no tooltip e na tabela."}
+            {cal.temStudio && ` Contorno tracejado: views importadas do Studio. ${NOTA_FUSO_STUDIO}`}
+          </>
+        }
         carregando={carregando}
         erro={dados.error}
         vazio={cal.vazio ? "Nenhum post nem view neste período." : null}

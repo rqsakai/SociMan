@@ -7,8 +7,8 @@
   até 3 h: o ganho se divide pelas horas-relógio cobertas, proporcional aos minutos de cada uma,
   no fuso da casa; intervalo maior: o ganho vai para `semHora`. Só entra a parte dentro do
   período (para `semHora`, o intervalo que termina nele). `n` = intervalos que somaram na célula.
-- **Calendário:** por dia do período, os posts publicados e as views ganhas (mesma regra dos
-  ganhos da visão geral).
+- **Calendário:** por dia do período, os posts publicados e as views ganhas (os totais diários da
+  visão geral, com o Studio nos dias que a coleta não cobre; spec 020).
 
 Tudo calculado em Python sobre as fotos do escopo (um SELECT), sem escrita.
 """
@@ -94,22 +94,34 @@ def audiencia(videos: Sequence[base.VideoEscopo],
     return schemas.MapaAudiencia(celulas=celulas, sem_hora=round(sem_hora))
 
 
-def calendario(posts: Sequence[PostAnalisado], por_dia: dict) -> list[schemas.DiaCalendario]:
+def calendario(posts: Sequence[PostAnalisado], totais: dict, periodo: Periodo
+               ) -> list[schemas.DiaCalendario]:
+    """Por dia: os posts publicados e as views ganhas de todas as séries do escopo (spec 020: com
+    o Studio nos dias que a coleta não cobre; `fonte` é `misto` quando as contas do dia vêm de
+    fontes diferentes)."""
     publicados: dict = {}
     for p in posts:
         dia = p.publicado_em.date()
         publicados[dia] = publicados.get(dia, 0) + 1
-    return [schemas.DiaCalendario(dia=dia, posts=publicados.get(dia, 0),
-                                  views=sum(ganhos.values()))
-            for dia, ganhos in sorted(por_dia.items())]
+    out = []
+    for dia in base.dias(periodo):
+        ts = [por_dia[dia] for por_dia in totais.values()]
+        com = [t for t in ts if t.views is not None]
+        fontes = {t.fonte for t in com}
+        studio = sum(t.fonte == "studio" for t in com)
+        out.append(schemas.DiaCalendario(
+            dia=dia, posts=publicados.get(dia, 0), views=sum(t.views for t in com),
+            fonte="misto" if len(fontes) > 1 else (fontes.pop() if fontes else "coletado"),
+            contas_studio=studio))
+    return out
 
 
 def calcular(db: Session, filtro: Filtro, agora: datetime | None = None
              ) -> schemas.QuandoPostarOut:
     posts = base.posts(db, filtro, agora=agora)
-    videos, por_dia = base.ganhos_por_dia(db, filtro)
+    videos = base.videos_escopo(db, filtro)
     fotos = base.fotos_views(db, [v.video_id for v in videos], filtro.atual.fim)
     return schemas.QuandoPostarOut(
         contexto=base.contexto(filtro, posts), por_publicacao=por_publicacao(posts),
         audiencia=audiencia(videos, fotos, filtro.atual),
-        calendario=calendario(posts, por_dia))
+        calendario=calendario(posts, base.totais_diarios(db, filtro), filtro.atual))

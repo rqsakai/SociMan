@@ -11,6 +11,7 @@
  * Tudo é leitura.
  */
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { CardAnalytics } from "@/components/analytics/CardAnalytics";
 import { corDoSlot, useOrdemContas, type OrdemContas } from "@/components/analytics/coresContas";
 import type { OpcoesGrafico } from "@/components/analytics/echarts";
@@ -31,6 +32,7 @@ import {
   type EstadoFiltroAnalytics,
 } from "@/lib/analytics";
 import { platformLabel } from "@/lib/perfis";
+import { studioContaPath } from "@/lib/studio";
 
 type ChaveIndicador = AnalyticsIndicador["chave"];
 type ChaveEixo = AnalyticsRadarConta["eixos"][number]["chave"];
@@ -194,6 +196,18 @@ export function Contas({ estado }: { estado: EstadoFiltroAnalytics }) {
               </Button>
             ))}
           </div>
+          {/* spec 020 (FR-022): o histórico importado do Studio de cada conta TikTok */}
+          {v.contas.some((c) => c.rede === "tiktok") && (
+            <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm" aria-label="Histórico do Studio">
+              {v.contas
+                .filter((c) => c.rede === "tiktok")
+                .map((c) => (
+                  <Link key={c.contaId} to={studioContaPath(c.contaId)} className="text-primary underline-offset-2 hover:underline">
+                    Histórico do Studio de {c.rotulo}
+                  </Link>
+                ))}
+            </p>
+          )}
         </CardAnalytics>
 
         <CardAnalytics
