@@ -74,9 +74,30 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         // clique na notificação do navegador (spec 006, R11): foca o app e abre o link
         importScripts: ["/sw-notificacoes.js"],
+        // ECharts do analytics (spec 019, R1 cuidado 2): ~234 kB gz que só quem abre /app/metricas
+        // precisa. Fica fora do precache (instalar o PWA não baixa) e entra num cache em runtime;
+        // é a única rota de runtime do SW (check:pwa confere).
+        globIgnores: ["**/graficos-*.js"],
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/graficos-[\w-]+\.js$/,
+            handler: "StaleWhileRevalidate",
+            options: { cacheName: "sociman-graficos", expiration: { maxEntries: 4 } },
+          },
+        ],
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // nome fixo para o chunk do ECharts (spec 019): o SW o reconhece por `graficos-*.js`
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](echarts|zrender)[\\/]/.test(id)) return "graficos";
+        },
+      },
+    },
+  },
   // cache separado quando rodando no docker-compose (repo bind-mount; o cache
   // do host em node_modules/.vite não pode ser compartilhado entre processos)
   cacheDir: process.env.VITE_CACHE_DIR || "node_modules/.vite",

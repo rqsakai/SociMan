@@ -9,6 +9,9 @@
  * - "Selecionar" em um clique, desfazível (toast com "Desfazer"); marcar vários e "Selecionar N".
  * - "Colar link" e "Enviar arquivo" para avulsos.
  * - Barra fixa "N selecionados para <perfil> → Gerar cortes" (abre o EnviarDialog).
+ * - `?video=<id>` (spec 019, "Gerar cortes" das oportunidades do analytics): o vídeo aparece em
+ *   destaque acima da lista, com o selo de direito e o mesmo "Selecionar"; a geração e o aviso de
+ *   direito seguem o fluxo de sempre (princípio II).
  */
 import { ApiError } from "@sociman/contract";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,6 +37,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { DireitoBadge } from "../../components/canais/DireitoBadge";
 import { ScoreBadge, ScoreReason } from "../../components/canais/ScoreReason";
 import { VideoCard } from "../../components/canais/VideoCard";
 import { ColarLinkDialog, EnviarArquivoDialog } from "../../components/envios/AvulsoDialogs";
@@ -105,6 +109,17 @@ export default function Descobrir() {
   useEffect(() => setParam("q", q), [q]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const canais = useQuery({ queryKey: canaisKey({}), queryFn: () => api.canais.list({}) });
+
+  // Vídeo vindo das oportunidades do analytics (spec 019): buscado à parte, porque os filtros da
+  // lista (recomendados, período) podem escondê-lo. A chave fica sob ["videos-fonte"], que o
+  // refreshSelecao já invalida.
+  const videoDestaqueId = get("video");
+  const destaque = useQuery({
+    queryKey: ["videos-fonte", "destaque", videoDestaqueId],
+    queryFn: () => api.videosFonte.get(videoDestaqueId),
+    enabled: Boolean(videoDestaqueId),
+  });
+  const videoDestaque = destaque.data?.video;
 
   const filters = useMemo(() => {
     const dias = periodos[periodo]?.dias;
@@ -253,7 +268,11 @@ export default function Descobrir() {
         const corte = v.jaCortado.find((j) => j.perfilId === perfilId);
         return (
           <div className="min-w-64 space-y-1.5">
-            <VideoCard video={v} jaCortado={corte ? `Já cortado para ${perfil?.name ?? "o perfil"} (${envioStatusLabel[corte.status as keyof typeof envioStatusLabel] ?? corte.status})` : null} />
+            <VideoCard
+              video={v}
+              jaCortado={corte ? `Já cortado para ${perfil?.name ?? "o perfil"} (${envioStatusLabel[corte.status as keyof typeof envioStatusLabel] ?? corte.status})` : null}
+              className={v.id === videoDestaqueId ? "rounded-md ring-2 ring-primary ring-offset-2 ring-offset-card" : undefined}
+            />
             <div className="sm:hidden">
               <ScoreReason video={v} compact />
             </div>
@@ -378,6 +397,49 @@ export default function Descobrir() {
           </AlertDescription>
         </Alert>
       )}
+
+      {videoDestaqueId && (destaque.isError ? (
+        <ApiErrorAlert error={destaque.error} />
+      ) : videoDestaque ? (
+        <section aria-label="Vídeo escolhido nas métricas" className="flex flex-col gap-3 rounded-xl bg-card p-4 shadow-card ring-2 ring-primary/60">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-semibold">Vídeo escolhido nas métricas</h2>
+            <div className="flex items-center gap-2">
+              <DireitoBadge direito={videoDestaque.canal.direito} />
+              <Button type="button" size="sm" variant="ghost" onClick={() => setParam("video", "")}>
+                Dispensar
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <VideoCard video={videoDestaque} className="flex-1" />
+            {(() => {
+              const sel = videoDestaque.selecionado.find((s) => s.perfilId === perfilId);
+              return sel ? (
+                <Button type="button" variant="secondary" size="sm" aria-label={`Desfazer seleção: ${videoDestaque.title}`} onClick={() => void desfazer(sel.envioId)}>
+                  <Check aria-hidden="true" />
+                  Selecionado
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!videoDestaque.disponivel || !perfilId || busy !== null}
+                  aria-busy={busy === videoDestaque.id}
+                  aria-label={`Selecionar para corte: ${videoDestaque.title}`}
+                  onClick={() => void selecionar(videoDestaque)}
+                >
+                  {busy === videoDestaque.id ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Plus aria-hidden="true" />}
+                  Selecionar
+                </Button>
+              );
+            })()}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Selecione e use &quot;Gerar cortes&quot; na barra de baixo, como sempre; o aviso de direito do canal aparece no envio.
+          </p>
+        </section>
+      ) : null)}
 
       <HeaderCard
         title="Vídeos recomendados"

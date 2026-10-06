@@ -653,3 +653,121 @@ def test_modulos_do_guia_nao_importam_a_publicacao():
     achados = {str(p.relative_to(SRC)): mods for p in fontes
                if (mods := _modulos_de_publicacao(ast.parse(p.read_text())))}
     assert not achados, f"o guia importa a publicação (princípio I): {achados}"
+
+
+# ---- spec 019 (analytics de decisão): só leitura ----
+
+ANALYTICS = SRC / "analytics"
+OPERATIONS_019 = {"analytics_visao_geral", "analytics_quando_postar", "analytics_o_que_funciona",
+                  "analytics_curvas", "analytics_contas", "analytics_funil", "analytics_mercado",
+                  "analytics_alertas"}
+# R12: nada de rede, HTTP, serviços que mudam estado nem histórico.
+IMPORTS_PROIBIDOS_019 = ("sociman_api.publicacao", "httpx", "sociman_api.postagem.service",
+                         "sociman_api.envios.service_envios", "sociman_api.cortes.service",
+                         "sociman_api.history")
+# `.add(`/`.delete(` só contam na sessão (`db.add`, `session.delete`): `set.add` é leitura.
+ESCRITAS_ORM = {"add_all", "flush", "commit", "merge", "bulk_save_objects"}
+ESCRITAS_SESSAO = {"add", "delete"}
+SESSOES = {"db", "session", "sessao", "s"}
+ESCRITAS_SQL = {"update", "insert", "delete"}
+_SQL_ESCRITA = re.compile(r"\b(INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|TRUNCATE)\b",
+                          re.IGNORECASE)
+
+
+def _rotas_019() -> dict[str, tuple[str, str]]:
+    return {op.get("operationId", ""): (m.upper(), path)
+            for path, ops in app.openapi()["paths"].items() for m, op in ops.items()
+            if path.startswith("/api/analytics")}
+
+
+def test_rotas_de_analytics_so_get():
+    rotas = _rotas_019()
+    assert len(rotas) >= len(OPERATIONS_019)  # o guarda está vivo
+    outros = [(m, p) for m, p in rotas.values() if m != "GET"]
+    assert not outros, f"analytics com rota que não é GET (princípio I): {outros}"
+
+
+def test_operation_ids_de_analytics():
+    rotas = _rotas_019()
+    assert all(op.startswith("analytics_") for op in rotas), sorted(rotas)
+    assert OPERATIONS_019 <= set(rotas), OPERATIONS_019 - set(rotas)
+    for op, (_, path) in rotas.items():
+        texto = f"{_norm(path)} {_norm(op)}"
+        assert not [t for t in PUBLISH_TERMS if t in texto], (op, path)
+
+
+def _nome(node: ast.AST) -> str:
+    """`db` em `db.add`, `self.db.add` ou `c.db.add`."""
+    if isinstance(node, ast.Name):
+        return node.id
+    return node.attr if isinstance(node, ast.Attribute) else ""
+
+
+def _escritas(tree: ast.AST) -> list[tuple[int, str]]:
+    """`.add(`, `.flush(`, `.commit(`, `.delete(`…, `update(`/`insert(`/`delete(` do SQLAlchemy
+    (importados ou chamados) e SQL de escrita em literais (fora das docstrings)."""
+    achados = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            f = node.func
+            if isinstance(f, ast.Attribute) and (f.attr in ESCRITAS_ORM or (
+                    f.attr in ESCRITAS_SESSAO and _nome(f.value) in SESSOES)):
+                achados.append((node.lineno, f".{f.attr}("))
+            elif isinstance(f, ast.Name) and f.id in ESCRITAS_SQL:
+                achados.append((node.lineno, f"{f.id}("))
+            elif isinstance(f, ast.Attribute) and f.attr in ESCRITAS_SQL \
+                    and isinstance(f.value, ast.Name) and f.value.id in ("sa", "sqlalchemy"):
+                achados.append((node.lineno, f"{f.value.id}.{f.attr}("))
+        elif isinstance(node, ast.ImportFrom) and node.module and \
+                node.module.split(".")[0] == "sqlalchemy":
+            achados += [(node.lineno, f"import {a.name}") for a in node.names
+                        if a.name in ESCRITAS_SQL]
+    for texto in _strings_de_codigo(tree):
+        if _SQL_ESCRITA.search(texto):
+            achados.append((0, texto.strip()[:40]))
+    return sorted(set(achados))
+
+
+def test_analytics_so_le():
+    """R12: `analytics/` não importa publicação, HTTP, serviços que escrevem nem o histórico, e
+    não grava (nenhum add/flush/commit/delete nem SQL de escrita)."""
+    fontes = sorted(ANALYTICS.rglob("*.py"))
+    assert fontes and (ANALYTICS / "router.py") in fontes  # o guarda está vivo
+    imports, escritas = [], []
+    for path in fontes:
+        tree = ast.parse(path.read_text())
+        rel = str(path.relative_to(SRC))
+        imports += [f"{rel}: {m}" for m in IMPORTS_PROIBIDOS_019 if _importa(tree, m)]
+        escritas += [f"{rel}:{linha}: {o}" for linha, o in _escritas(tree)]
+    assert not imports, f"analytics/ importa o que escreve ou publica (princípio I): {imports}"
+    assert not escritas, f"analytics/ escreve no banco (princípio I): {escritas}"
+
+
+def test_guarda_da_019_pega_os_jeitos_de_escrever():
+    codigo = '''
+from sqlalchemy import select, update
+import sqlalchemy as sa
+def f(db, x):
+    db.add(x)
+    db.flush()
+    db.commit()
+    db.delete(x)
+    db.execute(update(X).values(a=1))
+    db.execute(sa.insert(X))
+    db.execute(text("DELETE FROM metricas_videos"))
+    db.execute(select(X))
+    self.db.add(x)
+    vistas = set()
+    vistas.add(1)
+'''
+    tree = ast.parse(codigo)
+    assert {o for _, o in _escritas(tree)} == {
+        "import update", ".add(", ".flush(", ".commit(", ".delete(", "update(", "sa.insert(",
+        "DELETE FROM metricas_videos"}
+    assert len([1 for _, o in _escritas(tree) if o == ".add("]) == 2  # `set.add` não conta
+    for m, cod in (("sociman_api.publicacao", "from sociman_api.publicacao import conexoes"),
+                   ("sociman_api.history", "from sociman_api import history"),
+                   ("sociman_api.postagem.service", "from sociman_api.postagem import service"),
+                   ("httpx", "import httpx")):
+        assert _importa(ast.parse(cod), m), cod
+    assert not _escritas(ast.parse('"""UPDATE x SET y: só na docstring."""\nselect(X)\n'))

@@ -174,6 +174,33 @@ export type DestinoMetricas = components["schemas"]["DestinoMetricasOut"];
 export type MetricasContaFilters = NonNullable<paths["/api/contas/{conta_id}/metricas"]["get"]["parameters"]["query"]>;
 export type MetricasVideosFilters = NonNullable<paths["/api/metricas/videos"]["get"]["parameters"]["query"]>;
 export type MetricasExportFilters = NonNullable<paths["/api/metricas/export"]["get"]["parameters"]["query"]>;
+// 019-analytics
+export type AnalyticsFiltros = NonNullable<paths["/api/analytics/visao-geral"]["get"]["parameters"]["query"]>;
+export type AnalyticsFunilFiltros = NonNullable<paths["/api/analytics/funil"]["get"]["parameters"]["query"]>;
+export type AnalyticsContexto = components["schemas"]["Contexto"];
+export type AnalyticsContaOrdem = components["schemas"]["ContaOrdem"];
+export type AnalyticsAmostra = components["schemas"]["Amostra"];
+export type AnalyticsMedida = components["schemas"]["Medida"];
+export type AnalyticsIndicador = components["schemas"]["Indicador"];
+export type AnalyticsInsight = components["schemas"]["Insight"];
+export type AnalyticsPostResumo = components["schemas"]["PostResumo"];
+export type AnalyticsCelulaMapa = components["schemas"]["CelulaMapa"];
+export type AnalyticsLinhaRanking = components["schemas"]["LinhaRanking"];
+export type AnalyticsDispersao = components["schemas"]["Dispersao"];
+export type AnalyticsCurva = components["schemas"]["Curva"];
+export type AnalyticsDistribuicaoConta = components["schemas"]["DistribuicaoConta"];
+export type AnalyticsRadarConta = components["schemas"]["RadarConta"];
+export type AnalyticsEtapaFunil = components["schemas"]["EtapaFunil"];
+export type AnalyticsOportunidade = components["schemas"]["Oportunidade"];
+export type AnalyticsAlerta = components["schemas"]["Alerta"];
+export type AnalyticsVisaoGeral = components["schemas"]["VisaoGeralOut"];
+export type AnalyticsQuandoPostar = components["schemas"]["QuandoPostarOut"];
+export type AnalyticsOQueFunciona = components["schemas"]["OQueFuncionaOut"];
+export type AnalyticsCurvas = components["schemas"]["CurvasOut"];
+export type AnalyticsContas = components["schemas"]["ContasOut"];
+export type AnalyticsFunil = components["schemas"]["FunilOut"];
+export type AnalyticsMercado = components["schemas"]["MercadoOut"];
+export type AnalyticsAlertas = components["schemas"]["AlertasOut"];
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -551,6 +578,19 @@ export function createApiClient(options: ApiClientOptions = {}) {
         const filename = /filename="?([^";]+)"?/.exec(disposition)?.[1] ?? "sociman-metricas.zip";
         return { blob: data, filename };
       },
+    },
+    // Analytics de decisão (spec 019): 8 abas, só leitura (GET), dono e membro; custo de IA do funil só para o dono.
+    analytics: {
+      visaoGeral: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/visao-geral", { params: { query } })),
+      quandoPostar: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/quando-postar", { params: { query } })),
+      oQueFunciona: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/o-que-funciona", { params: { query } })),
+      curvas: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/curvas", { params: { query } })),
+      contas: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/contas", { params: { query } })),
+      funil: (query: AnalyticsFunilFiltros = {}) => unwrap(client.GET("/api/analytics/funil", { params: { query } })),
+      mercado: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/mercado", { params: { query } })),
+      alertas: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/alertas", { params: { query } })),
+      // ordem estável de todas as contas (cor fixa por conta, FR-006)
+      ordemContas: () => unwrap(client.GET("/api/analytics/ordem-contas")),
     },
     // Interruptor "Envios automáticos" (spec 015): só o dono humano muda; o nível do servidor é leitura.
     publicacao: {

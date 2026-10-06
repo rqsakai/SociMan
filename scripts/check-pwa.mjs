@@ -1,9 +1,9 @@
 // Checagem da spec 002 (PWA): valida o build da SPA depois de
 // `npm run build -w @sociman/web`. Confere o manifest (data-model.md), os ícones
-// citados, o sw.js (sem runtimeCaching, sem /api ou /img no precache, com o
-// denylist de navegação) e o index.html (sem script inline, com manifest,
+// citados, o sw.js (sem runtimeCaching além do chunk de gráficos da spec 019,
+// sem /api ou /img no precache, com o denylist de navegação) e o index.html (sem script inline, com manifest,
 // theme-color e apple-touch-icon). Aceita outro dist como argumento (testes).
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -76,8 +76,16 @@ if (!existsSync(swPath)) {
   const sw = readFileSync(swPath, "utf8");
   // O Workbox só emite registerRoute com estratégia (CacheFirst etc.) quando há
   // runtimeCaching; o único registerRoute permitido é o NavigationRoute.
-  if (/runtimeCaching/.test(sw) || /new \w+\.(CacheFirst|NetworkFirst|StaleWhileRevalidate|NetworkOnly|CacheOnly)\b/.test(sw)) {
-    fail("sw.js tem runtimeCaching (proibido: o SW só pode precachear o build)");
+  // Exceção da spec 019 (R1, cuidado 2): o chunk do ECharts (`/assets/graficos-*.js`) fica fora do
+  // precache e entra num StaleWhileRevalidate. É a ÚNICA rota com estratégia aceita; nada de /api,
+  // /img nem outra estratégia.
+  const graficos = /registerRoute\(\s*\/\\\/assets\\\/graficos-[^,]*,\s*new \w+\.StaleWhileRevalidate\(/g;
+  const semGraficos = sw.replace(graficos, "");
+  if (/runtimeCaching/.test(sw) || /new \w+\.(CacheFirst|NetworkFirst|StaleWhileRevalidate|NetworkOnly|CacheOnly)\b/.test(semGraficos)) {
+    fail("sw.js tem runtimeCaching (proibido: o SW só pode precachear o build, salvo o chunk de gráficos da spec 019)");
+  }
+  if (!graficos.test(sw) && existsSync(join(distDir, "assets")) && readdirSync(join(distDir, "assets")).some((f) => /^graficos-.*\.js$/.test(f))) {
+    fail("sw.js não tem a rota StaleWhileRevalidate do chunk de gráficos (spec 019)");
   }
   const precache = sw.match(/precacheAndRoute\(\s*(\[[\s\S]*?\])\s*,/);
   if (!precache) {
@@ -86,6 +94,7 @@ if (!existsSync(swPath)) {
     const urls = [...precache[1].matchAll(/url:\s*"([^"]+)"/g)].map((m) => m[1]);
     for (const url of urls) {
       if (/^\/?(api|img)(\/|$)/.test(url)) fail(`sw.js: a lista de precache cita "${url}"`);
+      if (/(^|\/)graficos-[^/]*\.js$/.test(url)) fail(`sw.js: o chunk de gráficos "${url}" está no precache (spec 019)`);
     }
   }
   const denylist = sw.match(/denylist:\s*\[([^\]]*)\]/);

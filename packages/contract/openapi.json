@@ -107,6 +107,95 @@
         "title": "AgendarIn",
         "type": "object"
       },
+      "Alerta": {
+        "properties": {
+          "alvo": {
+            "$ref": "#/components/schemas/AlvoAlerta"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "motivo": {
+            "title": "Motivo",
+            "type": "string"
+          },
+          "numeros": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Numeros",
+            "type": "object"
+          },
+          "severidade": {
+            "enum": [
+              "atencao",
+              "info",
+              "positivo"
+            ],
+            "title": "Severidade",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "estagnado",
+              "destaque",
+              "sem_coleta",
+              "vinculo_a_confirmar"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "severidade",
+          "alvo",
+          "motivo",
+          "numeros",
+          "link"
+        ],
+        "title": "Alerta",
+        "type": "object"
+      },
+      "AlertasOut": {
+        "properties": {
+          "alertas": {
+            "items": {
+              "$ref": "#/components/schemas/Alerta"
+            },
+            "title": "Alertas",
+            "type": "array"
+          },
+          "contagem": {
+            "$ref": "#/components/schemas/ContagemAlertas"
+          },
+          "contexto": {
+            "$ref": "#/components/schemas/Contexto"
+          }
+        },
+        "required": [
+          "contexto",
+          "alertas",
+          "contagem"
+        ],
+        "title": "AlertasOut",
+        "type": "object"
+      },
       "Alvo": {
         "properties": {
           "contaId": {
@@ -153,6 +242,42 @@
         "title": "Alvo",
         "type": "object"
       },
+      "AlvoAlerta": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "video",
+              "serie",
+              "destino"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "id",
+          "rotulo"
+        ],
+        "title": "AlvoAlerta",
+        "type": "object"
+      },
       "AlvoTeste": {
         "properties": {
           "entityId": {
@@ -174,6 +299,34 @@
           "entityId"
         ],
         "title": "AlvoTeste",
+        "type": "object"
+      },
+      "Amostra": {
+        "properties": {
+          "faltam": {
+            "title": "Faltam",
+            "type": "integer"
+          },
+          "minimo": {
+            "title": "Minimo",
+            "type": "integer"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "suficiente": {
+            "title": "Suficiente",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "n",
+          "minimo",
+          "suficiente",
+          "faltam"
+        ],
+        "title": "Amostra",
         "type": "object"
       },
       "AplicarMarcaIn": {
@@ -1886,6 +2039,69 @@
         "title": "CanalFonte",
         "type": "object"
       },
+      "CanalMercado": {
+        "properties": {
+          "canalId": {
+            "format": "uuid",
+            "title": "Canalid",
+            "type": "string"
+          },
+          "direito": {
+            "$ref": "#/components/schemas/CanalDireito"
+          },
+          "medianaVelocidade": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medianavelocidade"
+          },
+          "titulo": {
+            "title": "Titulo",
+            "type": "string"
+          },
+          "videos": {
+            "title": "Videos",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "canalId",
+          "titulo",
+          "direito",
+          "videos",
+          "medianaVelocidade"
+        ],
+        "title": "CanalMercado",
+        "type": "object"
+      },
+      "CanalOportunidade": {
+        "properties": {
+          "direito": {
+            "$ref": "#/components/schemas/CanalDireito"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "titulo": {
+            "title": "Titulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "titulo",
+          "direito"
+        ],
+        "title": "CanalOportunidade",
+        "type": "object"
+      },
       "CanalOut": {
         "properties": {
           "canal": {
@@ -2051,6 +2267,46 @@
           "duracao_s"
         ],
         "title": "CardFinal",
+        "type": "object"
+      },
+      "CelulaMapa": {
+        "properties": {
+          "amostraPequena": {
+            "title": "Amostrapequena",
+            "type": "boolean"
+          },
+          "dia": {
+            "title": "Dia",
+            "type": "integer"
+          },
+          "hora": {
+            "title": "Hora",
+            "type": "integer"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "dia",
+          "hora",
+          "valor",
+          "n",
+          "amostraPequena"
+        ],
+        "title": "CelulaMapa",
         "type": "object"
       },
       "ChamadaOut": {
@@ -2450,6 +2706,41 @@
         "title": "Conta",
         "type": "object"
       },
+      "ContaLinha": {
+        "properties": {
+          "contaId": {
+            "format": "uuid",
+            "title": "Contaid",
+            "type": "string"
+          },
+          "indicadores": {
+            "items": {
+              "$ref": "#/components/schemas/Indicador"
+            },
+            "title": "Indicadores",
+            "type": "array"
+          },
+          "perfil": {
+            "$ref": "#/components/schemas/PerfilRef"
+          },
+          "rede": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "contaId",
+          "rotulo",
+          "perfil",
+          "rede",
+          "indicadores"
+        ],
+        "title": "ContaLinha",
+        "type": "object"
+      },
       "ContaMetricasOut": {
         "properties": {
           "coleta": {
@@ -2468,14 +2759,55 @@
             },
             "title": "Publicacoes",
             "type": "array"
+          },
+          "viewsTotal": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Viewstotal"
           }
         },
         "required": [
           "coleta",
           "fotos",
-          "publicacoes"
+          "publicacoes",
+          "viewsTotal"
         ],
         "title": "ContaMetricasOut",
+        "type": "object"
+      },
+      "ContaOrdem": {
+        "properties": {
+          "contaId": {
+            "format": "uuid",
+            "title": "Contaid",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "rede": {
+            "$ref": "#/components/schemas/Platform"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "contaId",
+          "rotulo",
+          "rede",
+          "perfilId"
+        ],
+        "title": "ContaOrdem",
         "type": "object"
       },
       "ContaOut": {
@@ -2541,6 +2873,84 @@
         ],
         "title": "ContaStatus",
         "type": "string"
+      },
+      "ContagemAlertas": {
+        "properties": {
+          "atencao": {
+            "title": "Atencao",
+            "type": "integer"
+          },
+          "info": {
+            "title": "Info",
+            "type": "integer"
+          },
+          "positivo": {
+            "title": "Positivo",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "atencao",
+          "info",
+          "positivo"
+        ],
+        "title": "ContagemAlertas",
+        "type": "object"
+      },
+      "ContasOut": {
+        "properties": {
+          "contas": {
+            "items": {
+              "$ref": "#/components/schemas/ContaLinha"
+            },
+            "title": "Contas",
+            "type": "array"
+          },
+          "contexto": {
+            "$ref": "#/components/schemas/Contexto"
+          },
+          "perfis": {
+            "items": {
+              "$ref": "#/components/schemas/PerfilLinha"
+            },
+            "title": "Perfis",
+            "type": "array"
+          },
+          "radar": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/RadarConta"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Radar"
+          },
+          "radarMotivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Radarmotivo"
+          }
+        },
+        "required": [
+          "contexto",
+          "contas",
+          "perfis",
+          "radar",
+          "radarMotivo"
+        ],
+        "title": "ContasOut",
+        "type": "object"
       },
       "Conteudo": {
         "description": "O detalhe: a linha + o arquivo e os destinos completos.",
@@ -2944,6 +3354,72 @@
         "title": "ConteudosList",
         "type": "object"
       },
+      "Contexto": {
+        "properties": {
+          "aguardando": {
+            "title": "Aguardando",
+            "type": "integer"
+          },
+          "anteriorAte": {
+            "format": "date",
+            "title": "Anteriorate",
+            "type": "string"
+          },
+          "anteriorDe": {
+            "format": "date",
+            "title": "Anteriorde",
+            "type": "string"
+          },
+          "ate": {
+            "format": "date",
+            "title": "Ate",
+            "type": "string"
+          },
+          "de": {
+            "format": "date",
+            "title": "De",
+            "type": "string"
+          },
+          "foraDoSociman": {
+            "title": "Foradosociman",
+            "type": "integer"
+          },
+          "fuso": {
+            "title": "Fuso",
+            "type": "string"
+          },
+          "medida": {
+            "enum": [
+              "h1",
+              "h24",
+              "d7"
+            ],
+            "title": "Medida",
+            "type": "string"
+          },
+          "minimos": {
+            "$ref": "#/components/schemas/Minimos"
+          },
+          "postsNoPeriodo": {
+            "title": "Postsnoperiodo",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "de",
+          "ate",
+          "anteriorDe",
+          "anteriorAte",
+          "medida",
+          "fuso",
+          "postsNoPeriodo",
+          "aguardando",
+          "foraDoSociman",
+          "minimos"
+        ],
+        "title": "Contexto",
+        "type": "object"
+      },
       "Cor": {
         "additionalProperties": false,
         "properties": {
@@ -2972,6 +3448,42 @@
           "valor"
         ],
         "title": "Cor",
+        "type": "object"
+      },
+      "Correlacao": {
+        "properties": {
+          "amostra": {
+            "$ref": "#/components/schemas/Amostra"
+          },
+          "leitura": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leitura"
+          },
+          "rho": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rho"
+          }
+        },
+        "required": [
+          "rho",
+          "leitura",
+          "amostra"
+        ],
+        "title": "Correlacao",
         "type": "object"
       },
       "Corte": {
@@ -3701,6 +4213,91 @@
         "title": "CriadorOut",
         "type": "object"
       },
+      "Curva": {
+        "properties": {
+          "conta": {
+            "title": "Conta",
+            "type": "string"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "meiaVidaH": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meiavidah"
+          },
+          "pontos": {
+            "items": {
+              "$ref": "#/components/schemas/PontoCurva"
+            },
+            "title": "Pontos",
+            "type": "array"
+          },
+          "tituloCurto": {
+            "title": "Titulocurto",
+            "type": "string"
+          },
+          "videoId": {
+            "format": "uuid",
+            "title": "Videoid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "videoId",
+          "tituloCurto",
+          "contaId",
+          "conta",
+          "pontos",
+          "meiaVidaH"
+        ],
+        "title": "Curva",
+        "type": "object"
+      },
+      "CurvasOut": {
+        "properties": {
+          "contexto": {
+            "$ref": "#/components/schemas/Contexto"
+          },
+          "curvas": {
+            "items": {
+              "$ref": "#/components/schemas/Curva"
+            },
+            "title": "Curvas",
+            "type": "array"
+          },
+          "distribuicao": {
+            "items": {
+              "$ref": "#/components/schemas/DistribuicaoConta"
+            },
+            "title": "Distribuicao",
+            "type": "array"
+          }
+        },
+        "required": [
+          "contexto",
+          "curvas",
+          "distribuicao"
+        ],
+        "title": "CurvasOut",
+        "type": "object"
+      },
       "DesaprovarTodasIn": {
         "properties": {
           "confirmo": {
@@ -4209,6 +4806,52 @@
         "title": "DestinoResumo",
         "type": "object"
       },
+      "DiaCalendario": {
+        "properties": {
+          "dia": {
+            "format": "date",
+            "title": "Dia",
+            "type": "string"
+          },
+          "posts": {
+            "title": "Posts",
+            "type": "integer"
+          },
+          "views": {
+            "title": "Views",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dia",
+          "posts",
+          "views"
+        ],
+        "title": "DiaCalendario",
+        "type": "object"
+      },
+      "DiaSerie": {
+        "properties": {
+          "dia": {
+            "format": "date",
+            "title": "Dia",
+            "type": "string"
+          },
+          "porConta": {
+            "items": {
+              "$ref": "#/components/schemas/ViewsConta"
+            },
+            "title": "Porconta",
+            "type": "array"
+          }
+        },
+        "required": [
+          "dia",
+          "porConta"
+        ],
+        "title": "DiaSerie",
+        "type": "object"
+      },
       "DireitoEnvio": {
         "description": "O direito do canal no momento do envio, ou `avulso` (princípio II).",
         "enum": [
@@ -4258,6 +4901,198 @@
           "direito"
         ],
         "title": "DireitoIn",
+        "type": "object"
+      },
+      "Dispersao": {
+        "properties": {
+          "correlacao": {
+            "$ref": "#/components/schemas/Correlacao"
+          },
+          "pontos": {
+            "items": {
+              "$ref": "#/components/schemas/PontoDispersao"
+            },
+            "title": "Pontos",
+            "type": "array"
+          }
+        },
+        "required": [
+          "pontos",
+          "correlacao"
+        ],
+        "title": "Dispersao",
+        "type": "object"
+      },
+      "Dispersoes": {
+        "properties": {
+          "duracao": {
+            "$ref": "#/components/schemas/Dispersao"
+          },
+          "gancho": {
+            "$ref": "#/components/schemas/Dispersao"
+          },
+          "score": {
+            "$ref": "#/components/schemas/Dispersao"
+          }
+        },
+        "required": [
+          "duracao",
+          "gancho",
+          "score"
+        ],
+        "title": "Dispersoes",
+        "type": "object"
+      },
+      "DistribuicaoConta": {
+        "properties": {
+          "amostra": {
+            "$ref": "#/components/schemas/Amostra"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "mediana": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mediana"
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min"
+          },
+          "q1": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q1"
+          },
+          "q3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Q3"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "contaId",
+          "rotulo",
+          "min",
+          "q1",
+          "mediana",
+          "q3",
+          "max",
+          "amostra"
+        ],
+        "title": "DistribuicaoConta",
+        "type": "object"
+      },
+      "EixoRadar": {
+        "properties": {
+          "acima": {
+            "title": "Acima",
+            "type": "boolean"
+          },
+          "chave": {
+            "enum": [
+              "views_por_post",
+              "engajamento",
+              "frequencia",
+              "crescimento",
+              "velocidade_1h",
+              "acima_mediana"
+            ],
+            "title": "Chave",
+            "type": "string"
+          },
+          "indice": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indice"
+          },
+          "media": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Media"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "chave",
+          "valor",
+          "media",
+          "indice",
+          "acima"
+        ],
+        "title": "EixoRadar",
         "type": "object"
       },
       "EmailSentOut": {
@@ -5151,6 +5986,63 @@
         "title": "EstadoFiltro",
         "type": "string"
       },
+      "EtapaFunil": {
+        "properties": {
+          "chave": {
+            "enum": [
+              "enviados",
+              "cortes",
+              "aprovados",
+              "publicados",
+              "acima_patamar"
+            ],
+            "title": "Chave",
+            "type": "string"
+          },
+          "conversaoPct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conversaopct"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "perdas": {
+            "items": {
+              "$ref": "#/components/schemas/Perda"
+            },
+            "title": "Perdas",
+            "type": "array"
+          },
+          "tempoMedianoH": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tempomedianoh"
+          }
+        },
+        "required": [
+          "chave",
+          "n",
+          "conversaoPct",
+          "perdas",
+          "tempoMedianoH"
+        ],
+        "title": "EtapaFunil",
+        "type": "object"
+      },
       "Exemplo": {
         "properties": {
           "texto": {
@@ -5671,6 +6563,17 @@
               }
             ],
             "title": "Videos"
+          },
+          "views": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views"
           }
         },
         "required": [
@@ -5679,7 +6582,8 @@
           "seguidores",
           "seguindo",
           "curtidas",
-          "videos"
+          "videos",
+          "views"
         ],
         "title": "FotoConta",
         "type": "object"
@@ -5782,6 +6686,55 @@
           "items"
         ],
         "title": "FundoImagesList",
+        "type": "object"
+      },
+      "FunilOut": {
+        "properties": {
+          "contexto": {
+            "$ref": "#/components/schemas/Contexto"
+          },
+          "custoIaUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custoiausd"
+          },
+          "custoPorMilViewsUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custopormilviewsusd"
+          },
+          "etapas": {
+            "items": {
+              "$ref": "#/components/schemas/EtapaFunil"
+            },
+            "title": "Etapas",
+            "type": "array"
+          },
+          "patamar": {
+            "title": "Patamar",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "contexto",
+          "etapas",
+          "patamar",
+          "custoIaUsd",
+          "custoPorMilViewsUsd"
+        ],
+        "title": "FunilOut",
         "type": "object"
       },
       "Gancho": {
@@ -6883,6 +7836,68 @@
         "title": "ImageUrls",
         "type": "object"
       },
+      "Indicador": {
+        "properties": {
+          "anterior": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anterior"
+          },
+          "chave": {
+            "enum": [
+              "views",
+              "likes",
+              "engajamento",
+              "seguidores",
+              "posts",
+              "mediana_post"
+            ],
+            "title": "Chave",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          },
+          "variacaoPct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variacaopct"
+          }
+        },
+        "required": [
+          "chave",
+          "valor",
+          "anterior",
+          "variacaoPct",
+          "n"
+        ],
+        "title": "Indicador",
+        "type": "object"
+      },
       "Inelegivel": {
         "properties": {
           "code": {
@@ -6924,6 +7939,65 @@
           "expiraEm"
         ],
         "title": "IniciarOut",
+        "type": "object"
+      },
+      "Insight": {
+        "properties": {
+          "amostra": {
+            "$ref": "#/components/schemas/Amostra"
+          },
+          "frase": {
+            "title": "Frase",
+            "type": "string"
+          },
+          "grupo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grupo"
+          },
+          "pendente": {
+            "title": "Pendente",
+            "type": "boolean"
+          },
+          "regra": {
+            "enum": [
+              "horario",
+              "dia",
+              "duracao",
+              "canal",
+              "hashtag",
+              "destaque"
+            ],
+            "title": "Regra",
+            "type": "string"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "regra",
+          "frase",
+          "valor",
+          "grupo",
+          "amostra",
+          "pendente"
+        ],
+        "title": "Insight",
         "type": "object"
       },
       "Integracoes": {
@@ -7488,6 +8562,78 @@
         "title": "Limites",
         "type": "object"
       },
+      "LinhaRanking": {
+        "properties": {
+          "amostra": {
+            "$ref": "#/components/schemas/Amostra"
+          },
+          "chave": {
+            "title": "Chave",
+            "type": "string"
+          },
+          "direito": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CanalDireito"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "engajamento": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engajamento"
+          },
+          "lift": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lift"
+          },
+          "mediana": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mediana"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "chave",
+          "rotulo",
+          "n",
+          "mediana",
+          "lift",
+          "amostra"
+        ],
+        "title": "LinhaRanking",
+        "type": "object"
+      },
       "LoginIn": {
         "properties": {
           "email": {
@@ -7737,6 +8883,43 @@
         "title": "LoteResultado",
         "type": "object"
       },
+      "Mapa": {
+        "properties": {
+          "celulas": {
+            "items": {
+              "$ref": "#/components/schemas/CelulaMapa"
+            },
+            "title": "Celulas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "celulas"
+        ],
+        "title": "Mapa",
+        "type": "object"
+      },
+      "MapaAudiencia": {
+        "properties": {
+          "celulas": {
+            "items": {
+              "$ref": "#/components/schemas/CelulaMapa"
+            },
+            "title": "Celulas",
+            "type": "array"
+          },
+          "semHora": {
+            "title": "Semhora",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "celulas",
+          "semHora"
+        ],
+        "title": "MapaAudiencia",
+        "type": "object"
+      },
       "MarcaDagua": {
         "additionalProperties": false,
         "properties": {
@@ -7951,6 +9134,73 @@
         "title": "Marcos",
         "type": "object"
       },
+      "Medida": {
+        "description": "A medida do post (marco 1 h/24 h/7 d de views, research R3).",
+        "properties": {
+          "aguardando": {
+            "title": "Aguardando",
+            "type": "boolean"
+          },
+          "estimado": {
+            "title": "Estimado",
+            "type": "boolean"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "valor",
+          "estimado",
+          "aguardando"
+        ],
+        "title": "Medida",
+        "type": "object"
+      },
+      "MercadoOut": {
+        "properties": {
+          "canais": {
+            "items": {
+              "$ref": "#/components/schemas/CanalMercado"
+            },
+            "title": "Canais",
+            "type": "array"
+          },
+          "contexto": {
+            "$ref": "#/components/schemas/Contexto"
+          },
+          "oportunidades": {
+            "items": {
+              "$ref": "#/components/schemas/Oportunidade"
+            },
+            "title": "Oportunidades",
+            "type": "array"
+          },
+          "publicacao": {
+            "$ref": "#/components/schemas/Mapa"
+          },
+          "velocidadePorHorario": {
+            "$ref": "#/components/schemas/Mapa"
+          }
+        },
+        "required": [
+          "contexto",
+          "publicacao",
+          "velocidadePorHorario",
+          "oportunidades",
+          "canais"
+        ],
+        "title": "MercadoOut",
+        "type": "object"
+      },
       "Metrica": {
         "properties": {
           "comments": {
@@ -8105,6 +9355,29 @@
           "items"
         ],
         "title": "MidiaLinksOut",
+        "type": "object"
+      },
+      "Minimos": {
+        "properties": {
+          "contasRadar": {
+            "title": "Contasradar",
+            "type": "integer"
+          },
+          "correlacao": {
+            "title": "Correlacao",
+            "type": "integer"
+          },
+          "grupo": {
+            "title": "Grupo",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "grupo",
+          "correlacao",
+          "contasRadar"
+        ],
+        "title": "Minimos",
         "type": "object"
       },
       "Modo": {
@@ -8325,6 +9598,59 @@
           "naoLidas"
         ],
         "title": "NotificacoesList",
+        "type": "object"
+      },
+      "OQueFuncionaOut": {
+        "properties": {
+          "canais": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaRanking"
+            },
+            "title": "Canais",
+            "type": "array"
+          },
+          "contexto": {
+            "$ref": "#/components/schemas/Contexto"
+          },
+          "dispersoes": {
+            "$ref": "#/components/schemas/Dispersoes"
+          },
+          "excluidosSemVinculo": {
+            "title": "Excluidossemvinculo",
+            "type": "integer"
+          },
+          "hashtags": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaRanking"
+            },
+            "title": "Hashtags",
+            "type": "array"
+          },
+          "modos": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaRanking"
+            },
+            "title": "Modos",
+            "type": "array"
+          },
+          "padroes": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaRanking"
+            },
+            "title": "Padroes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "contexto",
+          "dispersoes",
+          "canais",
+          "hashtags",
+          "modos",
+          "padroes",
+          "excluidosSemVinculo"
+        ],
+        "title": "OQueFuncionaOut",
         "type": "object"
       },
       "Ok": {
@@ -8569,6 +9895,63 @@
         "title": "OpenShortsSubtitle",
         "type": "object"
       },
+      "Oportunidade": {
+        "properties": {
+          "canal": {
+            "$ref": "#/components/schemas/CanalOportunidade"
+          },
+          "idadeH": {
+            "title": "Idadeh",
+            "type": "number"
+          },
+          "linkGerarCortes": {
+            "title": "Linkgerarcortes",
+            "type": "string"
+          },
+          "tituloCurto": {
+            "title": "Titulocurto",
+            "type": "string"
+          },
+          "velocidade": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Velocidade"
+          },
+          "videoFonteId": {
+            "format": "uuid",
+            "title": "Videofonteid",
+            "type": "string"
+          },
+          "views": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views"
+          }
+        },
+        "required": [
+          "videoFonteId",
+          "tituloCurto",
+          "canal",
+          "idadeH",
+          "views",
+          "velocidade",
+          "linkGerarCortes"
+        ],
+        "title": "Oportunidade",
+        "type": "object"
+      },
       "Ordem": {
         "properties": {
           "fileIds": {
@@ -8595,6 +9978,22 @@
           "fileIds"
         ],
         "title": "Ordem",
+        "type": "object"
+      },
+      "OrdemContasOut": {
+        "properties": {
+          "contas": {
+            "items": {
+              "$ref": "#/components/schemas/ContaOrdem"
+            },
+            "title": "Contas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "contas"
+        ],
+        "title": "OrdemContasOut",
         "type": "object"
       },
       "OrdemConteudos": {
@@ -8868,6 +10267,24 @@
         "title": "PedirAprovacaoIn",
         "type": "object"
       },
+      "Perda": {
+        "properties": {
+          "motivo": {
+            "title": "Motivo",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "motivo",
+          "n"
+        ],
+        "title": "Perda",
+        "type": "object"
+      },
       "Perfil": {
         "properties": {
           "archived": {
@@ -9053,6 +10470,26 @@
         "title": "PerfilDetail",
         "type": "object"
       },
+      "PerfilLinha": {
+        "properties": {
+          "indicadores": {
+            "items": {
+              "$ref": "#/components/schemas/Indicador"
+            },
+            "title": "Indicadores",
+            "type": "array"
+          },
+          "perfil": {
+            "$ref": "#/components/schemas/PerfilRef"
+          }
+        },
+        "required": [
+          "perfil",
+          "indicadores"
+        ],
+        "title": "PerfilLinha",
+        "type": "object"
+      },
       "PerfilOut": {
         "properties": {
           "perfil": {
@@ -9126,6 +10563,184 @@
         ],
         "title": "Platform",
         "type": "string"
+      },
+      "PontoCurva": {
+        "properties": {
+          "idadeH": {
+            "title": "Idadeh",
+            "type": "number"
+          },
+          "views": {
+            "title": "Views",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "idadeH",
+          "views"
+        ],
+        "title": "PontoCurva",
+        "type": "object"
+      },
+      "PontoDispersao": {
+        "properties": {
+          "conta": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conta"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "estimado": {
+            "title": "Estimado",
+            "type": "boolean"
+          },
+          "tituloCurto": {
+            "title": "Titulocurto",
+            "type": "string"
+          },
+          "videoId": {
+            "format": "uuid",
+            "title": "Videoid",
+            "type": "string"
+          },
+          "x": {
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "required": [
+          "videoId",
+          "x",
+          "y",
+          "estimado",
+          "tituloCurto",
+          "contaId",
+          "conta"
+        ],
+        "title": "PontoDispersao",
+        "type": "object"
+      },
+      "PostResumo": {
+        "description": "Um post analisado, resumido para listas (principais, alertas).",
+        "properties": {
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "engajamento": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Engajamento"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "medida": {
+            "$ref": "#/components/schemas/Medida"
+          },
+          "publicadoEm": {
+            "format": "date-time",
+            "title": "Publicadoem",
+            "type": "string"
+          },
+          "rotuloConta": {
+            "title": "Rotuloconta",
+            "type": "string"
+          },
+          "thumbUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumburl"
+          },
+          "tituloCurto": {
+            "title": "Titulocurto",
+            "type": "string"
+          },
+          "videoId": {
+            "format": "uuid",
+            "title": "Videoid",
+            "type": "string"
+          },
+          "viewsAtual": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Viewsatual"
+          },
+          "viewsPeriodo": {
+            "title": "Viewsperiodo",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "videoId",
+          "contaId",
+          "rotuloConta",
+          "publicadoEm",
+          "tituloCurto",
+          "link",
+          "thumbUrl",
+          "medida",
+          "viewsAtual",
+          "viewsPeriodo",
+          "engajamento"
+        ],
+        "title": "PostResumo",
+        "type": "object"
       },
       "PostadoIn": {
         "properties": {
@@ -9402,6 +11017,61 @@
           "destinoId"
         ],
         "title": "Pulado",
+        "type": "object"
+      },
+      "QuandoPostarOut": {
+        "properties": {
+          "audiencia": {
+            "$ref": "#/components/schemas/MapaAudiencia"
+          },
+          "calendario": {
+            "items": {
+              "$ref": "#/components/schemas/DiaCalendario"
+            },
+            "title": "Calendario",
+            "type": "array"
+          },
+          "contexto": {
+            "$ref": "#/components/schemas/Contexto"
+          },
+          "porPublicacao": {
+            "$ref": "#/components/schemas/Mapa"
+          }
+        },
+        "required": [
+          "contexto",
+          "porPublicacao",
+          "audiencia",
+          "calendario"
+        ],
+        "title": "QuandoPostarOut",
+        "type": "object"
+      },
+      "RadarConta": {
+        "properties": {
+          "contaId": {
+            "format": "uuid",
+            "title": "Contaid",
+            "type": "string"
+          },
+          "eixos": {
+            "items": {
+              "$ref": "#/components/schemas/EixoRadar"
+            },
+            "title": "Eixos",
+            "type": "array"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "contaId",
+          "rotulo",
+          "eixos"
+        ],
+        "title": "RadarConta",
         "type": "object"
       },
       "ReagendarIn": {
@@ -12508,6 +14178,37 @@
         "title": "VideoResumo",
         "type": "object"
       },
+      "ViewsConta": {
+        "properties": {
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          },
+          "views": {
+            "title": "Views",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "contaId",
+          "rotulo",
+          "views"
+        ],
+        "title": "ViewsConta",
+        "type": "object"
+      },
       "Vinculo": {
         "properties": {
           "ancora": {
@@ -12709,6 +14410,54 @@
           "vinculo"
         ],
         "title": "VinculoOut",
+        "type": "object"
+      },
+      "VisaoGeralOut": {
+        "properties": {
+          "contexto": {
+            "$ref": "#/components/schemas/Contexto"
+          },
+          "indicadores": {
+            "items": {
+              "$ref": "#/components/schemas/Indicador"
+            },
+            "title": "Indicadores",
+            "type": "array"
+          },
+          "insights": {
+            "items": {
+              "$ref": "#/components/schemas/Insight"
+            },
+            "title": "Insights",
+            "type": "array"
+          },
+          "principais": {
+            "items": {
+              "$ref": "#/components/schemas/PostResumo"
+            },
+            "title": "Principais",
+            "type": "array"
+          },
+          "ranking": {
+            "$ref": "#/components/schemas/sociman_api__metricas__schemas__VideosList"
+          },
+          "serieDiaria": {
+            "items": {
+              "$ref": "#/components/schemas/DiaSerie"
+            },
+            "title": "Seriediaria",
+            "type": "array"
+          }
+        },
+        "required": [
+          "contexto",
+          "indicadores",
+          "serieDiaria",
+          "principais",
+          "insights",
+          "ranking"
+        ],
+        "title": "VisaoGeralOut",
         "type": "object"
       },
       "WatermarkImageOut": {
@@ -13151,6 +14900,1328 @@
           }
         },
         "summary": "Sequencia Previa"
+      }
+    },
+    "/api/analytics/alertas": {
+      "get": {
+        "operationId": "analytics_alertas",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rede",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Platform"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rede"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertasOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Alertas"
+      }
+    },
+    "/api/analytics/contas": {
+      "get": {
+        "operationId": "analytics_contas",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rede",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Platform"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rede"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContasOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Contas"
+      }
+    },
+    "/api/analytics/curvas": {
+      "get": {
+        "operationId": "analytics_curvas",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rede",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Platform"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rede"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurvasOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Curvas"
+      }
+    },
+    "/api/analytics/funil": {
+      "get": {
+        "operationId": "analytics_funil",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "patamar",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "minimum": 1,
+              "title": "Patamar",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rede",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Platform"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rede"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunilOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Funil"
+      }
+    },
+    "/api/analytics/mercado": {
+      "get": {
+        "operationId": "analytics_mercado",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rede",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Platform"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rede"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MercadoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Mercado"
+      }
+    },
+    "/api/analytics/o-que-funciona": {
+      "get": {
+        "operationId": "analytics_o_que_funciona",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rede",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Platform"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rede"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OQueFuncionaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "O Que Funciona"
+      }
+    },
+    "/api/analytics/ordem-contas": {
+      "get": {
+        "description": "Todas as contas na ordem estável da cor fixa (FR-006), sem filtro.",
+        "operationId": "analytics_ordem_contas",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdemContasOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Ordem Contas"
+      }
+    },
+    "/api/analytics/quando-postar": {
+      "get": {
+        "operationId": "analytics_quando_postar",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rede",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Platform"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rede"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuandoPostarOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Quando Postar"
+      }
+    },
+    "/api/analytics/visao-geral": {
+      "get": {
+        "operationId": "analytics_visao_geral",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rede",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Platform"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rede"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisaoGeralOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Visao Geral"
       }
     },
     "/api/armazenamento": {
@@ -23367,8 +26438,9 @@
             "name": "ordem",
             "required": false,
             "schema": {
-              "default": "views24h",
+              "default": "views",
               "enum": [
+                "views",
                 "views24h",
                 "views7d",
                 "engajamento",

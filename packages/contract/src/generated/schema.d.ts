@@ -89,6 +89,162 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/analytics/alertas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Alertas */
+        get: operations["analytics_alertas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/contas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Contas */
+        get: operations["analytics_contas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/curvas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Curvas */
+        get: operations["analytics_curvas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/funil": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Funil */
+        get: operations["analytics_funil"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/mercado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Mercado */
+        get: operations["analytics_mercado"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/o-que-funciona": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** O Que Funciona */
+        get: operations["analytics_o_que_funciona"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/ordem-contas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ordem Contas
+         * @description Todas as contas na ordem estável da cor fixa (FR-006), sem filtro.
+         */
+        get: operations["analytics_ordem_contas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/quando-postar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quando Postar */
+        get: operations["analytics_quando_postar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analytics/visao-geral": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Visao Geral */
+        get: operations["analytics_visao_geral"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/armazenamento": {
         parameters: {
             query?: never;
@@ -2916,6 +3072,35 @@ export interface components {
             plannedAt: string;
             textos?: components["schemas"]["Textos"] | null;
         };
+        /** Alerta */
+        Alerta: {
+            alvo: components["schemas"]["AlvoAlerta"];
+            /** Link */
+            link: string | null;
+            /** Motivo */
+            motivo: string;
+            /** Numeros */
+            numeros: {
+                [key: string]: number | null;
+            };
+            /**
+             * Severidade
+             * @enum {string}
+             */
+            severidade: "atencao" | "info" | "positivo";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "estagnado" | "destaque" | "sem_coleta" | "vinculo_a_confirmar";
+        };
+        /** AlertasOut */
+        AlertasOut: {
+            /** Alertas */
+            alertas: components["schemas"]["Alerta"][];
+            contagem: components["schemas"]["ContagemAlertas"];
+            contexto: components["schemas"]["Contexto"];
+        };
         /** Alvo */
         Alvo: {
             /** Contaid */
@@ -2927,6 +3112,18 @@ export interface components {
              * @enum {string}
              */
             entityType: "asset" | "perfil" | "kit" | "postagem" | "corte" | "conteudo" | "guia";
+        };
+        /** AlvoAlerta */
+        AlvoAlerta: {
+            /** Id */
+            id: string | null;
+            /** Rotulo */
+            rotulo: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "video" | "serie" | "destino";
         };
         /** AlvoTeste */
         AlvoTeste: {
@@ -2940,6 +3137,17 @@ export interface components {
              * @enum {string}
              */
             entityType: "corte" | "conteudo";
+        };
+        /** Amostra */
+        Amostra: {
+            /** Faltam */
+            faltam: number;
+            /** Minimo */
+            minimo: number;
+            /** N */
+            n: number;
+            /** Suficiente */
+            suficiente: boolean;
         };
         /** AplicarMarcaIn */
         AplicarMarcaIn: {
@@ -3474,6 +3682,32 @@ export interface components {
             /** Youtubechannelid */
             youtubeChannelId: string;
         };
+        /** CanalMercado */
+        CanalMercado: {
+            /**
+             * Canalid
+             * Format: uuid
+             */
+            canalId: string;
+            direito: components["schemas"]["CanalDireito"];
+            /** Medianavelocidade */
+            medianaVelocidade: number | null;
+            /** Titulo */
+            titulo: string;
+            /** Videos */
+            videos: number;
+        };
+        /** CanalOportunidade */
+        CanalOportunidade: {
+            direito: components["schemas"]["CanalDireito"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Titulo */
+            titulo: string;
+        };
         /** CanalOut */
         CanalOut: {
             canal: components["schemas"]["CanalFonte"];
@@ -3545,6 +3779,19 @@ export interface components {
              * @default 0.45
              */
             opacidade_fundo: number;
+        };
+        /** CelulaMapa */
+        CelulaMapa: {
+            /** Amostrapequena */
+            amostraPequena: boolean;
+            /** Dia */
+            dia: number;
+            /** Hora */
+            hora: number;
+            /** N */
+            n: number;
+            /** Valor */
+            valor: number | null;
         };
         /** ChamadaOut */
         ChamadaOut: {
@@ -3674,6 +3921,20 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** ContaLinha */
+        ContaLinha: {
+            /**
+             * Contaid
+             * Format: uuid
+             */
+            contaId: string;
+            /** Indicadores */
+            indicadores: components["schemas"]["Indicador"][];
+            perfil: components["schemas"]["PerfilRef"];
+            rede: components["schemas"]["Platform"];
+            /** Rotulo */
+            rotulo: string;
+        };
         /** ContaMetricasOut */
         ContaMetricasOut: {
             coleta: components["schemas"]["EstadoColeta"];
@@ -3681,6 +3942,24 @@ export interface components {
             fotos: components["schemas"]["FotoConta"][];
             /** Publicacoes */
             publicacoes: components["schemas"]["Publicacao"][];
+            /** Viewstotal */
+            viewsTotal: number | null;
+        };
+        /** ContaOrdem */
+        ContaOrdem: {
+            /**
+             * Contaid
+             * Format: uuid
+             */
+            contaId: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            rede: components["schemas"]["Platform"];
+            /** Rotulo */
+            rotulo: string;
         };
         /** ContaOut */
         ContaOut: {
@@ -3711,6 +3990,27 @@ export interface components {
          * @enum {string}
          */
         ContaStatus: "planejada" | "ativa" | "pausada" | "encerrada";
+        /** ContagemAlertas */
+        ContagemAlertas: {
+            /** Atencao */
+            atencao: number;
+            /** Info */
+            info: number;
+            /** Positivo */
+            positivo: number;
+        };
+        /** ContasOut */
+        ContasOut: {
+            /** Contas */
+            contas: components["schemas"]["ContaLinha"][];
+            contexto: components["schemas"]["Contexto"];
+            /** Perfis */
+            perfis: components["schemas"]["PerfilLinha"][];
+            /** Radar */
+            radar: components["schemas"]["RadarConta"][] | null;
+            /** Radarmotivo */
+            radarMotivo: string | null;
+        };
         /**
          * Conteudo
          * @description O detalhe: a linha + o arquivo e os destinos completos.
@@ -3834,6 +4134,43 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Contexto */
+        Contexto: {
+            /** Aguardando */
+            aguardando: number;
+            /**
+             * Anteriorate
+             * Format: date
+             */
+            anteriorAte: string;
+            /**
+             * Anteriorde
+             * Format: date
+             */
+            anteriorDe: string;
+            /**
+             * Ate
+             * Format: date
+             */
+            ate: string;
+            /**
+             * De
+             * Format: date
+             */
+            de: string;
+            /** Foradosociman */
+            foraDoSociman: number;
+            /** Fuso */
+            fuso: string;
+            /**
+             * Medida
+             * @enum {string}
+             */
+            medida: "h1" | "h24" | "d7";
+            minimos: components["schemas"]["Minimos"];
+            /** Postsnoperiodo */
+            postsNoPeriodo: number;
+        };
         /** Cor */
         Cor: {
             /** Chave */
@@ -3842,6 +4179,14 @@ export interface components {
             nome: string;
             /** Valor */
             valor: string;
+        };
+        /** Correlacao */
+        Correlacao: {
+            amostra: components["schemas"]["Amostra"];
+            /** Leitura */
+            leitura: string | null;
+            /** Rho */
+            rho: number | null;
         };
         /** Corte */
         Corte: {
@@ -4072,6 +4417,32 @@ export interface components {
         CriadorOut: {
             criador: components["schemas"]["Criador"];
         };
+        /** Curva */
+        Curva: {
+            /** Conta */
+            conta: string;
+            /** Contaid */
+            contaId: string | null;
+            /** Meiavidah */
+            meiaVidaH: number | null;
+            /** Pontos */
+            pontos: components["schemas"]["PontoCurva"][];
+            /** Titulocurto */
+            tituloCurto: string;
+            /**
+             * Videoid
+             * Format: uuid
+             */
+            videoId: string;
+        };
+        /** CurvasOut */
+        CurvasOut: {
+            contexto: components["schemas"]["Contexto"];
+            /** Curvas */
+            curvas: components["schemas"]["Curva"][];
+            /** Distribuicao */
+            distribuicao: components["schemas"]["DistribuicaoConta"][];
+        };
         /** DesaprovarTodasIn */
         DesaprovarTodasIn: {
             /**
@@ -4223,6 +4594,28 @@ export interface components {
             /** Videomudou */
             videoMudou: boolean;
         };
+        /** DiaCalendario */
+        DiaCalendario: {
+            /**
+             * Dia
+             * Format: date
+             */
+            dia: string;
+            /** Posts */
+            posts: number;
+            /** Views */
+            views: number;
+        };
+        /** DiaSerie */
+        DiaSerie: {
+            /**
+             * Dia
+             * Format: date
+             */
+            dia: string;
+            /** Porconta */
+            porConta: components["schemas"]["ViewsConta"][];
+        };
         /**
          * DireitoEnvio
          * @description O direito do canal no momento do envio, ou `avulso` (princípio II).
@@ -4244,6 +4637,52 @@ export interface components {
             evidenciaUrl?: string | null;
             /** Version */
             version: number;
+        };
+        /** Dispersao */
+        Dispersao: {
+            correlacao: components["schemas"]["Correlacao"];
+            /** Pontos */
+            pontos: components["schemas"]["PontoDispersao"][];
+        };
+        /** Dispersoes */
+        Dispersoes: {
+            duracao: components["schemas"]["Dispersao"];
+            gancho: components["schemas"]["Dispersao"];
+            score: components["schemas"]["Dispersao"];
+        };
+        /** DistribuicaoConta */
+        DistribuicaoConta: {
+            amostra: components["schemas"]["Amostra"];
+            /** Contaid */
+            contaId: string | null;
+            /** Max */
+            max: number | null;
+            /** Mediana */
+            mediana: number | null;
+            /** Min */
+            min: number | null;
+            /** Q1 */
+            q1: number | null;
+            /** Q3 */
+            q3: number | null;
+            /** Rotulo */
+            rotulo: string;
+        };
+        /** EixoRadar */
+        EixoRadar: {
+            /** Acima */
+            acima: boolean;
+            /**
+             * Chave
+             * @enum {string}
+             */
+            chave: "views_por_post" | "engajamento" | "frequencia" | "crescimento" | "velocidade_1h" | "acima_mediana";
+            /** Indice */
+            indice: number | null;
+            /** Media */
+            media: number | null;
+            /** Valor */
+            valor: number | null;
         };
         /** EmailSentOut */
         EmailSentOut: {
@@ -4516,6 +4955,22 @@ export interface components {
          * @enum {string}
          */
         EstadoFiltro: "pronto" | "aprovacao_pedida" | "aprovado" | "agendado" | "a_postar" | "atrasado" | "atencao" | "postado" | "rascunho_criado" | "publicado" | "falhou" | "em_revisao" | "arquivado" | "sem_conta" | "enviando" | "pausado" | "vencido" | "aguardando_vaga";
+        /** EtapaFunil */
+        EtapaFunil: {
+            /**
+             * Chave
+             * @enum {string}
+             */
+            chave: "enviados" | "cortes" | "aprovados" | "publicados" | "acima_patamar";
+            /** Conversaopct */
+            conversaoPct: number | null;
+            /** N */
+            n: number;
+            /** Perdas */
+            perdas: components["schemas"]["Perda"][];
+            /** Tempomedianoh */
+            tempoMedianoH: number | null;
+        };
         /** Exemplo */
         Exemplo: {
             /** Texto */
@@ -4694,6 +5149,8 @@ export interface components {
             seguindo: number | null;
             /** Videos */
             videos: number | null;
+            /** Views */
+            views: number | null;
         };
         /** FotoVideo */
         FotoVideo: {
@@ -4723,6 +5180,18 @@ export interface components {
         FundoImagesList: {
             /** Items */
             items: components["schemas"]["ImageRef"][];
+        };
+        /** FunilOut */
+        FunilOut: {
+            contexto: components["schemas"]["Contexto"];
+            /** Custoiausd */
+            custoIaUsd: number | null;
+            /** Custopormilviewsusd */
+            custoPorMilViewsUsd: number | null;
+            /** Etapas */
+            etapas: components["schemas"]["EtapaFunil"][];
+            /** Patamar */
+            patamar: number;
         };
         /** Gancho */
         Gancho: {
@@ -5110,6 +5579,22 @@ export interface components {
             /** Thumb */
             thumb: string;
         };
+        /** Indicador */
+        Indicador: {
+            /** Anterior */
+            anterior: number | null;
+            /**
+             * Chave
+             * @enum {string}
+             */
+            chave: "views" | "likes" | "engajamento" | "seguidores" | "posts" | "mediana_post";
+            /** N */
+            n: number;
+            /** Valor */
+            valor: number | null;
+            /** Variacaopct */
+            variacaoPct: number | null;
+        };
         /** Inelegivel */
         Inelegivel: {
             /** Code */
@@ -5131,6 +5616,23 @@ export interface components {
              * Format: date-time
              */
             expiraEm: string;
+        };
+        /** Insight */
+        Insight: {
+            amostra: components["schemas"]["Amostra"];
+            /** Frase */
+            frase: string;
+            /** Grupo */
+            grupo: string | null;
+            /** Pendente */
+            pendente: boolean;
+            /**
+             * Regra
+             * @enum {string}
+             */
+            regra: "horario" | "dia" | "duracao" | "canal" | "hashtag" | "destaque";
+            /** Valor */
+            valor: number | null;
         };
         /** Integracoes */
         Integracoes: {
@@ -5336,6 +5838,23 @@ export interface components {
             /** Umalinha */
             umaLinha: boolean;
         };
+        /** LinhaRanking */
+        LinhaRanking: {
+            amostra: components["schemas"]["Amostra"];
+            /** Chave */
+            chave: string;
+            direito?: components["schemas"]["CanalDireito"] | null;
+            /** Engajamento */
+            engajamento?: number | null;
+            /** Lift */
+            lift: number | null;
+            /** Mediana */
+            mediana: number | null;
+            /** N */
+            n: number;
+            /** Rotulo */
+            rotulo: string;
+        };
         /** LoginIn */
         LoginIn: {
             /** Email */
@@ -5425,6 +5944,18 @@ export interface components {
             /** Ok */
             ok: components["schemas"]["Destino"][];
         };
+        /** Mapa */
+        Mapa: {
+            /** Celulas */
+            celulas: components["schemas"]["CelulaMapa"][];
+        };
+        /** MapaAudiencia */
+        MapaAudiencia: {
+            /** Celulas */
+            celulas: components["schemas"]["CelulaMapa"][];
+            /** Semhora */
+            semHora: number;
+        };
         /** MarcaDagua */
         MarcaDagua: {
             /** Conta Id */
@@ -5496,6 +6027,28 @@ export interface components {
             h1: components["schemas"]["MarcoMetricas"];
             h24: components["schemas"]["MarcoMetricas"];
         };
+        /**
+         * Medida
+         * @description A medida do post (marco 1 h/24 h/7 d de views, research R3).
+         */
+        Medida: {
+            /** Aguardando */
+            aguardando: boolean;
+            /** Estimado */
+            estimado: boolean;
+            /** Valor */
+            valor: number | null;
+        };
+        /** MercadoOut */
+        MercadoOut: {
+            /** Canais */
+            canais: components["schemas"]["CanalMercado"][];
+            contexto: components["schemas"]["Contexto"];
+            /** Oportunidades */
+            oportunidades: components["schemas"]["Oportunidade"][];
+            publicacao: components["schemas"]["Mapa"];
+            velocidadePorHorario: components["schemas"]["Mapa"];
+        };
         /** Metrica */
         Metrica: {
             /** Comments */
@@ -5546,6 +6099,15 @@ export interface components {
         MidiaLinksOut: {
             /** Items */
             items: components["schemas"]["MidiaLink"][];
+        };
+        /** Minimos */
+        Minimos: {
+            /** Contasradar */
+            contasRadar: number;
+            /** Correlacao */
+            correlacao: number;
+            /** Grupo */
+            grupo: number;
         };
         /**
          * Modo
@@ -5627,6 +6189,21 @@ export interface components {
             items: components["schemas"]["Notificacao"][];
             /** Naolidas */
             naoLidas: number;
+        };
+        /** OQueFuncionaOut */
+        OQueFuncionaOut: {
+            /** Canais */
+            canais: components["schemas"]["LinhaRanking"][];
+            contexto: components["schemas"]["Contexto"];
+            dispersoes: components["schemas"]["Dispersoes"];
+            /** Excluidossemvinculo */
+            excluidosSemVinculo: number;
+            /** Hashtags */
+            hashtags: components["schemas"]["LinhaRanking"][];
+            /** Modos */
+            modos: components["schemas"]["LinhaRanking"][];
+            /** Padroes */
+            padroes: components["schemas"]["LinhaRanking"][];
         };
         /** Ok */
         Ok: {
@@ -5747,6 +6324,25 @@ export interface components {
             /** Uppercase */
             uppercase: boolean;
         };
+        /** Oportunidade */
+        Oportunidade: {
+            canal: components["schemas"]["CanalOportunidade"];
+            /** Idadeh */
+            idadeH: number;
+            /** Linkgerarcortes */
+            linkGerarCortes: string;
+            /** Titulocurto */
+            tituloCurto: string;
+            /** Velocidade */
+            velocidade: number | null;
+            /**
+             * Videofonteid
+             * Format: uuid
+             */
+            videoFonteId: string;
+            /** Views */
+            views: number | null;
+        };
         /** Ordem */
         Ordem: {
             /** Fileids */
@@ -5754,6 +6350,11 @@ export interface components {
             role: components["schemas"]["FileRole"];
             /** Version */
             version: number;
+        };
+        /** OrdemContasOut */
+        OrdemContasOut: {
+            /** Contas */
+            contas: components["schemas"]["ContaOrdem"][];
         };
         /**
          * OrdemConteudos
@@ -5846,6 +6447,13 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** Perda */
+        Perda: {
+            /** Motivo */
+            motivo: string;
+            /** N */
+            n: number;
+        };
         /** Perfil */
         Perfil: {
             /** Archived */
@@ -5907,6 +6515,12 @@ export interface components {
             contas: components["schemas"]["Conta"][];
             perfil: components["schemas"]["Perfil"];
         };
+        /** PerfilLinha */
+        PerfilLinha: {
+            /** Indicadores */
+            indicadores: components["schemas"]["Indicador"][];
+            perfil: components["schemas"]["PerfilRef"];
+        };
         /** PerfilOut */
         PerfilOut: {
             perfil: components["schemas"]["Perfil"];
@@ -5938,6 +6552,66 @@ export interface components {
          * @enum {string}
          */
         Platform: "tiktok" | "youtube" | "instagram" | "kwai" | "facebook" | "x" | "outra";
+        /** PontoCurva */
+        PontoCurva: {
+            /** Idadeh */
+            idadeH: number;
+            /** Views */
+            views: number;
+        };
+        /** PontoDispersao */
+        PontoDispersao: {
+            /** Conta */
+            conta: string | null;
+            /** Contaid */
+            contaId: string | null;
+            /** Estimado */
+            estimado: boolean;
+            /** Titulocurto */
+            tituloCurto: string;
+            /**
+             * Videoid
+             * Format: uuid
+             */
+            videoId: string;
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+        };
+        /**
+         * PostResumo
+         * @description Um post analisado, resumido para listas (principais, alertas).
+         */
+        PostResumo: {
+            /** Contaid */
+            contaId: string | null;
+            /** Engajamento */
+            engajamento: number | null;
+            /** Link */
+            link: string | null;
+            medida: components["schemas"]["Medida"];
+            /**
+             * Publicadoem
+             * Format: date-time
+             */
+            publicadoEm: string;
+            /** Rotuloconta */
+            rotuloConta: string;
+            /** Thumburl */
+            thumbUrl: string | null;
+            /** Titulocurto */
+            tituloCurto: string;
+            /**
+             * Videoid
+             * Format: uuid
+             */
+            videoId: string;
+            /** Viewsatual */
+            viewsAtual: number | null;
+            /** Viewsperiodo */
+            viewsPeriodo: number;
+        };
         /** PostadoIn */
         PostadoIn: {
             /** Postedurl */
@@ -6033,6 +6707,26 @@ export interface components {
              * Format: date-time
              */
             plannedAt: string;
+        };
+        /** QuandoPostarOut */
+        QuandoPostarOut: {
+            audiencia: components["schemas"]["MapaAudiencia"];
+            /** Calendario */
+            calendario: components["schemas"]["DiaCalendario"][];
+            contexto: components["schemas"]["Contexto"];
+            porPublicacao: components["schemas"]["Mapa"];
+        };
+        /** RadarConta */
+        RadarConta: {
+            /**
+             * Contaid
+             * Format: uuid
+             */
+            contaId: string;
+            /** Eixos */
+            eixos: components["schemas"]["EixoRadar"][];
+            /** Rotulo */
+            rotulo: string;
         };
         /** ReagendarIn */
         ReagendarIn: {
@@ -7018,6 +7712,15 @@ export interface components {
             /** Vinculometodo */
             vinculoMetodo: ("envio" | "casamento" | "link" | "escolha") | null;
         };
+        /** ViewsConta */
+        ViewsConta: {
+            /** Contaid */
+            contaId: string | null;
+            /** Rotulo */
+            rotulo: string;
+            /** Views */
+            views: number;
+        };
         /** Vinculo */
         Vinculo: {
             /** Ancora */
@@ -7063,6 +7766,19 @@ export interface components {
         VinculoOut: {
             destino: components["schemas"]["Destino"];
             vinculo: components["schemas"]["Vinculo"];
+        };
+        /** VisaoGeralOut */
+        VisaoGeralOut: {
+            contexto: components["schemas"]["Contexto"];
+            /** Indicadores */
+            indicadores: components["schemas"]["Indicador"][];
+            /** Insights */
+            insights: components["schemas"]["Insight"][];
+            /** Principais */
+            principais: components["schemas"]["PostResumo"][];
+            ranking: components["schemas"]["sociman_api__metricas__schemas__VideosList"];
+            /** Seriediaria */
+            serieDiaria: components["schemas"]["DiaSerie"][];
         };
         /** WatermarkImageOut */
         WatermarkImageOut: {
@@ -7391,6 +8107,549 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_alertas: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertasOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_contas: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContasOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_curvas: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurvasOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_funil: {
+        parameters: {
+            query?: {
+                patamar?: number;
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FunilOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_mercado: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MercadoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_o_que_funciona: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OQueFuncionaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_ordem_contas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrdemContasOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_quando_postar: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuandoPostarOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_visao_geral: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VisaoGeralOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -15228,7 +16487,7 @@ export interface operations {
                 origem?: string | null;
                 de?: string | null;
                 ate?: string | null;
-                ordem?: "views24h" | "views7d" | "engajamento" | "velocidade" | "publicadoEm";
+                ordem?: "views" | "views24h" | "views7d" | "engajamento" | "velocidade" | "publicadoEm";
                 direcao?: "desc" | "asc";
                 cursor?: string | null;
                 limite?: number;

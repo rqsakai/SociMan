@@ -2,6 +2,7 @@
 // com import.meta.env.DEV no App.tsx). Dados fictícios; não chama a API.
 // /app/_showcase          → AppShell + MetricCards + HeaderCard + DataTable (cliente e externo)
 // /app/_showcase?auth=1   → AuthShell de exemplo
+// /app/_showcase?graficos=1 → gráficos do analytics (spec 019)
 import { Clock, LayoutGrid, Plus, ShieldCheck, Users, Video } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import ShowcaseGraficos from "./_ShowcaseGraficos";
 
 interface PerfilFicticio {
   id: string;
@@ -220,6 +222,7 @@ export default function Showcase() {
   const [params] = useSearchParams();
   const [busca, setBusca] = useState("");
   if (params.get("auth")) return <AcessoExemplo />;
+  if (params.get("graficos")) return <ShowcaseGraficos />;
   return (
     <AppShell search={{ value: busca, onChange: setBusca }}>
       <Painel />

@@ -23,8 +23,10 @@ export function useFiltroUrl() {
   const [params, setParams] = useSearchParams();
   const set = (patch: Record<string, string | null>, opts: { replace?: boolean } = {}) =>
     setParams(
-      (cur) => {
-        const next = new URLSearchParams(cur);
+      // parte da URL do momento, não dos params do render: no react-router 7 a navegação vai num
+      // transition, e dois patches seguidos (ex.: período e logo o perfil) apagariam um ao outro
+      () => {
+        const next = new URLSearchParams(window.location.search);
         for (const [k, v] of Object.entries(patch)) {
           if (v) next.set(k, v);
           else next.delete(k);

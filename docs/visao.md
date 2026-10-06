@@ -109,3 +109,8 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 17. `017-guia-de-comunicacao` ✅ **implementada** (`specs/017-guia-de-comunicacao/`, 2026-09-30; falta a suíte e2e inteira 2x e a validação com o Claude real): guia de voz por perfil e
    por conta (tom, regras, vocabulário, proibidas, emojis, hashtags fixas, até 5 exemplos) que entra em todo
    pedido do assistente de IA (008); só o dono edita; montar e testar o guia com a IA.
+19. `019-analytics` ✅ **implementada** (`specs/019-analytics/`, 2026-10-02; falta a verificação final T061 e o quickstart com dados reais): o
+   analytics de decisão em `/app/metricas`, só leitura sobre os dados da 016 e da cadeia do SociMan, em 8 abas
+   (Visão geral com o ranking, Quando postar, O que funciona, Curvas, Contas, Funil, Mercado, Alertas), com
+   medida do post (1 h, 24 h, 7 d), amostras mínimas, "Ver tabela" e CSV em todo card, e gráficos com o
+   Apache ECharts carregado sob demanda (ADR 0002).

@@ -329,12 +329,12 @@ async function abrirContas(page: Page, perfilId: string): Promise<void> {
   await page.getByRole("tab", { name: "Contas", exact: true }).click();
 }
 
-// Filtro de perfil e conta das telas de métricas (a conta só abre depois do perfil).
+// Filtros globais do analytics (spec 019): perfil e conta (a conta só abre depois do perfil).
 async function escolherConta(page: Page, perfil: string, handle: string): Promise<void> {
   await page.getByLabel("Perfil", { exact: true }).selectOption({ label: perfil });
-  const conta = page.getByLabel("Conta TikTok", { exact: true });
+  const conta = page.getByRole("combobox", { name: "Conta", exact: true });
   await expect(conta).toBeEnabled();
-  await conta.selectOption({ label: `@${handle}` });
+  await conta.selectOption({ label: `@${handle} (TikTok)` });
 }
 
 // Recarrega até o texto aparecer no painel (a tela não tem tempo real).
@@ -711,6 +711,10 @@ test("US4: ranking ordenável e curva com os marcos 1 h/24 h/7 d/30 d", async ({
   expect(por7d.slice(0, 2).map((x) => x.id)).toEqual([ids.A, ids.B]);
   const por24h = (await getJson<{ items: VideoResumo[] }>(request, auth, `/api/metricas/videos?contaId=${p.contaId}&ordem=views24h&direcao=desc`)).items;
   expect(por24h.map((x) => x.id)).toEqual([ids.C, ids.A, ids.B]);
+  const padrao = (await getJson<{ items: VideoResumo[] }>(request, auth, `/api/metricas/videos?contaId=${p.contaId}`)).items;
+  expect(padrao.map((x) => x.id), "padrão: views total").toEqual([ids.A, ids.B, ids.C]);
+  const conta = await getJson<{ viewsTotal: number | null; fotos: { views: number | null }[] }>(request, auth, `/api/contas/${p.contaId}/metricas`);
+  expect(conta.viewsTotal, "views da conta = soma da última foto de cada vídeo").toBe(6000 + 3500 + 2600);
   const soCortes = (await getJson<{ items: VideoResumo[] }>(request, auth, `/api/metricas/videos?contaId=${p.contaId}&origem=corte`)).items;
   expect(soCortes, "filtro de origem").toEqual([]);
 
@@ -719,10 +723,19 @@ test("US4: ranking ordenável e curva com os marcos 1 h/24 h/7 d/30 d", async ({
   await expect(page).toHaveURL(/\/app$/);
   await page.getByRole("link", { name: "Métricas" }).click();
   await expect(page).toHaveURL(/\/app\/metricas/);
-  await page.getByRole("tab", { name: "Ranking" }).click();
+  // spec 019: o ranking fica na aba Visão geral (a padrão)
+  await expect(page.getByRole("tab", { name: "Visão geral" })).toHaveAttribute("aria-selected", "true");
+  // o ranking segue o período global (padrão 7 d): os vídeos de 9 e 10 dias pedem 30 d
+  const trinta = page.getByRole("group", { name: "Atalhos de período" }).getByRole("button", { name: "30 d" });
+  await trinta.click();
+  await expect(page).toHaveURL(/[?&]de=\d{4}-\d{2}-\d{2}/);
   await escolherConta(page, `Ranking ${sfx}`, p.handle);
-  await page.getByLabel("Ordenar por").selectOption("views7d");
+  // padrão: views total (a última foto), sempre visível
   const linhas = page.getByRole("row");
+  await expect(page.getByLabel("Ordenar por")).toHaveValue("views");
+  await expect(linhas.nth(1)).toContainText(`Campeão da semana ${sfx}`);
+  await expect(linhas.nth(1)).toContainText("6.000");
+  await page.getByLabel("Ordenar por").selectOption("views7d");
   await expect(linhas.nth(1)).toContainText(`Campeão da semana ${sfx}`);
   await expect(linhas.nth(2)).toContainText(`Segundo lugar ${sfx}`);
   await page.screenshot({ path: `${SHOTS}/016-ranking.png`, fullPage: true });
@@ -730,7 +743,8 @@ test("US4: ranking ordenável e curva com os marcos 1 h/24 h/7 d/30 d", async ({
   await expect(linhas.nth(1)).toContainText(`Estreia forte ${sfx}`);
 
   // ---- o vídeo de fora abre a curva com os marcos ----
-  await page.getByRole("link", { name: `Campeão da semana ${sfx}` }).click();
+  // spec 019: "Principais vídeos" da Visão geral também liga o vídeo; o clique é no ranking
+  await page.getByRole("table").getByRole("link", { name: `Campeão da semana ${sfx}` }).click();
   await expect(page).toHaveURL(new RegExp(`/app/metricas/videos/${ids.A}`));
   await expect(page.getByRole("img", { name: /Visualizações pela idade do vídeo/ }).first()).toBeVisible();
   await expect(page.getByText("ainda não").first()).toBeVisible();
@@ -742,6 +756,10 @@ test("US4: ranking ordenável e curva com os marcos 1 h/24 h/7 d/30 d", async ({
   await expect(page.getByRole("tab", { name: "Contas" })).toHaveAttribute("aria-selected", "true");
   await escolherConta(page, `Ranking ${sfx}`, p.handle);
   await expect(page.getByText("Coletando métricas").first()).toBeVisible();
+  // views da conta: derivadas dos vídeos (card com o total atual e gráfico padrão)
+  await expect(page.getByText("12.100", { exact: true })).toBeVisible();
+  await expect(page.getByRole("img", { name: /Views totais dos vídeos ao longo do tempo/ }).first()).toBeVisible();
+  await page.getByRole("button", { name: "Seguidores", exact: true }).click();
   await expect(page.getByRole("img", { name: /Seguidores ao longo do tempo/ }).first()).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/016-conta-grafico.png`, fullPage: true });
 
@@ -808,13 +826,18 @@ test("US5: exportar o ZIP em CSV com o cabeçalho do dicionário; membro não ex
     dlg.getByRole("button", { name: "Exportar", exact: true }).click(),
   ]);
   expect(download.suggestedFilename()).toMatch(/^sociman-metricas-\d{8}-\d{8}\.zip$/);
+  // o aviso de sucesso fica no canto de cima, sobre o "Sair": fecha antes de sair
+  const aviso = page.locator("[data-sonner-toast]").filter({ hasText: "Métricas exportadas" });
+  await expect(aviso).toBeVisible();
+  await aviso.getByRole("button", { name: "Close toast" }).click();
+  await expect(aviso).toHaveCount(0);
   await logout(page);
 
   // ---- membro: vê as métricas, sem Exportar; a API recusa ----
   await login(page, member.email, member.final);
   await expect(page).toHaveURL(/\/app$/);
   await page.goto("/app/metricas");
-  await expect(page.getByRole("tab", { name: "Ranking" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Visão geral" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Exportar" })).toHaveCount(0);
   const memberAuth = { Authorization: `Bearer ${await apiToken(request, member.email, member.final)}` };
   expect((await request.get(url, { headers: memberAuth })).status()).toBe(403);
@@ -871,7 +894,7 @@ test("FR-009: desconectar com confirmação anonimiza a série; reconectar come�
   expect(await videosDaConta(request, auth, p.contaId), "a conta não tem mais série").toEqual([]);
 
   await page.goto("/app/metricas");
-  await page.getByRole("tab", { name: "Ranking" }).click();
+  await page.getByRole("tab", { name: "Visão geral" }).click();
   await page.getByLabel("Origem").selectOption("anonima");
   await expect(page.getByText(anon!.serieRotulo!).first()).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/016-serie-anonima.png`, fullPage: true });

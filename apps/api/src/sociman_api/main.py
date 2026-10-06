@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from sociman_api import datadir
+from sociman_api.analytics.router import router as analytics_router  # spec 019
 from sociman_api.assets.router import router as assets_router
 from sociman_api.assets.router_perfil import router as assets_perfil_router
 from sociman_api.auth.router_auth import router as auth_router
@@ -63,6 +64,7 @@ app.include_router(conteudos_video_router)  # spec 014: vídeo próprio
 app.include_router(publicacao_router)  # spec 015: conexões, interruptor e execução
 app.include_router(metricas_router)  # spec 016: métricas, vínculo e exportação
 app.include_router(guia_router)  # spec 017: guia de comunicação do perfil e da conta
+app.include_router(analytics_router)  # spec 019: analytics de decisão (só leitura)
 install_openapi_error_contract(app)
 
 

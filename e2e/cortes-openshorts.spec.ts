@@ -106,7 +106,11 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
 
   await nav(page, "Canais-fonte").click();
   await expect(page.getByRole("table", { name: "Canais-fonte" }).getByText("Outro Canal Fake")).toBeVisible();
-  await expect(page.getByRole("table", { name: "Canais-fonte" }).getByText("Sem acordo", { exact: true })).toBeVisible();
+  // escopo na linha do canal B: outros specs (ex.: Mercado da 019) também criam canais "Sem acordo"
+  await expect(
+    page.getByRole("table", { name: "Canais-fonte" }).getByRole("row").filter({ hasText: "Outro Canal Fake" })
+      .getByText("Sem acordo", { exact: true }),
+  ).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/006-canais.png`, fullPage: true });
   await logout(page);
 
