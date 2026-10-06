@@ -103,6 +103,9 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
   (`apps/api`); SQLAlchemy 2 + Alembic + PostgreSQL; Redis para estado efêmero (sessões de
   autenticação e limites de tentativa); MinIO + imgproxy para imagens; nginx como edge.
   Trocar ou adicionar um componente da stack é emenda desta constitution.
+- **Gráficos do SPA:** **Apache ECharts** (importação modular por `echarts/core`), só em rotas
+  carregadas sob demanda, para não pesar no restante do aplicativo; nenhuma outra biblioteca de
+  gráficos. Tooltips escapam todo texto vindo de fora (ADR 0002).
 - **Ferramentas só de dev:** Mailpit captura os e-mails em desenvolvimento e testes e NÃO DEVE ser
   usado em produção.
 - **Redis não é banco de registro:** dado que precisa sobreviver (usuários, eventos de segurança,
@@ -147,4 +150,4 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 - **Conformidade:** toda spec, plano e revisão de código verifica a aderência aos princípios.
   Uma violação dos princípios I, II ou VII bloqueia a entrega.
 
-**Version**: 4.0.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-09-29
+**Version**: 4.1.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-01
