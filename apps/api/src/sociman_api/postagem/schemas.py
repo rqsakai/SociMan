@@ -300,6 +300,8 @@ class UpdateDestinoIn(CamelModel):
     descricao: Descricao | None = None
     hashtags: Hashtags | None = None
     ia: IaAplicacoes | None = None
+    # Spec 009 (FR-020): a proposta de texto que este save aplica (só humano).
+    proposta_id: UUID | None = None
 
 
 class PedirAprovacaoIn(CamelModel):

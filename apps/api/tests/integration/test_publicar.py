@@ -5,12 +5,13 @@ revalidação com o `creator_info` no horário e o `publicado` com o link."""
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from atores import ator_fake
 from sqlalchemy import select, text
 
 from integration import publicacao_helpers as ph
 from integration.postagem_helpers import PW, add_destino, criar_corte
 from integration.publicacao_helpers import MARCA, MUSICA, opcoes
-from sociman_api.auth.deps import Actor, current_user
+from sociman_api.auth.deps import current_user
 from sociman_api.db import get_engine
 from sociman_api.main import app
 from sociman_api.notificacoes.models import Notificacao
@@ -120,8 +121,7 @@ def test_dono_edita_textos_e_regrava_o_snapshot(cena, hm):
     d = _publicar(cena, textos={"descricao": "Antes"}).json()["destino"]
     r = _textos(cena, d, h=hm, descricao="Do membro")
     assert r.status_code == 403 and _err(r) == "somente_dono"
-    app.dependency_overrides[current_user] = lambda: Actor(
-        kind="mcp_client", user_id=cena.dono.id, user=cena.dono)
+    app.dependency_overrides[current_user] = lambda: ator_fake("mcp_client", cena.dono)
     try:
         r = _textos(cena, d, h={"Authorization": "Bearer x"}, descricao="Do MCP")
     finally:

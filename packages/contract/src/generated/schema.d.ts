@@ -245,6 +245,148 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/anotacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Anotacoes List
+         * @description Anotações e propostas, das mais novas para as mais antigas, com filtros.
+         */
+        get: operations["anotacoes_list"];
+        put?: never;
+        /**
+         * Anotacoes Create
+         * @description Grava uma observação ou uma proposta de texto (só em destino) presa a um item.
+         */
+        post: operations["anotacoes_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/anotacoes/resumo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Anotacoes Resumo
+         * @description Quantas propostas estão abertas (contador do menu).
+         */
+        get: operations["anotacoes_resumo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/anotacoes/{anotacao_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Anotacoes Get */
+        get: operations["anotacoes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Anotacoes Update
+         * @description Só o autor, só com a anotação aberta.
+         */
+        patch: operations["anotacoes_update"];
+        trace?: never;
+    };
+    "/api/anotacoes/{anotacao_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Anotacoes Archive
+         * @description O autor ou um dono, só com a anotação aberta.
+         */
+        post: operations["anotacoes_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/anotacoes/{anotacao_id}/descartar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Anotacoes Descartar
+         * @description Ato humano: descarta a proposta, com motivo opcional.
+         */
+        post: operations["anotacoes_descartar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/anotacoes/{anotacao_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Anotacoes Revert
+         * @description Só o dono humano.
+         */
+        post: operations["anotacoes_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/anotacoes/{anotacao_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Anotacoes Versions */
+        get: operations["anotacoes_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/armazenamento": {
         parameters: {
             query?: never;
@@ -1025,6 +1167,62 @@ export interface paths {
         put?: never;
         /** Revert Conta */
         post: operations["contas_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contas/{conta_id}/studio/cobertura": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Studio Cobertura */
+        get: operations["studio_cobertura"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contas/{conta_id}/studio/importacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Studio Importacoes */
+        get: operations["studio_importacoes"];
+        put?: never;
+        /** Studio Confirmar */
+        post: operations["studio_confirmar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/contas/{conta_id}/studio/previa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Studio Previa
+         * @description Lê os arquivos em memória e devolve a pré-visualização (nada é gravado). Sem arquivo, o
+         *     padrão `[]` leva ao 400 `studio_arquivos` (e não ao erro genérico de validação).
+         */
+        post: operations["studio_previa"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2188,6 +2386,200 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/mcp/chamadas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Chamadas List
+         * @description Registro de chamadas MCP (só inserção), da mais nova para a mais antiga.
+         */
+        get: operations["mcp_chamadas_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mcp/clientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Clientes List
+         * @description Clientes MCP (inclusive revogados): ativos, suspensos, revogados, depois o nome.
+         */
+        get: operations["mcp_clientes_list"];
+        put?: never;
+        /**
+         * Clientes Create
+         * @description Cria o cliente e devolve a credencial **uma única vez**.
+         */
+        post: operations["mcp_clientes_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mcp/clientes/{cliente_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clientes Get */
+        get: operations["mcp_clientes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Clientes Update
+         * @description Nome, descrição, escopo, limites e vencimento; valem na chamada seguinte.
+         */
+        patch: operations["mcp_clientes_update"];
+        trace?: never;
+    };
+    "/api/mcp/clientes/{cliente_id}/reativar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clientes Reativar */
+        post: operations["mcp_clientes_reativar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mcp/clientes/{cliente_id}/revogar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clientes Revogar
+         * @description Final: o cliente fica na lista como revogado e nunca volta.
+         */
+        post: operations["mcp_clientes_revogar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mcp/clientes/{cliente_id}/rotacionar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clientes Rotacionar
+         * @description Credencial nova (mostrada uma vez); a antiga deixa de valer na hora.
+         */
+        post: operations["mcp_clientes_rotacionar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mcp/clientes/{cliente_id}/suspender": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clientes Suspender */
+        post: operations["mcp_clientes_suspender"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mcp/clientes/{cliente_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clientes Versions */
+        get: operations["mcp_clientes_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mcp/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Config Get
+         * @description O botão da tela e o `MCP_HABILITADO` do servidor; os dois precisam estar ligados.
+         */
+        get: operations["mcp_config_get"];
+        /** Config Update */
+        put: operations["mcp_config_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mcp/config/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Config Versions */
+        get: operations["mcp_config_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/metricas/export": {
         parameters: {
             query?: never;
@@ -2931,6 +3323,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/studio/importacoes/{importacao_id}/desfazer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Studio Desfazer */
+        post: operations["studio_desfazer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users": {
         parameters: {
             query?: never;
@@ -3125,6 +3534,21 @@ export interface components {
              */
             tipo: "video" | "serie" | "destino";
         };
+        /** AlvoRef */
+        AlvoRef: {
+            /** Arquivado */
+            arquivado: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Link */
+            link: string;
+            tipo: components["schemas"]["AnotacaoAlvo"];
+            /** Titulo */
+            titulo: string;
+        };
         /** AlvoTeste */
         AlvoTeste: {
             /**
@@ -3148,6 +3572,71 @@ export interface components {
             n: number;
             /** Suficiente */
             suficiente: boolean;
+        };
+        /** Anotacao */
+        Anotacao: {
+            alvo: components["schemas"]["AlvoRef"];
+            autor: components["schemas"]["Autor"];
+            campos: components["schemas"]["CamposProposta"] | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Motivodescarte */
+            motivoDescarte: string | null;
+            /** Perfilid */
+            perfilId: string | null;
+            /** Resolvidaem */
+            resolvidaEm: string | null;
+            resolvidaPor: components["schemas"]["UserRef"] | null;
+            situacao: components["schemas"]["AnotacaoSituacao"];
+            /** Texto */
+            texto: string;
+            tipo: components["schemas"]["AnotacaoTipo"];
+            /** Version */
+            version: number;
+        };
+        /**
+         * AnotacaoAlvo
+         * @enum {string}
+         */
+        AnotacaoAlvo: "perfil" | "conta" | "canal" | "video_fonte" | "corte" | "conteudo" | "destino";
+        /** AnotacaoOut */
+        AnotacaoOut: {
+            anotacao: components["schemas"]["Anotacao"];
+        };
+        /**
+         * AnotacaoSituacao
+         * @enum {string}
+         */
+        AnotacaoSituacao: "aberta" | "aplicada" | "descartada" | "arquivada";
+        /**
+         * AnotacaoTipo
+         * @enum {string}
+         */
+        AnotacaoTipo: "observacao" | "proposta_texto";
+        /** AnotacaoVersionIn */
+        AnotacaoVersionIn: {
+            /** Version */
+            version: number;
+        };
+        /** AnotacoesPage */
+        AnotacoesPage: {
+            /** Anotacoes */
+            anotacoes: components["schemas"]["Anotacao"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+        };
+        /** AnotacoesResumo */
+        AnotacoesResumo: {
+            /** Abertas */
+            abertas: number;
         };
         /** AplicarMarcaIn */
         AplicarMarcaIn: {
@@ -3200,6 +3689,25 @@ export interface components {
             reason: "ok" | "sem_sentinela" | "pouco_espaco";
             /** Totalbytes */
             totalBytes: number | null;
+        };
+        /** ArquivoPrevia */
+        ArquivoPrevia: {
+            /** Handle */
+            handle: string | null;
+            /** Ignorados */
+            ignorados: string[];
+            /** Nome */
+            nome: string;
+            /**
+             * Secao
+             * @enum {string}
+             */
+            secao: "visao_geral" | "seguidores";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "zip" | "csv";
         };
         /** Asset */
         Asset: {
@@ -3428,6 +3936,35 @@ export interface components {
             accessToken: string;
             user: components["schemas"]["User"];
         };
+        /**
+         * Autor
+         * @description Spec 009 (R6): quem fez a mudança. `mcp_client` = o selo "Agente: <nome>".
+         */
+        Autor: {
+            /** Id */
+            id: string | null;
+            /** Nome */
+            nome: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "usuario" | "mcp_client" | "sistema";
+        };
+        /** Aviso */
+        Aviso: {
+            /**
+             * Codigo
+             * @enum {string}
+             */
+            codigo: "diverge_da_coleta" | "dia_incompleto" | "dias_faltando" | "periodo_longo" | "ano_deduzido" | "colunas_ausentes" | "cabecalho_provisorio";
+            /** Detalhes */
+            detalhes?: {
+                [key: string]: unknown;
+            } | null;
+            /** Mensagem */
+            mensagem: string;
+        };
         /** Body_assets_file_upload */
         Body_assets_file_upload: {
             /**
@@ -3509,6 +4046,15 @@ export interface components {
             file: string;
             /** Version */
             version: number;
+        };
+        /** Body_studio_previa */
+        Body_studio_previa: {
+            /**
+             * Arquivos
+             * @description De 1 a 2 arquivos (.zip ou .csv) do TikTok Studio, até 5 MB no total
+             * @default []
+             */
+            arquivos: string[];
         };
         /** Busca */
         Busca: {
@@ -3616,6 +4162,18 @@ export interface components {
             items: components["schemas"]["CalendarioItem"][];
             /** Semdata */
             semData: components["schemas"]["SemData"][];
+        };
+        /**
+         * CamposProposta
+         * @description Proposta de texto para um destino: pelo menos um campo (400 `campos_vazios`).
+         */
+        CamposProposta: {
+            /** Descricao */
+            descricao?: string | null;
+            /** Hashtags */
+            hashtags?: string[] | null;
+            /** Titulo */
+            titulo?: string | null;
         };
         /** CanaisList */
         CanaisList: {
@@ -3793,6 +4351,38 @@ export interface components {
             /** Valor */
             valor: number | null;
         };
+        /** ChamadaMcp */
+        ChamadaMcp: {
+            /** Argsresumo */
+            argsResumo: {
+                [key: string]: unknown;
+            };
+            cliente: components["schemas"]["ClienteRef"] | null;
+            /** Codigoerro */
+            codigoErro: string | null;
+            /** Duracaoms */
+            duracaoMs: number;
+            entidade: components["schemas"]["EntidadeRef"] | null;
+            /** Escrita */
+            escrita: boolean;
+            /** Id */
+            id: number;
+            /** Metodo */
+            metodo: string;
+            /**
+             * Ocorreuem
+             * Format: date-time
+             */
+            ocorreuEm: string;
+            resultado: components["schemas"]["McpResultado"];
+            /** Rota */
+            rota: string;
+            /** Statushttp */
+            statusHttp: number | null;
+            /** Tool */
+            tool: string;
+            via: components["schemas"]["McpVia"];
+        };
         /** ChamadaOut */
         ChamadaOut: {
             chamada: components["schemas"]["IaChamada"];
@@ -3804,12 +4394,129 @@ export interface components {
             /** Nextcursor */
             nextCursor: string | null;
         };
+        /** ChamadasPage */
+        ChamadasPage: {
+            /** Chamadas */
+            chamadas: components["schemas"]["ChamadaMcp"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+        };
         /** ChangePasswordIn */
         ChangePasswordIn: {
             /** Currentpassword */
             currentPassword: string;
             /** Newpassword */
             newPassword: string;
+        };
+        /** ClienteComToken */
+        ClienteComToken: {
+            cliente: components["schemas"]["ClienteMcp"];
+            /** Token */
+            token: string;
+        };
+        /** ClienteMcp */
+        ClienteMcp: {
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Descricao */
+            descricao: string;
+            escopo: components["schemas"]["McpEscopo"];
+            /** Expiraem */
+            expiraEm: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Limiteescritasdia */
+            limiteEscritasDia: number;
+            /** Limiteporminuto */
+            limitePorMinuto: number;
+            /** Nolimite */
+            noLimite: boolean;
+            /** Nome */
+            nome: string;
+            /** Revogadoem */
+            revogadoEm: string | null;
+            revogadoPor: components["schemas"]["UserRef"] | null;
+            situacao: components["schemas"]["McpSituacao"];
+            /**
+             * Tokenemitidoem
+             * Format: date-time
+             */
+            tokenEmitidoEm: string;
+            /** Tokenid */
+            tokenId: string;
+            /** Ultimousoem */
+            ultimoUsoEm: string | null;
+            uso24h: components["schemas"]["Uso24h"];
+            /** Venceembreve */
+            venceEmBreve: boolean;
+            /** Version */
+            version: number;
+        };
+        /** ClienteOut */
+        ClienteOut: {
+            cliente: components["schemas"]["ClienteMcp"];
+        };
+        /** ClienteRef */
+        ClienteRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nome */
+            nome: string;
+        };
+        /** ClientesList */
+        ClientesList: {
+            /** Clientes */
+            clientes: components["schemas"]["ClienteMcp"][];
+        };
+        /** Cobertura */
+        Cobertura: {
+            coleta: components["schemas"]["ColetaCobertura"] | null;
+            /**
+             * Contaid
+             * Format: uuid
+             */
+            contaId: string;
+            /**
+             * Hoje
+             * Format: date
+             */
+            hoje: string;
+            /** Importacoesativas */
+            importacoesAtivas: number;
+            /** Secoes */
+            secoes: components["schemas"]["SecaoCobertura"][];
+        };
+        /** ColetaCobertura */
+        ColetaCobertura: {
+            /**
+             * Primeirodia
+             * Format: date
+             */
+            primeiroDia: string;
+            /**
+             * Primeirodiacoberto
+             * Format: date
+             */
+            primeiroDiaCoberto: string;
+        };
+        /** Colunas */
+        Colunas: {
+            /** Ausentes */
+            ausentes: string[];
+            /** Ignoradas */
+            ignoradas: string[];
+            /** Reconhecidas */
+            reconhecidas: string[];
         };
         /** Conexao */
         Conexao: {
@@ -3848,6 +4555,19 @@ export interface components {
         /** ConexaoOut */
         ConexaoOut: {
             conexao: components["schemas"]["Conexao"];
+        };
+        /** ConfirmarIn */
+        ConfirmarIn: {
+            /**
+             * Confirmoconta
+             * @default false
+             */
+            confirmoConta: boolean;
+            /**
+             * Previaid
+             * Format: uuid
+             */
+            previaId: string;
         };
         /** ConfirmarQualidadeIn */
         ConfirmarQualidadeIn: {
@@ -3965,6 +4685,18 @@ export interface components {
         ContaOut: {
             conta: components["schemas"]["Conta"];
         };
+        /** ContaPrevia */
+        ContaPrevia: {
+            /** Handle */
+            handle: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Perfil */
+            perfil: string;
+        };
         /** ContaRef */
         ContaRef: {
             /**
@@ -3998,6 +4730,36 @@ export interface components {
             info: number;
             /** Positivo */
             positivo: number;
+        };
+        /** ContagensImportacao */
+        ContagensImportacao: {
+            /** Coletados */
+            coletados: number;
+            /** Divergentes */
+            divergentes: number;
+            /** Faltando */
+            faltando: number;
+            /** Gravados */
+            gravados: number;
+            /** Ignorados */
+            ignorados: number;
+            /** Iguais */
+            iguais: number;
+        };
+        /** ContagensPrevia */
+        ContagensPrevia: {
+            /** Coletados */
+            coletados: number;
+            /** Divergentes */
+            divergentes: number;
+            /** Faltando */
+            faltando: string[];
+            /** Gravados */
+            gravados: number;
+            /** Ignorados */
+            ignorados: string[];
+            /** Iguais */
+            iguais: number;
         };
         /** ContasOut */
         ContasOut: {
@@ -4170,6 +4932,17 @@ export interface components {
             minimos: components["schemas"]["Minimos"];
             /** Postsnoperiodo */
             postsNoPeriodo: number;
+            studio: components["schemas"]["ContextoStudio"];
+        };
+        /**
+         * ContextoStudio
+         * @description Spec 020: dias distintos do período em que alguma série usou o histórico do Studio.
+         */
+        ContextoStudio: {
+            /** Dias */
+            dias: number;
+            /** Series */
+            series: number;
         };
         /** Cor */
         Cor: {
@@ -4306,12 +5079,49 @@ export interface components {
             /** Usadas */
             usadas: number;
         };
+        /** CreateAnotacaoIn */
+        CreateAnotacaoIn: {
+            /**
+             * Alvoid
+             * Format: uuid
+             */
+            alvoId: string;
+            alvoTipo: components["schemas"]["AnotacaoAlvo"];
+            campos?: components["schemas"]["CamposProposta"] | null;
+            /** Texto */
+            texto: string;
+            /** @default observacao */
+            tipo: components["schemas"]["AnotacaoTipo"];
+        };
         /** CreateCanalIn */
         CreateCanalIn: {
             /** Perfilids */
             perfilIds?: string[];
             /** Youtubechannelid */
             youtubeChannelId: string;
+        };
+        /** CreateClienteIn */
+        CreateClienteIn: {
+            /**
+             * Descricao
+             * @default
+             */
+            descricao: string;
+            escopo: components["schemas"]["McpEscopo"];
+            /** Expiraem */
+            expiraEm?: string | null;
+            /**
+             * Limiteescritasdia
+             * @default 200
+             */
+            limiteEscritasDia: number;
+            /**
+             * Limiteporminuto
+             * @default 60
+             */
+            limitePorMinuto: number;
+            /** Nome */
+            nome: string;
         };
         /** CreateContaIn */
         CreateContaIn: {
@@ -4451,6 +5261,13 @@ export interface components {
              */
             confirmo: boolean;
         };
+        /** DescartarIn */
+        DescartarIn: {
+            /** Motivo */
+            motivo?: string | null;
+            /** Version */
+            version: number;
+        };
         /**
          * DesconectarIn
          * @description Spec 016 (R13): com a série de métricas com dados, `confirmoAnonimizar` é obrigatório.
@@ -4470,6 +5287,11 @@ export interface components {
             agendamentosEmAtencao: number;
             conexao: components["schemas"]["Conexao"];
             metricasAnonimizadas: components["schemas"]["MetricasAnonimizadas"] | null;
+        };
+        /** DesfazerIn */
+        DesfazerIn: {
+            /** Version */
+            version: number;
         };
         /** Destino */
         Destino: {
@@ -4596,11 +5418,18 @@ export interface components {
         };
         /** DiaCalendario */
         DiaCalendario: {
+            /** Contasstudio */
+            contasStudio: number;
             /**
              * Dia
              * Format: date
              */
             dia: string;
+            /**
+             * Fonte
+             * @enum {string}
+             */
+            fonte: "coletado" | "studio" | "misto";
             /** Posts */
             posts: number;
             /** Views */
@@ -4695,6 +5524,18 @@ export interface components {
             desktop: string | null;
             /** Web */
             web: string | null;
+        };
+        /** EntidadeRef */
+        EntidadeRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Link */
+            link: string;
+            /** Tipo */
+            tipo: string;
         };
         /**
          * EnviarAgoraIn
@@ -5028,6 +5869,37 @@ export interface components {
             name: string;
             /** Slug */
             slug: string;
+        };
+        /** Faixa */
+        Faixa: {
+            /**
+             * Ate
+             * Format: date
+             */
+            ate: string;
+            /**
+             * De
+             * Format: date
+             */
+            de: string;
+        };
+        /** FaixaFonte */
+        FaixaFonte: {
+            /**
+             * Ate
+             * Format: date
+             */
+            ate: string;
+            /**
+             * De
+             * Format: date
+             */
+            de: string;
+            /**
+             * Fonte
+             * @constant
+             */
+            fonte: "studio";
         };
         /** FilePatch */
         FilePatch: {
@@ -5579,6 +6451,67 @@ export interface components {
             /** Thumb */
             thumb: string;
         };
+        /** Importacao */
+        Importacao: {
+            /**
+             * Anoorigem
+             * @enum {string}
+             */
+            anoOrigem: "nome_zip" | "deduzido" | "misto";
+            /** Contaid */
+            contaId: string | null;
+            /** Contagens */
+            contagens: {
+                [key: string]: components["schemas"]["ContagensImportacao"];
+            };
+            /**
+             * Criadaem
+             * Format: date-time
+             */
+            criadaEm: string;
+            criadaPor: components["schemas"]["UserRef"];
+            /** Desfeitaem */
+            desfeitaEm: string | null;
+            desfeitaPor: components["schemas"]["UserRef"] | null;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "ativa" | "desfeita";
+            /** Gravados */
+            gravados: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nomesarquivos */
+            nomesArquivos: string[] | null;
+            /**
+             * Periodoate
+             * Format: date
+             */
+            periodoAte: string;
+            /**
+             * Periodode
+             * Format: date
+             */
+            periodoDe: string;
+            /** Secoes */
+            secoes: ("visao_geral" | "seguidores")[];
+            /**
+             * Serieid
+             * Format: uuid
+             */
+            serieId: string;
+            /** Version */
+            version: number;
+        };
+        /** ImportacoesList */
+        ImportacoesList: {
+            /** Items */
+            items: components["schemas"]["Importacao"][];
+        };
         /** Indicador */
         Indicador: {
             /** Anterior */
@@ -5588,6 +6521,8 @@ export interface components {
              * @enum {string}
              */
             chave: "views" | "likes" | "engajamento" | "seguidores" | "posts" | "mediana_post";
+            /** Diasstudio */
+            diasStudio: number;
             /** N */
             n: number;
             /** Valor */
@@ -5667,6 +6602,21 @@ export interface components {
             perfilId: string;
             /** Status */
             status: string;
+        };
+        /** JaImportada */
+        JaImportada: {
+            /**
+             * Em
+             * Format: date-time
+             */
+            em: string;
+            /**
+             * Importacaoid
+             * Format: uuid
+             */
+            importacaoId: string;
+            /** Por */
+            por: string;
         };
         /** Kit */
         Kit: {
@@ -5837,6 +6787,33 @@ export interface components {
             minItens: number | null;
             /** Umalinha */
             umaLinha: boolean;
+        };
+        /** LinhaAmostra */
+        LinhaAmostra: {
+            /** Comments */
+            comments?: number | null;
+            /**
+             * Dia
+             * Format: date
+             */
+            dia: string;
+            /** Likes */
+            likes?: number | null;
+            /** Seguidores */
+            seguidores?: number | null;
+            /** Seguidoresdif */
+            seguidoresDif?: number | null;
+            /** Shares */
+            shares?: number | null;
+            /**
+             * Situacao
+             * @enum {string}
+             */
+            situacao: "novo" | "igual" | "divergente" | "coletado" | "ignorado";
+            /** Views */
+            views?: number | null;
+            /** Visitasperfil */
+            visitasPerfil?: number | null;
         };
         /** LinhaRanking */
         LinhaRanking: {
@@ -6027,6 +7004,52 @@ export interface components {
             h1: components["schemas"]["MarcoMetricas"];
             h24: components["schemas"]["MarcoMetricas"];
         };
+        /** McpClienteRef */
+        McpClienteRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nome */
+            nome: string;
+        };
+        /** McpConfig */
+        McpConfig: {
+            /** Habilitado */
+            habilitado: boolean;
+            /** Servidorhabilitado */
+            servidorHabilitado: boolean;
+            /** Version */
+            version: number;
+        };
+        /** McpConfigIn */
+        McpConfigIn: {
+            /** Habilitado */
+            habilitado: boolean;
+            /** Version */
+            version: number;
+        };
+        /**
+         * McpEscopo
+         * @enum {string}
+         */
+        McpEscopo: "leitura" | "propostas";
+        /**
+         * McpResultado
+         * @enum {string}
+         */
+        McpResultado: "ok" | "erro" | "recusada" | "limite" | "nao_autenticado";
+        /**
+         * McpSituacao
+         * @enum {string}
+         */
+        McpSituacao: "ativo" | "suspenso" | "revogado";
+        /**
+         * McpVia
+         * @enum {string}
+         */
+        McpVia: "mcp" | "api";
         /**
          * Medida
          * @description A medida do post (marco 1 h/24 h/7 d de views, research R3).
@@ -6547,6 +7570,24 @@ export interface components {
             /** Items */
             items: components["schemas"]["Perfil"][];
         };
+        /** PeriodoPrevia */
+        PeriodoPrevia: {
+            /**
+             * Anoorigem
+             * @enum {string}
+             */
+            anoOrigem: "nome_zip" | "deduzido" | "misto";
+            /**
+             * Ate
+             * Format: date
+             */
+            ate: string;
+            /**
+             * De
+             * Format: date
+             */
+            de: string;
+        };
         /**
          * Platform
          * @enum {string}
@@ -6629,6 +7670,31 @@ export interface components {
             pulados: components["schemas"]["Pulado"][];
             /** Slots */
             slots: components["schemas"]["SlotSequencia"][];
+        };
+        /** PreviaStudio */
+        PreviaStudio: {
+            /** Arquivos */
+            arquivos: components["schemas"]["ArquivoPrevia"][];
+            /** Avisos */
+            avisos: components["schemas"]["Aviso"][];
+            conta: components["schemas"]["ContaPrevia"];
+            /** Exigeconfirmacaoconta */
+            exigeConfirmacaoConta: boolean;
+            /**
+             * Expiraem
+             * Format: date-time
+             */
+            expiraEm: string;
+            periodo: components["schemas"]["PeriodoPrevia"];
+            /** Podeconfirmar */
+            podeConfirmar: boolean;
+            /**
+             * Previaid
+             * Format: uuid
+             */
+            previaId: string;
+            /** Secoes */
+            secoes: components["schemas"]["SecaoPrevia"][];
         };
         /**
          * PropostaOpenshorts
@@ -6899,10 +7965,40 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** SecaoCobertura */
+        SecaoCobertura: {
+            /** Buracos */
+            buracos: components["schemas"]["Faixa"][];
+            /** Faixas */
+            faixas: components["schemas"]["FaixaFonte"][];
+            /**
+             * Secao
+             * @enum {string}
+             */
+            secao: "visao_geral" | "seguidores";
+            /** Sobreposicao */
+            sobreposicao: components["schemas"]["Faixa"][];
+        };
+        /** SecaoPrevia */
+        SecaoPrevia: {
+            /** Amostra */
+            amostra: components["schemas"]["LinhaAmostra"][];
+            colunas: components["schemas"]["Colunas"];
+            contagens: components["schemas"]["ContagensPrevia"];
+            jaImportada: components["schemas"]["JaImportada"] | null;
+            /**
+             * Secao
+             * @enum {string}
+             */
+            secao: "visao_geral" | "seguidores";
+            /** Totais */
+            totais: components["schemas"]["TotaisVisaoGeral"] | components["schemas"]["TotaisSeguidores"];
+        };
         /** SecurityEvent */
         SecurityEvent: {
             /** Actorkind */
             actorKind: string;
+            actorMcpClient?: components["schemas"]["McpClienteRef"] | null;
             /** Actorname */
             actorName: string | null;
             /** Actoruserid */
@@ -7296,10 +8392,59 @@ export interface components {
             /** Ok */
             ok: components["schemas"]["Destino"][];
         };
+        /** TotaisSeguidores */
+        TotaisSeguidores: {
+            /** Ganhos */
+            ganhos: number;
+            /** Seguidoresfim */
+            seguidoresFim: number;
+            /** Seguidoresinicio */
+            seguidoresInicio: number;
+        };
+        /** TotaisVisaoGeral */
+        TotaisVisaoGeral: {
+            /** Comments */
+            comments: number | null;
+            /** Likes */
+            likes: number | null;
+            /** Shares */
+            shares: number | null;
+            /** Views */
+            views: number;
+            /** Visitasperfil */
+            visitasPerfil: number | null;
+        };
+        /** UpdateAnotacaoIn */
+        UpdateAnotacaoIn: {
+            campos?: components["schemas"]["CamposProposta"] | null;
+            /** Texto */
+            texto?: string | null;
+            /** Version */
+            version: number;
+        };
         /** UpdateCanalIn */
         UpdateCanalIn: {
             /** Perfilids */
             perfilIds?: string[] | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * UpdateClienteIn
+         * @description Só os campos mandados mudam; `expiraEm: null` tira o vencimento.
+         */
+        UpdateClienteIn: {
+            /** Descricao */
+            descricao?: string | null;
+            escopo?: components["schemas"]["McpEscopo"] | null;
+            /** Expiraem */
+            expiraEm?: string | null;
+            /** Limiteescritasdia */
+            limiteEscritasDia?: number | null;
+            /** Limiteporminuto */
+            limitePorMinuto?: number | null;
+            /** Nome */
+            nome?: string | null;
             /** Version */
             version: number;
         };
@@ -7337,6 +8482,8 @@ export interface components {
             hashtags?: string[] | null;
             /** Ia */
             ia?: components["schemas"]["IaAplicacao"][] | null;
+            /** Propostaid */
+            propostaId?: string | null;
             /** Titulo */
             titulo?: string | null;
             /** Version */
@@ -7445,6 +8592,15 @@ export interface components {
             /** Rotulo */
             rotulo: string;
         };
+        /** Uso24h */
+        Uso24h: {
+            /** Chamadas */
+            chamadas: number;
+            /** Escritas */
+            escritas: number;
+            /** Recusas */
+            recusas: number;
+        };
         /**
          * Valor
          * @description Um formato por tipo: `texto`, `itens`, os três da postagem, o `guia` (proposta e
@@ -7493,6 +8649,7 @@ export interface components {
             after: {
                 [key: string]: unknown;
             };
+            autor: components["schemas"]["Autor"];
             /** Before */
             before: {
                 [key: string]: unknown;
@@ -7714,12 +8871,21 @@ export interface components {
         };
         /** ViewsConta */
         ViewsConta: {
+            /** Comparacao */
+            comparacao: number | null;
             /** Contaid */
             contaId: string | null;
+            /**
+             * Fonte
+             * @enum {string}
+             */
+            fonte: "coletado" | "studio";
             /** Rotulo */
             rotulo: string;
             /** Views */
             views: number;
+            /** Visitasperfil */
+            visitasPerfil: number | null;
         };
         /** Vinculo */
         Vinculo: {
@@ -8622,6 +9788,580 @@ export interface operations {
                 };
             };
             /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    anotacoes_list: {
+        parameters: {
+            query?: {
+                alvoTipo?: components["schemas"]["AnotacaoAlvo"] | null;
+                alvoId?: string | null;
+                perfilId?: string | null;
+                situacao?: components["schemas"]["AnotacaoSituacao"] | null;
+                tipo?: components["schemas"]["AnotacaoTipo"] | null;
+                autorClienteId?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnotacoesPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    anotacoes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAnotacaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnotacaoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    anotacoes_resumo: {
+        parameters: {
+            query?: {
+                perfilId?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnotacoesResumo"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    anotacoes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anotacao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnotacaoOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    anotacoes_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anotacao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAnotacaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnotacaoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    anotacoes_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anotacao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnotacaoVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnotacaoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    anotacoes_descartar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anotacao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DescartarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnotacaoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    anotacoes_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anotacao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnotacaoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    anotacoes_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                anotacao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -11783,6 +13523,291 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    studio_cobertura: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cobertura"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    studio_importacoes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportacoesList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    studio_confirmar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmarIn"];
+            };
+        };
+        responses: {
+            /** @description Já importado: nada gravado (gravados = 0) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Importacao"];
+                };
+            };
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Importacao"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    studio_previa: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_studio_previa"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreviaStudio"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -16407,6 +18432,778 @@ export interface operations {
             };
         };
     };
+    mcp_chamadas_list: {
+        parameters: {
+            query?: {
+                clienteId?: string | null;
+                tool?: string | null;
+                resultado?: components["schemas"]["McpResultado"] | null;
+                via?: components["schemas"]["McpVia"] | null;
+                de?: string | null;
+                ate?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChamadasPage"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_clientes_list: {
+        parameters: {
+            query?: {
+                situacao?: components["schemas"]["McpSituacao"] | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientesList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_clientes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateClienteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClienteComToken"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_clientes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClienteOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_clientes_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateClienteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClienteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_clientes_reativar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClienteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_clientes_revogar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClienteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_clientes_rotacionar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClienteComToken"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_clientes_suspender: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClienteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_clientes_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["McpConfig"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_config_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["McpConfigIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["McpConfig"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mcp_config_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     metricas_export: {
         parameters: {
             query?: {
@@ -19959,6 +22756,77 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    studio_desfazer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                importacao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesfazerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Importacao"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

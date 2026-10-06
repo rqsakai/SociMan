@@ -12,6 +12,7 @@ import { Clapperboard, Plus } from "lucide-react";
 import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { useAnotacoesResumo } from "@/lib/anotacoes";
 import { useAuth } from "@/lib/authStore";
 import { cn } from "@/lib/utils";
 import { navItems } from "./nav";
@@ -29,6 +30,9 @@ function Brand() {
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const isOwner = useAuth((s) => s.user?.role === "dono");
   const items = navItems.filter((item) => !item.ownerOnly || isOwner);
+  // 009-mcp: propostas abertas dos agentes ao lado de "Propostas dos agentes".
+  const propostas = useAnotacoesResumo();
+  const contadores = { propostas: propostas.data?.abertas ?? 0 };
 
   return (
     <div className="flex h-full flex-col gap-4 p-4">
@@ -36,7 +40,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       <div className="h-px bg-linear-to-r from-transparent via-sidebar-border to-transparent" />
       <nav aria-label="Menu principal" className="flex-1">
         <ul className="space-y-1">
-          {items.map(({ label, to, icon: Icon, end }) => (
+          {items.map(({ label, to, icon: Icon, end, contador }) => (
             <li key={to}>
               <NavLink
                 to={to}
@@ -54,6 +58,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               >
                 <Icon className="size-4.5 shrink-0" aria-hidden="true" />
                 {label}
+                {contador && contadores[contador] > 0 && (
+                  <span className="ml-auto rounded-full bg-sidebar-accent px-2 text-xs font-semibold text-sidebar-accent-foreground">
+                    {contadores[contador]}
+                  </span>
+                )}
               </NavLink>
             </li>
           ))}

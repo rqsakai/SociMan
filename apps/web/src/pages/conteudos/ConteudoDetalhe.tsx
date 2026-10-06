@@ -17,6 +17,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { AgendarDialog } from "@/components/conteudos/AgendarDialog";
 import { DestinosSection } from "@/components/conteudos/DestinoPanel";
@@ -119,7 +120,8 @@ export default function ConteudoDetalhe() {
                 </Button>
               )
             }
-            conta={params.get("conta")}
+            // spec 009: os links de anotação e do registro MCP apontam o destino (`?destino=<id>`)
+            conta={params.get("conta") ?? c.destinos.find((d) => d.id === params.get("destino"))?.conta.id ?? null}
             onContaChange={(conta) =>
               setParams(
                 (cur) => {
@@ -137,6 +139,7 @@ export default function ConteudoDetalhe() {
           <Player conteudo={c} />
           <PropostaCard conteudo={c} />
           <Desempenho conteudo={c} onChanged={refresh} />
+          <AnotacoesCard alvoTipo="conteudo" alvoId={c.id} arquivado={c.archived} titulo="Anotações do conteúdo" />
           <Historico conteudo={c} onReverted={refresh} />
         </div>
       </div>

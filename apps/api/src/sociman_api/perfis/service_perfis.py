@@ -159,13 +159,19 @@ def conta_out(
 
 def versions_out(db: Session, entity_type: str, entity_id: uuid.UUID) -> schemas.VersionsList:
     """Histórico da entidade, da versão mais recente para a mais antiga."""
-    rows = history.list_versions(db, entity_type, entity_id)
+    return version_items(db, history.list_versions(db, entity_type, entity_id))
+
+
+def version_items(db: Session, rows: list[history.EntityVersion]) -> schemas.VersionsList:
+    """As linhas do histórico no formato do contrato, com o `autor` (spec 009)."""
     users = user_refs(db, [r.actor_user_id for r in rows])
+    autores = history.autores(db, rows)
     return schemas.VersionsList(items=[
         schemas.Version(
             version=r.version, action=r.action,
             actor=users.get(r.actor_user_id) if r.actor_user_id else None,
-            actor_kind=r.actor_kind, occurred_at=r.occurred_at,
+            actor_kind=r.actor_kind, autor=schemas.Autor(**autores[r.id]),
+            occurred_at=r.occurred_at,
             changed_fields=list(r.changed_fields), before=r.before, after=r.after,
             details=r.details,
         )

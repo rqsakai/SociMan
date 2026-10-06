@@ -3,10 +3,10 @@
 import logging
 import secrets
 from functools import lru_cache
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import AliasChoices, Field, SecretStr, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +23,8 @@ class Settings(BaseSettings):
     jwt_secret: str | None = None
     access_ttl: int = 15 * 60
     refresh_ttl: int = 7 * 24 * 60 * 60
-    refresh_grace: int = 60
+    # Carência do token anterior (renovação concorrente entre abas). Curta: fora dela é reuso.
+    refresh_grace: int = 10
     verify_ttl: int = 24 * 60 * 60
     reset_ttl: int = 15 * 60
     password_min_length: int = 12
@@ -94,6 +95,18 @@ class Settings(BaseSettings):
     # desconectar (desconectar anonimiza, Q4 = A).
     metricas_coleta_habilitada: bool = True
     agendador_metricas_s: int = Field(60, gt=0)
+
+    # Servidor MCP (spec 009, R10/R11): nível do servidor do interruptor (o outro é a tela) e as
+    # origens de navegador aceitas no `/mcp` (vazio = nenhuma; agentes não mandam `Origin`).
+    mcp_habilitado: bool = False
+    mcp_origens_permitidas: Annotated[list[str], NoDecode] = []
+
+    @field_validator("mcp_origens_permitidas", mode="before")
+    @classmethod
+    def _origens(cls, value: object) -> object:
+        if isinstance(value, str):  # `.env`: separadas por vírgula
+            return [o.strip() for o in value.split(",") if o.strip()]
+        return value
 
     @model_validator(mode="after")
     def _jwt_secret(self) -> "Settings":

@@ -108,6 +108,8 @@ services:
     user: "1000:1000"
     environment:
       <<: [*api-env, *integracoes-env, *tiktok-env]
+      # Spec 009: o `/mcp` ligado no servidor SÓ aqui (o botão da tela começa desligado).
+      MCP_HABILITADO: "true"
     extra_hosts: *tiktok-hosts
     volumes:
       - sociman-data:/srv/sociman-data

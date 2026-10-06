@@ -13,6 +13,12 @@ que decide a implementação. As versões foram conferidas em 2026-10-02.
   - nada do `MCPServer` de alto nível (decorators) nem do suporte a OAuth.
 
   A versão fica fixada no `pyproject` com `>=2.2,<3`.
+- **Implementação (T004, 2026-10-05):** o `uv add "mcp>=2.2,<3"` resolveu o **`mcp` 2.3.0** (com o
+  `mcp-types` 2.3.0). O `uv tree` não traz framework extra: `starlette`, `uvicorn` e `pydantic` já
+  estavam na API; entram `httpx2`, `sse-starlette`, `jsonschema` (usado também para validar os
+  argumentos das tools, R2) e `opentelemetry-api` (o middleware de spans do SDK, inerte sem
+  exportador). O `/mcp` usa um `StreamableHTTPSessionManager` sem estado **por requisição**, então
+  o app não precisa de lifespan.
 - **Por quê:**
   - O SDK v2 implementa a versão **2026-07-28** e todas as anteriores, **incluindo o handshake
     `initialize` da 2025-11-25**. Isso é decisivo, porque o OpenClaw 2026.9.6 traz o
@@ -353,3 +359,22 @@ que decide a implementação. As versões foram conferidas em 2026-10-02.
 - **Alternativas:**
   - **Um servidor só, com uma credencial para todos:** perde a autoria por agente (VII). Recusado.
   - **OAuth `per-requester`:** foi recusado na clarificação.
+
+### Resultado da sonda (T006, 2026-10-05, só leitura da doc e do pacote instalado)
+
+1. **Versão do cliente do OpenClaw:** o pacote 2026.9.6 traz o `@modelcontextprotocol/sdk` **1.30.0**,
+   com `LATEST_PROTOCOL_VERSION = '2025-11-25'` (conferido em `node_modules`). O servidor atende essa
+   versão pelo `initialize` (testado em `test_mcp_protocolo.py`, modo `legacy`). A versão do cliente do
+   runtime `claude-cli` só se confirma com o gateway real (quickstart §4.6, com o dono).
+2. **`${VAR}` em `headers`:** a doc do gateway (`docs/gateway/config-extensions.md`) mostra
+   `headers: { Authorization: "Bearer ${MCP_REMOTE_TOKEN}" }` num servidor `streamable-http`, e o
+   `docs/cli/mcp/transports.md` diz que o `mcp doctor` só avisa de valores **literais** em cabeçalhos
+   sensíveis. Então o caminho preferido (variável no `EnvironmentFile` do serviço) é suportado pela doc;
+   a confirmação final é o `openclaw mcp doctor --probe` sem o aviso de cabeçalho literal (§4.5).
+3. **Restringir um servidor a um agente:** `agents.entries.<id>.tools.allow/deny` também valem para os
+   servidores MCP nativos, com nomes `<servidor-seguro>__<tool>` (`docs/gateway/cli-backends.md`,
+   "Bundle MCP overlays"); no `claude-cli`, o OpenClaw omite o servidor ou manda `--disallowedTools`.
+   Logo, dá para negar os `sociman…__*` dos outros agentes na política de cada um. O nome "seguro" exato
+   do servidor (hífen vira `_`?) se confere com `openclaw mcp probe <servidor>` na sonda; o guia
+   (`docs/guia-mcp-openclaw.md`) usa nomes só com letras e `_` (`sociman_cacador`) para evitar a dúvida.
+

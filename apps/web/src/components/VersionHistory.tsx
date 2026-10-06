@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "../lib/authStore";
 import { ApiErrorAlert } from "./ApiErrorAlert";
 import { iaDaVersao, IaSelo } from "./ia/IaSelo";
+import { AgenteSelo } from "./mcp/AgenteSelo";
 
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "medium" });
 
@@ -43,6 +44,20 @@ const actorKindLabel: Record<string, string> = { "system:cli": "CLI", "system:ag
 
 function actorText(version: EntityVersion): string {
   return version.actor?.name ?? actorKindLabel[version.actorKind] ?? "—";
+}
+
+// 009-mcp: o cliente MCP autor da versão (selo "Agente: <nome>") e a proposta de origem de um save
+// humano (`details.proposta = {id, clienteId, clienteNome?}`).
+function agenteDaVersao(version: EntityVersion): string | null {
+  const autor = version.autor;
+  return autor?.tipo === "mcp_client" ? (autor.nome ?? "cliente MCP") : null;
+}
+
+function propostaDaVersao(details: Record<string, unknown>): { clienteNome: string | null } | null {
+  const p = details.proposta;
+  if (!p || typeof p !== "object") return null;
+  const nome = (p as { clienteNome?: unknown }).clienteNome;
+  return { clienteNome: typeof nome === "string" ? nome : null };
 }
 
 interface VersionHistoryProps {
@@ -102,6 +117,8 @@ export function VersionHistory({ versions, labels, formatValue, onRevert, onRelo
         {versions.map((v) => {
           const fromVersion = typeof v.details.from_version === "number" ? v.details.from_version : null;
           const ia = iaDaVersao(v.details);
+          const agente = agenteDaVersao(v);
+          const proposta = propostaDaVersao(v.details);
           // "archived" também está no snapshot, mas a ação já diz isso; a tabela fica para os dados.
           const fields = v.changedFields.filter((f) => v.action === "updated" || v.action === "reverted" || f !== "archived");
           return (
@@ -117,9 +134,15 @@ export function VersionHistory({ versions, labels, formatValue, onRevert, onRelo
                   {fromVersion !== null && <span className="text-muted-foreground">(para a versão {fromVersion})</span>}
                   {v.version === current && <Badge variant="secondary">atual</Badge>}
                   {ia && <IaSelo chamadaId={ia[0]?.chamadaId} />}
+                  {agente && <AgenteSelo nome={agente} />}
+                  {proposta && (
+                    <span className="text-xs text-muted-foreground">
+                      a partir da proposta de {proposta.clienteNome ?? "um agente"}
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {actorText(v)} · <time dateTime={v.occurredAt}>{dateFormat.format(new Date(v.occurredAt))}</time>
+                  {agente ?? actorText(v)} · <time dateTime={v.occurredAt}>{dateFormat.format(new Date(v.occurredAt))}</time>
                 </p>
               </div>
 

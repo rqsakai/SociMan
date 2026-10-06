@@ -4,6 +4,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -200,6 +201,8 @@ export default function CanalDetalhe() {
       </div>
 
       <VideosRecentes canalId={canal.id} />
+
+      <AnotacoesCard alvoTipo="canal" alvoId={canal.id} arquivado={canal.archived} titulo="Anotações do canal" />
 
       <Card className="shadow-card">
         <CardHeader>

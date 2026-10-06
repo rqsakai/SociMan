@@ -5,11 +5,12 @@ humano; as validações do agendar valem."""
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from atores import ator_fake
 from sqlalchemy import select, text
 
 from integration import publicacao_helpers as ph
 from integration.postagem_helpers import PW, add_destino
-from sociman_api.auth.deps import Actor, current_user
+from sociman_api.auth.deps import current_user
 from sociman_api.auth.models import SecurityEvent
 from sociman_api.db import get_engine
 from sociman_api.main import app
@@ -99,8 +100,7 @@ def test_membro_e_mcp_403(cena, hm):
     d = _pendente(cena)
     r = _enviar(cena, d, h=hm)
     assert r.status_code == 403 and _err(r) == "somente_dono"
-    app.dependency_overrides[current_user] = lambda: Actor(
-        kind="mcp_client", user_id=cena.dono.id, user=cena.dono)
+    app.dependency_overrides[current_user] = lambda: ator_fake("mcp_client", cena.dono)
     try:
         r = _enviar(cena, d, h={"Authorization": "Bearer qualquer"})
     finally:

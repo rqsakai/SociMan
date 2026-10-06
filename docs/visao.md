@@ -88,7 +88,10 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    - **Bordões e séries:** lista de sugestões com seleção e "Gerar mais" (sem repetir aceitos/rejeitados).
    - **Regras por tipo de campo** editáveis pelo dono, com histórico e "voltar ao padrão"; registro de
      chamadas e resumo de custo do mês. As sugestões da 006 migraram para o mesmo registro.
-9. `009-mcp`: servidor MCP sobre a API (o número fica, porque a constitution e as specs citam a `009-mcp`).
+9. `009-mcp` ✅ **implementada na API** (`specs/009-mcp/`, 2026-10-05; constitution 4.2.0, ADR 0003; falta a
+   validação real com o OpenClaw, T061, com o dono). Endpoint `/mcp` dentro da API (SDK `mcp`), tools do OpenAPI
+   por mapa explícito (62 de leitura + 5 de propostas), token `smcp_` por agente, portão com `somente_humano`,
+   limites, registro só de inserção, anotações e propostas. Guia: `docs/guia-mcp-openclaw.md`.
 10. `010-cenas`
 11. `011-scripts`: roteiros por cena e avatar.
 12. `012-produtos-shop`
@@ -114,3 +117,7 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    (Visão geral com o ranking, Quando postar, O que funciona, Curvas, Contas, Funil, Mercado, Alertas), com
    medida do post (1 h, 24 h, 7 d), amostras mínimas, "Ver tabela" e CSV em todo card, e gráficos com o
    Apache ECharts carregado sob demanda (ADR 0002).
+20. `020-historico-tiktok-studio` (`specs/020-historico-tiktok-studio/`, 2026-10-05; API pronta, SPA e e2e em andamento):
+   o dono importa os ZIPs da Visão geral e de Seguidores exportados do TikTok Studio, com pré-visualização e
+   confirmação (só dono humano), como uma fonte separada e desfazível; o analytics da 019 usa esses dias
+   antes da 1ª coleta e no dia dela, sempre dizendo a fonte. Os arquivos nunca são guardados.

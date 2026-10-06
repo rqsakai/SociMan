@@ -1,11 +1,12 @@
 """App FastAPI. Tudo sob /api (o edge nginx roteia /api/* para cá)."""
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from sociman_api import datadir
 from sociman_api.analytics.router import router as analytics_router  # spec 019
+from sociman_api.anotacoes.router import router as anotacoes_router  # spec 009
 from sociman_api.assets.router import router as assets_router
 from sociman_api.assets.router_perfil import router as assets_perfil_router
 from sociman_api.auth.router_auth import router as auth_router
@@ -25,7 +26,12 @@ from sociman_api.marca.router import router as kit_router
 from sociman_api.marca.router_fontes import router as fontes_router
 from sociman_api.marca.router_fundos import router as fundos_router
 from sociman_api.marca.router_marca_dagua import router as marca_dagua_router
+from sociman_api.mcp import portao as mcp_portao  # spec 009
+from sociman_api.mcp import servidor as mcp_servidor  # spec 009
+from sociman_api.mcp.registro import RegistroMiddleware as RegistroMcpMiddleware  # spec 009
+from sociman_api.mcp.router import router as mcp_router  # spec 009
 from sociman_api.metricas.router import router as metricas_router  # spec 016
+from sociman_api.metricas.studio.router import router as studio_router  # spec 020
 from sociman_api.notificacoes.router import router as notificacoes_router
 from sociman_api.perfis.router_contas import router as contas_router
 from sociman_api.perfis.router_imagens import router as imagens_router
@@ -37,7 +43,9 @@ from sociman_api.router_midia import router as midia_router
 
 datadir.pin_tempdir()  # spool de upload no HD, nunca no /tmp do container
 
-app = FastAPI(title="SociMan API", version="0.1.0", openapi_url="/api/openapi.json", docs_url="/api/docs")
+# Spec 009 (R5): todo token MCP passa pelo portão, em qualquer rota e antes da validação.
+app = FastAPI(title="SociMan API", version="0.1.0", openapi_url="/api/openapi.json", docs_url="/api/docs",
+              dependencies=[Depends(mcp_portao.dependencia)])
 register_error_handlers(app)
 app.include_router(auth_router)
 app.include_router(users_router)
@@ -65,6 +73,11 @@ app.include_router(publicacao_router)  # spec 015: conexões, interruptor e exec
 app.include_router(metricas_router)  # spec 016: métricas, vínculo e exportação
 app.include_router(guia_router)  # spec 017: guia de comunicação do perfil e da conta
 app.include_router(analytics_router)  # spec 019: analytics de decisão (só leitura)
+app.include_router(mcp_router)  # spec 009: clientes MCP, interruptor e registro (só dono humano)
+app.include_router(anotacoes_router)  # spec 009: anotações e propostas dos agentes
+mcp_servidor.montar(app)  # spec 009: endpoint MCP `/mcp` (fora do OpenAPI)
+app.add_middleware(RegistroMcpMiddleware)  # spec 009: registro das chamadas com token MCP
+app.include_router(studio_router)  # spec 020: histórico do TikTok Studio
 install_openapi_error_contract(app)
 
 

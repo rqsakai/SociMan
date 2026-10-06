@@ -4,7 +4,12 @@
 import { execSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 
-const files = ["packages/contract/openapi.json", "packages/contract/src/generated/schema.d.ts"];
+// Spec 009: as tools do MCP (mcp-tools.json) também saem do OpenAPI e entram na comparação.
+const files = [
+  "packages/contract/openapi.json",
+  "packages/contract/src/generated/schema.d.ts",
+  "packages/contract/mcp-tools.json",
+];
 const before = files.map((f) => (existsSync(f) ? readFileSync(f, "utf8") : null));
 execSync("npm run -s gen:contract", { stdio: "inherit" });
 const stale = files.filter((f, i) => before[i] !== readFileSync(f, "utf8"));

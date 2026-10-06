@@ -79,6 +79,12 @@ _TABLES += ("metricas_buscas_post", "metricas_conta_fotos", "metricas_video_foto
             "metricas_videos", "metricas_series")
 # Spec 017: os guias de comunicação (FKs para `perfis`/`contas`; o CASCADE cobre a ordem).
 _TABLES += ("ia_guias",)
+# Spec 020: o histórico do Studio (os dias primeiro; o trigger só de inserção não dispara no
+# TRUNCATE).
+_TABLES += ("metricas_studio_dias", "metricas_studio_importacoes")
+# Spec 009: clientes MCP, registro (só inserção: o trigger de linha não dispara no TRUNCATE) e
+# anotações. A linha única de `mcp_config` volta desligada em `_clean_state`.
+_TABLES += ("mcp_chamadas", "anotacoes", "mcp_clientes")
 
 
 @pytest.fixture(autouse=True)
@@ -93,6 +99,11 @@ def _clean_state() -> Iterator[None]:
                 "INSERT INTO publicacao_config (id, envios_habilitados, version) "
                 "VALUES (1, false, 1) ON CONFLICT (id) DO UPDATE SET envios_habilitados = false, "
                 "version = 1, created_by = NULL, updated_by = NULL"))
+        if conn.execute(text("SELECT to_regclass('mcp_config')")).scalar():  # spec 009
+            conn.execute(text(
+                "INSERT INTO mcp_config (id, habilitado, version) VALUES (1, false, 1) "
+                "ON CONFLICT (id) DO UPDATE SET habilitado = false, version = 1, "
+                "created_by = NULL, updated_by = NULL"))
     get_redis().flushdb()
     yield
     app.dependency_overrides.clear()
@@ -243,5 +254,18 @@ def publicacao_habilitada(monkeypatch: pytest.MonkeyPatch) -> Callable[[bool], N
 
     def _set(valor: bool = True) -> None:
         monkeypatch.setattr(get_settings(), "publicacao_habilitada", valor)
+
+    return _set
+
+
+# ---- spec 009 ----
+
+@pytest.fixture
+def mcp_habilitado(monkeypatch: pytest.MonkeyPatch) -> Callable[[bool], None]:
+    """Override do nível do servidor do interruptor MCP (`MCP_HABILITADO`, R11): a stack de
+    teste sobe com `false`; `mcp_habilitado(True)` liga só neste teste."""
+
+    def _set(valor: bool = True) -> None:
+        monkeypatch.setattr(get_settings(), "mcp_habilitado", valor)
 
     return _set

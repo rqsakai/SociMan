@@ -47,6 +47,11 @@ import PublicacaoConfig from "./pages/configuracoes/Publicacao";
 import VideoMetricas from "./pages/metricas/VideoMetricas";
 // 017-guia-de-comunicacao
 import ContaGuia from "./pages/perfis/ContaGuia";
+import ContaStudio from "./pages/perfis/ContaStudio";
+
+// 009-mcp
+import Agentes from "./pages/configuracoes/Agentes";
+import Propostas from "./pages/propostas/Propostas";
 
 // 019-analytics: /app/metricas carrega sob demanda (traz o ECharts, chunk `graficos`).
 const Analytics = lazy(() => import("./pages/analytics/Analytics"));
@@ -120,6 +125,7 @@ export default function App() {
                 <Route path="/app/perfis/:id/kit/historico" element={<KitHistorico />} />
                 <Route path="/app/contas/:id/historico" element={<ContaHistorico />} />
                 <Route path="/app/contas/:id/guia" element={<ContaGuia />} />
+                <Route path="/app/contas/:id/studio" element={<ContaStudio />} />
                 <Route path="/app/cortes/:id" element={<CorteDetalhe />} />
                 <Route path="/app/assets/:id" element={<AssetDetalhe />} />
                 <Route path="/app/assets/:id/historico" element={<AssetHistorico />} />
@@ -142,6 +148,7 @@ export default function App() {
                 <Route path="/app/metricas/videos/:id" element={<VideoMetricas />} />
                 <Route path="/app/assistente-ia" element={<AssistenteIa />} />
                 <Route path="/app/assistente-ia/regras/:tipo" element={<RegraDetalhe />} />
+                <Route path="/app/propostas" element={<Propostas />} />
                 <Route
                   path="/app/usuarios"
                   element={
@@ -163,6 +170,14 @@ export default function App() {
                   element={
                     <RequireOwner>
                       <PublicacaoConfig />
+                    </RequireOwner>
+                  }
+                />
+                <Route
+                  path="/app/configuracoes/agentes"
+                  element={
+                    <RequireOwner>
+                      <Agentes />
                     </RequireOwner>
                   }
                 />

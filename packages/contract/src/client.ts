@@ -201,6 +201,26 @@ export type AnalyticsContas = components["schemas"]["ContasOut"];
 export type AnalyticsFunil = components["schemas"]["FunilOut"];
 export type AnalyticsMercado = components["schemas"]["MercadoOut"];
 export type AnalyticsAlertas = components["schemas"]["AlertasOut"];
+// 020-historico-tiktok-studio (pelas rotas: o nome da classe Previa colide com outra no OpenAPI)
+type StudioJson<T> = T extends { content: { "application/json": infer B } } ? B : never;
+export type StudioPrevia = StudioJson<paths["/api/contas/{conta_id}/studio/previa"]["post"]["responses"]["201"]>;
+export type StudioImportacao = components["schemas"]["Importacao"];
+export type StudioCobertura = components["schemas"]["Cobertura"];
+// 009-mcp (tipos pelas rotas, para não depender do nome das classes da API)
+type Json<T> = T extends { content: { "application/json": infer B } } ? B : never;
+export type McpCliente = Json<paths["/api/mcp/clientes/{cliente_id}"]["get"]["responses"][200]>["cliente"];
+export type McpEscopo = McpCliente["escopo"];
+export type McpSituacao = McpCliente["situacao"];
+export type McpClienteFilters = NonNullable<paths["/api/mcp/clientes"]["get"]["parameters"]["query"]>;
+export type McpClienteCreateRequest = NonNullable<paths["/api/mcp/clientes"]["post"]["requestBody"]>["content"]["application/json"];
+export type McpClienteUpdateRequest = NonNullable<paths["/api/mcp/clientes/{cliente_id}"]["patch"]["requestBody"]>["content"]["application/json"];
+export type McpConfig = Json<paths["/api/mcp/config"]["get"]["responses"][200]>;
+export type McpChamada = Json<paths["/api/mcp/chamadas"]["get"]["responses"][200]>["chamadas"][number];
+export type McpChamadaFilters = NonNullable<paths["/api/mcp/chamadas"]["get"]["parameters"]["query"]>;
+export type Anotacao = Json<paths["/api/anotacoes/{anotacao_id}"]["get"]["responses"][200]>["anotacao"];
+export type AnotacaoFilters = NonNullable<paths["/api/anotacoes"]["get"]["parameters"]["query"]>;
+export type AnotacaoCreateRequest = NonNullable<paths["/api/anotacoes"]["post"]["requestBody"]>["content"]["application/json"];
+export type AnotacaoResumoFilters = NonNullable<paths["/api/anotacoes/resumo"]["get"]["parameters"]["query"]>;
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -592,6 +612,35 @@ export function createApiClient(options: ApiClientOptions = {}) {
       // ordem estável de todas as contas (cor fixa por conta, FR-006)
       ordemContas: () => unwrap(client.GET("/api/analytics/ordem-contas")),
     },
+    // Histórico do TikTok Studio (spec 020): prévia (multipart, nada gravado), confirmar e desfazer só
+    // do dono humano; a lista e a cobertura são leitura de todos.
+    studio: {
+      previa: (contaId: string, arquivos: Blob[]) => {
+        const form = new FormData();
+        for (const a of arquivos) form.append("arquivos", a, a instanceof File ? a.name : undefined);
+        return unwrap(
+          client.POST("/api/contas/{conta_id}/studio/previa", { params: { path: { conta_id: contaId } }, body: form as never }),
+        );
+      },
+      confirmar: (contaId: string, body: { previaId: string; confirmoConta?: boolean }) =>
+        unwrap(
+          client.POST("/api/contas/{conta_id}/studio/importacoes", {
+            params: { path: { conta_id: contaId } },
+            body: { confirmoConta: false, ...body },
+          }),
+        ),
+      importacoes: (contaId: string) =>
+        unwrap(client.GET("/api/contas/{conta_id}/studio/importacoes", { params: { path: { conta_id: contaId } } })),
+      cobertura: (contaId: string) =>
+        unwrap(client.GET("/api/contas/{conta_id}/studio/cobertura", { params: { path: { conta_id: contaId } } })),
+      desfazer: (importacaoId: string, version: number) =>
+        unwrap(
+          client.POST("/api/studio/importacoes/{importacao_id}/desfazer", {
+            params: { path: { importacao_id: importacaoId } },
+            body: { version },
+          }),
+        ),
+    },
     // Interruptor "Envios automáticos" (spec 015): só o dono humano muda; o nível do servidor é leitura.
     publicacao: {
       config: () => unwrap(client.GET("/api/publicacao/config")),
@@ -848,6 +897,49 @@ export function createApiClient(options: ApiClientOptions = {}) {
       list: (query: NotificacaoFilters = {}) => unwrap(client.GET("/api/notificacoes", { params: { query } })),
       marcarLidas: (body: { ids: number[] } | { todas: true }) =>
         unwrap(client.POST("/api/notificacoes/lidas", { body: { todas: false, ...body } })),
+    },
+    // Clientes MCP dos agentes (spec 009): tudo só do dono humano. O `token` vem SÓ no create e no
+    // rotacionar, uma vez; nenhuma outra resposta o traz.
+    mcp: {
+      clientes: (query: McpClienteFilters = {}) => unwrap(client.GET("/api/mcp/clientes", { params: { query } })),
+      cliente: (clienteId: string) =>
+        unwrap(client.GET("/api/mcp/clientes/{cliente_id}", { params: { path: { cliente_id: clienteId } } })),
+      create: (body: McpClienteCreateRequest) => unwrap(client.POST("/api/mcp/clientes", { body })),
+      update: (clienteId: string, body: McpClienteUpdateRequest) =>
+        unwrap(client.PATCH("/api/mcp/clientes/{cliente_id}", { params: { path: { cliente_id: clienteId } }, body })),
+      suspender: (clienteId: string, version: number) =>
+        unwrap(client.POST("/api/mcp/clientes/{cliente_id}/suspender", { params: { path: { cliente_id: clienteId } }, body: { version } })),
+      reativar: (clienteId: string, version: number) =>
+        unwrap(client.POST("/api/mcp/clientes/{cliente_id}/reativar", { params: { path: { cliente_id: clienteId } }, body: { version } })),
+      rotacionar: (clienteId: string, version: number) =>
+        unwrap(client.POST("/api/mcp/clientes/{cliente_id}/rotacionar", { params: { path: { cliente_id: clienteId } }, body: { version } })),
+      revogar: (clienteId: string, version: number) =>
+        unwrap(client.POST("/api/mcp/clientes/{cliente_id}/revogar", { params: { path: { cliente_id: clienteId } }, body: { version } })),
+      versions: (clienteId: string) =>
+        unwrap(client.GET("/api/mcp/clientes/{cliente_id}/versions", { params: { path: { cliente_id: clienteId } } })),
+      config: () => unwrap(client.GET("/api/mcp/config")),
+      updateConfig: (body: { version: number; habilitado: boolean }) => unwrap(client.PUT("/api/mcp/config", { body })),
+      configVersions: () => unwrap(client.GET("/api/mcp/config/versions")),
+      chamadas: (query: McpChamadaFilters = {}) => unwrap(client.GET("/api/mcp/chamadas", { params: { query } })),
+    },
+    // Anotações e propostas dos agentes (spec 009, US4). Aplicar é pelo save do destino
+    // (`propostaId` no `destinos.update`); descartar é humano, reverter só do dono.
+    anotacoes: {
+      list: (query: AnotacaoFilters = {}) => unwrap(client.GET("/api/anotacoes", { params: { query } })),
+      get: (anotacaoId: string) =>
+        unwrap(client.GET("/api/anotacoes/{anotacao_id}", { params: { path: { anotacao_id: anotacaoId } } })),
+      create: (body: AnotacaoCreateRequest) => unwrap(client.POST("/api/anotacoes", { body })),
+      archive: (anotacaoId: string, version: number) =>
+        unwrap(client.POST("/api/anotacoes/{anotacao_id}/archive", { params: { path: { anotacao_id: anotacaoId } }, body: { version } })),
+      descartar: (anotacaoId: string, body: { version: number; motivo?: string | null }) =>
+        unwrap(client.POST("/api/anotacoes/{anotacao_id}/descartar", { params: { path: { anotacao_id: anotacaoId } }, body })),
+      versions: (anotacaoId: string) =>
+        unwrap(client.GET("/api/anotacoes/{anotacao_id}/versions", { params: { path: { anotacao_id: anotacaoId } } })),
+      revert: (anotacaoId: string, version: number, toVersion: number) =>
+        unwrap(
+          client.POST("/api/anotacoes/{anotacao_id}/revert", { params: { path: { anotacao_id: anotacaoId } }, body: { version, toVersion } }),
+        ),
+      resumo: (query: AnotacaoResumoFilters = {}) => unwrap(client.GET("/api/anotacoes/resumo", { params: { query } })),
     },
     config: () => unwrap(client.GET("/api/config")),
     health: () => unwrap(client.GET("/api/health")),

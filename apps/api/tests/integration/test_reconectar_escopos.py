@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
+from atores import ator_fake
 from fakes.tiktok_fake import ESCOPOS, ESCOPOS_016
 from sqlalchemy import func, select
 
@@ -18,7 +19,7 @@ from integration.conexao_helpers import (  # noqa: F401
     retorno,
 )
 from integration.postagem_helpers import criar_conta, criar_perfil, dono, membro  # noqa: F401
-from sociman_api.auth.deps import Actor, current_user
+from sociman_api.auth.deps import current_user
 from sociman_api.auth.models import SecurityEvent
 from sociman_api.history import EntityVersion
 from sociman_api.main import app
@@ -147,8 +148,7 @@ def test_membro_nao_amplia(client, db, c, membro):  # noqa: F811
 def test_cliente_mcp_nao_amplia(client, db, c, kind):
     conectar(client, c["h"], c["conta"], c["fake"], escopos=ESCOPOS)
     user = c["user"]
-    app.dependency_overrides[current_user] = lambda: Actor(kind=kind, user_id=user.id,
-                                                           user=user)
+    app.dependency_overrides[current_user] = lambda: ator_fake(kind, user)
     r = _iniciar(client, c)
     assert r.status_code == 403 and _err(r) == "somente_humano"
     r = client.post("/api/conexoes/retorno", headers=c["h"], json={"state": "x", "code": "y"})

@@ -119,6 +119,8 @@ def refresh(
 
     Qualquer falha é 401 `invalid_token`: token desconhecido ou expirado, reuso (a família já foi
     revogada pela rotação) e usuário inativo ou apagado (a família é revogada aqui, FR-014).
+    O token anterior dentro da carência (duas abas renovando juntas) recebe o token atual e grava
+    `refresh_concorrente` (informativo): não é reuso.
     """
     invalid = ApiError(401, "invalid_token", INVALID_SESSION)
     owner_id = _family_owner(refresh_token)
@@ -133,6 +135,8 @@ def refresh(
     if user is None or not user.is_active:
         tokens.revoke_family(result.fam)
         raise invalid
+    if result.concurrent:
+        record_event(db, "refresh_concorrente", "ok", _user_actor(user), user.id, request)
     return user, result.access, result.refresh, result.remaining_seconds
 
 

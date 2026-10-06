@@ -58,6 +58,7 @@ def record_event(
         outcome=outcome,
         actor_user_id=actor.user_id,
         actor_kind=actor.kind,
+        actor_mcp_client_id=getattr(actor, "mcp_client_id", None),  # spec 009
         subject_user_id=subject_user_id,
         ip=_client_ip(request),
         user_agent=user_agent[:USER_AGENT_MAX] if user_agent else None,

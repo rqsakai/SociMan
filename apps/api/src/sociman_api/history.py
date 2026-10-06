@@ -53,6 +53,10 @@ class EntityVersion(Base):
     action: Mapped[str] = mapped_column(Text, nullable=False)  # ver ACTIONS
     actor_kind: Mapped[str] = mapped_column(Text, nullable=False)  # user | system:cli
     actor_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
+    # Spec 009 (R6): o cliente MCP autor; a FK para `mcp_clientes` e o CHECK
+    # `ck_entity_versions_ator` ficam na migration 0014 (sem FK no ORM: o `history` não importa
+    # o pacote `mcp`).
+    actor_mcp_client_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     occurred_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -73,7 +77,8 @@ Index(
 
 
 class ActorLike(Protocol):
-    """O `Actor` da auth (ou qualquer objeto com `kind` e `user_id`)."""
+    """O `Actor` da auth (ou qualquer objeto com `kind` e `user_id`). O `mcp_client_id` (spec
+    009) é lido com `getattr`: atores sem ele valem como `None`."""
 
     kind: str
     user_id: uuid.UUID | None
@@ -136,6 +141,7 @@ def record(
         action=action,
         actor_kind=actor.kind,
         actor_user_id=actor.user_id,
+        actor_mcp_client_id=getattr(actor, "mcp_client_id", None),
         before=before_json,
         after=after_json,
         changed_fields=diff(before_json, after_json),
@@ -175,5 +181,34 @@ def check_version(entity: Any, expected: int, label: str) -> None:
     if entity.version != expected:
         feminine = label.split(maxsplit=1)[0].lower() in ("esta", "essa")
         verb = "alterada" if feminine else "alterado"
+        # Spec 009 (FR-013): a versão atual vai junto, para o agente reler e tentar de novo.
         raise ApiError(409, "version_conflict",
-                       f"{label} foi {verb} por outra pessoa; recarregue")
+                       f"{label} foi {verb} por outra pessoa; recarregue",
+                       details={"versaoAtual": entity.version})
+
+
+def autores(db: Session, rows: list[EntityVersion]) -> dict[int, dict[str, Any]]:
+    """Spec 009 (R6): o `autor` de cada versão (`{tipo, id, nome}`), numa consulta por tipo.
+
+    `tipo` é `usuario`, `mcp_client` (o selo "Agente: <nome>") ou `sistema` (CLI, trilhas).
+    """
+    from sociman_api.auth.models import User
+    from sociman_api.mcp.models import McpCliente
+
+    user_ids = {r.actor_user_id for r in rows if r.actor_user_id is not None}
+    mcp_ids = {r.actor_mcp_client_id for r in rows if r.actor_mcp_client_id is not None}
+    users = dict(db.execute(select(User.id, User.name).where(User.id.in_(user_ids))).all()
+                 ) if user_ids else {}
+    clientes = dict(db.execute(select(McpCliente.id, McpCliente.nome).where(
+        McpCliente.id.in_(mcp_ids))).all()) if mcp_ids else {}
+    out: dict[int, dict[str, Any]] = {}
+    for r in rows:
+        if r.actor_mcp_client_id is not None:
+            out[r.id] = {"tipo": "mcp_client", "id": r.actor_mcp_client_id,
+                         "nome": clientes.get(r.actor_mcp_client_id, "Agente")}
+        elif r.actor_user_id is not None:
+            out[r.id] = {"tipo": "usuario", "id": r.actor_user_id,
+                         "nome": users.get(r.actor_user_id, "Usuário")}
+        else:
+            out[r.id] = {"tipo": "sistema", "id": None, "nome": r.actor_kind}
+    return out

@@ -9,12 +9,13 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from atores import ator_fake
 from sqlalchemy import select, text
 
 from integration.conexao_helpers import app_tiktok, destino_auto  # noqa: F401
 from integration.metricas_helpers import HANDLE, OUTRA, POST_ID, _agora, err, m  # noqa: F401
 from integration.postagem_helpers import LEGENDA, criar_corte, membro  # noqa: F401
-from sociman_api.auth.deps import Actor, current_user
+from sociman_api.auth.deps import current_user
 from sociman_api.db import get_engine
 from sociman_api.history import EntityVersion
 from sociman_api.main import app
@@ -400,8 +401,7 @@ def test_membro_e_mcp_nao_ligam_nem_desfazem(m, membro):  # noqa: F811
         == 200
     r = m.ligar(d, h=membro[1], videoId=vid)
     assert r.status_code == 403 and err(r) == "somente_dono"
-    app.dependency_overrides[current_user] = lambda: Actor(kind="mcp_client",
-                                                           user_id=m.dono.id, user=m.dono)
+    app.dependency_overrides[current_user] = lambda: ator_fake("mcp_client", m.dono)
     r = m.ligar(d, videoId=vid)
     assert r.status_code == 403 and err(r) == "somente_humano"
     r = m.desfazer(d)

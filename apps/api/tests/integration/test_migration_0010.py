@@ -80,7 +80,8 @@ def _destinos(conn) -> list[tuple]:
 
 def _historico(conn) -> tuple:
     return tuple(conn.execute(text(
-        "SELECT count(*), md5(string_agg(t::text, '|' ORDER BY t.id)) FROM entity_versions t"
+        "SELECT count(*), md5(string_agg((to_jsonb(t) - 'actor_mcp_client_id')::text, '|' "
+        "ORDER BY t.id)) FROM entity_versions t"  # a coluna da 0014 (spec 009) fica de fora
     )).one())
 
 

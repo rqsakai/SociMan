@@ -771,3 +771,165 @@ def f(db, x):
                    ("httpx", "import httpx")):
         assert _importa(ast.parse(cod), m), cod
     assert not _escritas(ast.parse('"""UPDATE x SET y: só na docstring."""\nselect(X)\n'))
+
+
+# ---- spec 009 (servidor MCP) ----
+
+MCP = SRC / "mcp"
+ANOTACOES = SRC / "anotacoes"
+# T011: o `mcp/` não tem regra de domínio (chama a API pela ponte, FR-011). De `sociman_api`, só
+# a infraestrutura, a autoria e os tipos do contrato das versões (`perfis.schemas`).
+IMPORTS_PERMITIDOS_009 = ("sociman_api.mcp", "sociman_api.history", "sociman_api.auth",
+                          "sociman_api.db", "sociman_api.redis", "sociman_api.config",
+                          "sociman_api.errors", "sociman_api.perfis.schemas")
+MODELOS_PERMITIDOS_009 = {"sociman_api.mcp.models", "sociman_api.auth.models"}
+_SQL_TABELA = re.compile(r"\b(?:FROM|INTO|UPDATE|JOIN|TABLE)\s+([a-z_]+)", re.IGNORECASE)
+
+
+def _imports_sociman(tree: ast.AST) -> set[str]:
+    out = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            out |= {a.name for a in node.names if a.name.startswith("sociman_api")}
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module \
+                and node.module.startswith("sociman_api"):
+            out |= {f"{node.module}.{a.name}" if node.module == "sociman_api" else node.module
+                    for a in node.names}
+    return out
+
+
+def test_mcp_nao_importa_dominio_nem_publicacao():
+    fontes = sorted(MCP.rglob("*.py"))
+    assert (MCP / "portao.py") in fontes and (MCP / "servidor.py") in fontes  # vivo
+    proibidos = {}
+    for path in fontes:
+        mods = _imports_sociman(ast.parse(path.read_text()))
+        ruins = sorted(m for m in mods if not m.startswith(IMPORTS_PERMITIDOS_009))
+        if ruins:
+            proibidos[str(path.relative_to(SRC))] = ruins
+    assert not proibidos, f"mcp/ importa domínio ou publicação (FR-011, princípio I): {proibidos}"
+
+
+def test_mcp_so_toca_tabelas_mcp():
+    """Modelos só de `mcp.models` (e `auth.models`, para nomes e eventos) e SQL literal só em
+    tabelas `mcp_*`."""
+    achados = []
+    for path in sorted(MCP.rglob("*.py")):
+        tree = ast.parse(path.read_text())
+        rel = str(path.relative_to(SRC))
+        achados += [f"{rel}: {m}" for m in _imports_sociman(tree)
+                    if m.endswith(".models") and m not in MODELOS_PERMITIDOS_009]
+        for texto in _strings_de_codigo(tree):
+            achados += [f"{rel}: {t}" for t in _SQL_TABELA.findall(texto)
+                        if not t.lower().startswith("mcp_")]
+    assert not achados, f"mcp/ mexe em tabela de domínio: {achados}"
+
+
+def test_anotacoes_e_mcp_nao_importam_a_publicacao():
+    fontes = sorted(ANOTACOES.rglob("*.py")) + sorted(MCP.rglob("*.py"))
+    assert (ANOTACOES / "service.py") in fontes
+    achados = {str(p.relative_to(SRC)): mods for p in fontes
+               if (mods := _modulos_de_publicacao(ast.parse(p.read_text())))}
+    assert not achados, f"importa a publicação (princípio I): {achados}"
+
+
+def test_rotas_da_009_sem_delete_e_nomes_neutros():
+    rotas = {(m.upper(), path, op.get("operationId", ""))
+             for path, ops in app.openapi()["paths"].items() for m, op in ops.items()
+             if path.startswith(("/api/mcp", "/api/anotacoes"))}
+    assert len(rotas) >= 22
+    assert not [r for r in rotas if r[0] == "DELETE"]
+    assert all(op.startswith(("mcp_", "anotacoes_")) for _, _, op in rotas)
+    for _, path, op in rotas:
+        texto = f"{_norm(path)} {_norm(op)}"
+        assert not [t for t in PUBLISH_TERMS if t in texto], (op, path)
+    # o endpoint MCP fica fora do OpenAPI (não é rota REST nem vira tool)
+    assert "/mcp" not in app.openapi()["paths"]
+
+
+# ---- spec 020 (histórico do TikTok Studio): só lê arquivos enviados pelo dono ----
+
+STUDIO = SRC / "metricas" / "studio"
+OPERATIONS_020 = {"studio_previa", "studio_confirmar", "studio_importacoes", "studio_cobertura",
+                  "studio_desfazer"}
+# Nada de rede, publicação nem armazenamento de arquivos (os ZIPs nunca são guardados).
+IMPORTS_PROIBIDOS_020 = ("sociman_api.publicacao", "httpx", "requests", "urllib.request",
+                         "minio", "sociman_api.storage", "sociman_api.datadir")
+# Nada extraído nem gravado em disco.
+CHAMADAS_DISCO_020 = {"extract", "extractall", "write_bytes", "write_text", "mkdir",
+                      "NamedTemporaryFile", "SpooledTemporaryFile", "mkstemp", "TemporaryFile"}
+ARQUIVOS_REAIS_020 = ("Overview_*.zip", "Followers_*.zip", "Content_*.zip", "Viewers_*.zip",
+                      "Overview.csv", "FollowerHistory.csv", "Content.csv")
+
+
+def _disco_020(tree: ast.AST) -> list[tuple[int, str]]:
+    achados = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        f = node.func
+        nome = f.attr if isinstance(f, ast.Attribute) else f.id if isinstance(f, ast.Name) \
+            else ""
+        if nome in CHAMADAS_DISCO_020:
+            achados.append((node.lineno, nome))
+        elif nome == "open" and isinstance(f, ast.Name):  # o `open` embutido (disco)
+            achados.append((node.lineno, "open"))
+    return achados
+
+
+def test_studio_nao_importa_rede_publicacao_nem_storage():
+    fontes = sorted(STUDIO.rglob("*.py"))
+    assert (STUDIO / "arquivos.py") in fontes and (STUDIO / "router.py") in fontes  # vivo
+    achados = [f"{p.relative_to(SRC)}: {m}" for p in fontes
+               for m in IMPORTS_PROIBIDOS_020 if _importa(ast.parse(p.read_text()), m)]
+    assert not achados, f"metricas/studio/ importa rede, publicação ou storage: {achados}"
+
+
+def test_studio_nao_extrai_nem_grava_em_disco():
+    achados = [f"{p.relative_to(SRC)}:{linha}: {o}" for p in sorted(STUDIO.rglob("*.py"))
+               for linha, o in _disco_020(ast.parse(p.read_text()))]
+    assert not achados, f"metricas/studio/ toca o disco (R2): {achados}"
+
+
+def test_guarda_da_020_pega_extract_e_open():
+    codigo = "zf.extractall('/tmp')\nzf.extract('a')\nopen('x', 'wb')\nzf.open('Overview.csv')\n"
+    assert {o for _, o in _disco_020(ast.parse(codigo))} == {"extractall", "extract", "open"}
+    assert _importa(ast.parse("from sociman_api import storage"), "sociman_api.storage")
+
+
+def test_rotas_do_studio():
+    rotas = {op.get("operationId", ""): (m.upper(), path)
+             for path, ops in app.openapi()["paths"].items() for m, op in ops.items()
+             if "/studio" in path}
+    assert set(rotas) == OPERATIONS_020
+    assert not [r for r in rotas.values() if r[0] == "DELETE"]
+    for op, (_, path) in rotas.items():
+        texto = f"{_norm(path)} {_norm(op)}"
+        assert not [t for t in PUBLISH_TERMS if t in texto], (op, path)
+
+
+def test_escritas_do_studio_so_para_dono_humano():
+    from sociman_api.auth.deps import require_human_owner, require_user
+    from sociman_api.metricas.studio.router import router as studio_router
+
+    def chamadas(dependant) -> set:
+        out = set()
+        for d in dependant.dependencies:
+            out.add(d.call)
+            out |= chamadas(d)
+        return out
+
+    rotas = [r for r in studio_router.routes if hasattr(r, "dependant")]
+    assert len(rotas) == len(OPERATIONS_020)
+    for r in rotas:
+        deps = chamadas(r.dependant)
+        if r.methods & {"POST", "PUT", "PATCH", "DELETE"}:
+            assert require_human_owner in deps, r.path
+        else:
+            assert require_user in deps, r.path
+
+
+def test_nenhum_arquivo_real_do_studio_na_api():
+    achados = [str(p.relative_to(API_DIR)) for padrao in ARQUIVOS_REAIS_020
+               for p in API_DIR.rglob(padrao) if ".venv" not in p.parts]
+    assert not achados, f"arquivo do TikTok Studio no repositório (privacidade): {achados}"

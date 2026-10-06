@@ -6,6 +6,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from atores import ator_fake
 from sqlalchemy import select, text
 
 from integration import publicacao_helpers as ph
@@ -20,7 +21,7 @@ from integration.postagem_helpers import (  # noqa: F401
     dono,
     membro,
 )
-from sociman_api.auth.deps import Actor, current_user
+from sociman_api.auth.deps import current_user
 from sociman_api.auth.models import SecurityEvent
 from sociman_api.cortes.models import CorteStatus
 from sociman_api.db import get_engine
@@ -125,8 +126,7 @@ def test_membro_e_mcp_recebem_403(client, db, c):
     for rota in ("aprovar-todas", "desaprovar-todas"):
         r = _todas(client, c["hm"], corte.id, rota)
         assert r.status_code == 403 and _err(r) == "somente_dono"
-    app.dependency_overrides[current_user] = lambda: Actor(
-        kind="mcp_client", user_id=c["dono"].id, user=c["dono"])
+    app.dependency_overrides[current_user] = lambda: ator_fake("mcp_client", c["dono"])
     try:
         for rota in ("aprovar-todas", "desaprovar-todas"):
             r = _todas(client, {"Authorization": "Bearer qualquer"}, corte.id, rota)

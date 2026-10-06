@@ -14,6 +14,12 @@ map $http_upgrade $connection_upgrade {
 # portabilidade: o app é seguro sozinho).
 limit_req_zone $binary_remote_addr zone=edge_api:10m rate=20r/s;
 limit_req_zone $binary_remote_addr zone=edge_img:10m rate=30r/s;
+# Spec 009 (R7/R9): o MCP dos agentes tem zona própria, por IP. O limite fino é por cliente, na
+# API (o edge não conhece o token). O log do /mcp ganha o nome da tool (cabeçalho `Mcp-Name` da
+# versão 2026-07-28), nunca o `Authorization`.
+limit_req_zone $binary_remote_addr zone=edge_mcp:10m rate=10r/s;
+log_format sociman_mcp '$remote_addr - [$time_local] "$request" $status $body_bytes_sent '
+                       '$request_time mcp_name="$http_mcp_name"';
 
 # HTTP pelo IP da casa (${LAN_HOST}) → HTTPS (spec 002-pwa, R8). $host sai sem
 # porta. localhost/127.0.0.1 ficam em HTTP (dev e e2e). A CA pública é a única
@@ -70,6 +76,7 @@ server {
     proxy_read_timeout 300s;
     limit_req zone=edge_api burst=40 nodelay;
     proxy_pass http://$api_upstream;
+    proxy_set_header X-Sociman-Via "";   # spec 009 (R9): só a ponte em processo marca a via
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
@@ -87,6 +94,7 @@ server {
     proxy_send_timeout 900s;
     limit_req zone=edge_api burst=40 nodelay;
     proxy_pass http://$api_upstream;
+    proxy_set_header X-Sociman-Via "";   # spec 009 (R9): só a ponte em processo marca a via
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
@@ -103,6 +111,7 @@ server {
     proxy_send_timeout 900s;
     limit_req zone=edge_api burst=40 nodelay;
     proxy_pass http://$api_upstream;
+    proxy_set_header X-Sociman-Via "";   # spec 009 (R9): só a ponte em processo marca a via
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
@@ -118,6 +127,7 @@ server {
     proxy_buffering off;
     proxy_read_timeout 300s;
     proxy_pass http://$api_upstream;
+    proxy_set_header X-Sociman-Via "";   # spec 009 (R9): só a ponte em processo marca a via
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
@@ -130,6 +140,7 @@ server {
     client_max_body_size 11m;
     limit_req zone=edge_api burst=40 nodelay;
     proxy_pass http://$api_upstream;
+    proxy_set_header X-Sociman-Via "";   # spec 009 (R9): só a ponte em processo marca a via
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
@@ -143,6 +154,24 @@ server {
     client_max_body_size 21m;
     limit_req zone=edge_api burst=40 nodelay;
     proxy_pass http://$api_upstream;
+    proxy_set_header X-Sociman-Via "";   # spec 009 (R9): só a ponte em processo marca a via
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  # --------------------------------------------------- servidor MCP (spec 009, R9)
+  # Streamable HTTP dos agentes. Corpo pequeno, sem buffer (SSE, se o cliente pedir) e a marca
+  # interna `X-Sociman-Via` apagada: só a ponte em processo da API pode trazê-la.
+  location = /mcp {
+    client_max_body_size 1m;
+    limit_req zone=edge_mcp burst=20 nodelay;
+    proxy_buffering off;
+    proxy_read_timeout 120s;
+    access_log /var/log/nginx/access.log sociman_mcp;
+    proxy_pass http://$api_upstream;
+    proxy_set_header X-Sociman-Via "";
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     proxy_set_header X-Forwarded-For $remote_addr;
@@ -155,6 +184,7 @@ server {
     client_max_body_size 8m;
     limit_req zone=edge_api burst=40 nodelay;
     proxy_pass http://$api_upstream;
+    proxy_set_header X-Sociman-Via "";   # spec 009 (R9): só a ponte em processo marca a via
     proxy_http_version 1.1;
     proxy_set_header Host $host;
     # Mirror do edge (fecha o spoof de XFF): o X-Forwarded-For que o cliente

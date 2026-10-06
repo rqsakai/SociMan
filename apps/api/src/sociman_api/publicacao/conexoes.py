@@ -507,7 +507,8 @@ def desconectar(db: Session, actor: Actor, conta_id: uuid.UUID, version: int, cl
         antes = history.snapshot(conexao)
         history.record(db, actor, ENTITY, conexao, "updated", antes, history.snapshot(conexao),
                        {"acao": "metricas_anonimizadas", "videos": anonimizadas[0],
-                        "fotos": anonimizadas[1]})
+                        "fotos": anonimizadas[1],
+                        "importacoes": anonimizar.importacoes(db, serie.id)})  # spec 020
     em_atencao = _destinos_automaticos(db, conta.id, DestinoEstado.agendado)
     db.flush()
     return conta, em_atencao, anonimizadas

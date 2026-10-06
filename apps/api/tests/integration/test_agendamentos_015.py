@@ -6,6 +6,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from atores import ator_fake
 from sqlalchemy import select
 
 from integration import publicacao_helpers as ph
@@ -39,8 +40,7 @@ def hm(cena, make_user, login):
 @pytest.fixture
 def mcp(cena):
     """O dono, mas por um cliente MCP (009): nunca humano."""
-    app.dependency_overrides[current_user] = lambda: Actor(
-        kind="mcp_client", user_id=cena.dono.id, user=cena.dono)
+    app.dependency_overrides[current_user] = lambda: ator_fake("mcp_client", cena.dono)
     yield {"Authorization": "Bearer qualquer"}
     app.dependency_overrides.pop(current_user, None)
 

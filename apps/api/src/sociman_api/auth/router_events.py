@@ -17,7 +17,7 @@ from sqlalchemy.orm import aliased
 from sociman_api.auth.deps import RequireOwner
 from sociman_api.auth.models import SecurityEvent as EventRow
 from sociman_api.auth.models import User as UserRow
-from sociman_api.auth.schemas import SecurityEvent, SecurityEventPage
+from sociman_api.auth.schemas import McpClienteRef, SecurityEvent, SecurityEventPage
 from sociman_api.db import DbSession
 from sociman_api.errors import ApiError, ErrorEnvelope
 
@@ -45,6 +45,17 @@ def decode_cursor(cursor: str) -> tuple[datetime, int]:
         return occurred_at, int(event_id)
     except (binascii.Error, UnicodeDecodeError, ValueError) as exc:
         raise ApiError(400, "validation_error", "cursor: inválido") from exc
+
+
+def _clientes_mcp(db, ids: set[UUID | None]) -> dict[UUID, McpClienteRef]:
+    """Spec 009: nome do cliente MCP de cada evento (recusas e gestão de clientes)."""
+    from sociman_api.mcp.models import McpCliente
+
+    wanted = {i for i in ids if i is not None}
+    if not wanted:
+        return {}
+    rows = db.execute(select(McpCliente.id, McpCliente.nome).where(McpCliente.id.in_(wanted)))
+    return {cid: McpClienteRef(id=cid, nome=nome) for cid, nome in rows}
 
 
 @router.get("", operation_id="security_events_list", response_model=SecurityEventPage,
@@ -82,6 +93,7 @@ def list_events(
         query.order_by(EventRow.occurred_at.desc(), EventRow.id.desc()).limit(limit + 1)
     ).all()
     page = rows[:limit]
+    clientes = _clientes_mcp(db, {e.actor_mcp_client_id for e, _, _ in page})
     items = [
         SecurityEvent(
             id=event.id,
@@ -91,6 +103,7 @@ def list_events(
             actor_kind=event.actor_kind,
             actor_user_id=event.actor_user_id,
             actor_name=actor_name,
+            actor_mcp_client=clientes.get(event.actor_mcp_client_id),
             subject_user_id=event.subject_user_id,
             subject_name=subject_name,
             ip=str(event.ip) if event.ip is not None else None,

@@ -463,3 +463,201 @@ export function adiantarColeta(contaId: string): void {
 export function adiantarBusca(destinoId: string): void {
   sqlE2e(`update metricas_buscas_post set proxima_em = now() where destino_id = '${destinoId}' and encerrada_em is null`);
 }
+
+// --- histórico do TikTok Studio (spec 020, T022) ---
+
+// ZIP "stored" (sem compressão, como os do Studio) montado em memória: cabeçalho local + dados de
+// cada entrada, diretório central e fim do diretório. CRC pelo `zlib.crc32` do Node; sem dependência.
+export function zipStudio(entradas: { nome: string; dados: Buffer }[]): Buffer {
+  const locais: Buffer[] = [];
+  const centrais: Buffer[] = [];
+  let offset = 0;
+  for (const e of entradas) {
+    const nome = Buffer.from(e.nome, "utf8");
+    const crc = crc32(e.dados) >>> 0;
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4); // versão necessária
+    local.writeUInt16LE(0, 6); // flags
+    local.writeUInt16LE(0, 8); // método: stored
+    local.writeUInt16LE(0, 10); // hora
+    local.writeUInt16LE(0x21, 12); // data: 1980-01-01
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(e.dados.length, 18);
+    local.writeUInt32LE(e.dados.length, 22);
+    local.writeUInt16LE(nome.length, 26);
+    local.writeUInt16LE(0, 28);
+    const central = Buffer.alloc(46);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE(20, 4);
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(0, 8);
+    central.writeUInt16LE(0, 10);
+    central.writeUInt16LE(0, 12);
+    central.writeUInt16LE(0x21, 14);
+    central.writeUInt32LE(crc, 16);
+    central.writeUInt32LE(e.dados.length, 20);
+    central.writeUInt32LE(e.dados.length, 24);
+    central.writeUInt16LE(nome.length, 28);
+    central.writeUInt32LE(offset, 42);
+    locais.push(local, nome, e.dados);
+    centrais.push(central, nome);
+    offset += local.length + nome.length + e.dados.length;
+  }
+  const dirCentral = Buffer.concat(centrais);
+  const fim = Buffer.alloc(22);
+  fim.writeUInt32LE(0x06054b50, 0);
+  fim.writeUInt16LE(entradas.length, 8);
+  fim.writeUInt16LE(entradas.length, 10);
+  fim.writeUInt32LE(dirCentral.length, 12);
+  fim.writeUInt32LE(offset, 16);
+  return Buffer.concat([...locais, dirCentral, fim]);
+}
+
+const MESES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+// "2026-09-25" → "September 25" (o Studio não traz o ano).
+export function diaStudio(dia: string): string {
+  const [, m, d] = dia.split("-").map(Number);
+  return `${MESES_EN[m! - 1]} ${d}`;
+}
+
+// CSV no formato real: UTF-8 com BOM, tudo entre aspas, sem quebra de linha no fim.
+function csvStudio(cabecalho: string[], linhas: (string | number)[][]): Buffer {
+  const linha = (campos: (string | number)[]) => campos.map((c) => `"${String(c)}"`).join(",");
+  return Buffer.from(`\ufeff${[linha(cabecalho), ...linhas.map(linha)].join("\n")}`, "utf8");
+}
+
+export interface DiaOverview {
+  dia: string; // AAAA-MM-DD
+  views: number;
+  visitasPerfil?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+}
+
+export function csvOverview(dias: DiaOverview[]): Buffer {
+  return csvStudio(
+    ["Date", "Video Views", "Profile Views", "Likes", "Comments", "Shares"],
+    dias.map((d) => [diaStudio(d.dia), d.views, d.visitasPerfil ?? 0, d.likes ?? 0, d.comments ?? 0, d.shares ?? 0]),
+  );
+}
+
+export function csvSeguidores(dias: { dia: string; seguidores: number }[]): Buffer {
+  return csvStudio(
+    ["Date", "Followers", "Difference in followers from previous day"],
+    dias.map((d, i) => [diaStudio(d.dia), d.seguidores, i === 0 ? 0 : d.seguidores - dias[i - 1]!.seguidores]),
+  );
+}
+
+// Os dois ZIPs como o Studio entrega: `Overview_<1º dia>_<epoch do fim>_<handle>.zip` e
+// `Followers_<handle>.zip` (com as 3 entradas extras só com cabeçalho). O epoch é 18:46 (−03) do
+// último dia. Prontos para `setInputFiles`.
+export function zipsStudio(handle: string, dias: (DiaOverview & { seguidores: number })[]) {
+  const ultimo = dias[dias.length - 1]!.dia;
+  const [y, m, d] = ultimo.split("-").map(Number);
+  const epoch = Math.floor(Date.UTC(y!, m! - 1, d!, 21, 46, 14) / 1000);
+  const vazio = (cab: string[]) => csvStudio(cab, []);
+  return {
+    overview: {
+      name: `Overview_${dias[0]!.dia}_${epoch}_${handle}.zip`,
+      mimeType: "application/zip",
+      buffer: zipStudio([{ nome: "Overview.csv", dados: csvOverview(dias) }]),
+    },
+    seguidores: {
+      name: `Followers_${handle}.zip`,
+      mimeType: "application/zip",
+      buffer: zipStudio([
+        { nome: "FollowerHistory.csv", dados: csvSeguidores(dias) },
+        { nome: "FollowerActivity.csv", dados: vazio(["Date", "Hour", "Active followers"]) },
+        { nome: "FollowerGender.csv", dados: vazio(["Gender", "Distribution"]) },
+        { nome: "FollowerTopTerritories.csv", dados: vazio(["Top territories", "Distribution"]) },
+      ]),
+    },
+  };
+}
+
+// --- MCP (spec 009, T030) ---
+
+// Versão de protocolo do cliente do OpenClaw (@modelcontextprotocol/sdk 1.30.0).
+export const MCP_PROTOCOLO = "2025-11-25";
+
+export interface RespostaMcp {
+  status: number;
+  headers: Headers;
+  // corpo JSON-RPC (ou o JSON de erro HTTP); null quando não veio JSON
+  body: { result?: Record<string, unknown>; error?: { code: number; message: string }; [k: string]: unknown } | null;
+}
+
+// Chama o `/mcp` do edge efêmero com o Bearer de um cliente MCP. Usa o `fetch` do Node, e não o
+// `request` do Playwright, para o token não entrar em trace nem em relatório. `extras.headers`
+// sobrescreve cabeçalhos (ex.: `Origin`); `extras.semToken` manda sem Authorization.
+export async function chamarMcp(
+  token: string,
+  metodo: string,
+  params: Record<string, unknown> = {},
+  extras: { headers?: Record<string, string>; semToken?: boolean } = {},
+): Promise<RespostaMcp> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json, text/event-stream",
+    "MCP-Protocol-Version": MCP_PROTOCOLO,
+    ...(extras.semToken ? {} : { Authorization: `Bearer ${token}` }),
+    ...extras.headers,
+  };
+  const res = await fetch(`${BASE_URL}/mcp`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ jsonrpc: "2.0", id: randomUUID(), method: metodo, params }),
+  });
+  const texto = await res.text();
+  let body: RespostaMcp["body"] = null;
+  try {
+    body = JSON.parse(texto) as RespostaMcp["body"];
+  } catch {
+    // SSE de uma mensagem só: pega o último `data:`
+    const data = texto.split("\n").filter((l) => l.startsWith("data:")).pop();
+    if (data) body = JSON.parse(data.slice(5)) as RespostaMcp["body"];
+  }
+  return { status: res.status, headers: res.headers, body };
+}
+
+// `tools/call` de uma tool: devolve o `result` do JSON-RPC (com `isError` e `structuredContent`).
+export async function chamarTool(token: string, nome: string, args: Record<string, unknown> = {}): Promise<RespostaMcp> {
+  return chamarMcp(token, "tools/call", { name: nome, arguments: args });
+}
+
+export interface ClienteMcpE2e {
+  id: string;
+  nome: string;
+  token: string; // só em memória, nunca em arquivo nem log
+  version: number;
+}
+
+// Cria um cliente MCP pela API (dono humano) e devolve o token emitido UMA vez.
+export async function criarClienteMcp(
+  request: APIRequestContext,
+  donoToken: string,
+  nome: string,
+  escopo: "leitura" | "propostas",
+  extras: { limitePorMinuto?: number; limiteEscritasDia?: number } = {},
+): Promise<ClienteMcpE2e> {
+  const res = await request.post("/api/mcp/clientes", {
+    headers: { Authorization: `Bearer ${donoToken}` },
+    data: { nome, escopo, ...extras },
+  });
+  expect(res.status(), `POST /api/mcp/clientes (${nome})`).toBe(201);
+  const body = (await res.json()) as { cliente: { id: string; nome: string; version: number }; token: string };
+  return { id: body.cliente.id, nome: body.cliente.nome, token: body.token, version: body.cliente.version };
+}
+
+// Liga ou desliga o interruptor da tela (o servidor da stack e2e já vem com MCP_HABILITADO=true).
+export async function interruptorMcp(request: APIRequestContext, donoToken: string, habilitado: boolean): Promise<void> {
+  const auth = { Authorization: `Bearer ${donoToken}` };
+  const atual = await request.get("/api/mcp/config", { headers: auth });
+  expect(atual.status(), "GET /api/mcp/config").toBe(200);
+  const { version } = (await atual.json()) as { version: number };
+  const res = await request.put("/api/mcp/config", { headers: auth, data: { version, habilitado } });
+  expect(res.status(), "PUT /api/mcp/config").toBe(200);
+}

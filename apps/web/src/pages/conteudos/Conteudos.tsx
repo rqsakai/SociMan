@@ -30,6 +30,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/field";
+import { useAbrirDestinoDaUrl } from "@/lib/abrirDestino";
 import { api } from "@/lib/api";
 import { filtersFromParams, formatDuracao, invalidarConteudos, origemLabel, situacaoLabel, useConteudos, useEhDono } from "@/lib/conteudos";
 import { contaPlatformText, perfilKey } from "@/lib/perfis";
@@ -45,6 +46,7 @@ interface LoteVisto {
 
 export default function Conteudos() {
   usePageMeta({ title: "Conteúdos" });
+  useAbrirDestinoDaUrl();
   const queryClient = useQueryClient();
   const dono = useEhDono();
   const [params] = useSearchParams();

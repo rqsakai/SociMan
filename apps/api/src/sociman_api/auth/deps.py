@@ -6,6 +6,8 @@
 - `require_human_owner` (spec 015, research R15): dono **e** `actor.kind == "user"`. Qualquer
   outro ator (cliente MCP da 009, `system:*`, token de agente) recebe 403 `somente_humano` e
   deixa um evento de segurança `publicacao_recusada` (princípio I).
+- `require_human` (spec 009): qualquer humano (`actor.kind == "user"`), com a mesma recusa.
+- Bearer `smcp_…` (spec 009): o ator `mcp_client` vem do portão (`mcp/portao.py`, R5).
 """
 
 import logging
@@ -27,12 +29,14 @@ log = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class Actor:
-    """Autor de uma ação. `mcp_client` fica reservado para a spec 009."""
+    """Autor de uma ação. O `mcp_client` (spec 009) nunca tem `user`: lê como um membro."""
 
     kind: str  # user | anonymous | system:cli | system:publicacao | mcp_client (009)
     user_id: uuid.UUID | None = None
     user: User | None = None
     fam: str | None = None
+    mcp_client_id: uuid.UUID | None = None  # spec 009: o cliente MCP (kind == "mcp_client")
+    mcp_escopo: str | None = None  # leitura | propostas
 
 
 ANONYMOUS = Actor(kind="anonymous")
@@ -55,6 +59,10 @@ def _actor_from_request(request: Request, db: Session) -> Actor | None:
     token = bearer_token(request)
     if not token:
         return None
+    if token.startswith("smcp_"):  # spec 009: token de cliente MCP, decidido pelo portão (R5)
+        from sociman_api.mcp import portao  # import tardio (o portão usa este módulo)
+
+        return portao.ator(request)
     claims = tokens.decode_access(token)
     if not claims:
         return None
@@ -144,8 +152,18 @@ def require_human_owner(request: Request,
     return actor
 
 
+def require_human(request: Request, actor: Annotated[Actor, Depends(require_user)]) -> Actor:
+    """Rotas **Hu** da 009: qualquer usuário humano (dono ou membro). Outro ator → 403
+    `somente_humano` + evento `publicacao_recusada`."""
+    if actor.kind != "user":
+        registrar_recusa(actor, _rota(request), request)
+        raise ApiError(403, "somente_humano", SOMENTE_HUMANO)
+    return actor
+
+
 CurrentUser = Annotated[Actor, Depends(current_user)]
 RequireUser = Annotated[Actor, Depends(require_user)]
 RequireOwner = Annotated[Actor, Depends(require_owner)]
 OptionalActor = Annotated[Actor, Depends(get_actor)]
 RequireHumanOwner = Annotated[Actor, Depends(require_human_owner)]
+RequireHuman = Annotated[Actor, Depends(require_human)]

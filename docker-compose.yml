@@ -84,6 +84,9 @@ services:
       # Spec 016: métricas (só leitura). false pausa a coleta sem desconectar.
       METRICAS_COLETA_HABILITADA: ${METRICAS_COLETA_HABILITADA:-true}
       AGENDADOR_METRICAS_S: ${AGENDADOR_METRICAS_S:-60}
+      # Spec 009: servidor MCP dos agentes (`/mcp`). false = desligado no servidor (padrão).
+      MCP_HABILITADO: ${MCP_HABILITADO:-false}
+      MCP_ORIGENS_PERMITIDAS: ${MCP_ORIGENS_PERMITIDAS:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"   # OpenShorts roda no host (:8000)
     volumes:

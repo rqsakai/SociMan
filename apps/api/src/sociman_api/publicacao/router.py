@@ -17,8 +17,8 @@ from fastapi import APIRouter, Depends, Request
 from sociman_api.auth.deps import RequireHumanOwner, RequireUser
 from sociman_api.db import DbSession
 from sociman_api.errors import ErrorEnvelope
-from sociman_api.perfis.schemas import Version, VersionIn, VersionsList
-from sociman_api.perfis.service_perfis import user_refs
+from sociman_api.perfis.schemas import VersionIn, VersionsList
+from sociman_api.perfis.service_perfis import version_items
 from sociman_api.postagem import schemas as postagem_schemas
 from sociman_api.postagem import service as postagem_service
 from sociman_api.publicacao import conexoes, registro, schemas, service
@@ -95,16 +95,7 @@ def conexao_criador(conta_id: UUID, actor: RequireHumanOwner, db: DbSession,
 @router.get("/contas/{conta_id}/conexao/versions", operation_id="conexoes_versions",
             response_model=VersionsList, responses=_errors(401, 403, 404))
 def conexao_versions(conta_id: UUID, actor: RequireUser, db: DbSession) -> VersionsList:
-    rows = conexoes.versions(db, conta_id)
-    users = user_refs(db, [r.actor_user_id for r in rows])
-    return VersionsList(items=[
-        Version(version=r.version, action=r.action,
-                actor=users.get(r.actor_user_id) if r.actor_user_id else None,
-                actor_kind=r.actor_kind, occurred_at=r.occurred_at,
-                changed_fields=list(r.changed_fields), before=r.before, after=r.after,
-                details=r.details)
-        for r in rows
-    ])
+    return version_items(db, conexoes.versions(db, conta_id))  # spec 009: com o `autor`
 
 
 # ---- interruptor ----

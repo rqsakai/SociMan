@@ -5,11 +5,12 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from atores import ator_fake
 from sqlalchemy import func, select
 
 from integration.conexao_helpers import app_tiktok, conectar, destino_auto  # noqa: F401
 from integration.postagem_helpers import criar_conta, criar_perfil, dono, membro  # noqa: F401
-from sociman_api.auth.deps import Actor, current_user
+from sociman_api.auth.deps import current_user
 from sociman_api.auth.models import SecurityEvent
 from sociman_api.conteudos.models import Modo
 from sociman_api.main import app
@@ -37,8 +38,7 @@ def _eventos(db) -> int:
 
 
 def _como_mcp(user) -> None:
-    app.dependency_overrides[current_user] = lambda: Actor(kind="mcp_client", user_id=user.id,
-                                                           user=user)
+    app.dependency_overrides[current_user] = lambda: ator_fake("mcp_client", user)
 
 
 # ---- GET / PUT ----

@@ -268,7 +268,8 @@ def test_patch_com_versao_velha_da_409(client: TestClient, headers, make_perfil)
     r = _patch(client, headers, conta, notes="segunda")  # ainda com a versão 1
     assert r.status_code == 409
     assert _error(r) == {"code": "version_conflict",
-                         "message": "Esta conta foi alterada por outra pessoa; recarregue"}
+                         "message": "Esta conta foi alterada por outra pessoa; recarregue",
+                         "details": {"versaoAtual": 2}}  # spec 009 (FR-013)
 
 
 def test_conta_inexistente_da_404(client: TestClient, headers) -> None:

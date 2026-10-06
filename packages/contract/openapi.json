@@ -278,6 +278,39 @@
         "title": "AlvoAlerta",
         "type": "object"
       },
+      "AlvoRef": {
+        "properties": {
+          "arquivado": {
+            "title": "Arquivado",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "link": {
+            "title": "Link",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/AnotacaoAlvo"
+          },
+          "titulo": {
+            "title": "Titulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "id",
+          "titulo",
+          "link",
+          "arquivado"
+        ],
+        "title": "AlvoRef",
+        "type": "object"
+      },
       "AlvoTeste": {
         "properties": {
           "entityId": {
@@ -327,6 +360,211 @@
           "faltam"
         ],
         "title": "Amostra",
+        "type": "object"
+      },
+      "Anotacao": {
+        "properties": {
+          "alvo": {
+            "$ref": "#/components/schemas/AlvoRef"
+          },
+          "autor": {
+            "$ref": "#/components/schemas/Autor"
+          },
+          "campos": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CamposProposta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "motivoDescarte": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivodescarte"
+          },
+          "perfilId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perfilid"
+          },
+          "resolvidaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolvidaem"
+          },
+          "resolvidaPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "situacao": {
+            "$ref": "#/components/schemas/AnotacaoSituacao"
+          },
+          "texto": {
+            "title": "Texto",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/AnotacaoTipo"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "alvo",
+          "perfilId",
+          "tipo",
+          "texto",
+          "campos",
+          "situacao",
+          "autor",
+          "resolvidaPor",
+          "resolvidaEm",
+          "motivoDescarte",
+          "createdAt",
+          "version"
+        ],
+        "title": "Anotacao",
+        "type": "object"
+      },
+      "AnotacaoAlvo": {
+        "enum": [
+          "perfil",
+          "conta",
+          "canal",
+          "video_fonte",
+          "corte",
+          "conteudo",
+          "destino"
+        ],
+        "title": "AnotacaoAlvo",
+        "type": "string"
+      },
+      "AnotacaoOut": {
+        "properties": {
+          "anotacao": {
+            "$ref": "#/components/schemas/Anotacao"
+          }
+        },
+        "required": [
+          "anotacao"
+        ],
+        "title": "AnotacaoOut",
+        "type": "object"
+      },
+      "AnotacaoSituacao": {
+        "enum": [
+          "aberta",
+          "aplicada",
+          "descartada",
+          "arquivada"
+        ],
+        "title": "AnotacaoSituacao",
+        "type": "string"
+      },
+      "AnotacaoTipo": {
+        "enum": [
+          "observacao",
+          "proposta_texto"
+        ],
+        "title": "AnotacaoTipo",
+        "type": "string"
+      },
+      "AnotacaoVersionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "AnotacaoVersionIn",
+        "type": "object"
+      },
+      "AnotacoesPage": {
+        "properties": {
+          "anotacoes": {
+            "items": {
+              "$ref": "#/components/schemas/Anotacao"
+            },
+            "title": "Anotacoes",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "anotacoes",
+          "nextCursor"
+        ],
+        "title": "AnotacoesPage",
+        "type": "object"
+      },
+      "AnotacoesResumo": {
+        "properties": {
+          "abertas": {
+            "title": "Abertas",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "abertas"
+        ],
+        "title": "AnotacoesResumo",
         "type": "object"
       },
       "AplicarMarcaIn": {
@@ -459,6 +697,57 @@
           "cortesBytes"
         ],
         "title": "Armazenamento",
+        "type": "object"
+      },
+      "ArquivoPrevia": {
+        "properties": {
+          "handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handle"
+          },
+          "ignorados": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ignorados",
+            "type": "array"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "secao": {
+            "enum": [
+              "visao_geral",
+              "seguidores"
+            ],
+            "title": "Secao",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "zip",
+              "csv"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nome",
+          "tipo",
+          "secao",
+          "handle",
+          "ignorados"
+        ],
+        "title": "ArquivoPrevia",
         "type": "object"
       },
       "Asset": {
@@ -1209,6 +1498,82 @@
         "title": "AuthSession",
         "type": "object"
       },
+      "Autor": {
+        "description": "Spec 009 (R6): quem fez a mudança. `mcp_client` = o selo \"Agente: <nome>\".",
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "usuario",
+              "mcp_client",
+              "sistema"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "id",
+          "nome"
+        ],
+        "title": "Autor",
+        "type": "object"
+      },
+      "Aviso": {
+        "properties": {
+          "codigo": {
+            "enum": [
+              "diverge_da_coleta",
+              "dia_incompleto",
+              "dias_faltando",
+              "periodo_longo",
+              "ano_deduzido",
+              "colunas_ausentes",
+              "cabecalho_provisorio"
+            ],
+            "title": "Codigo",
+            "type": "string"
+          },
+          "detalhes": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detalhes"
+          },
+          "mensagem": {
+            "title": "Mensagem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensagem"
+        ],
+        "title": "Aviso",
+        "type": "object"
+      },
       "Body_assets_file_upload": {
         "properties": {
           "file": {
@@ -1425,6 +1790,22 @@
           "version"
         ],
         "title": "Body_perfis_upload_logo",
+        "type": "object"
+      },
+      "Body_studio_previa": {
+        "properties": {
+          "arquivos": {
+            "default": [],
+            "description": "De 1 a 2 arquivos (.zip ou .csv) do TikTok Studio, até 5 MB no total",
+            "items": {
+              "contentMediaType": "application/octet-stream",
+              "type": "string"
+            },
+            "title": "Arquivos",
+            "type": "array"
+          }
+        },
+        "title": "Body_studio_previa",
         "type": "object"
       },
       "Busca": {
@@ -1808,6 +2189,55 @@
           "semData"
         ],
         "title": "CalendarioOut",
+        "type": "object"
+      },
+      "CamposProposta": {
+        "additionalProperties": false,
+        "description": "Proposta de texto para um destino: pelo menos um campo (400 `campos_vazios`).",
+        "properties": {
+          "descricao": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "hashtags": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 60,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "maxItems": 8,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hashtags"
+          },
+          "titulo": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Titulo"
+          }
+        },
+        "title": "CamposProposta",
         "type": "object"
       },
       "CanaisList": {
@@ -2309,6 +2739,110 @@
         "title": "CelulaMapa",
         "type": "object"
       },
+      "ChamadaMcp": {
+        "properties": {
+          "argsResumo": {
+            "additionalProperties": true,
+            "title": "Argsresumo",
+            "type": "object"
+          },
+          "cliente": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ClienteRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "codigoErro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigoerro"
+          },
+          "duracaoMs": {
+            "title": "Duracaoms",
+            "type": "integer"
+          },
+          "entidade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntidadeRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "escrita": {
+            "title": "Escrita",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "metodo": {
+            "title": "Metodo",
+            "type": "string"
+          },
+          "ocorreuEm": {
+            "format": "date-time",
+            "title": "Ocorreuem",
+            "type": "string"
+          },
+          "resultado": {
+            "$ref": "#/components/schemas/McpResultado"
+          },
+          "rota": {
+            "title": "Rota",
+            "type": "string"
+          },
+          "statusHttp": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statushttp"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "via": {
+            "$ref": "#/components/schemas/McpVia"
+          }
+        },
+        "required": [
+          "id",
+          "ocorreuEm",
+          "cliente",
+          "via",
+          "tool",
+          "metodo",
+          "rota",
+          "argsResumo",
+          "resultado",
+          "statusHttp",
+          "codigoErro",
+          "duracaoMs",
+          "escrita",
+          "entidade"
+        ],
+        "title": "ChamadaMcp",
+        "type": "object"
+      },
       "ChamadaOut": {
         "properties": {
           "chamada": {
@@ -2349,6 +2883,34 @@
         "title": "ChamadasList",
         "type": "object"
       },
+      "ChamadasPage": {
+        "properties": {
+          "chamadas": {
+            "items": {
+              "$ref": "#/components/schemas/ChamadaMcp"
+            },
+            "title": "Chamadas",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "chamadas",
+          "nextCursor"
+        ],
+        "title": "ChamadasPage",
+        "type": "object"
+      },
       "ChangePasswordIn": {
         "properties": {
           "currentPassword": {
@@ -2369,6 +2931,305 @@
           "newPassword"
         ],
         "title": "ChangePasswordIn",
+        "type": "object"
+      },
+      "ClienteComToken": {
+        "properties": {
+          "cliente": {
+            "$ref": "#/components/schemas/ClienteMcp"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cliente",
+          "token"
+        ],
+        "title": "ClienteComToken",
+        "type": "object"
+      },
+      "ClienteMcp": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "descricao": {
+            "title": "Descricao",
+            "type": "string"
+          },
+          "escopo": {
+            "$ref": "#/components/schemas/McpEscopo"
+          },
+          "expiraEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiraem"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "limiteEscritasDia": {
+            "title": "Limiteescritasdia",
+            "type": "integer"
+          },
+          "limitePorMinuto": {
+            "title": "Limiteporminuto",
+            "type": "integer"
+          },
+          "noLimite": {
+            "title": "Nolimite",
+            "type": "boolean"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "revogadoEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revogadoem"
+          },
+          "revogadoPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "situacao": {
+            "$ref": "#/components/schemas/McpSituacao"
+          },
+          "tokenEmitidoEm": {
+            "format": "date-time",
+            "title": "Tokenemitidoem",
+            "type": "string"
+          },
+          "tokenId": {
+            "title": "Tokenid",
+            "type": "string"
+          },
+          "ultimoUsoEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultimousoem"
+          },
+          "uso24h": {
+            "$ref": "#/components/schemas/Uso24h"
+          },
+          "venceEmBreve": {
+            "title": "Venceembreve",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "descricao",
+          "escopo",
+          "situacao",
+          "tokenId",
+          "tokenEmitidoEm",
+          "expiraEm",
+          "venceEmBreve",
+          "limitePorMinuto",
+          "limiteEscritasDia",
+          "ultimoUsoEm",
+          "uso24h",
+          "noLimite",
+          "revogadoEm",
+          "revogadoPor",
+          "createdAt",
+          "createdBy",
+          "version"
+        ],
+        "title": "ClienteMcp",
+        "type": "object"
+      },
+      "ClienteOut": {
+        "properties": {
+          "cliente": {
+            "$ref": "#/components/schemas/ClienteMcp"
+          }
+        },
+        "required": [
+          "cliente"
+        ],
+        "title": "ClienteOut",
+        "type": "object"
+      },
+      "ClienteRef": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nome"
+        ],
+        "title": "ClienteRef",
+        "type": "object"
+      },
+      "ClientesList": {
+        "properties": {
+          "clientes": {
+            "items": {
+              "$ref": "#/components/schemas/ClienteMcp"
+            },
+            "title": "Clientes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "clientes"
+        ],
+        "title": "ClientesList",
+        "type": "object"
+      },
+      "Cobertura": {
+        "properties": {
+          "coleta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ColetaCobertura"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contaId": {
+            "format": "uuid",
+            "title": "Contaid",
+            "type": "string"
+          },
+          "hoje": {
+            "format": "date",
+            "title": "Hoje",
+            "type": "string"
+          },
+          "importacoesAtivas": {
+            "title": "Importacoesativas",
+            "type": "integer"
+          },
+          "secoes": {
+            "items": {
+              "$ref": "#/components/schemas/SecaoCobertura"
+            },
+            "title": "Secoes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "contaId",
+          "hoje",
+          "coleta",
+          "secoes",
+          "importacoesAtivas"
+        ],
+        "title": "Cobertura",
+        "type": "object"
+      },
+      "ColetaCobertura": {
+        "properties": {
+          "primeiroDia": {
+            "format": "date",
+            "title": "Primeirodia",
+            "type": "string"
+          },
+          "primeiroDiaCoberto": {
+            "format": "date",
+            "title": "Primeirodiacoberto",
+            "type": "string"
+          }
+        },
+        "required": [
+          "primeiroDia",
+          "primeiroDiaCoberto"
+        ],
+        "title": "ColetaCobertura",
+        "type": "object"
+      },
+      "Colunas": {
+        "properties": {
+          "ausentes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ausentes",
+            "type": "array"
+          },
+          "ignoradas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Ignoradas",
+            "type": "array"
+          },
+          "reconhecidas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reconhecidas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "reconhecidas",
+          "ausentes",
+          "ignoradas"
+        ],
+        "title": "Colunas",
         "type": "object"
       },
       "Conexao": {
@@ -2533,6 +3394,25 @@
           "conexao"
         ],
         "title": "ConexaoOut",
+        "type": "object"
+      },
+      "ConfirmarIn": {
+        "properties": {
+          "confirmoConta": {
+            "default": false,
+            "title": "Confirmoconta",
+            "type": "boolean"
+          },
+          "previaId": {
+            "format": "uuid",
+            "title": "Previaid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "previaId"
+        ],
+        "title": "ConfirmarIn",
         "type": "object"
       },
       "ConfirmarQualidadeIn": {
@@ -2822,6 +3702,30 @@
         "title": "ContaOut",
         "type": "object"
       },
+      "ContaPrevia": {
+        "properties": {
+          "handle": {
+            "title": "Handle",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "perfil": {
+            "title": "Perfil",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "handle",
+          "perfil"
+        ],
+        "title": "ContaPrevia",
+        "type": "object"
+      },
       "ContaRef": {
         "properties": {
           "conexao": {
@@ -2895,6 +3799,90 @@
           "positivo"
         ],
         "title": "ContagemAlertas",
+        "type": "object"
+      },
+      "ContagensImportacao": {
+        "properties": {
+          "coletados": {
+            "title": "Coletados",
+            "type": "integer"
+          },
+          "divergentes": {
+            "title": "Divergentes",
+            "type": "integer"
+          },
+          "faltando": {
+            "title": "Faltando",
+            "type": "integer"
+          },
+          "gravados": {
+            "title": "Gravados",
+            "type": "integer"
+          },
+          "ignorados": {
+            "title": "Ignorados",
+            "type": "integer"
+          },
+          "iguais": {
+            "title": "Iguais",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "gravados",
+          "iguais",
+          "divergentes",
+          "coletados",
+          "faltando",
+          "ignorados"
+        ],
+        "title": "ContagensImportacao",
+        "type": "object"
+      },
+      "ContagensPrevia": {
+        "properties": {
+          "coletados": {
+            "title": "Coletados",
+            "type": "integer"
+          },
+          "divergentes": {
+            "title": "Divergentes",
+            "type": "integer"
+          },
+          "faltando": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Faltando",
+            "type": "array"
+          },
+          "gravados": {
+            "title": "Gravados",
+            "type": "integer"
+          },
+          "ignorados": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Ignorados",
+            "type": "array"
+          },
+          "iguais": {
+            "title": "Iguais",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "gravados",
+          "iguais",
+          "divergentes",
+          "coletados",
+          "faltando",
+          "ignorados"
+        ],
+        "title": "ContagensPrevia",
         "type": "object"
       },
       "ContasOut": {
@@ -3403,6 +4391,9 @@
           "postsNoPeriodo": {
             "title": "Postsnoperiodo",
             "type": "integer"
+          },
+          "studio": {
+            "$ref": "#/components/schemas/ContextoStudio"
           }
         },
         "required": [
@@ -3415,9 +4406,29 @@
           "postsNoPeriodo",
           "aguardando",
           "foraDoSociman",
-          "minimos"
+          "minimos",
+          "studio"
         ],
         "title": "Contexto",
+        "type": "object"
+      },
+      "ContextoStudio": {
+        "description": "Spec 020: dias distintos do período em que alguma série usou o histórico do Studio.",
+        "properties": {
+          "dias": {
+            "title": "Dias",
+            "type": "integer"
+          },
+          "series": {
+            "title": "Series",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dias",
+          "series"
+        ],
+        "title": "ContextoStudio",
         "type": "object"
       },
       "Cor": {
@@ -3894,6 +4905,46 @@
         "title": "CotaYoutube",
         "type": "object"
       },
+      "CreateAnotacaoIn": {
+        "additionalProperties": false,
+        "properties": {
+          "alvoId": {
+            "format": "uuid",
+            "title": "Alvoid",
+            "type": "string"
+          },
+          "alvoTipo": {
+            "$ref": "#/components/schemas/AnotacaoAlvo"
+          },
+          "campos": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CamposProposta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "texto": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Texto",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/AnotacaoTipo",
+            "default": "observacao"
+          }
+        },
+        "required": [
+          "alvoTipo",
+          "alvoId",
+          "texto"
+        ],
+        "title": "CreateAnotacaoIn",
+        "type": "object"
+      },
       "CreateCanalIn": {
         "properties": {
           "perfilIds": {
@@ -3915,6 +4966,57 @@
           "youtubeChannelId"
         ],
         "title": "CreateCanalIn",
+        "type": "object"
+      },
+      "CreateClienteIn": {
+        "properties": {
+          "descricao": {
+            "default": "",
+            "maxLength": 300,
+            "title": "Descricao",
+            "type": "string"
+          },
+          "escopo": {
+            "$ref": "#/components/schemas/McpEscopo"
+          },
+          "expiraEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiraem"
+          },
+          "limiteEscritasDia": {
+            "default": 200,
+            "maximum": 5000.0,
+            "minimum": 0.0,
+            "title": "Limiteescritasdia",
+            "type": "integer"
+          },
+          "limitePorMinuto": {
+            "default": 60,
+            "maximum": 600.0,
+            "minimum": 1.0,
+            "title": "Limiteporminuto",
+            "type": "integer"
+          },
+          "nome": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Nome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nome",
+          "escopo"
+        ],
+        "title": "CreateClienteIn",
         "type": "object"
       },
       "CreateContaIn": {
@@ -4309,6 +5411,33 @@
         "title": "DesaprovarTodasIn",
         "type": "object"
       },
+      "DescartarIn": {
+        "additionalProperties": false,
+        "properties": {
+          "motivo": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "DescartarIn",
+        "type": "object"
+      },
       "DesconectarIn": {
         "description": "Spec 016 (R13): com a série de métricas com dados, `confirmoAnonimizar` é obrigatório.",
         "properties": {
@@ -4355,6 +5484,20 @@
           "metricasAnonimizadas"
         ],
         "title": "DesconectarOut",
+        "type": "object"
+      },
+      "DesfazerIn": {
+        "properties": {
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "DesfazerIn",
         "type": "object"
       },
       "Destino": {
@@ -4808,9 +5951,22 @@
       },
       "DiaCalendario": {
         "properties": {
+          "contasStudio": {
+            "title": "Contasstudio",
+            "type": "integer"
+          },
           "dia": {
             "format": "date",
             "title": "Dia",
+            "type": "string"
+          },
+          "fonte": {
+            "enum": [
+              "coletado",
+              "studio",
+              "misto"
+            ],
+            "title": "Fonte",
             "type": "string"
           },
           "posts": {
@@ -4825,7 +5981,9 @@
         "required": [
           "dia",
           "posts",
-          "views"
+          "views",
+          "fonte",
+          "contasStudio"
         ],
         "title": "DiaCalendario",
         "type": "object"
@@ -5138,6 +6296,30 @@
           "desktop"
         ],
         "title": "EnderecosLogin",
+        "type": "object"
+      },
+      "EntidadeRef": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "link": {
+            "title": "Link",
+            "type": "string"
+          },
+          "tipo": {
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "id",
+          "link"
+        ],
+        "title": "EntidadeRef",
         "type": "object"
       },
       "EnviarAgoraIn": {
@@ -6224,6 +7406,52 @@
           "name"
         ],
         "title": "ExportPerfil",
+        "type": "object"
+      },
+      "Faixa": {
+        "properties": {
+          "ate": {
+            "format": "date",
+            "title": "Ate",
+            "type": "string"
+          },
+          "de": {
+            "format": "date",
+            "title": "De",
+            "type": "string"
+          }
+        },
+        "required": [
+          "de",
+          "ate"
+        ],
+        "title": "Faixa",
+        "type": "object"
+      },
+      "FaixaFonte": {
+        "properties": {
+          "ate": {
+            "format": "date",
+            "title": "Ate",
+            "type": "string"
+          },
+          "de": {
+            "format": "date",
+            "title": "De",
+            "type": "string"
+          },
+          "fonte": {
+            "const": "studio",
+            "title": "Fonte",
+            "type": "string"
+          }
+        },
+        "required": [
+          "de",
+          "ate",
+          "fonte"
+        ],
+        "title": "FaixaFonte",
         "type": "object"
       },
       "FilePatch": {
@@ -7836,6 +9064,171 @@
         "title": "ImageUrls",
         "type": "object"
       },
+      "Importacao": {
+        "properties": {
+          "anoOrigem": {
+            "enum": [
+              "nome_zip",
+              "deduzido",
+              "misto"
+            ],
+            "title": "Anoorigem",
+            "type": "string"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "contagens": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ContagensImportacao"
+            },
+            "propertyNames": {
+              "enum": [
+                "visao_geral",
+                "seguidores"
+              ]
+            },
+            "title": "Contagens",
+            "type": "object"
+          },
+          "criadaEm": {
+            "format": "date-time",
+            "title": "Criadaem",
+            "type": "string"
+          },
+          "criadaPor": {
+            "$ref": "#/components/schemas/UserRef"
+          },
+          "desfeitaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desfeitaem"
+          },
+          "desfeitaPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estado": {
+            "enum": [
+              "ativa",
+              "desfeita"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "gravados": {
+            "title": "Gravados",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "nomesArquivos": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nomesarquivos"
+          },
+          "periodoAte": {
+            "format": "date",
+            "title": "Periodoate",
+            "type": "string"
+          },
+          "periodoDe": {
+            "format": "date",
+            "title": "Periodode",
+            "type": "string"
+          },
+          "secoes": {
+            "items": {
+              "enum": [
+                "visao_geral",
+                "seguidores"
+              ],
+              "type": "string"
+            },
+            "title": "Secoes",
+            "type": "array"
+          },
+          "serieId": {
+            "format": "uuid",
+            "title": "Serieid",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "contaId",
+          "serieId",
+          "version",
+          "estado",
+          "secoes",
+          "periodoDe",
+          "periodoAte",
+          "anoOrigem",
+          "contagens",
+          "nomesArquivos",
+          "criadaEm",
+          "criadaPor",
+          "desfeitaEm",
+          "desfeitaPor",
+          "gravados"
+        ],
+        "title": "Importacao",
+        "type": "object"
+      },
+      "ImportacoesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Importacao"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ImportacoesList",
+        "type": "object"
+      },
       "Indicador": {
         "properties": {
           "anterior": {
@@ -7860,6 +9253,10 @@
             ],
             "title": "Chave",
             "type": "string"
+          },
+          "diasStudio": {
+            "title": "Diasstudio",
+            "type": "integer"
           },
           "n": {
             "title": "N",
@@ -7893,7 +9290,8 @@
           "valor",
           "anterior",
           "variacaoPct",
-          "n"
+          "n",
+          "diasStudio"
         ],
         "title": "Indicador",
         "type": "object"
@@ -8063,6 +9461,31 @@
           "status"
         ],
         "title": "JaCortado",
+        "type": "object"
+      },
+      "JaImportada": {
+        "properties": {
+          "em": {
+            "format": "date-time",
+            "title": "Em",
+            "type": "string"
+          },
+          "importacaoId": {
+            "format": "uuid",
+            "title": "Importacaoid",
+            "type": "string"
+          },
+          "por": {
+            "title": "Por",
+            "type": "string"
+          }
+        },
+        "required": [
+          "importacaoId",
+          "em",
+          "por"
+        ],
+        "title": "JaImportada",
         "type": "object"
       },
       "Kit": {
@@ -8560,6 +9983,109 @@
           "maxSugestoes"
         ],
         "title": "Limites",
+        "type": "object"
+      },
+      "LinhaAmostra": {
+        "properties": {
+          "comments": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
+          },
+          "dia": {
+            "format": "date",
+            "title": "Dia",
+            "type": "string"
+          },
+          "likes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likes"
+          },
+          "seguidores": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seguidores"
+          },
+          "seguidoresDif": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seguidoresdif"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "situacao": {
+            "enum": [
+              "novo",
+              "igual",
+              "divergente",
+              "coletado",
+              "ignorado"
+            ],
+            "title": "Situacao",
+            "type": "string"
+          },
+          "views": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views"
+          },
+          "visitasPerfil": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visitasperfil"
+          }
+        },
+        "required": [
+          "dia",
+          "situacao"
+        ],
+        "title": "LinhaAmostra",
         "type": "object"
       },
       "LinhaRanking": {
@@ -9133,6 +10659,103 @@
         ],
         "title": "Marcos",
         "type": "object"
+      },
+      "McpClienteRef": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nome"
+        ],
+        "title": "McpClienteRef",
+        "type": "object"
+      },
+      "McpConfig": {
+        "properties": {
+          "habilitado": {
+            "title": "Habilitado",
+            "type": "boolean"
+          },
+          "servidorHabilitado": {
+            "title": "Servidorhabilitado",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "habilitado",
+          "servidorHabilitado",
+          "version"
+        ],
+        "title": "McpConfig",
+        "type": "object"
+      },
+      "McpConfigIn": {
+        "properties": {
+          "habilitado": {
+            "title": "Habilitado",
+            "type": "boolean"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "habilitado",
+          "version"
+        ],
+        "title": "McpConfigIn",
+        "type": "object"
+      },
+      "McpEscopo": {
+        "enum": [
+          "leitura",
+          "propostas"
+        ],
+        "title": "McpEscopo",
+        "type": "string"
+      },
+      "McpResultado": {
+        "enum": [
+          "ok",
+          "erro",
+          "recusada",
+          "limite",
+          "nao_autenticado"
+        ],
+        "title": "McpResultado",
+        "type": "string"
+      },
+      "McpSituacao": {
+        "enum": [
+          "ativo",
+          "suspenso",
+          "revogado"
+        ],
+        "title": "McpSituacao",
+        "type": "string"
+      },
+      "McpVia": {
+        "enum": [
+          "mcp",
+          "api"
+        ],
+        "title": "McpVia",
+        "type": "string"
       },
       "Medida": {
         "description": "A medida do post (marco 1 h/24 h/7 d de views, research R3).",
@@ -10551,6 +12174,36 @@
         "title": "PerfisList",
         "type": "object"
       },
+      "PeriodoPrevia": {
+        "properties": {
+          "anoOrigem": {
+            "enum": [
+              "nome_zip",
+              "deduzido",
+              "misto"
+            ],
+            "title": "Anoorigem",
+            "type": "string"
+          },
+          "ate": {
+            "format": "date",
+            "title": "Ate",
+            "type": "string"
+          },
+          "de": {
+            "format": "date",
+            "title": "De",
+            "type": "string"
+          }
+        },
+        "required": [
+          "de",
+          "ate",
+          "anoOrigem"
+        ],
+        "title": "PeriodoPrevia",
+        "type": "object"
+      },
       "Platform": {
         "enum": [
           "tiktok",
@@ -10804,6 +12457,68 @@
           "inelegiveis"
         ],
         "title": "Previa",
+        "type": "object"
+      },
+      "PreviaStudio": {
+        "properties": {
+          "arquivos": {
+            "items": {
+              "$ref": "#/components/schemas/ArquivoPrevia"
+            },
+            "title": "Arquivos",
+            "type": "array"
+          },
+          "avisos": {
+            "items": {
+              "$ref": "#/components/schemas/Aviso"
+            },
+            "title": "Avisos",
+            "type": "array"
+          },
+          "conta": {
+            "$ref": "#/components/schemas/ContaPrevia"
+          },
+          "exigeConfirmacaoConta": {
+            "title": "Exigeconfirmacaoconta",
+            "type": "boolean"
+          },
+          "expiraEm": {
+            "format": "date-time",
+            "title": "Expiraem",
+            "type": "string"
+          },
+          "periodo": {
+            "$ref": "#/components/schemas/PeriodoPrevia"
+          },
+          "podeConfirmar": {
+            "title": "Podeconfirmar",
+            "type": "boolean"
+          },
+          "previaId": {
+            "format": "uuid",
+            "title": "Previaid",
+            "type": "string"
+          },
+          "secoes": {
+            "items": {
+              "$ref": "#/components/schemas/SecaoPrevia"
+            },
+            "title": "Secoes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "previaId",
+          "expiraEm",
+          "conta",
+          "arquivos",
+          "periodo",
+          "secoes",
+          "avisos",
+          "exigeConfirmacaoConta",
+          "podeConfirmar"
+        ],
+        "title": "PreviaStudio",
         "type": "object"
       },
       "PropostaOpenshorts": {
@@ -11550,11 +13265,118 @@
         "title": "ScoreDetail",
         "type": "object"
       },
+      "SecaoCobertura": {
+        "properties": {
+          "buracos": {
+            "items": {
+              "$ref": "#/components/schemas/Faixa"
+            },
+            "title": "Buracos",
+            "type": "array"
+          },
+          "faixas": {
+            "items": {
+              "$ref": "#/components/schemas/FaixaFonte"
+            },
+            "title": "Faixas",
+            "type": "array"
+          },
+          "secao": {
+            "enum": [
+              "visao_geral",
+              "seguidores"
+            ],
+            "title": "Secao",
+            "type": "string"
+          },
+          "sobreposicao": {
+            "items": {
+              "$ref": "#/components/schemas/Faixa"
+            },
+            "title": "Sobreposicao",
+            "type": "array"
+          }
+        },
+        "required": [
+          "secao",
+          "faixas",
+          "sobreposicao",
+          "buracos"
+        ],
+        "title": "SecaoCobertura",
+        "type": "object"
+      },
+      "SecaoPrevia": {
+        "properties": {
+          "amostra": {
+            "items": {
+              "$ref": "#/components/schemas/LinhaAmostra"
+            },
+            "title": "Amostra",
+            "type": "array"
+          },
+          "colunas": {
+            "$ref": "#/components/schemas/Colunas"
+          },
+          "contagens": {
+            "$ref": "#/components/schemas/ContagensPrevia"
+          },
+          "jaImportada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JaImportada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "secao": {
+            "enum": [
+              "visao_geral",
+              "seguidores"
+            ],
+            "title": "Secao",
+            "type": "string"
+          },
+          "totais": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TotaisVisaoGeral"
+              },
+              {
+                "$ref": "#/components/schemas/TotaisSeguidores"
+              }
+            ],
+            "title": "Totais"
+          }
+        },
+        "required": [
+          "secao",
+          "jaImportada",
+          "contagens",
+          "totais",
+          "colunas",
+          "amostra"
+        ],
+        "title": "SecaoPrevia",
+        "type": "object"
+      },
       "SecurityEvent": {
         "properties": {
           "actorKind": {
             "title": "Actorkind",
             "type": "string"
+          },
+          "actorMcpClient": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/McpClienteRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "actorName": {
             "anyOf": [
@@ -12634,6 +14456,128 @@
         "title": "TodasResultado",
         "type": "object"
       },
+      "TotaisSeguidores": {
+        "properties": {
+          "ganhos": {
+            "title": "Ganhos",
+            "type": "integer"
+          },
+          "seguidoresFim": {
+            "title": "Seguidoresfim",
+            "type": "integer"
+          },
+          "seguidoresInicio": {
+            "title": "Seguidoresinicio",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seguidoresInicio",
+          "seguidoresFim",
+          "ganhos"
+        ],
+        "title": "TotaisSeguidores",
+        "type": "object"
+      },
+      "TotaisVisaoGeral": {
+        "properties": {
+          "comments": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comments"
+          },
+          "likes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likes"
+          },
+          "shares": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shares"
+          },
+          "views": {
+            "title": "Views",
+            "type": "integer"
+          },
+          "visitasPerfil": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visitasperfil"
+          }
+        },
+        "required": [
+          "views",
+          "visitasPerfil",
+          "likes",
+          "comments",
+          "shares"
+        ],
+        "title": "TotaisVisaoGeral",
+        "type": "object"
+      },
+      "UpdateAnotacaoIn": {
+        "additionalProperties": false,
+        "properties": {
+          "campos": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CamposProposta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "UpdateAnotacaoIn",
+        "type": "object"
+      },
       "UpdateCanalIn": {
         "additionalProperties": false,
         "properties": {
@@ -12663,6 +14607,94 @@
           "version"
         ],
         "title": "UpdateCanalIn",
+        "type": "object"
+      },
+      "UpdateClienteIn": {
+        "description": "Só os campos mandados mudam; `expiraEm: null` tira o vencimento.",
+        "properties": {
+          "descricao": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "escopo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/McpEscopo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expiraEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiraem"
+          },
+          "limiteEscritasDia": {
+            "anyOf": [
+              {
+                "maximum": 5000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limiteescritasdia"
+          },
+          "limitePorMinuto": {
+            "anyOf": [
+              {
+                "maximum": 600.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limiteporminuto"
+          },
+          "nome": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "UpdateClienteIn",
         "type": "object"
       },
       "UpdateContaIn": {
@@ -12820,6 +14852,18 @@
               }
             ],
             "title": "Ia"
+          },
+          "propostaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Propostaid"
           },
           "titulo": {
             "anyOf": [
@@ -13175,6 +15219,29 @@
         "title": "Uso",
         "type": "object"
       },
+      "Uso24h": {
+        "properties": {
+          "chamadas": {
+            "title": "Chamadas",
+            "type": "integer"
+          },
+          "escritas": {
+            "title": "Escritas",
+            "type": "integer"
+          },
+          "recusas": {
+            "title": "Recusas",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "chamadas",
+          "recusas",
+          "escritas"
+        ],
+        "title": "Uso24h",
+        "type": "object"
+      },
       "Valor": {
         "description": "Um formato por tipo: `texto`, `itens`, os três da postagem, o `guia` (proposta e\nentrada do \"montar\"; entrada do \"testar\") ou as `variacoes` (proposta do \"testar\").",
         "properties": {
@@ -13347,6 +15414,9 @@
             "title": "After",
             "type": "object"
           },
+          "autor": {
+            "$ref": "#/components/schemas/Autor"
+          },
           "before": {
             "anyOf": [
               {
@@ -13386,6 +15456,7 @@
           "action",
           "actor",
           "actorKind",
+          "autor",
           "occurredAt",
           "changedFields",
           "before",
@@ -14180,6 +16251,17 @@
       },
       "ViewsConta": {
         "properties": {
+          "comparacao": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comparacao"
+          },
           "contaId": {
             "anyOf": [
               {
@@ -14192,6 +16274,14 @@
             ],
             "title": "Contaid"
           },
+          "fonte": {
+            "enum": [
+              "coletado",
+              "studio"
+            ],
+            "title": "Fonte",
+            "type": "string"
+          },
           "rotulo": {
             "title": "Rotulo",
             "type": "string"
@@ -14199,12 +16289,26 @@
           "views": {
             "title": "Views",
             "type": "integer"
+          },
+          "visitasPerfil": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visitasperfil"
           }
         },
         "required": [
           "contaId",
           "rotulo",
-          "views"
+          "views",
+          "fonte",
+          "comparacao",
+          "visitasPerfil"
         ],
         "title": "ViewsConta",
         "type": "object"
@@ -16222,6 +18326,831 @@
           }
         },
         "summary": "Visao Geral"
+      }
+    },
+    "/api/anotacoes": {
+      "get": {
+        "description": "Anotações e propostas, das mais novas para as mais antigas, com filtros.",
+        "operationId": "anotacoes_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "alvoTipo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AnotacaoAlvo"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Alvotipo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "alvoId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Alvoid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "situacao",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AnotacaoSituacao"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Situacao"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AnotacaoTipo"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "autorClienteId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Autorclienteid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnotacoesPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Anotacoes List"
+      },
+      "post": {
+        "description": "Grava uma observação ou uma proposta de texto (só em destino) presa a um item.",
+        "operationId": "anotacoes_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAnotacaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnotacaoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Anotacoes Create"
+      }
+    },
+    "/api/anotacoes/resumo": {
+      "get": {
+        "description": "Quantas propostas estão abertas (contador do menu).",
+        "operationId": "anotacoes_resumo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnotacoesResumo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Anotacoes Resumo"
+      }
+    },
+    "/api/anotacoes/{anotacao_id}": {
+      "get": {
+        "operationId": "anotacoes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "anotacao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Anotacao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnotacaoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Anotacoes Get"
+      },
+      "patch": {
+        "description": "Só o autor, só com a anotação aberta.",
+        "operationId": "anotacoes_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "anotacao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Anotacao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAnotacaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnotacaoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Anotacoes Update"
+      }
+    },
+    "/api/anotacoes/{anotacao_id}/archive": {
+      "post": {
+        "description": "O autor ou um dono, só com a anotação aberta.",
+        "operationId": "anotacoes_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "anotacao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Anotacao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnotacaoVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnotacaoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Anotacoes Archive"
+      }
+    },
+    "/api/anotacoes/{anotacao_id}/descartar": {
+      "post": {
+        "description": "Ato humano: descarta a proposta, com motivo opcional.",
+        "operationId": "anotacoes_descartar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "anotacao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Anotacao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DescartarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnotacaoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Anotacoes Descartar"
+      }
+    },
+    "/api/anotacoes/{anotacao_id}/revert": {
+      "post": {
+        "description": "Só o dono humano.",
+        "operationId": "anotacoes_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "anotacao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Anotacao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnotacaoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Anotacoes Revert"
+      }
+    },
+    "/api/anotacoes/{anotacao_id}/versions": {
+      "get": {
+        "operationId": "anotacoes_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "anotacao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Anotacao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Anotacoes Versions"
       }
     },
     "/api/armazenamento": {
@@ -20163,6 +23092,354 @@
           }
         },
         "summary": "Revert Conta"
+      }
+    },
+    "/api/contas/{conta_id}/studio/cobertura": {
+      "get": {
+        "operationId": "studio_cobertura",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conta Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cobertura"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Studio Cobertura"
+      }
+    },
+    "/api/contas/{conta_id}/studio/importacoes": {
+      "get": {
+        "operationId": "studio_importacoes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conta Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportacoesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Studio Importacoes"
+      },
+      "post": {
+        "operationId": "studio_confirmar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conta Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Importacao"
+                }
+              }
+            },
+            "description": "Já importado: nada gravado (gravados = 0)"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Importacao"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          }
+        },
+        "summary": "Studio Confirmar"
+      }
+    },
+    "/api/contas/{conta_id}/studio/previa": {
+      "post": {
+        "description": "Lê os arquivos em memória e devolve a pré-visualização (nada é gravado). Sem arquivo, o\npadrão `[]` leva ao 400 `studio_arquivos` (e não ao erro genérico de validação).",
+        "operationId": "studio_previa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conta_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conta Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_studio_previa"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviaStudio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          }
+        },
+        "summary": "Studio Previa"
       }
     },
     "/api/contas/{conta_id}/versions": {
@@ -26187,6 +29464,1053 @@
         "summary": "Get Integracoes"
       }
     },
+    "/api/mcp/chamadas": {
+      "get": {
+        "description": "Registro de chamadas MCP (só inserção), da mais nova para a mais antiga.",
+        "operationId": "mcp_chamadas_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "clienteId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Clienteid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tool",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tool"
+            }
+          },
+          {
+            "in": "query",
+            "name": "resultado",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/McpResultado"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Resultado"
+            }
+          },
+          {
+            "in": "query",
+            "name": "via",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/McpVia"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Via"
+            }
+          },
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChamadasPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Chamadas List"
+      }
+    },
+    "/api/mcp/clientes": {
+      "get": {
+        "description": "Clientes MCP (inclusive revogados): ativos, suspensos, revogados, depois o nome.",
+        "operationId": "mcp_clientes_list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "situacao",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/McpSituacao"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Situacao"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Clientes List"
+      },
+      "post": {
+        "description": "Cria o cliente e devolve a credencial **uma única vez**.",
+        "operationId": "mcp_clientes_create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClienteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteComToken"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Clientes Create"
+      }
+    },
+    "/api/mcp/clientes/{cliente_id}": {
+      "get": {
+        "operationId": "mcp_clientes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cliente_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cliente Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Clientes Get"
+      },
+      "patch": {
+        "description": "Nome, descrição, escopo, limites e vencimento; valem na chamada seguinte.",
+        "operationId": "mcp_clientes_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cliente_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cliente Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateClienteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Clientes Update"
+      }
+    },
+    "/api/mcp/clientes/{cliente_id}/reativar": {
+      "post": {
+        "operationId": "mcp_clientes_reativar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cliente_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cliente Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Clientes Reativar"
+      }
+    },
+    "/api/mcp/clientes/{cliente_id}/revogar": {
+      "post": {
+        "description": "Final: o cliente fica na lista como revogado e nunca volta.",
+        "operationId": "mcp_clientes_revogar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cliente_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cliente Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Clientes Revogar"
+      }
+    },
+    "/api/mcp/clientes/{cliente_id}/rotacionar": {
+      "post": {
+        "description": "Credencial nova (mostrada uma vez); a antiga deixa de valer na hora.",
+        "operationId": "mcp_clientes_rotacionar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cliente_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cliente Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteComToken"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Clientes Rotacionar"
+      }
+    },
+    "/api/mcp/clientes/{cliente_id}/suspender": {
+      "post": {
+        "operationId": "mcp_clientes_suspender",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cliente_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cliente Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Clientes Suspender"
+      }
+    },
+    "/api/mcp/clientes/{cliente_id}/versions": {
+      "get": {
+        "operationId": "mcp_clientes_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cliente_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cliente Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Clientes Versions"
+      }
+    },
+    "/api/mcp/config": {
+      "get": {
+        "description": "O botão da tela e o `MCP_HABILITADO` do servidor; os dois precisam estar ligados.",
+        "operationId": "mcp_config_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Config Get"
+      },
+      "put": {
+        "operationId": "mcp_config_update",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpConfigIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpConfig"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Config Update"
+      }
+    },
+    "/api/mcp/config/versions": {
+      "get": {
+        "operationId": "mcp_config_versions",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Config Versions"
+      }
+    },
     "/api/metricas/export": {
       "get": {
         "operationId": "metricas_export",
@@ -31116,6 +35440,96 @@
           }
         },
         "summary": "List Events"
+      }
+    },
+    "/api/studio/importacoes/{importacao_id}/desfazer": {
+      "post": {
+        "operationId": "studio_desfazer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "importacao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Importacao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesfazerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Importacao"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Studio Desfazer"
       }
     },
     "/api/users": {

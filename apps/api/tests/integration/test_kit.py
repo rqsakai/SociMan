@@ -247,7 +247,8 @@ def test_version_conflict(client, member):
     r = _put(client, h, perfil, _body(kit))  # ainda com version 0
     assert r.status_code == 409
     assert r.json()["error"] == {"code": "version_conflict",
-                                 "message": "Este kit foi alterado por outra pessoa; recarregue"}
+                                 "message": "Este kit foi alterado por outra pessoa; recarregue",
+                                 "details": {"versaoAtual": 1}}  # spec 009 (FR-013)
     assert _save(client, h, perfil, v1, series=["Achadinhos da semana"])["version"] == 2
 
 

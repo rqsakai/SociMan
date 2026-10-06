@@ -240,6 +240,7 @@ def test_patch_com_versao_velha_da_409(client, member, db):
     assert r.json()["error"] == {
         "code": "version_conflict",
         "message": "Este perfil foi alterado por outra pessoa; recarregue",
+        "details": {"versaoAtual": 2},  # spec 009 (FR-013)
     }
     assert len(_versions(db, p["id"])) == 2
     assert client.patch(f"/api/perfis/{p['id']}", json={"bio": "c"}, headers=h).status_code \

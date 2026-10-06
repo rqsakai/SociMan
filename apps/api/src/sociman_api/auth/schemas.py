@@ -115,6 +115,11 @@ class AppConfig(CamelModel):
     password_max_length: int
 
 
+class McpClienteRef(CamelModel):
+    id: UUID
+    nome: str
+
+
 class SecurityEvent(CamelModel):
     id: int
     occurred_at: datetime
@@ -123,6 +128,7 @@ class SecurityEvent(CamelModel):
     actor_kind: str
     actor_user_id: UUID | None
     actor_name: str | None
+    actor_mcp_client: "McpClienteRef | None" = None  # spec 009: o agente autor do evento
     subject_user_id: UUID | None
     subject_name: str | None
     ip: str | None

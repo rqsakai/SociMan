@@ -11,6 +11,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -323,6 +324,10 @@ export default function EnvioDetalhe() {
           ))}
         </div>
       </section>
+
+      {envio.video && (
+        <AnotacoesCard alvoTipo="video_fonte" alvoId={envio.video.id} titulo="Anotações do vídeo-fonte" />
+      )}
 
       <Card className="shadow-card">
         <CardHeader>

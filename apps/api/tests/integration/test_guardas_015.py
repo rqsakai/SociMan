@@ -6,6 +6,7 @@ decisão humana. Toda recusa a não humano deixa o evento `publicacao_recusada`.
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from atores import ator_fake
 from sqlalchemy import func, select
 
 from integration.conexao_helpers import (  # noqa: F401
@@ -88,8 +89,7 @@ def _rotas_h(cena) -> list[tuple[str, str, dict | None]]:
 def test_rotas_h_recusam_nao_humano(client, db, cena, kind):
     antes = _foto(db)
     user = cena["user"]
-    app.dependency_overrides[current_user] = lambda: Actor(kind=kind, user_id=user.id,
-                                                           user=user)
+    app.dependency_overrides[current_user] = lambda: ator_fake(kind, user)
     rotas = _rotas_h(cena)
     for metodo, rota, body in rotas:
         r = client.request(metodo, rota, headers={**cena["h"], **HOST_WEB}, json=body)
@@ -135,8 +135,7 @@ def _agendar(client, h, cena, pronto, modo="criar_rascunho"):
 
 
 def _como(kind, user):
-    app.dependency_overrides[current_user] = lambda: Actor(kind=kind, user_id=user.id,
-                                                           user=user)
+    app.dependency_overrides[current_user] = lambda: ator_fake(kind, user)
 
 
 def test_agendar_automatico_so_dono_humano(client, db, cena, pronto, membro):  # noqa: F811

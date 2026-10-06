@@ -4,6 +4,7 @@ qualquer outro ator recebe 403 `somente_humano` e deixa o evento `publicacao_rec
 import uuid
 
 import pytest
+from atores import ator_fake
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -55,7 +56,7 @@ def test_dono_humano_passa(dono, db):
 @pytest.mark.parametrize("kind", ["mcp_client", "system:cli", "system:publicacao"])
 def test_nao_humano_recusado_com_evento(kind, dono, db):
     conta = uuid.uuid4()
-    client = _app(Actor(kind=kind, user_id=dono.id, user=dono))
+    client = _app(ator_fake(kind, dono))
     r = client.post(ROTA.format(conta_id=conta))
     assert r.status_code == 403
     assert r.json()["error"]["code"] == "somente_humano"
@@ -84,7 +85,7 @@ def test_service_dono_humano_passa(dono, db):
 def test_service_nao_humano(kind, dono, db):
     destino = uuid.uuid4()
     with pytest.raises(ApiError) as exc:
-        exigir_humano_dono(Actor(kind=kind, user_id=dono.id, user=dono), "POST /api/agendamentos",
+        exigir_humano_dono(ator_fake(kind, dono), "POST /api/agendamentos",
                            destino_id=destino)
     assert (exc.value.status, exc.value.code) == (403, "somente_humano")
     [ev] = _eventos(db)
@@ -102,6 +103,6 @@ def test_service_membro(membro, db):
 def test_evento_sobrevive_ao_rollback_de_quem_chama(dono, db):
     """O evento vai numa sessão própria: o rollback da transação do service não o apaga."""
     with pytest.raises(ApiError):
-        exigir_humano_dono(Actor(kind="mcp_client", user_id=dono.id, user=dono), "POST /api/x")
+        exigir_humano_dono(ator_fake("mcp_client", dono), "POST /api/x")
     db.rollback()
     assert len(_eventos(db)) == 1

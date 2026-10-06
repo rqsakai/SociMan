@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
 import { usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -357,6 +358,7 @@ export default function CorteDetalhe() {
               </>
             ) : null)}
 
+          <AnotacoesCard alvoTipo="corte" alvoId={c.id} arquivado={c.archived} titulo="Anotações do corte" />
           <Card className="shadow-card">
             <CardHeader>
               <HistoryHeading>Histórico do corte</HistoryHeading>

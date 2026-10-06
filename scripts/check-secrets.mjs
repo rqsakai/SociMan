@@ -13,6 +13,8 @@ const patterns = [
   { name: "chave privada PEM", re: /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/ },
   { name: "atribuição jwt_secret literal", re: /jwt_secret\s*=\s*["'][A-Za-z0-9+/=]{24,}["']/i },
   { name: "Bearer token longo hardcoded", re: /Bearer\s+[A-Za-z0-9._-]{40,}/ },
+  // Spec 009: credencial de cliente MCP (smcp_<8 base32>_<43 base64url>).
+  { name: "token de cliente MCP", re: /\bsmcp_[a-z2-7]{8}_[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/ },
 ];
 
 // Spec 015: a chave dos tokens e o client secret da TikTok com VALOR (formas `=` e `:`).

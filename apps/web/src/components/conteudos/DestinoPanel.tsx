@@ -58,12 +58,14 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { VersionHistory } from "@/components/VersionHistory";
+import { AnotacoesDoItem } from "@/components/anotacoes/AnotacoesDoItem";
 import { IaAssist } from "@/components/ia/IaAssist";
 import { EnviarAgora } from "@/components/publicacao/EnviarAgora";
 import { ExecucaoStatus } from "@/components/publicacao/ExecucaoStatus";
 import { DesempenhoDestino } from "@/components/metricas/DesempenhoDestino";
 import { LegendaFinal } from "@/components/publicacao/LegendaFinal";
 import { api } from "@/lib/api";
+import { invalidarAnotacoes, useAnotacoesDisponiveis, type Anotacao } from "@/lib/anotacoes";
 import { destinoVersionsKey, estadoEfetivoTone, invalidarConteudos, propostaDe, useEhDono } from "@/lib/conteudos";
 import { comRebase, useFormRebase, type IaAlvo, type IaAplicacao, type TextosPostagem } from "@/lib/ia";
 import { contaPlatformText, errorText, perfilKey } from "@/lib/perfis";
@@ -280,6 +282,9 @@ export function DestinoPanel({
   const [recusarOpen, setRecusarOpen] = useState(false);
   const [agendarOpen, setAgendarOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  // spec 009 (FR-020): proposta de texto aplicada ao formulário; vai como `propostaId` no "Salvar".
+  const [aplicada, setAplicada] = useState<{ id: string; autor: string } | null>(null);
+  const comAnotacoes = useAnotacoesDisponiveis();
 
   const conta = destino.conta;
   const proposta = propostaDe(conteudo);
@@ -347,7 +352,33 @@ export function DestinoPanel({
     if (tiktok && legendaTiktok({ descricao, hashtags }).length > LEGENDA_TIKTOK_MAX) errs.descricao = `A legenda final passa de ${LEGENDA_TIKTOK_MAX.toLocaleString("pt-BR")} caracteres`;
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) return;
-    await run("salvar", () => api.destinos.update(destino.id, { version: destino.version, titulo, descricao, hashtags }), "Textos salvos.");
+    const ok = await run(
+      "salvar",
+      () => api.destinos.update(destino.id, { version: destino.version, titulo, descricao, hashtags, ...(aplicada ? { propostaId: aplicada.id } : {}) }),
+      aplicada ? "Textos salvos a partir da proposta." : "Textos salvos.",
+    );
+    if (ok && aplicada) {
+      setAplicada(null);
+      await invalidarAnotacoes(queryClient);
+    }
+  }
+
+  // "Aplicar" de uma proposta de texto: preenche o formulário, sem salvar (spec 009, FR-020).
+  function aplicarProposta(a: Anotacao) {
+    const c = a.campos;
+    if (!c) return;
+    if (c.titulo != null) setTitulo(c.titulo.slice(0, TITULO_MAX));
+    if (c.descricao != null) setDescricao(c.descricao.slice(0, DESCRICAO_MAX));
+    if (c.hashtags != null) setHashtags(c.hashtags.slice(0, HASHTAGS_MAX));
+    setFieldErrors({});
+    setAplicada({ id: a.id, autor: a.autor.nome ?? "agente" });
+  }
+
+  function desfazerProposta() {
+    setTitulo(destino.titulo);
+    setDescricao(destino.descricao);
+    setHashtags(destino.hashtags);
+    setAplicada(null);
   }
 
   async function marcarPostado() {
@@ -633,11 +664,25 @@ export function DestinoPanel({
       </IaAssist>
       {tiktok && <LegendaFinal legenda={legendaAtual} />}
 
+      {aplicada && (
+        <Alert>
+          <ClipboardPaste aria-hidden="true" />
+          <AlertTitle>Proposta de {aplicada.autor} no formulário</AlertTitle>
+          <AlertDescription>
+            <p>Nada foi salvo. Confira os textos e clique em "Salvar textos"; a proposta fica como aplicada.</p>
+            <Button type="button" variant="outline" size="sm" className="mt-1" onClick={desfazerProposta}>
+              <X aria-hidden="true" />
+              Desfazer
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {error !== null && <ApiErrorAlert error={error} onReload={() => void onChanged()} />}
 
       <div className="flex flex-wrap gap-2">
         {editavel && (
-          <Button type="button" disabled={busy !== null || !dirty} aria-busy={busy === "salvar"} onClick={() => void salvar()}>
+          <Button type="button" disabled={busy !== null || (!dirty && !aplicada)} aria-busy={busy === "salvar"} onClick={() => void salvar()}>
             {busy === "salvar" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
             Salvar textos
           </Button>
@@ -698,6 +743,20 @@ export function DestinoPanel({
       </div>
 
       {showHistory && <DestinoHistorico destino={destino} onReverted={() => done()} />}
+
+      {/* spec 009: anotações e propostas dos agentes neste destino */}
+      {comAnotacoes && (
+      <div className="border-t pt-3">
+        <AnotacoesDoItem
+          alvoTipo="destino"
+          titulo="Anotações e propostas desta conta"
+          alvoId={destino.id}
+          arquivado={destino.archived || conteudo.archived}
+          onAplicar={aplicarProposta}
+          aplicarBloqueado={editavel ? null : "Os textos deste destino não podem ser editados agora."}
+        />
+      </div>
+      )}
 
       <AgendarDialog
         open={agendarOpen}

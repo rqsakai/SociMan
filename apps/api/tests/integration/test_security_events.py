@@ -95,6 +95,7 @@ def test_mais_recente_primeiro_com_nomes_e_ip(
         "actorKind": "anonymous",
         "actorUserId": None,
         "actorName": None,
+        "actorMcpClient": None,  # spec 009
         "subjectUserId": str(member.id),
         "subjectName": "Membro",
         "ip": "203.0.113.7",

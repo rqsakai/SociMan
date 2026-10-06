@@ -754,6 +754,7 @@ def update_textos(db: Session, actor: Actor, destino_id: uuid.UUID,
     _check_textos_editaveis(destino)
     if destino.estado == DestinoEstado.agendado and destino.modo == Modo.publicar:
         exigir_humano(actor, "PATCH /api/destinos/{id}", destino)  # Q2: só dono edita
+    _trava_mcp(actor, destino, body)  # spec 009 (FR-020/FR-021)
     before = history.snapshot(destino)
     _aplicar_textos(destino, body.titulo, body.descricao, body.hashtags)
     conteudo = db.get(Conteudo, destino.conteudo_id)
@@ -774,14 +775,52 @@ def update_textos(db: Session, actor: Actor, destino_id: uuid.UUID,
             destino.agendado_em = datetime.now(UTC)
             regravou = True
     after = history.snapshot(destino)
+    proposta = _aplicar_proposta(db, actor, destino, body.proposta_id)
     if not history.diff(before, after):
+        db.flush()
         return destino
     details = _marcar_ia_destino(db, actor, destino, conteudo, conta, before, after, body.ia)
     if regravou:
         details = {**(details or {}), "acao": "snapshot_atualizado"}
+    if proposta is not None:
+        details = {**(details or {}), "proposta": proposta}
     _record(db, actor, destino, "updated", before, details)
     db.flush()
     return destino
+
+
+# Spec 009: o ator MCP só edita textos antes da aprovação (FR-021) e nunca aplica proposta.
+_EDITAVEIS_MCP = (DestinoEstado.pendente, DestinoEstado.aprovacao_pedida)
+DESTINO_APROVADO = "Destino aprovado: só o dono altera; grave uma proposta de texto"
+
+
+def _trava_mcp(actor: Actor, destino: Postagem, body: schemas.UpdateDestinoIn) -> None:
+    if actor.kind == "user":
+        return
+    if body.proposta_id is not None:
+        from sociman_api.auth.deps import SOMENTE_HUMANO, registrar_recusa
+
+        registrar_recusa(actor, "PATCH /api/destinos/{destino_id}", destino_id=destino.id)
+        raise ApiError(403, "somente_humano", SOMENTE_HUMANO)
+    if actor.kind == "mcp_client" and (destino.archived
+                                       or destino.estado not in _EDITAVEIS_MCP):
+        raise ApiError(409, "destino_aprovado", DESTINO_APROVADO)
+
+
+def _aplicar_proposta(db: Session, actor: Actor, destino: Postagem,
+                      proposta_id: uuid.UUID | None) -> dict[str, Any] | None:
+    """FR-020: o save humano com `propostaId` marca a proposta `aplicada` na mesma transação e
+    devolve o `details.proposta` do histórico do destino."""
+    if proposta_id is None:
+        return None
+    from sociman_api.anotacoes import service as anotacoes  # import tardio (ciclo)
+    from sociman_api.mcp.models import McpCliente  # só o nome, para o selo do histórico
+
+    proposta = anotacoes.aplicar(db, actor, proposta_id, destino.id)
+    cliente = db.get(McpCliente, proposta.autor_mcp_cliente_id) \
+        if proposta.autor_mcp_cliente_id else None
+    return {"id": str(proposta.id), "clienteId": str(cliente.id) if cliente else None,
+            "clienteNome": cliente.nome if cliente else None}
 
 
 def _check_pronto(info: _ConteudoInfo) -> None:

@@ -99,6 +99,8 @@ class SecurityEvent(Base):
     outcome: Mapped[str] = mapped_column(Text, nullable=False)  # ok | denied
     actor_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
     actor_kind: Mapped[str] = mapped_column(Text, nullable=False)  # user | anonymous | system:cli
+    # Spec 009 (R6): cliente MCP autor do evento (FK e CHECK na migration 0014).
+    actor_mcp_client_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     subject_user_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
     ip: Mapped[IPv4Address | IPv6Address | None] = mapped_column(INET)
     user_agent: Mapped[str | None] = mapped_column(Text)

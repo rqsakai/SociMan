@@ -15,6 +15,7 @@ from sociman_api.envios import models as _envios_models  # noqa: F401
 from sociman_api.ia import models as _ia_models  # noqa: F401
 from sociman_api.marca import models as _marca_models  # noqa: F401
 from sociman_api.metricas import models as _metricas_models  # noqa: F401 — spec 016
+from sociman_api.metricas.studio import models as _studio_models  # noqa: F401 — spec 020
 from sociman_api.notificacoes import models as _notificacoes_models  # noqa: F401
 from sociman_api.perfis import models as _perfis_models  # noqa: F401
 from sociman_api.postagem import models as _postagem_models  # noqa: F401

@@ -15,7 +15,7 @@ from sociman_api.ia.aplicacao import IaAplicacoes
 from sociman_api.perfis.models import ContaStatus, PerfilStatus, Platform
 
 __all__ = [
-    "Conta", "ContaOut", "CreateContaIn", "CreatePerfilIn", "ImageRef", "ImageUrls", "Perfil",
+    "Autor", "Conta", "ContaOut", "CreateContaIn", "CreatePerfilIn", "ImageRef", "ImageUrls", "Perfil",
     "PerfilDetail", "PerfilOut", "PerfisList", "RevertIn", "SlugSuggestion", "UpdateContaIn",
     "UpdatePerfilIn", "UserRef", "Version", "VersionIn", "VersionsList",
 ]
@@ -97,11 +97,20 @@ class Conta(CamelModel):
     updated_by: UserRef | None
 
 
+class Autor(CamelModel):
+    """Spec 009 (R6): quem fez a mudança. `mcp_client` = o selo "Agente: <nome>"."""
+
+    tipo: Literal["usuario", "mcp_client", "sistema"]
+    id: UUID | None
+    nome: str
+
+
 class Version(CamelModel):
     version: int
     action: Action
     actor: UserRef | None
     actor_kind: str
+    autor: Autor  # spec 009: os campos antigos continuam, por compatibilidade
     occurred_at: datetime
     changed_fields: list[str]
     before: dict[str, Any] | None

@@ -113,6 +113,35 @@ export const errorCodes = [
   "periodo_invalido",
   // 017-guia-de-comunicacao
   "ia_proibida",
+  // 009-mcp
+  "nome_em_uso",
+  "expira_no_passado",
+  "mcp_cliente_revogado",
+  "mcp_desligado",
+  "mcp_suspenso",
+  "mcp_origem",
+  "escopo_mcp",
+  "mcp_limite",
+  "mcp_indisponivel",
+  "alvo_arquivado",
+  "proposta_so_em_destino",
+  "campos_vazios",
+  "nao_e_o_autor",
+  "anotacao_fechada",
+  "destino_aprovado",
+  // 020-historico-tiktok-studio
+  "arquivo_grande",
+  "studio_arquivos",
+  "studio_zip_inseguro",
+  "studio_secao_nao_importada",
+  "studio_formato",
+  "studio_invalido",
+  "studio_datas",
+  "studio_conta_diferente",
+  "serie_indisponivel",
+  "confirmar_conta",
+  "previa_indisponivel",
+  "ja_desfeita",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];
