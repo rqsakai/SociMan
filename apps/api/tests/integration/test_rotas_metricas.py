@@ -57,12 +57,16 @@ def test_ranking_ordena_nas_duas_direcoes_com_cursor_estavel(client, db, base):
     # 3 vídeos com 30 fotos horárias: o i-ésimo tem views = 100·k·(i+1).
     s = semear(db, base["conta"]["id"], videos=3, fotos=30, inicio=_agora() - timedelta(days=5))
     ids = [str(i) for i in s.videos]
-    for ordem in ("views24h", "engajamento", "velocidade", "publicadoEm"):
+    for ordem in ("views", "views24h", "engajamento", "velocidade", "publicadoEm"):
         desc = [v["id"] for v in _get(client, base["h"], "/api/metricas/videos", ordem=ordem,
                                       direcao="desc")["items"]]
         asc = [v["id"] for v in _get(client, base["h"], "/api/metricas/videos", ordem=ordem,
                                      direcao="asc")["items"]]
         assert sorted(desc) == sorted(ids) and asc == list(reversed(desc)), ordem
+    # Padrão: views total (a última foto), maior primeiro.
+    padrao = _get(client, base["h"], "/api/metricas/videos")["items"]
+    assert [v["id"] for v in padrao] == list(reversed(ids))
+    assert [v["ultima"]["views"] for v in padrao] == [300 * 30, 200 * 30, 100 * 30]
     top = _get(client, base["h"], "/api/metricas/videos", ordem="views24h")["items"]
     assert [v["id"] for v in top] == list(reversed(ids))
     assert top[0]["views24h"]["valor"] == pytest.approx(300 * 24)
@@ -115,6 +119,34 @@ def test_curva_marcos_e_conta(client, db, base):
     assert "coletando" in c["coleta"]
     assert client.get(f"/api/contas/{uuid.uuid4()}/metricas",
                       headers=base["h"]).status_code == 404
+
+
+def test_views_da_conta_somam_a_ultima_foto_de_cada_video(client, db, base):
+    """A rede não dá views da conta: em cada foto da conta, a soma, por vídeo da série, da
+    última foto com `coletado_em` até ali; vídeo sem foto até o corte não entra."""
+    from sociman_api.metricas.models import FotoVideo
+
+    t0 = (_agora() - timedelta(days=3)).replace(minute=0, second=0, microsecond=0)
+    # `semear` grava uma foto da conta por dia, em t0, t0 + 24 h, t0 + 48 h e t0 + 72 h.
+    s = semear(db, base["conta"]["id"], videos=2, fotos=0, inicio=t0, intervalo_h=24)
+    a, b = s.videos  # `a` publicado em t0, `b` em t0 + 24 h
+    pub = {a: t0, b: t0 + timedelta(hours=24)}
+    for vid, h, views in [(a, 1, 100), (a, 5, 500), (a, 24, 600), (b, 25, 70), (a, 30, 900)]:
+        em = t0 + timedelta(hours=h)
+        idade = int((em - pub[vid]).total_seconds())
+        db.add(FotoVideo(video_id=vid, coletado_em=em, idade_s=idade, alvo_idade_min=idade // 60,
+                         views=views, likes=0, comments=0, shares=0))
+    db.commit()
+    c = _get(client, base["h"], f"/api/contas/{base['conta']['id']}/metricas", resolucao="hora")
+    # t0: nenhum vídeo com foto; t0 + 24 h: só `a` (a foto no limite entra; `b` ainda sem foto);
+    # depois, a última de `a` (900) + a de `b` (70).
+    assert [f["views"] for f in c["fotos"]] == [None, 600, 970, 970]
+    assert c["viewsTotal"] == 970
+    # Sem série viva: sem fotos e sem total.
+    outra = criar_conta(client, base["h"], criar_perfil(client, base["h"], "Outro")["id"],
+                        "tiktok", "semserie")
+    vazio = _get(client, base["h"], f"/api/contas/{outra['id']}/metricas")
+    assert vazio["fotos"] == [] and vazio["viewsTotal"] is None
 
 
 def test_destino_traz_vinculo_e_curva(client, db, base):
@@ -181,5 +213,10 @@ def test_ranking_de_2_contas_por_1_ano_em_menos_de_300ms(client, db, base):
     _get(client, base["h"], "/api/metricas/videos", ordem="views7d")  # aquece
     t0 = time.perf_counter()
     r = _get(client, base["h"], "/api/metricas/videos", ordem="views7d")
+    assert time.perf_counter() - t0 < 0.3
+    assert r["total"] == 1460 and len(r["items"]) == 50
+    _get(client, base["h"], "/api/metricas/videos")  # padrão: views total
+    t0 = time.perf_counter()
+    r = _get(client, base["h"], "/api/metricas/videos")
     assert time.perf_counter() - t0 < 0.3
     assert r["total"] == 1460 and len(r["items"]) == 50

@@ -75,7 +75,7 @@ def vinculo_desfazer(destino_id: UUID, body: VersionIn, actor: RequireHumanOwner
 # ---- métricas de conta e vídeos (US4) ----
 
 ORIGENS = ("corte", "video_proprio", "fora", "anonima")
-Ordem = Literal["views24h", "views7d", "engajamento", "velocidade", "publicadoEm"]
+Ordem = Literal["views", "views24h", "views7d", "engajamento", "velocidade", "publicadoEm"]
 Direcao = Literal["desc", "asc"]
 Resolucao = Literal["auto", "hora", "dia"]
 
@@ -116,7 +116,7 @@ def metricas_videos_list(
     perfil_id: Annotated[UUID | None, Query(alias="perfilId")] = None,
     conta_id: Annotated[UUID | None, Query(alias="contaId")] = None,
     origem: str | None = None, de: date | None = None, ate: date | None = None,
-    ordem: Ordem = "views24h", direcao: Direcao = "desc", cursor: str | None = None,
+    ordem: Ordem = "views", direcao: Direcao = "desc", cursor: str | None = None,
     limite: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> schemas.VideosList:
     return consulta.ranking(db, perfil_id=perfil_id, conta_id=conta_id, origens=_origens(origem),

@@ -17,6 +17,7 @@ Um ZIP com `fotos_videos`, `videos`, `fotos_conta` (CSV ou JSON Lines), `diciona
 import csv
 import io
 import json
+import re
 import uuid
 import zipfile
 from collections.abc import Iterable, Iterator
@@ -107,11 +108,20 @@ def _valor(v: Any, tz: ZoneInfo) -> Any:
     return v
 
 
+# Injeção de fórmula: legendas e títulos vêm da rede, e o CSV é aberto em planilha. Texto que
+# começa com um destes vira texto com um apóstrofo na frente; números continuam números. O @ de
+# uma conta (`@atavernanerd`) não forma fórmula e sai limpo.
+_FORMULA = ("=", "+", "-", "@", "\t", "\r")
+_HANDLE = re.compile(r"^@[A-Za-z0-9._]+$")
+
+
 def _csv(v: Any) -> str:
     if v is None:
         return ""
     if isinstance(v, bool):
         return "true" if v else "false"
+    if isinstance(v, str) and v.startswith(_FORMULA) and not _HANDLE.fullmatch(v):
+        return "'" + v
     return str(v)
 
 

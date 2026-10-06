@@ -119,8 +119,9 @@ export const MARCOS = [
 ] as const satisfies readonly { id: keyof Marcos; label: string; horas: number }[];
 
 export const ordemLabel: Record<OrdemRanking, string> = {
-  views7d: "Visualizações em 7 dias",
+  views: "Visualizações (total)",
   views24h: "Visualizações em 24 h",
+  views7d: "Visualizações em 7 dias",
   engajamento: "Engajamento",
   velocidade: "Velocidade (views/h)",
   publicadoEm: "Data de publicação",
@@ -169,6 +170,13 @@ export function formatDistancia(min: number): string {
 export function linkDoVideo(v: Pick<VideoResumo, "id" | "conteudoId" | "contaId">): string {
   if (v.conteudoId) return `/app/conteudos/${v.conteudoId}${v.contaId ? `?conta=${v.contaId}` : ""}`;
   return `/app/metricas/videos/${v.id}`;
+}
+
+// Legenda curta para listas compactas: os primeiros `max` caracteres com reticências (o texto
+// inteiro vai no `title`).
+export function truncar(texto: string, max = 40): string {
+  const t = texto.replace(/\s+/g, " ").trim();
+  return t.length <= max ? t : `${t.slice(0, max).trimEnd()}…`;
 }
 
 export const nomeDaConta = (v: Pick<VideoResumo, "conta" | "serieRotulo">) => (v.conta ? `@${v.conta.handle.replace(/^@/, "")}` : (v.serieRotulo ?? "Conta anônima"));

@@ -421,11 +421,12 @@ def _cursor_escrever(chave: tuple) -> str:
 
 def ranking(db: Session, *, perfil_id: uuid.UUID | None = None,
             conta_id: uuid.UUID | None = None, origens: Sequence[str] | None = None,
-            de: date | None = None, ate: date | None = None, ordem: str = "views24h",
+            de: date | None = None, ate: date | None = None, ordem: str = "views",
             direcao: str = "desc", cursor: str | None = None, limite: int = 50,
             agora: datetime | None = None) -> schemas.VideosList:
     """Filtros em SQL; a métrica da ordem calculada para todos os filtrados (2 buscas por
-    índice por vídeo) e a página montada só para os `limite` da vez. Ordem estável: (métrica,
+    índice por vídeo) e a página montada só para os `limite` da vez. `views` (padrão) é o total
+    atual: as views da última foto. Ordem estável: (métrica,
     `publicado_em`, `id`), com os sem valor no fim nas duas direções. Sem `origem`, as séries
     anônimas ficam de fora (elas entram com `origem=anonima`)."""
     agora = agora or datetime.now(ZoneInfo("UTC"))
@@ -446,6 +447,10 @@ def ranking(db: Session, *, perfil_id: uuid.UUID | None = None,
 
     if ordem == "publicadoEm":
         valores = {v.id: v.publicado_em.timestamp() for v in videos}
+    elif ordem == "views":
+        # total atual: basta a última foto (1 busca por índice por vídeo)
+        ultimas = _ultimas(db, [v.id for v in videos])
+        valores = {v.id: ultimas[v.id].views if v.id in ultimas else None for v in videos}
     else:
         marco_nome = ORDEM_MARCO.get(ordem)
         # ordem por marco: bastam as vizinhas dele (a última só para engajamento/velocidade)
@@ -479,11 +484,38 @@ def ranking(db: Session, *, perfil_id: uuid.UUID | None = None,
 AUTO_HORA_ATE = timedelta(days=14)
 PERIODO_PADRAO = timedelta(days=30)
 
+# A rede não dá as views totais da conta: elas são derivadas das fotos dos vídeos. Em cada corte
+# `t`, soma-se, por vídeo da série, as views da última foto com `coletado_em ≤ t` (vídeo sem foto
+# até `t` não entra). Uma volta da coleta grava a foto da conta e as dos vídeos com o mesmo
+# `agora`, então o corte no `coletado_em` da foto da conta já pega os vídeos da mesma volta.
+_SQL_VIEWS_CONTA = text("""
+SELECT c.t, sum(u.views), count(u.views)
+FROM unnest(CAST(:cortes AS timestamptz[])) AS c(t)
+CROSS JOIN metricas_videos v
+JOIN LATERAL (
+    SELECT f.views FROM metricas_video_fotos f
+    WHERE f.video_id = v.id AND f.coletado_em <= c.t AND f.views IS NOT NULL
+    ORDER BY f.idade_s DESC, f.id DESC LIMIT 1) u ON true
+WHERE v.serie_id = :serie
+GROUP BY c.t
+""")
+
+
+def views_conta(db: Session, serie_id: uuid.UUID, cortes: Sequence[datetime]
+                ) -> dict[datetime, int | None]:
+    """Views totais da série em cada corte (None quando nenhum vídeo tinha foto até ali)."""
+    if not cortes:
+        return {}
+    rows = db.execute(_SQL_VIEWS_CONTA, {"cortes": list(cortes), "serie": serie_id})
+    somas = {r[0]: int(r[1]) for r in rows if r[2]}
+    return {t: somas.get(t) for t in cortes}
+
 
 def conta_metricas(db: Session, conta: Conta, de: date | None = None, ate: date | None = None,
                    resolucao: str = "auto") -> schemas.ContaMetricasOut:
     """Fotos da conta no período (hora até 14 dias em `auto`, senão a última de cada dia de
-    `APP_TZ`) e as publicações marcadas."""
+    `APP_TZ`), com as views derivadas dos vídeos em cada foto, o total atual de views e as
+    publicações marcadas."""
     tz = _tz()
     hoje = datetime.now(tz).date()
     ate = ate or hoje
@@ -494,7 +526,8 @@ def conta_metricas(db: Session, conta: Conta, de: date | None = None, ate: date 
     coleta = estado_coleta(db, conta, conexoes.conexao_viva(db, conta.id))
     serie = serie_viva(db, conta.id)
     if serie is None:
-        return schemas.ContaMetricasOut(coleta=coleta, fotos=[], publicacoes=[])
+        return schemas.ContaMetricasOut(coleta=coleta, fotos=[], publicacoes=[],
+                                        views_total=None)
     fotos = list(db.scalars(select(FotoConta).where(
         FotoConta.serie_id == serie.id, FotoConta.janela_em >= ini, FotoConta.janela_em < fim)
         .order_by(FotoConta.janela_em)))
@@ -504,6 +537,8 @@ def conta_metricas(db: Session, conta: Conta, de: date | None = None, ate: date 
         for f in fotos:
             por_dia[f.janela_em.astimezone(tz).date()] = f  # a última de cada dia
         fotos = list(por_dia.values())
+    agora = datetime.now(ZoneInfo("UTC"))
+    views = views_conta(db, serie.id, [f.coletado_em for f in fotos] + [agora])
     pubs = db.execute(select(VideoRede.id, VideoRede.publicado_em, Postagem.conteudo_id)
                       .outerjoin(Postagem, Postagem.id == VideoRede.destino_id)
                       .where(VideoRede.serie_id == serie.id, VideoRede.publicado_em >= ini,
@@ -513,6 +548,8 @@ def conta_metricas(db: Session, conta: Conta, de: date | None = None, ate: date 
         coleta=coleta,
         fotos=[schemas.FotoConta(coletado_em=_local(f.coletado_em), janela_em=_local(f.janela_em),
                                  seguidores=f.seguidores, seguindo=f.seguindo,
-                                 curtidas=f.curtidas, videos=f.videos) for f in fotos],
+                                 curtidas=f.curtidas, videos=f.videos,
+                                 views=views[f.coletado_em]) for f in fotos],
+        views_total=views[agora],
         publicacoes=[schemas.Publicacao(video_id=p.id, publicado_em=_local(p.publicado_em),
                                         conteudo_id=p.conteudo_id) for p in pubs])

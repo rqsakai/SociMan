@@ -1,8 +1,9 @@
 /*
- * Evolução de uma conta (spec 016, US4), na aba "Contas" de /app/metricas: seguidores ou curtidas
- * ao longo do tempo, com os vídeos publicados marcados, e o estado da coleta. Período e resolução
+ * Evolução de uma conta (spec 016, US4), na aba "Contas" de /app/metricas (spec 019): views (padrão),
+ * seguidores ou curtidas ao longo do tempo, com os vídeos publicados marcados, e o estado da coleta. Período e resolução
  * na URL (`cde`, `cate`, `resolucao`); padrão: últimos 30 dias, resolução automática (hora até 14
- * dias, dia além disso).
+ * dias, dia além disso). As views da conta são derivadas pela API (a TikTok não as dá): a soma das
+ * últimas views de cada vídeo; o card mostra o total atual.
  */
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -17,13 +18,20 @@ import { formatCompacto, formatNumero, useMetricasConta, type FotoConta, type Re
 import { addDays, formatDateTime, localDateKey } from "@/lib/tz";
 import { ColetaStatus } from "./ColetaStatus";
 import { FiltroContas, useContasTikTok } from "./FiltroContas";
-import { LinhaChart } from "./LinhaChart";
+import { LinhaChart, type SerieCor } from "./LinhaChart";
 
-type Vista = "seguidores" | "curtidas";
+type Vista = "views" | "seguidores" | "curtidas";
+
+const VISTAS: Record<Vista, { botao: string; titulo: string; cor: SerieCor }> = {
+  views: { botao: "Views", titulo: "Views totais dos vídeos ao longo do tempo", cor: "info" },
+  seguidores: { botao: "Seguidores", titulo: "Seguidores ao longo do tempo", cor: "primary" },
+  curtidas: { botao: "Curtidas", titulo: "Curtidas totais ao longo do tempo", cor: "success" },
+};
 
 const formatData = (ms: number) => new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" }).format(new Date(ms));
 
-export function ContaMetricas() {
+// `semFiltroContas`: no analytics (spec 019) o perfil e a conta vêm dos filtros globais da página.
+export function ContaMetricas({ semFiltroContas = false }: { semFiltroContas?: boolean } = {}) {
   const [params, set] = useFiltroUrl();
   const perfilId = params.get("perfil") ?? "";
   const contas = useContasTikTok(perfilId);
@@ -33,20 +41,19 @@ export function ContaMetricas() {
   const ate = params.get("cate") ?? hoje;
   const invertido = de > ate;
   const resolucao = (params.get("resolucao") as Resolucao | null) ?? "auto";
-  const [vista, setVista] = useState<Vista>("seguidores");
+  const [vista, setVista] = useState<Vista>("views");
   const dados = useMetricasConta(contaId, invertido ? { resolucao } : { de, ate, resolucao });
   const conta = contas.find((c) => c.id === contaId);
 
   const fotos = dados.data?.fotos ?? [];
   const ultima: FotoConta | undefined = fotos[fotos.length - 1];
-  const campo = vista === "seguidores" ? "seguidores" : "curtidas";
-  const pontos = fotos.map((f) => ({ x: new Date(f.coletadoEm).getTime(), y: [f[campo]] }));
+  const pontos = fotos.map((f) => ({ x: new Date(f.coletadoEm).getTime(), y: [f[vista]] }));
   const marcadores = (dados.data?.publicacoes ?? []).map((p) => ({ x: new Date(p.publicadoEm).getTime(), label: `Vídeo publicado em ${formatDateTime(p.publicadoEm)}` }));
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
-        <FiltroContas perfilId={perfilId} contaId={contaId} set={set} todasAsContas={false} />
+        {!semFiltroContas && <FiltroContas perfilId={perfilId} contaId={contaId} set={set} todasAsContas={false} />}
         <fieldset className="space-y-1.5">
           <legend className="text-sm font-medium">Período</legend>
           <div className="flex items-center gap-1.5">
@@ -74,7 +81,7 @@ export function ContaMetricas() {
       {!contaId ? (
         <p className="text-sm text-muted-foreground">Escolha o perfil e a conta TikTok para ver a evolução.</p>
       ) : (
-        <HeaderCard title={conta ? `@${conta.handle}` : "Conta"} description="Seguidores e curtidas ao longo do tempo; as marcas são os vídeos publicados." tone="dark">
+        <HeaderCard title={conta ? `@${conta.handle}` : "Conta"} description="Views, seguidores e curtidas ao longo do tempo; as marcas são os vídeos publicados." tone="dark">
           <div className="space-y-4">
             {dados.isError ? (
               <ApiErrorAlert error={dados.error} />
@@ -93,9 +100,10 @@ export function ContaMetricas() {
                   </p>
                 )}
                 {ultima && (
-                  <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                     {(
                       [
+                        ["Views", dados.data.viewsTotal],
                         ["Seguidores", ultima.seguidores],
                         ["Seguindo", ultima.seguindo],
                         ["Curtidas", ultima.curtidas],
@@ -114,15 +122,15 @@ export function ContaMetricas() {
                 ) : (
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-1" role="group" aria-label="O que mostrar no gráfico">
-                      {(["seguidores", "curtidas"] as const).map((v) => (
+                      {(Object.keys(VISTAS) as Vista[]).map((v) => (
                         <Button key={v} type="button" size="sm" variant={vista === v ? "default" : "outline"} aria-pressed={vista === v} onClick={() => setVista(v)}>
-                          {v === "seguidores" ? "Seguidores" : "Curtidas"}
+                          {VISTAS[v].botao}
                         </Button>
                       ))}
                     </div>
                     <LinhaChart
-                      titulo={vista === "seguidores" ? "Seguidores ao longo do tempo" : "Curtidas totais ao longo do tempo"}
-                      series={[{ label: vista === "seguidores" ? "Seguidores" : "Curtidas", cor: vista === "seguidores" ? "primary" : "success" }]}
+                      titulo={VISTAS[vista].titulo}
+                      series={[{ label: VISTAS[vista].botao, cor: VISTAS[vista].cor }]}
                       pontos={pontos}
                       marcadores={marcadores}
                       formatX={(x) => (pontos.length > 1 && pontos[pontos.length - 1]!.x - pontos[0]!.x < 2 * 86_400_000 ? formatDateTime(new Date(x).toISOString()) : formatData(x))}

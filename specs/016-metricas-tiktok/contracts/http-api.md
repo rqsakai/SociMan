@@ -38,7 +38,7 @@ EstadoColeta      { permissao: PermissaoColeta, escoposFaltando: string[],
 Contadores        { views|null, likes|null, comments|null, shares|null }
 FotoVideo         { coletadoEm, idadeS: int, alvoIdadeMin: int } & Contadores
 FotoConta         { coletadoEm, janelaEm, seguidores|null, seguindo|null,
-                    curtidas|null, videos|null }
+                    curtidas|null, videos|null, views|null }  # views derivada dos vídeos (bugfix 2026-10-01)
 MarcoValor        { valor: number|null, estimado: bool,
                     motivo: null|"ainda_nao"|"sem_dado" }
 Marcos            { h1: {views, likes, comments, shares: MarcoValor},
@@ -88,12 +88,12 @@ Ampliações dos tipos da 015:
 ### Métricas de conta
 | Método e caminho | `operationId` | Perm. | Corpo / query | Resposta |
 |---|---|---|---|---|
-| `GET /api/contas/{id}/metricas` | `metricas_conta` | User | `?de&ate&resolucao=auto\|hora\|dia` (`auto`: hora até 14 dias, dia além disso, com a última foto de cada dia) | `{ coleta: EstadoColeta, fotos: FotoConta[], publicacoes: [{videoId, publicadoEm, conteudoId\|null}] }` |
+| `GET /api/contas/{id}/metricas` | `metricas_conta` | User | `?de&ate&resolucao=auto\|hora\|dia` (`auto`: hora até 14 dias, dia além disso, com a última foto de cada dia) | `{ coleta: EstadoColeta, fotos: FotoConta[], publicacoes: [{videoId, publicadoEm, conteudoId\|null}], viewsTotal\|null }` (views da conta: soma, por vídeo da série, da última foto até o corte) |
 
 ### Vídeos, ranking e curva
 | Método e caminho | `operationId` | Perm. | Corpo / query | Resposta |
 |---|---|---|---|---|
-| `GET /api/metricas/videos` | `metricas_videos_list` | User | `?perfilId&contaId&origem=corte,video_proprio,fora,anonima&de&ate` (período de **publicação**) `&ordem=views24h\|views7d\|engajamento\|velocidade\|publicadoEm&direcao=desc\|asc&cursor&limite≤100` (padrão 50) | `{ items: VideoResumo[], nextCursor\|null, total }` |
+| `GET /api/metricas/videos` | `metricas_videos_list` | User | `?perfilId&contaId&origem=corte,video_proprio,fora,anonima&de&ate` (período de **publicação**) `&ordem=views\|views24h\|views7d\|engajamento\|velocidade\|publicadoEm&direcao=desc\|asc&cursor&limite≤100` (padrão 50; ordem padrão `views`, o total atual) | `{ items: VideoResumo[], nextCursor\|null, total }` |
 | `GET /api/metricas/videos/{id}` | `metricas_videos_get` | User | | `VideoDetalhe` |
 
 ### Métricas e vínculo do destino

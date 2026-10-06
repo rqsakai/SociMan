@@ -52,6 +52,8 @@ class FotoConta(CamelModel):
     seguindo: int | None
     curtidas: int | None
     videos: int | None
+    # Derivada: soma das últimas views de cada vídeo da série até `coletado_em` (a rede não dá).
+    views: int | None
 
 
 class MarcoValor(CamelModel):
@@ -124,6 +126,7 @@ class ContaMetricasOut(CamelModel):
     coleta: EstadoColeta
     fotos: list[FotoConta]
     publicacoes: list[Publicacao]
+    views_total: int | None  # soma da última foto de cada vídeo da série (agora)
 
 
 # ---- vínculo do destino ----
