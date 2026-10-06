@@ -59,7 +59,7 @@ _FINAIS = (IaDesfecho.descartada, IaDesfecho.erro)
 class _Alvo:
     """O que a chamada precisa casar: o perfil e a entidade salva (ou o conteúdo + conta)."""
 
-    entidade: str  # asset | perfil | kit | postagem | guia
+    entidade: str  # asset | perfil | kit | postagem | guia | cena
     perfil_id: uuid.UUID
     entity_id: uuid.UUID
     tipo_asset: str | None = None
@@ -95,6 +95,9 @@ def _casa_alvo(chamada: Any, tipo: TipoCampo, alvo: _Alvo) -> bool:
         # Guia nunca salvo: a chamada foi gerada sem entity_id (a linha nasce neste save).
         return (chamada.entity_type == "guia" and chamada.conta_id == alvo.conta_id
                 and chamada.entity_id in (None, alvo.entity_id))
+    if alvo.entidade == "cena":
+        # Spec 010: cena nunca salva: a chamada foi gerada sem entity_id (nasce neste save).
+        return chamada.entity_type == "cena" and chamada.entity_id in (None, alvo.entity_id)
     if alvo.entidade == "kit":
         # Kit nunca salvo: a chamada foi gerada sem entity_id (a linha nasce neste save).
         return chamada.entity_type == "kit" and chamada.entity_id in (None, alvo.entity_id)
@@ -157,6 +160,9 @@ def _igual_proposta(tipo: TipoCampo, proposta: Mapping[str, Any],
         return _texto(tipo, depois.get(campo)) == _texto(tipo, proposta.get("texto"))
     if tipo.formato == "lista":
         return _lista(depois.get(tipo.campos[0])) == _lista(proposta.get("itens"))
+    if tipo.formato == "campos_cena":  # spec 010: os campos propostos, como foram salvos
+        cena = proposta.get("cena") or {}
+        return all((depois.get(c) or "").strip() == (v or "").strip() for c, v in cena.items())
     # textos_postagem: os três juntos.
     return (
         (depois.get("titulo") or "").strip() == (proposta.get("titulo") or "").strip()
@@ -274,6 +280,10 @@ def _campos_iguais_com_proibida(tipo: TipoCampo, chamada: Any, item: IaAplicacao
             conferir(campo, (depois.get(campo) or "").strip() == valor.strip(), [valor])
         hashtags = list(proposta.get("hashtags") or ())
         conferir("hashtags", _lista(depois.get("hashtags")) == _lista(hashtags), hashtags)
+    elif tipo.formato == "campos_cena":  # spec 010
+        for campo, valor in (proposta.get("cena") or {}).items():
+            conferir(campo, (depois.get(campo) or "").strip() == (valor or "").strip(),
+                     [valor or ""])
     elif tipo.formato == "sugestoes":
         campo = tipo.campos[0]
         propostas = {i.strip() for i in proposta.get("itens") or ()}

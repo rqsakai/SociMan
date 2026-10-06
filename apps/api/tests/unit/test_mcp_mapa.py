@@ -113,7 +113,9 @@ def test_paginacao_padrao():
 def test_escopos():
     leitura = {d["name"] for d in ferramentas.definicoes(app, "leitura")}
     propostas = {d["name"] for d in ferramentas.definicoes(app, "propostas")}
-    assert len(leitura) == 62 and len(propostas) == 67 and leitura < propostas
+    # spec 010: +8 leituras de cena (lista, detalhe, histórico, tomadas, padrões, conteúdo)
+    # spec 013: +2 leituras do registro de importações da agência (lista e detalhe)
+    assert len(leitura) == 72 and len(propostas) == 77 and leitura < propostas
     exportado = ferramentas.exportar_json(app)
     assert {d["name"] for d in exportado["leitura"]} == leitura
     assert {d["name"] for d in exportado["propostas"]} == propostas - leitura

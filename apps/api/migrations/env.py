@@ -7,6 +7,7 @@ from sociman_api import history as _history  # noqa: F401 — registra no metada
 from sociman_api.assets import models as _assets_models  # noqa: F401
 from sociman_api.auth import models as _auth_models  # noqa: F401
 from sociman_api.canais import models as _canais_models  # noqa: F401
+from sociman_api.cenas import models as _cenas_models  # noqa: F401 — spec 010
 from sociman_api.config import get_settings
 from sociman_api.conteudos import models as _conteudos_models  # noqa: F401 — spec 014
 from sociman_api.cortes import models as _cortes_models  # noqa: F401

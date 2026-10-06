@@ -82,7 +82,8 @@ def test_upgrade_checks_trigger_e_downgrade(make_user):
         _recusa("INSERT INTO anotacoes (id, alvo_tipo, alvo_id, tipo, texto, campos, autor_kind, "
                 "autor_user_id) VALUES (gen_random_uuid(), 'perfil', gen_random_uuid(), "
                 "'proposta_texto', 'x', '{}', 'user', :u)", {"u": dono},
-                "ck_anotacoes_proposta_em_destino")
+                # spec 010: na cabeça, o CHECK virou `ck_anotacoes_proposta_alvo`
+                "ck_anotacoes_proposta_(em_destino|alvo)")
         _recusa("INSERT INTO anotacoes (id, alvo_tipo, alvo_id, tipo, texto, autor_kind, "
                 "autor_user_id, autor_mcp_cliente_id) VALUES (gen_random_uuid(), 'perfil', "
                 "gen_random_uuid(), 'observacao', 'x', 'user', :u, :c)", {"u": dono, "c": cid},

@@ -125,3 +125,34 @@ Pela rede de casa: `--url https://192.168.86.47:8543/mcp --ca docker/certs/ca/so
 - **Nunca:** conectar conta, aprovar, agendar, publicar, enviar para corte, mudar o direito do canal,
   reverter, mexer em usuários, credenciais, guia ou regras. A API recusa com `somente_humano` e grava o
   evento, mesmo se o agente chamar a API direto.
+
+## Propor cenas (shop-diretor)
+
+Desde a spec 010, o agente com escopo **leitura e propostas** lê as cenas (`cenas_list`, `cenas_get`,
+com o prompt montado e os ingredientes) e **propõe** cenas com `anotacoes_create`. Ele não cria, não
+edita, não marca pronta e não envia tomadas: o dono abre "Propostas dos agentes" › Aceitar, confere o
+formulário preenchido e salva.
+
+Exemplo (cena nova no perfil; os ids vêm de `assets_list`):
+
+```json
+{
+  "alvoTipo": "perfil",
+  "alvoId": "<id do perfil>",
+  "tipo": "proposta_cena",
+  "texto": "Abertura do vídeo da panela elétrica: a Achadinhos levanta a tampa.",
+  "campos": {
+    "nome": "Achadinhos abre a panela",
+    "avatarId": "<id do avatar>", "cenarioId": "<id do cenário>",
+    "plano": "medio", "movimento": "parada",
+    "acao": "lifts the lid and steam comes out",
+    "fala": "Gente, olha essa panela!",
+    "duracaoS": 8, "modo": "ingredientes",
+    "produtoNome": "Panela de pressão elétrica", "produtoImagemId": "<id da foto>"
+  }
+}
+```
+
+Para propor mudança numa cena existente, use `"alvoTipo": "cena"` e mande só os campos que mudam. Cena
+`usada` recusa (409 `cena_usada`); asset de outro perfil ou arquivado recusa (422 `proposta_invalida`).
+A proposta conta no limite diário de escritas do cliente.

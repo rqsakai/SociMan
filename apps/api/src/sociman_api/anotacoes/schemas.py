@@ -11,6 +11,7 @@ from pydantic import ConfigDict, Field, StringConstraints
 
 from sociman_api.anotacoes.models import AnotacaoAlvo, AnotacaoSituacao, AnotacaoTipo
 from sociman_api.auth.schemas import CamelModel
+from sociman_api.cenas.schemas import CamposCena
 from sociman_api.perfis.schemas import Autor, UserRef
 from sociman_api.postagem.schemas import Descricao, Hashtags, Titulo
 
@@ -29,6 +30,10 @@ class CamposProposta(CamelModel):
     hashtags: Hashtags | None = None
 
 
+# Spec 010: a proposta de cena (`proposta_cena`) traz os campos da cena; o `tipo` decide qual.
+Campos = CamposProposta | CamposCena
+
+
 class AlvoRef(CamelModel):
     tipo: AnotacaoAlvo
     id: UUID
@@ -43,7 +48,7 @@ class Anotacao(CamelModel):
     perfil_id: UUID | None
     tipo: AnotacaoTipo
     texto: str
-    campos: CamposProposta | None
+    campos: Campos | None
     situacao: AnotacaoSituacao
     autor: Autor
     resolvida_por: UserRef | None
@@ -73,7 +78,7 @@ class CreateAnotacaoIn(CamelModel):
     alvo_id: UUID
     tipo: AnotacaoTipo = AnotacaoTipo.observacao
     texto: Texto
-    campos: CamposProposta | None = None
+    campos: Campos | None = None
 
 
 class UpdateAnotacaoIn(CamelModel):
@@ -81,7 +86,7 @@ class UpdateAnotacaoIn(CamelModel):
 
     version: VersionNumber
     texto: Texto | None = None
-    campos: CamposProposta | None = None
+    campos: Campos | None = None
 
 
 class AnotacaoVersionIn(CamelModel):

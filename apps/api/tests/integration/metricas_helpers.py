@@ -213,8 +213,12 @@ def semear(db, conta_id, *, videos: int = 3, fotos: int = 5, inicio: datetime | 
                              views=views_por_h * k * (i + 1), likes=10 * k, comments=k,
                              shares=k))
     dias = int((videos * intervalo_h) // 24) + 2
+    # outra semeadura na mesma série pode já ter a janela (uq_metricas_conta_fotos_janela)
+    existentes = set(db.scalars(select(FotoConta.janela_em).where(FotoConta.serie_id == serie_id)))
     for d in range(dias):
         janela = (inicio + timedelta(days=d)).replace(minute=0, second=0, microsecond=0)
+        if janela in existentes:
+            continue
         db.add(FotoConta(serie_id=serie_id, coletado_em=janela, janela_em=janela,
                          seguidores=1000 + d, seguindo=10, curtidas=5000 + d, videos=videos))
     db.commit()

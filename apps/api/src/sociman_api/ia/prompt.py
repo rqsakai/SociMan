@@ -116,6 +116,9 @@ def _limites(tipo: TipoCampo, fixas: int = 0) -> str:
                       f"termos, de até {g.TERMO_MAX} caracteres; emojis preferidos: até "
                       f"{g.EMOJIS_ITENS}; sem repetir itens; emojis: nao, moderado, livre ou "
                       "null (não definido)")
+    elif tipo.formato == "campos_cena":  # spec 010
+        partes.append("ação com 1 a 1000 caracteres; câmera até 500; iluminação e estilo até "
+                      "500; áudio até 300")
     elif tipo.limites.normalizar == "hashtag":
         partes.append(_hashtags(fixas))
         if lim.max_chars_item:
@@ -148,6 +151,10 @@ def _formato(tipo: TipoCampo) -> str:
         return ('"tom", "faca", "nao_faca", "vocabulario", "proibidas", "emojis" e '
                 '"emojis_preferidos": o guia de comunicação completo, que substitui o atual '
                 "(sem hashtags fixas e sem exemplos: esses são do dono).")
+    if tipo.formato == "campos_cena":  # spec 010
+        return ('"acao", "camera", "estilo" e "audio": os quatro campos da cena, em inglês e '
+                "coerentes entre si (texto vazio mantém o campo como está). A descrição do "
+                "avatar e o cenário não são campos da cena: não os reescreva.")
     if tipo.formato == "variacoes":
         return ('"variacoes": exatamente 3 versões diferentes dos textos da postagem, cada uma '
                 'com "titulo", "descricao" e "hashtags", coerentes entre si.')
@@ -244,6 +251,9 @@ def _valor_atual(tipo: TipoCampo, valor: Mapping[str, Any]) -> str:
         return json.dumps(atual, ensure_ascii=False) if atual else ""
     if tipo.formato == "variacoes":
         return ""
+    if tipo.formato == "campos_cena":  # spec 010
+        atual = {k: v for k, v in (valor.get("cena") or {}).items() if v}
+        return json.dumps(atual, ensure_ascii=False) if atual else ""
     itens = [i for i in valor.get("itens") or () if i.strip()]
     return "\n".join(f"- {i}" for i in itens)
 

@@ -113,6 +113,9 @@ services:
     extra_hosts: *tiktok-hosts
     volumes:
       - sociman-data:/srv/sociman-data
+      # Spec 013: a pasta sintética da agência (nada da pasta real), só leitura.
+      - ./e2e/fixtures/agencia/shared:/agencia/shared:ro
+      - ./e2e/fixtures/agencia/clipes:/agencia/clipes:ro
     entrypoint: *data-entrypoint
     command: ["sh", "start.sh"]   # migrations + uvicorn, sem --reload
     healthcheck:

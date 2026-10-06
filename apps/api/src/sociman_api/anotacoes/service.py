@@ -31,6 +31,8 @@ from sociman_api.anotacoes.models import (
 from sociman_api.auth.deps import Actor
 from sociman_api.auth.models import User, UserRole
 from sociman_api.canais.models import CanalFonte, CanalPerfil, VideoFonte
+from sociman_api.cenas.models import Cena, CenaStatus
+from sociman_api.cenas.schemas import CamposCena
 from sociman_api.conteudos.models import Conteudo
 from sociman_api.cortes.models import Corte
 from sociman_api.errors import ApiError
@@ -48,11 +50,12 @@ _MODELOS: dict[AnotacaoAlvo, Any] = {
     AnotacaoAlvo.perfil: Perfil, AnotacaoAlvo.conta: Conta, AnotacaoAlvo.canal: CanalFonte,
     AnotacaoAlvo.video_fonte: VideoFonte, AnotacaoAlvo.corte: Corte,
     AnotacaoAlvo.conteudo: Conteudo, AnotacaoAlvo.destino: Postagem,
+    AnotacaoAlvo.cena: Cena,  # spec 010
 }
 _NOMES = {AnotacaoAlvo.perfil: "Perfil", AnotacaoAlvo.conta: "Conta",
           AnotacaoAlvo.canal: "Canal-fonte", AnotacaoAlvo.video_fonte: "Vídeo-fonte",
           AnotacaoAlvo.corte: "Corte", AnotacaoAlvo.conteudo: "Conteúdo",
-          AnotacaoAlvo.destino: "Destino"}
+          AnotacaoAlvo.destino: "Destino", AnotacaoAlvo.cena: "Cena"}
 
 
 @dataclass(frozen=True)
@@ -69,7 +72,7 @@ def _primeiro_perfil(db: Session, canal_id: uuid.UUID) -> uuid.UUID | None:
 
 
 def _titulo(obj: Any, padrao: str) -> str:
-    for attr in ("titulo", "title", "name", "handle", "hook_text", "source_title"):
+    for attr in ("titulo", "title", "name", "nome", "handle", "hook_text", "source_title"):
         valor = getattr(obj, attr, None)
         if isinstance(valor, str) and valor.strip():
             return valor.strip()[:120]
@@ -98,6 +101,8 @@ def _alvo(db: Session, tipo: AnotacaoAlvo, alvo_id: uuid.UUID) -> _Alvo | None:
             return _Alvo(obj.perfil_id, titulo, f"/app/cortes/{obj.id}", arquivado)
         case AnotacaoAlvo.conteudo:
             return _Alvo(obj.perfil_id, titulo, f"/app/conteudos/{obj.id}", arquivado)
+        case AnotacaoAlvo.cena:  # spec 010
+            return _Alvo(obj.perfil_id, titulo, f"/app/cenas/{obj.id}", arquivado)
         case AnotacaoAlvo.destino:
             conteudo = db.get(Conteudo, obj.conteudo_id)
             if titulo == _NOMES[tipo] and conteudo is not None:
@@ -141,13 +146,21 @@ def anotacoes_out(db: Session, anotacoes: list[Anotacao]) -> list[schemas.Anotac
             alvo=schemas.AlvoRef(tipo=a.alvo_tipo, id=a.alvo_id, titulo=alvo.titulo,
                                  link=alvo.link, arquivado=alvo.arquivado),
             perfil_id=a.perfil_id, tipo=a.tipo, texto=a.texto,
-            campos=schemas.CamposProposta(**a.campos) if a.campos is not None else None,
+            campos=_campos_out(a),
             situacao=a.situacao, autor=autor,
             resolvida_por=(UserRef(id=a.resolvida_por, name=users.get(a.resolvida_por, ""))
                            if a.resolvida_por else None),
             resolvida_em=a.resolvida_em, motivo_descarte=a.motivo_descarte,
             created_at=a.created_at, version=a.version))
     return out
+
+
+def _campos_out(a: Anotacao) -> schemas.CamposProposta | CamposCena | None:
+    if a.campos is None:
+        return None
+    if a.tipo == AnotacaoTipo.proposta_cena:
+        return CamposCena.model_validate(a.campos)
+    return schemas.CamposProposta(**a.campos)
 
 
 def anotacao_out(db: Session, anotacao: Anotacao) -> schemas.Anotacao:
@@ -223,11 +236,25 @@ def versoes(db: Session, anotacao_id: uuid.UUID):
 
 # ---- mutações ----
 
-def _campos(tipo: AnotacaoTipo, campos: schemas.CamposProposta | None) -> dict[str, Any] | None:
+def _campos(tipo: AnotacaoTipo, campos: Any | None) -> dict[str, Any] | None:
     if tipo == AnotacaoTipo.observacao:
         if campos is not None:
             raise ApiError(400, "validation_error", "campos: só numa proposta de texto")
         return None
+    if tipo == AnotacaoTipo.proposta_cena:  # spec 010: chaves em camelCase
+        dados = campos.model_dump(exclude_none=True) if campos is not None else {}
+        try:
+            cena = CamposCena.model_validate(dados)
+        except ValueError:
+            raise ApiError(400, "validation_error",
+                           "campos: use os campos da cena (nome, ação, fala…)") from None
+        out = cena.model_dump(exclude_none=True, by_alias=True, mode="json")
+        if not out:
+            raise ApiError(400, "campos_vazios", "A proposta de cena precisa de algum campo")
+        return out
+    if not isinstance(campos, schemas.CamposProposta) and campos is not None:
+        raise ApiError(400, "validation_error",
+                       "campos: título, descrição ou hashtags da proposta de texto")
     if campos is None or not campos.model_dump(exclude_none=True):
         raise ApiError(400, "campos_vazios",
                        "A proposta de texto precisa de título, descrição ou hashtags")
@@ -260,12 +287,18 @@ def criar(db: Session, actor: Actor, body: schemas.CreateAnotacaoIn) -> Anotacao
     if body.tipo == AnotacaoTipo.proposta_texto and body.alvo_tipo != AnotacaoAlvo.destino:
         raise ApiError(400, "proposta_so_em_destino",
                        "A proposta de texto só vale para um destino; use uma observação")
+    if body.tipo == AnotacaoTipo.proposta_cena \
+            and body.alvo_tipo not in (AnotacaoAlvo.perfil, AnotacaoAlvo.cena):
+        raise ApiError(422, "proposta_alvo_invalido",
+                       "A proposta de cena vale num perfil (cena nova) ou numa cena")
     campos = _campos(body.tipo, body.campos)
     alvo = _alvo(db, body.alvo_tipo, body.alvo_id)
     if alvo is None:
         raise ApiError(404, "not_found", f"{_NOMES[body.alvo_tipo]} não encontrado")
     if alvo.arquivado:
         raise ApiError(409, "alvo_arquivado", "Este item está arquivado")
+    if body.tipo == AnotacaoTipo.proposta_cena:
+        _validar_cena(db, body.alvo_tipo, body.alvo_id, alvo, campos or {})
     mcp = actor.kind == "mcp_client"
     if not mcp and actor.kind != "user":
         raise ApiError(403, "forbidden", "Sem permissão")
@@ -283,6 +316,33 @@ def criar(db: Session, actor: Actor, body: schemas.CreateAnotacaoIn) -> Anotacao
     return anotacao
 
 
+def _validar_cena(db: Session, alvo_tipo: AnotacaoAlvo, alvo_id: uuid.UUID, alvo: _Alvo,
+                  campos: dict[str, Any]) -> None:
+    """Spec 010: a cena alvo não pode estar `usada`; os assets propostos são do perfil e não
+    estão arquivados (422 `proposta_invalida`)."""
+    from sociman_api.cenas import service as cenas  # import tardio (ciclo)
+    from sociman_api.cenas.models import CAMPOS_EDITAVEIS
+
+    base: dict[str, Any] = {}
+    if alvo_tipo == AnotacaoAlvo.cena:
+        cena = db.get(Cena, alvo_id)
+        if cena.status == CenaStatus.usada:
+            raise ApiError(409, "cena_usada", cenas.CENA_USADA)
+        base = {f: getattr(cena, f) for f in CAMPOS_EDITAVEIS}
+    proposta = CamposCena.model_validate(campos).model_dump(exclude_unset=True)
+    novos = {k for k in proposta if k.endswith("_id")}
+    if "avatar_id" in proposta and "avatar_arquivo_id" not in proposta:
+        base["avatar_arquivo_id"] = None
+    if "cenario_id" in proposta and "cenario_arquivo_id" not in proposta:
+        base["cenario_arquivo_id"] = None
+
+    def erro(campo: str, mensagem: str) -> ApiError:
+        return ApiError(422, "proposta_invalida", f"{cenas.camel(campo)}: {mensagem}",
+                        details={"field": cenas.camel(campo)})
+
+    cenas.validar_refs(db, alvo.perfil_id, base | proposta, novos=novos, erro=erro)
+
+
 def editar(db: Session, actor: Actor, anotacao_id: uuid.UUID, body: schemas.UpdateAnotacaoIn
            ) -> Anotacao:
     anotacao = get_or_404(db, anotacao_id, lock=True)
@@ -295,6 +355,11 @@ def editar(db: Session, actor: Actor, anotacao_id: uuid.UUID, body: schemas.Upda
         anotacao.texto = body.texto
     if "campos" in body.model_fields_set:
         anotacao.campos = _campos(anotacao.tipo, body.campos)
+        if anotacao.tipo == AnotacaoTipo.proposta_cena:
+            alvo = _alvo(db, anotacao.alvo_tipo, anotacao.alvo_id)
+            if alvo is not None:
+                _validar_cena(db, anotacao.alvo_tipo, anotacao.alvo_id, alvo,
+                              anotacao.campos or {})
     if history.diff(before, history.snapshot(anotacao)):
         _record(db, actor, anotacao, "updated", before, {"acao": "editada"})
         db.flush()
@@ -347,6 +412,29 @@ def aplicar(db: Session, actor: Actor, proposta_id: uuid.UUID, destino_id: uuid.
     anotacao.resolvida_em = datetime.now(UTC)
     _record(db, actor, anotacao, "updated", before,
             {"acao": "aplicada", "destinoId": str(destino_id)})
+    return anotacao
+
+
+def aplicar_cena(db: Session, actor: Actor, proposta_id: uuid.UUID, *, perfil_id: uuid.UUID,
+                 cena_id: uuid.UUID | None, aplicada_em: uuid.UUID) -> Anotacao:
+    """Spec 010: chamado pelo save humano da cena com `propostaId` (cena nova: `cena_id` None e
+    a proposta precisa estar no perfil; alteração: a proposta precisa ser desta cena)."""
+    anotacao = db.get(Anotacao, proposta_id, with_for_update=True)
+    if cena_id is None:
+        casa = anotacao is not None and anotacao.alvo_tipo == AnotacaoAlvo.perfil \
+            and anotacao.alvo_id == perfil_id
+    else:
+        casa = anotacao is not None and anotacao.alvo_tipo == AnotacaoAlvo.cena \
+            and anotacao.alvo_id == cena_id
+    if not casa or anotacao.tipo != AnotacaoTipo.proposta_cena:
+        raise ApiError(409, "proposta_invalida", "Essa proposta não é desta cena")
+    _aberta(anotacao)
+    before = history.snapshot(anotacao)
+    anotacao.situacao = AnotacaoSituacao.aplicada
+    anotacao.resolvida_por = actor.user_id
+    anotacao.resolvida_em = datetime.now(UTC)
+    _record(db, actor, anotacao, "updated", before,
+            {"acao": "aplicada", "cenaId": str(aplicada_em)})
     return anotacao
 
 

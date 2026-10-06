@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
 import {
+  aceitarCenaHref,
   alvoTipoLabel,
   situacaoAnotacaoLabel,
   situacaoAnotacaoTone,
@@ -71,6 +72,12 @@ const columns = col.columns([
             <Badge variant="outline" className="ml-1">
               item arquivado
             </Badge>
+          )}
+          {/* spec 010: a proposta de cena é aceita no formulário da cena */}
+          {aceitarCenaHref(c.row.original) && (
+            <Link to={aceitarCenaHref(c.row.original)!} className="block text-sm font-medium text-primary underline-offset-2 hover:underline">
+              Aceitar
+            </Link>
           )}
         </div>
       );

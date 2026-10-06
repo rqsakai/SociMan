@@ -142,6 +142,26 @@ export const errorCodes = [
   "confirmar_conta",
   "previa_indisponivel",
   "ja_desfeita",
+  // 010-cenas
+  "nao_encontrada",
+  "arquivada",
+  "cena_invalida",
+  "cena_incompleta",
+  "cena_usada",
+  "cena_nao_pronta",
+  "cena_rascunho",
+  "cena_outro_perfil",
+  "cena_arquivada",
+  "origem_invalida",
+  "proposta_invalida",
+  "proposta_alvo_invalido",
+  // 013-importacao
+  "agencia_pasta_indisponivel",
+  "agencia_pasta_grande",
+  "importacao_em_andamento",
+  "previa_expirada",
+  "escolha_invalida",
+  "importacao_nao_desfazivel",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

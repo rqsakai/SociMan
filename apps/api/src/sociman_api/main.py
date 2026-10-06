@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from sociman_api import datadir
+from sociman_api.agencia.router import router as agencia_router  # spec 013
 from sociman_api.analytics.router import router as analytics_router  # spec 019
 from sociman_api.anotacoes.router import router as anotacoes_router  # spec 009
 from sociman_api.assets.router import router as assets_router
@@ -13,6 +14,9 @@ from sociman_api.auth.router_auth import router as auth_router
 from sociman_api.auth.router_events import router as events_router
 from sociman_api.auth.router_users import router as users_router
 from sociman_api.canais.router import router as canais_router
+from sociman_api.cenas import usos_assets as _cenas_usos  # noqa: F401 — spec 010: "onde é usado"
+from sociman_api.cenas.router import router as cenas_router  # spec 010
+from sociman_api.cenas.router_perfil import router as cenas_perfil_router  # spec 010
 from sociman_api.conteudos.router import router as conteudos_router
 from sociman_api.conteudos.router_video import router as conteudos_video_router
 from sociman_api.cortes.router import router as cortes_router
@@ -78,6 +82,9 @@ app.include_router(anotacoes_router)  # spec 009: anotações e propostas dos ag
 mcp_servidor.montar(app)  # spec 009: endpoint MCP `/mcp` (fora do OpenAPI)
 app.add_middleware(RegistroMcpMiddleware)  # spec 009: registro das chamadas com token MCP
 app.include_router(studio_router)  # spec 020: histórico do TikTok Studio
+app.include_router(cenas_perfil_router)  # spec 010: cenas do perfil e padrões
+app.include_router(cenas_router)  # spec 010: cena, tomadas e vínculo com o conteúdo
+app.include_router(agencia_router)  # spec 013: importação da agência (só dono humano grava)
 install_openapi_error_contract(app)
 
 

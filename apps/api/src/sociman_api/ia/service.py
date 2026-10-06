@@ -18,6 +18,7 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, time, timedelta
+from types import SimpleNamespace
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -65,16 +66,69 @@ class AlvoResolvido:
     conta: Conta | None = None
     postagem: Any | None = None
     conteudo: Any | None = None  # spec 014: toda chamada `postagem.*` grava o `conteudo_id`
+    cena: ctx_mod.CenaInfo | None = None  # spec 010: o contexto da cena (salva ou formulário)
 
 
 def _arquivado(nome: str) -> ApiError:
     return ApiError(409, "conflict", f"{nome} está arquivad{'a' if nome.startswith('Esta') else 'o'}")
 
 
+def _resolver_cena(db: Session, perfil: Perfil, alvo: schemas.Alvo,
+                   contexto: schemas.CenaContexto | None) -> AlvoResolvido:
+    """Spec 010: a cena salva (do perfil, não arquivada) ou, numa cena nova, o `cenaContexto`
+    do formulário. Os ids do formulário passam pela mesma conferência do save (422)."""
+    from sociman_api.cenas import ingredientes  # import tardio (ciclo)
+    from sociman_api.cenas import service as cenas
+    from sociman_api.cenas.models import CAMPOS_EDITAVEIS, Cena
+    from sociman_api.ia.tipos import CAMPOS_CENA_IA
+
+    if alvo.entity_type != "cena":
+        raise invalid("Este campo é de uma cena")
+    valores: dict[str, Any] = {}
+    cena = None
+    if alvo.entity_id is not None:
+        cena = db.get(Cena, alvo.entity_id)
+        if cena is None:
+            raise ApiError(404, "nao_encontrada", "Cena não encontrada")
+        if cena.perfil_id != perfil.id:
+            raise invalid("A cena é de outro perfil")
+        if cena.archived:
+            raise _arquivado("Esta cena")
+        valores = {f: getattr(cena, f) for f in CAMPOS_EDITAVEIS}
+    elif contexto is None:
+        raise invalid("cenaContexto: obrigatório numa cena ainda não salva")
+    novos: set[str] = set()
+    if contexto is not None:
+        form = contexto.model_dump(exclude_unset=True)
+        novos = {k for k in form if k.endswith("_id")}
+        valores |= form
+        if "avatar_id" in form and "avatar_arquivo_id" not in form:
+            valores["avatar_arquivo_id"] = None
+    valores.setdefault("produto_nome", None)
+    if valores.get("produto_imagem_id") is not None and not valores.get("produto_nome"):
+        valores["produto_imagem_id"] = None  # o contexto não exige a foto
+    cenas.validar_refs(db, perfil.id, valores, novos=novos)
+    assets = cenas.assets_da(db, SimpleNamespace(
+        avatar_id=valores.get("avatar_id"), cenario_id=valores.get("cenario_id"),
+        produto_imagem_id=valores.get("produto_imagem_id")))
+    f = ingredientes.arquivo(assets.avatar, valores.get("avatar_arquivo_id"))
+    info = ctx_mod.CenaInfo(
+        avatar=assets.avatar, arquivo_rotulo=(f.look or f.label) if f is not None else None,
+        cenario=assets.cenario, produto_nome=valores.get("produto_nome"),
+        produto_com_foto=assets.produto is not None, fala=valores.get("fala"),
+        duracao_s=valores.get("duracao_s"),
+        modo=getattr(valores.get("modo"), "value", valores.get("modo")),
+        atuais=tuple((c, valores.get(c) or "") for c in CAMPOS_CENA_IA))
+    return AlvoResolvido("cena", cena.id if cena is not None else None, cena=info)
+
+
 def _resolver_alvo(db: Session, tipo: TipoCampo, perfil: Perfil,
-                   alvo: schemas.Alvo) -> AlvoResolvido:
+                   alvo: schemas.Alvo,
+                   cena_contexto: schemas.CenaContexto | None = None) -> AlvoResolvido:
     """Confere que o alvo existe, é do perfil e casa com o tipo (400 `invalid_ia` senão)."""
     et, eid = alvo.entity_type, alvo.entity_id
+    if tipo.entidade == "cena":
+        return _resolver_cena(db, perfil, alvo, cena_contexto)
     if tipo.entidade == "asset":
         if et != "asset" or eid is None:
             raise invalid("Este campo é de um asset")
@@ -164,7 +218,8 @@ def _valor_atual(tipo: TipoCampo, valor: schemas.Valor) -> dict[str, Any]:
     dados = valor.model_dump(exclude_none=True)
     lim = tipo.limites
     permitidos = {"texto": {"texto"}, "lista": {"itens"}, "sugestoes": {"itens"},
-                  "textos_postagem": {"titulo", "descricao", "hashtags"}}[tipo.formato]
+                  "textos_postagem": {"titulo", "descricao", "hashtags"},
+                  "campos_cena": {"cena"}}[tipo.formato]
     if set(dados) - permitidos:
         raise invalid(f"valorAtual: este campo aceita só {', '.join(sorted(permitidos))}")
     maximo = _limite(lim.max_chars)
@@ -292,7 +347,8 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: A
     efetivo = _efetivo(tipo, guias)
     enviado_perfil, enviado_conta = prompt.guias_enviados(tipo, guias)
     contexto = ctx_mod.montar(db, tipo, perfil, asset=alvo.asset, corte=alvo.corte,
-                              conta=alvo.conta, postagem=alvo.postagem, conteudo=alvo.conteudo)
+                              conta=alvo.conta, postagem=alvo.postagem, conteudo=alvo.conteudo,
+                              cena=alvo.cena)
     if tipo.entidade == "guia":  # spec 017: de quem é o guia que está sendo montado
         dono = "o perfil inteiro (vale para todas as contas)" if alvo.conta is None else (
             "a conta " + ctx_mod.plataforma_label(alvo.conta.platform, alvo.conta.platform_name)
@@ -370,7 +426,9 @@ def gerar(db: Session, actor: Actor, body: schemas.GerarIn,
     perfil = get_perfil_or_404(db, body.perfil_id)
     if perfil.archived:
         raise _arquivado("Este perfil")
-    alvo = _resolver_alvo(db, tipo, perfil, body.alvo)
+    if body.cena_contexto is not None and tipo.entidade != "cena":
+        raise invalid("cenaContexto: só nos campos da cena")
+    alvo = _resolver_alvo(db, tipo, perfil, body.alvo, body.cena_contexto)
     valor_atual = _valor_atual(tipo, body.valor_atual)
     aceitos, rejeitados = _selecao(tipo, body.selecao)
     anteriores = _anteriores(db, actor, tipo, perfil, alvo, body.sessao_id, body.anteriores)

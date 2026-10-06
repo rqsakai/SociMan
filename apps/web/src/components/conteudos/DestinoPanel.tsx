@@ -65,7 +65,7 @@ import { ExecucaoStatus } from "@/components/publicacao/ExecucaoStatus";
 import { DesempenhoDestino } from "@/components/metricas/DesempenhoDestino";
 import { LegendaFinal } from "@/components/publicacao/LegendaFinal";
 import { api } from "@/lib/api";
-import { invalidarAnotacoes, useAnotacoesDisponiveis, type Anotacao } from "@/lib/anotacoes";
+import { camposTexto, invalidarAnotacoes, useAnotacoesDisponiveis, type Anotacao } from "@/lib/anotacoes";
 import { destinoVersionsKey, estadoEfetivoTone, invalidarConteudos, propostaDe, useEhDono } from "@/lib/conteudos";
 import { comRebase, useFormRebase, type IaAlvo, type IaAplicacao, type TextosPostagem } from "@/lib/ia";
 import { contaPlatformText, errorText, perfilKey } from "@/lib/perfis";
@@ -365,7 +365,7 @@ export function DestinoPanel({
 
   // "Aplicar" de uma proposta de texto: preenche o formulário, sem salvar (spec 009, FR-020).
   function aplicarProposta(a: Anotacao) {
-    const c = a.campos;
+    const c = camposTexto(a);
     if (!c) return;
     if (c.titulo != null) setTitulo(c.titulo.slice(0, TITULO_MAX));
     if (c.descricao != null) setDescricao(c.descricao.slice(0, DESCRICAO_MAX));

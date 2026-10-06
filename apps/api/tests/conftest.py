@@ -85,6 +85,11 @@ _TABLES += ("metricas_studio_dias", "metricas_studio_importacoes")
 # Spec 009: clientes MCP, registro (só inserção: o trigger de linha não dispara no TRUNCATE) e
 # anotações. A linha única de `mcp_config` volta desligada em `_clean_state`.
 _TABLES += ("mcp_chamadas", "anotacoes", "mcp_clientes")
+# Spec 013: importações da agência (os itens são só de inserção; o TRUNCATE passa).
+_TABLES += ("agencia_importacao_itens", "agencia_importacoes")
+# Spec 010: cenas, tomadas, usos e padrões (a FK deferível da tomada escolhida e o CASCADE
+# cobrem a ordem).
+_TABLES += ("cena_usos", "cena_tomadas", "cenas", "cena_padroes")
 
 
 @pytest.fixture(autouse=True)

@@ -101,6 +101,11 @@ class Settings(BaseSettings):
     mcp_habilitado: bool = False
     mcp_origens_permitidas: Annotated[list[str], NoDecode] = []
 
+    # Importação da agência (spec 013, R1): as pastas da agência, montadas só leitura no
+    # container da API (`AGENCIA_SHARED_HOST`/`AGENCIA_CLIPES_HOST` no compose).
+    agencia_shared_dir: str = "/agencia/shared"
+    agencia_clipes_dir: str = "/agencia/clipes"
+
     @field_validator("mcp_origens_permitidas", mode="before")
     @classmethod
     def _origens(cls, value: object) -> object:

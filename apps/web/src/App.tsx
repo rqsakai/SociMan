@@ -52,6 +52,12 @@ import ContaStudio from "./pages/perfis/ContaStudio";
 // 009-mcp
 import Agentes from "./pages/configuracoes/Agentes";
 import Propostas from "./pages/propostas/Propostas";
+// 013-importacao
+import ImportacaoAgencia from "./pages/configuracoes/ImportacaoAgencia";
+import ImportacaoDetalhe from "./pages/configuracoes/ImportacaoDetalhe";
+// 010-cenas
+import CenaDetalhe, { CenaNova } from "./pages/cenas/CenaDetalhe";
+import CenaHistorico from "./pages/cenas/CenaHistorico";
 
 // 019-analytics: /app/metricas carrega sob demanda (traz o ECharts, chunk `graficos`).
 const Analytics = lazy(() => import("./pages/analytics/Analytics"));
@@ -149,6 +155,10 @@ export default function App() {
                 <Route path="/app/assistente-ia" element={<AssistenteIa />} />
                 <Route path="/app/assistente-ia/regras/:tipo" element={<RegraDetalhe />} />
                 <Route path="/app/propostas" element={<Propostas />} />
+                {/* 010-cenas */}
+                <Route path="/app/perfis/:id/cenas/nova" element={<CenaNova />} />
+                <Route path="/app/cenas/:id" element={<CenaDetalhe />} />
+                <Route path="/app/cenas/:id/historico" element={<CenaHistorico />} />
                 <Route
                   path="/app/usuarios"
                   element={
@@ -173,6 +183,9 @@ export default function App() {
                     </RequireOwner>
                   }
                 />
+                {/* 013-importacao: membro vê o estado e as importações; ler, confirmar e desfazer são do dono */}
+                <Route path="/app/configuracoes/importacao" element={<ImportacaoAgencia />} />
+                <Route path="/app/configuracoes/importacao/:id" element={<ImportacaoDetalhe />} />
                 <Route
                   path="/app/configuracoes/agentes"
                   element={

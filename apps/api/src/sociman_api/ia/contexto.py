@@ -183,14 +183,63 @@ def _postagem(tipo: TipoCampo, db: Session, corte: Corte | None, conta: Conta,
     return entidade, terceiros
 
 
+@dataclass(frozen=True)
+class CenaInfo:
+    """Spec 010: o que a IA da cena recebe como contexto (da cena salva ou do formulário, com a
+    posse conferida). A descrição do avatar e o cenário vão só como contexto: não são campos."""
+
+    avatar: Asset | None = None
+    arquivo_rotulo: str | None = None  # o look ou a pose escolhidos
+    cenario: Asset | None = None
+    produto_nome: str | None = None
+    produto_com_foto: bool = False
+    fala: str | None = None
+    duracao_s: int | None = None
+    modo: str | None = None
+    atuais: tuple[tuple[str, str], ...] = ()  # (campo, valor salvo) dos 4 campos da IA
+
+
+_ROTULOS_CENA = {"acao": "Ação atual", "camera": "Detalhe de câmera atual",
+                 "estilo": "Iluminação e estilo atuais", "audio": "Áudio ambiente atual"}
+
+
+def _cena(tipo: TipoCampo, cena: CenaInfo) -> list[tuple[str, str]]:
+    linhas: list[tuple[str, str]] = []
+    if cena.avatar is not None:
+        linhas.append(("Avatar (descrição fixa; não muda)", _corta(cena.avatar.prompt, 2000)
+                       or cena.avatar.name))
+        if cena.avatar.image_rules:
+            linhas.append(("Regras de imagem do avatar", _corta(cena.avatar.image_rules, 2000)))
+        if cena.arquivo_rotulo:
+            linhas.append(("Look ou pose da cena", cena.arquivo_rotulo))
+    if cena.cenario is not None:
+        linhas.append(("Cenário (prompt do ambiente; não muda)",
+                       _corta(cena.cenario.prompt, 2000) or cena.cenario.name))
+    if cena.produto_nome:
+        foto = " (com foto de referência)" if cena.produto_com_foto else " (sem foto)"
+        linhas.append(("Produto", cena.produto_nome + foto))
+    if cena.duracao_s:
+        linhas.append(("Duração", f"{cena.duracao_s} s"))
+    if cena.modo:
+        linhas.append(("Modo do Flow", cena.modo))
+    if cena.fala:
+        linhas.append(("Fala para a câmera (pt-BR)", cena.fala))
+    linhas += [(_ROTULOS_CENA[c], v) for c, v in cena.atuais if c not in tipo.campos and v]
+    return linhas
+
+
 def montar(db: Session, tipo: TipoCampo, perfil: Perfil, *, asset: Asset | None = None,
            corte: Corte | None = None, conta: Conta | None = None,
-           postagem: Any | None = None, conteudo: Any | None = None) -> Contexto:
+           postagem: Any | None = None, conteudo: Any | None = None,
+           cena: CenaInfo | None = None) -> Contexto:
     bloco, kit_salvo = perfil_bloco(db, perfil)
-    personas = _personas(db, perfil.id, asset.id if asset is not None else None)
+    avatar = asset if asset is not None else (cena.avatar if cena is not None else None)
+    personas = _personas(db, perfil.id, avatar.id if avatar is not None else None)
     entidade: list[tuple[str, str]] = []
     terceiros: list[tuple[str, str]] = []
-    if tipo.entidade == "asset" and asset is not None:
+    if tipo.entidade == "cena" and cena is not None:
+        entidade = _cena(tipo, cena)
+    elif tipo.entidade == "asset" and asset is not None:
         entidade = _asset(tipo, asset)
     elif tipo.entidade == "kit":
         entidade = _kit(tipo, bloco)
@@ -201,7 +250,7 @@ def montar(db: Session, tipo: TipoCampo, perfil: Perfil, *, asset: Asset | None 
     faltante = []
     if not kit_salvo:
         faltante.append("kit")
-    if not personas and not (asset is not None and asset.tipo == AssetTipo.avatar):
+    if not personas and not (avatar is not None and avatar.tipo == AssetTipo.avatar):
         faltante.append("persona")
     if tipo.entidade == "postagem" and (corte is not None or conteudo is not None) \
             and not (corte is not None and (corte.transcript or "").strip()):

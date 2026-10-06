@@ -23,7 +23,7 @@ from typing import Any, Literal
 from pydantic import BaseModel
 
 from sociman_api.ia import guia as guia_mod
-from sociman_api.ia.tipos import TipoCampo
+from sociman_api.ia.tipos import CAMPOS_CENA_IA, LIMITES_CENA, TipoCampo
 from sociman_api.postagem import textos  # normalizar_hashtags e os limites da postagem
 
 EXPLICACAO_MAX = 400
@@ -83,10 +83,22 @@ class PropostaVariacoes(BaseModel):
     avisos: list[str]
 
 
+class PropostaCamposCena(BaseModel):
+    """Spec 010 (`cena.ajustar`): só as 4 chaves que vão ao prompt; texto vazio = sem mudança.
+    O schema fechado descarta qualquer outra (a descrição do avatar não é campo da cena)."""
+
+    acao: str
+    camera: str
+    estilo: str
+    audio: str
+    explicacao: str
+    avisos: list[str]
+
+
 SCHEMAS: dict[str, type[BaseModel]] = {
     "texto": PropostaTexto, "lista": PropostaLista, "sugestoes": PropostaSugestoes,
     "textos_postagem": PropostaTextosPostagem, "guia": PropostaGuia,
-    "variacoes": PropostaVariacoes,
+    "variacoes": PropostaVariacoes, "campos_cena": PropostaCamposCena,
 }
 VARIACOES = 3
 
@@ -195,6 +207,11 @@ def problemas(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
             erros.extend(f"variação {n}: {e}" for e in _problemas_postagem(v, fixas))
     elif isinstance(parsed, PropostaGuia):
         erros.extend(_problemas_guia(parsed))
+    elif isinstance(parsed, PropostaCamposCena):
+        if not parsed.acao.strip():
+            erros.append("a ação veio vazia")
+        erros.extend(f"{c} passou de {LIMITES_CENA[c]} caracteres"
+                     for c, v in _campos_cena(parsed).items() if len(v) > LIMITES_CENA[c])
     erros.extend(f"usou a palavra proibida {p}"
                  for p in guia_mod.achar_proibidas(_textos(parsed), efetivo.proibidas))
     return erros
@@ -211,7 +228,14 @@ def _textos(parsed: BaseModel) -> list[str]:
         return [parsed.titulo, parsed.descricao, *parsed.hashtags]
     if isinstance(parsed, PropostaVariacoes):
         return [t for v in parsed.variacoes for t in (v.titulo, v.descricao, *v.hashtags)]
+    if isinstance(parsed, PropostaCamposCena):
+        return list(_campos_cena(parsed).values())
     return []
+
+
+def _campos_cena(parsed: "PropostaCamposCena") -> dict[str, str]:
+    """As chaves preenchidas da proposta de cena, sem espaços nas pontas."""
+    return {c: getattr(parsed, c).strip() for c in CAMPOS_CENA_IA if getattr(parsed, c).strip()}
 
 
 # ---- hashtags fixas do guia (R6 da 017) ----
@@ -413,6 +437,16 @@ def finalizar(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
     elif isinstance(parsed, PropostaGuia):
         out.proposta, avisos = _ajustar_guia(parsed)
         out.avisos.extend(avisos)
+    elif isinstance(parsed, PropostaCamposCena):
+        campos = _campos_cena(parsed)
+        if "acao" not in campos:
+            raise Invalida("a ação veio vazia")
+        maiores = [c for c, v in campos.items() if len(v) > LIMITES_CENA[c]]
+        if maiores:
+            out.excede = True
+            out.avisos.append(f"{', '.join(maiores)} passa(m) do limite; edite antes de "
+                              "aplicar.")
+        out.proposta = {"cena": campos}
     else:  # pragma: no cover
         raise TypeError(type(parsed).__name__)
     _avisos_do_guia(tipo, parsed, out, efetivo)

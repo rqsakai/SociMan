@@ -85,6 +85,15 @@ def variacoes(*titulos: str, hashtags: list[str] | None = None,
                      "explicacao": explicacao, "avisos": avisos or []}, **kw)
 
 
+def campos_cena(explicacao: str = "Ajustei a cena.", avisos: list[str] | None = None,
+                **campos: str) -> dict[str, Any]:
+    """Spec 010 (`cena.ajustar`): os 4 campos da cena."""
+    dados = {"acao": "lifts the lid slowly and smiles at the product",
+             "camera": "eye level, shallow depth of field", "estilo": "warm soft light",
+             "audio": "gentle kitchen ambience"} | campos
+    return mensagem(dados | {"explicacao": explicacao, "avisos": avisos or []})
+
+
 def _padrao(body: dict[str, Any]) -> dict[str, Any]:
     """Uma resposta válida para o schema pedido (sem fila)."""
     props = (body.get("output_config", {}).get("format", {}).get("schema", {})
@@ -95,6 +104,8 @@ def _padrao(body: dict[str, Any]) -> dict[str, Any]:
         return variacoes()
     if "tom" in props:
         return guia()
+    if "acao" in props:  # spec 010
+        return campos_cena()
     if "itens" in props:
         return itens("#dica", "#casa", "#achadinhos")
     base = fixture("valida")

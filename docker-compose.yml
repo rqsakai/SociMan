@@ -91,6 +91,10 @@ services:
       - "host.docker.internal:host-gateway"   # OpenShorts roda no host (:8000)
     volumes:
       - ./apps/api:/app   # código ao vivo; o venv fica em /opt/venv na imagem
+      # Spec 013 (R1): as pastas da agência, SÓ LEITURA (o SociMan nunca escreve nelas). Têm de
+      # existir no host antes de subir (senão o Docker as cria como root, armadilha 1).
+      - ${AGENCIA_SHARED_HOST:-../shared}:/agencia/shared:ro
+      - ${AGENCIA_CLIPES_HOST:-../media/clipes}:/agencia/clipes:ro
       # O pai do ponto de montagem, no mesmo caminho: a API sobe sem o HD (e nunca cria a pasta
       # de dados); com rslave, montar ou desmontar o HD no host aparece aqui sem reiniciar.
       - type: bind

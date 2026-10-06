@@ -40,9 +40,11 @@ from sociman_api.errors import ApiError
 
 MidiaKind = Literal["corte_original", "corte_marcado", "fonte", "marca_dagua", "fundo",
                     "imagem",  # imagem: qualquer `images.id` (biblioteca da 007)
-                    "conteudo_video"]  # vídeo próprio (spec 014)
+                    "conteudo_video",  # vídeo próprio (spec 014)
+                    "cena_tomada"]  # tomada de uma cena (spec 010)
 KINDS: frozenset[str] = frozenset(get_args(MidiaKind))
-VIDEO_KINDS: frozenset[str] = frozenset({"corte_original", "corte_marcado", "conteudo_video"})
+VIDEO_KINDS: frozenset[str] = frozenset({"corte_original", "corte_marcado", "conteudo_video",
+                                         "cena_tomada"})
 LINK_TTL = 60 * 60  # 1 h (interface)
 PATH_PREFIX = "/api/midia/"
 _DOMAIN = b"midia:"

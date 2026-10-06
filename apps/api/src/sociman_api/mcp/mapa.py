@@ -167,6 +167,24 @@ TOOLS: dict[str, Tool] = {
                             "disponível)."),
     "integracoes_get": _l("Integrações", "Quais integrações estão configuradas (sem nenhum valor "
                           "de chave)."),
+    # ---- cenas (spec 010) ----
+    "cenas_list": _l("Listar cenas", "Cenas do perfil para o Flow/Veo (tomadas de até 8 s), "
+                     "com status (rascunho, pronta, usada), filtros por avatar, cenário, foto do "
+                     "produto, tag e busca (`q`), e paginação (`cursor`).", limite_padrao=50),
+    "cenas_get": _l("Ver cena", "Detalhe de uma cena: campos, prompt montado em inglês (ao vivo "
+                    "em rascunho, congelado em pronta/usada), negative prompt, ingredientes "
+                    "(imagens por link), avisos e onde foi usada. Para propor mudanças, grave "
+                    "uma `proposta_cena` com `anotacoes_create`."),
+    "cenas_versions": _versoes("uma cena"),
+    "cenas_tomadas_list": _l("Listar tomadas da cena", "Tomadas (vídeos gerados no Flow) de uma "
+                             "cena, com duração, proporção, nota e o prompt usado em cada uma. "
+                             "Sem link de vídeo."),
+    "cenas_tomadas_versions": _versoes("uma tomada"),
+    "cenas_padroes_get": _l("Ver padrões das cenas", "Estilo e negative prompt padrão das cenas "
+                            "do perfil (usados quando a cena deixa o campo vazio)."),
+    "cenas_padroes_versions": _versoes("os padrões das cenas"),
+    "conteudos_cenas_get": _l("Cenas de um conteúdo", "Cenas que compõem um conteúdo de vídeo "
+                              "próprio."),
     # ---- anotações (leitura) ----
     "anotacoes_list": _l("Listar anotações e propostas", "Anotações e propostas presas aos itens, "
                          "com filtros (alvo, perfil, situação, tipo, cliente) e paginação "
@@ -174,12 +192,28 @@ TOOLS: dict[str, Tool] = {
     "anotacoes_get": _l("Ver anotação", "Detalhe de uma anotação ou proposta, com o item alvo e "
                         "a situação (aberta, aplicada, descartada, arquivada)."),
     "anotacoes_versions": _versoes("uma anotação"),
+    # ---- importação da agência (spec 013, leitura do registro) ----
+    "agencia_importacoes_list": _l("Listar importações da agência", "Importações do markdown da "
+                                   "agência para o SociMan (quem, quando, estado e contagens), "
+                                   "mais recentes primeiro. O SociMan é a fonte da verdade "
+                                   "depois da importação."),
+    "agencia_importacoes_get": _l("Ver importação da agência", "Itens de uma importação: arquivo "
+                                  "e trecho de origem, situação, escolha do dono, resultado e a "
+                                  "entidade criada ou alterada. Filtros `situacao`, `tipo`, "
+                                  "`perfil`."),
     # ---- escopo `propostas` (escritas do primeiro corte, FR-018) ----
     "anotacoes_create": Tool(
         "Criar anotação ou proposta",
         "Grava uma observação ou uma proposta de texto presa a um item (perfil, conta, canal, "
         "vídeo-fonte, corte, conteúdo ou destino). A proposta de texto (título, descrição, "
-        "hashtags) só vale em destino e não muda o destino: o dono aplica ou descarta.",
+        "hashtags) só vale em destino e não muda o destino: o dono aplica ou descarta. "
+        "Proposta de cena (spec 010): `tipo = \"proposta_cena\"` com alvo `perfil` (cena "
+        "nova) ou `cena` (alteração; nunca numa cena usada) e `campos` com os campos da cena "
+        "em camelCase (nome, avatarId, avatarArquivoId, cenarioId, cenarioArquivoId, plano, "
+        "movimento, camera, acao em inglês, fala em pt-BR, textoTela, estilo, audio, duracaoS "
+        "4/6/8, modo, quadroInicial, quadroFinal, produtoNome, produtoImagemId, negative). Os "
+        "ids são assets do perfil (veja `assets_list`). Não cria nem altera a cena: o humano "
+        "aceita pelo formulário.",
         escopo="propostas", escrita=True, entidade="anotacao"),
     "anotacoes_update": Tool(
         "Editar anotação", "Edita o texto ou os campos de uma anotação sua que ainda está "
@@ -212,13 +246,18 @@ _PROIBIDAS_II = {op: "direito e envio para corte são do dono (princípio II)" f
 _PROIBIDAS_VII = {op: "reverter e decidir propostas é do dono (princípio VII)" for op in (
     "assets_revert", "canais_revert", "contas_revert", "conteudos_revert", "destinos_revert",
     "envios_padroes_revert", "guias_conta_revert", "guias_perfil_revert", "ia_regras_revert",
-    "kit_revert", "perfis_revert", "anotacoes_revert", "anotacoes_descartar")}
+    "kit_revert", "perfis_revert", "anotacoes_revert", "anotacoes_descartar",
+    # spec 010
+    "cenas_revert", "cenas_tomadas_revert", "cenas_padroes_revert")}
 _PROIBIDAS_DONO = {op: "escolha do dono (vínculo do post, guia e regras)" for op in (
     "destinos_vinculo_criar", "destinos_vinculo_desfazer", "guias_perfil_update",
     "guias_conta_update", "ia_regras_update", "ia_regras_padrao")}
 # Spec 020: importar (prévia, confirmar) e desfazer o histórico do TikTok Studio são do dono.
 _PROIBIDAS_DONO |= {op: "importação do TikTok Studio é do dono (spec 020)" for op in (
     "studio_previa", "studio_confirmar", "studio_desfazer")}
+# Spec 013: ler a pasta, confirmar e desfazer a importação da agência são do dono humano.
+_PROIBIDAS_DONO |= {op: "importação da agência é do dono (spec 013)" for op in (
+    "agencia_previa", "agencia_confirmar", "agencia_desfazer")}
 _PROIBIDAS_PESSOAS = {op: "pessoas, autenticação e segurança" for op in (
     "users_list", "users_create", "users_update", "users_set_password",
     "users_resend_verification", "auth_login", "auth_logout", "auth_refresh", "auth_me",
@@ -238,13 +277,14 @@ PROIBIDAS: dict[str, str] = {**_PROIBIDAS_I, **_PROIBIDAS_II, **_PROIBIDAS_VII,
 _FORA_UPLOAD = {op: "upload ou binário (só pela interface)" for op in (
     "assets_upload", "assets_file_upload", "envios_arquivo", "conteudos_video_proprio",
     "cortes_upload", "fontes_upload", "perfis_upload_banner", "perfis_upload_logo", "midia_get",
-    "fontes_padrao_file")}
+    "fontes_padrao_file", "cenas_tomadas_upload")}
 _FORA_DEPRECATED = {op: "rota deprecated" for op in (
     "fundos_list", "fundos_upload", "marca_dagua_list", "marca_dagua_upload",
     "postagens_sugestoes", "postagens_sugerir")}
 _FORA_INFRA = {op: "infraestrutura ou apoio da interface" for op in (
     "health_api_health_get", "app_config", "perfis_slug_suggestion", "notificacoes_list",
-    "notificacoes_marcar_lidas", "anotacoes_resumo")}
+    "notificacoes_marcar_lidas", "anotacoes_resumo",
+    "agencia_estado")}  # spec 013: estado das pastas da agência (apoio da tela)
 _FORA_ESCRITAS = {op: "escrita fora do primeiro corte (FR-018/FR-023)" for op in (
     "perfis_create", "perfis_update", "perfis_archive", "perfis_restore", "perfis_clear_banner",
     "perfis_clear_logo", "contas_create", "contas_update", "contas_archive", "contas_restore",
@@ -255,7 +295,12 @@ _FORA_ESCRITAS = {op: "escrita fora do primeiro corte (FR-018/FR-023)" for op in
     "conteudos_update", "conteudos_archive", "conteudos_restore", "conteudos_add_destino",
     "cortes_update_hook", "cortes_archive", "cortes_restore", "destinos_archive",
     "destinos_restore", "destinos_pedir_aprovacao", "destinos_lote_pedir_aprovacao",
-    "envios_archive", "agendamentos_sequencia_previa")}
+    "envios_archive", "agendamentos_sequencia_previa",
+    # spec 010: o agente só propõe cenas (`proposta_cena`); escrever é do humano
+    "cenas_create", "cenas_update", "cenas_duplicar", "cenas_pronta", "cenas_rascunho",
+    "cenas_remontar", "cenas_archive", "cenas_restore", "cenas_tomadas_escolher",
+    "cenas_tomadas_update", "cenas_tomadas_archive", "cenas_tomadas_restore",
+    "conteudos_cenas_put", "cenas_padroes_put")}
 _FORA_DONO = {op: "IA paga ou dado de dono" for op in (
     "ia_gerar", "ia_guia_montar", "ia_guia_testar", "ia_chamadas_list", "ia_chamadas_get",
     "ia_chamadas_descartar", "ia_resumo", "ia_regras_versions",

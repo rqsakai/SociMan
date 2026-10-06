@@ -6,10 +6,11 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from pydantic import StringConstraints
+from pydantic import Field, StringConstraints
 
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.canais.schemas import PerfilRef
+from sociman_api.cenas.schemas import CenaResumo
 from sociman_api.conteudos.consulta import Situacao
 from sociman_api.conteudos.models import ConteudoOrigem as Origem
 from sociman_api.perfis.schemas import UserRef, VersionNumber
@@ -107,6 +108,7 @@ class Conteudo(ConteudoItem):
     updated_by: UserRef | None
     destinos: list[Destino]  # type: ignore[assignment]  # todos, inclusive os arquivados
     proposta_openshorts: PropostaOpenshorts | None  # null fora da origem corte do OpenShorts
+    cenas: list[CenaResumo] = Field(default_factory=list)  # spec 010: as cenas que compõem o vídeo próprio
 
 
 class ConteudoOut(CamelModel):

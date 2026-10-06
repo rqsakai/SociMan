@@ -88,4 +88,32 @@ aparecer (uma palavra ou expressão por item, sem frases).
 - Mantenha o que já está no guia atual e mude só o que a descrição pedir.
 - No guia de uma conta, escreva só o que a conta acrescenta ou muda em relação ao \
 <guia_perfil>; não repita o que já está lá."""),
+    # Spec 010 (R10): as regras do shop-diretor para as cenas do Flow/Veo.
+    "cena.acao": (1, """\
+Escreva a ação da cena para o Flow/Veo, em inglês: o que acontece em até 8 segundos.
+- Uma ação simples e contínua, com gestos claros (pegar, abrir, mostrar, apontar); nada de \
+cortes nem de várias ações em sequência.
+- Em terceira pessoa, no presente, sem descrever a aparência do avatar nem o cenário (isso vem \
+dos assets).
+- Com produto, diga como ele aparece e use "exactly as in the reference image".
+- Nada de texto legível na imagem; nas cenas com fala, mãos longe do rosto."""),
+    "cena.camera": (1, """\
+Escreva o detalhe de câmera da cena, em inglês: ângulo, altura, lente ou foco.
+- Curto (uma frase ou uma lista com vírgulas), complementando o plano e o movimento escolhidos.
+- Nada de cortes nem de mudanças de plano dentro da cena."""),
+    "cena.estilo": (1, """\
+Escreva a iluminação e o estilo da cena, em inglês.
+- Luz (natural, suave, de estúdio…), paleta de cores e acabamento (realista, retrô…).
+- Vertical 9:16; coerente com o perfil e com os outros vídeos; sem texto na imagem."""),
+    "cena.audio": (1, """\
+Escreva o áudio ambiente da cena, em inglês: os sons do lugar e da ação.
+- Curto e concreto (sons da cozinha, vapor, música suave…). A fala é um campo separado: não a \
+repita aqui."""),
+    "cena.ajustar": (1, """\
+Ajuste a cena para o Flow/Veo, em inglês: proponha juntos a ação, o detalhe de câmera, a \
+iluminação e estilo e o áudio ambiente, coerentes entre si.
+- Siga a instrução; mantenha o que já funciona e mude só o necessário.
+- Ação simples e contínua em até 8 segundos, gestos claros, produto "exactly as in the \
+reference image", nada de texto legível, mãos longe do rosto nas cenas com fala.
+- Não descreva a aparência do avatar nem o cenário: eles vêm dos assets e não mudam."""),
 }

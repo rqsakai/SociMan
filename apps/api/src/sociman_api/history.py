@@ -10,7 +10,9 @@ Como uma entidade de domínio usa este módulo:
 
 import enum
 import uuid
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import date, datetime
 from typing import Any, Protocol
 
@@ -76,6 +78,22 @@ Index(
 )
 
 
+# Spec 013 (R8): a origem `importacao` de toda versão gravada dentro de `origem_importacao(...)`
+# (o service chamado não muda de assinatura; o `record` soma `{"importacao": …}` aos `details`).
+_ORIGEM_IMPORTACAO: ContextVar[dict[str, Any] | None] = ContextVar("origem_importacao",
+                                                                  default=None)
+
+
+@contextmanager
+def origem_importacao(origem: Mapping[str, Any]) -> Iterator[None]:
+    """`{"id", "arquivo", "trecho"}` da importação da agência que está gravando."""
+    token = _ORIGEM_IMPORTACAO.set(dict(origem))
+    try:
+        yield
+    finally:
+        _ORIGEM_IMPORTACAO.reset(token)
+
+
 class ActorLike(Protocol):
     """O `Actor` da auth (ou qualquer objeto com `kind` e `user_id`). O `mcp_client_id` (spec
     009) é lido com `getattr`: atores sem ele valem como `None`."""
@@ -132,6 +150,9 @@ def record(
         entity.version = 1
     else:
         entity.version += 1
+    origem = _ORIGEM_IMPORTACAO.get()
+    if origem is not None:
+        details = {**(details or {}), "importacao": origem}
     before_json = _jsonable(before) if before is not None else None
     after_json = _jsonable(after)
     row = EntityVersion(

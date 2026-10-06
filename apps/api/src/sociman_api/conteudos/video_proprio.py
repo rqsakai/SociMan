@@ -74,36 +74,43 @@ def _titulo(up: Spooled) -> str:
 
 
 def create(db: Session, actor: Actor, perfil_id: uuid.UUID, up: Spooled) -> Conteudo:
+    return create_de_arquivo(db, actor, perfil_id, up.path, up.filename, _titulo(up), up.size,
+                             up.sha256)
+
+
+def create_de_arquivo(db: Session, actor: Actor, perfil_id: uuid.UUID, path: Path,
+                      filename: str, titulo: str, size: int, sha256: str) -> Conteudo:
+    """O miolo do envio com o vídeo já no disco (o spool da rota ou, na importação da agência
+    da spec 013, o arquivo na montagem só leitura). O `path` só é lido."""
     perfil = get_perfil_or_404(db, perfil_id)
     if perfil.archived:
         raise ApiError(409, "perfil_archived", "O perfil está arquivado")
-    info = probe(up.path, max_duration_s=MAX_DURATION_S, min_duration_s=MIN_DURATION_S,
+    info = probe(path, max_duration_s=MAX_DURATION_S, min_duration_s=MIN_DURATION_S,
                  max_bytes=max_bytes(), too_long=TOO_LONG, too_short=TOO_SHORT,
                  too_big=TOO_BIG)
     conteudo_id = uuid.uuid4()
     with tempfile.TemporaryDirectory(dir=cortes_service.spool_dir(), prefix="proprio-") as tmp:
         poster = Path(tmp) / "poster.jpg"
         try:
-            compose.extract_frame(up.path, min(1.0, info.duration_s / 2), poster)
+            compose.extract_frame(path, min(1.0, info.duration_s / 2), poster)
         except compose.ComposeError:
             raise InvalidVideo("Não deu para ler um quadro do vídeo") from None
         p_key = poster_key(perfil_id, conteudo_id)
         storage.put(p_key, poster.read_bytes(), "image/jpeg", bucket="imagens")
     v_key = video_key(conteudo_id, info.content_type)
-    storage.put_file(v_key, up.path, info.content_type, bucket="videos")
+    storage.put_file(v_key, path, info.content_type, bucket="videos")
 
     conteudo = Conteudo(
         id=conteudo_id, perfil_id=perfil_id, origem=ConteudoOrigem.video_proprio,
-        titulo=_titulo(up), video_key=v_key, video_content_type=info.content_type,
-        video_bytes=up.size, video_sha256=up.sha256, original_filename=up.filename,
+        titulo=titulo[:TITULO_MAX], video_key=v_key, video_content_type=info.content_type,
+        video_bytes=size, video_sha256=sha256, original_filename=filename,
         duration_ms=info.duration_ms, width=info.width, height=info.height, poster_key=p_key,
         created_by=actor.user_id, updated_by=actor.user_id,
     )
     db.add(conteudo)
     db.flush()
     history.record(db, actor, ENTITY, conteudo, "created", None, history.snapshot(conteudo),
-                   {"arquivo": {"nome": up.filename, "bytes": up.size, "sha256": up.sha256}})
+                   {"arquivo": {"nome": filename, "bytes": size, "sha256": sha256}})
     db.flush()
     db.refresh(conteudo)
     return conteudo
-

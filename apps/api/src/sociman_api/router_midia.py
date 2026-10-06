@@ -124,6 +124,16 @@ def resolve(db: Session, kind: str, entity_id: uuid.UUID) -> Target:
         stem = f"{_slug(db, conteudo.perfil_id)}-{conteudo.created_at:%Y-%m-%d}"
         return Target("videos", conteudo.video_key, conteudo.video_content_type,
                       f"{stem}-video.{ext}")
+    if kind == "cena_tomada":  # spec 010
+        from sociman_api.cenas.models import Cena, CenaTomada
+
+        tomada = db.get(CenaTomada, entity_id)
+        if tomada is None:
+            raise _not_found()
+        cena = db.get(Cena, tomada.cena_id)
+        ext = _VIDEO_EXT.get(tomada.content_type, "mp4")
+        stem = f"{_slug(db, cena.perfil_id) if cena else 'cena'}-tomada-{tomada.id.hex[:8]}"
+        return Target("videos", tomada.video_key, tomada.content_type, f"{stem}.{ext}")
     if kind in midia.VIDEO_KINDS:
         corte = db.get(Corte, entity_id)
         if corte is None:

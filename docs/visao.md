@@ -92,10 +92,20 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    validação real com o OpenClaw, T061, com o dono). Endpoint `/mcp` dentro da API (SDK `mcp`), tools do OpenAPI
    por mapa explícito (62 de leitura + 5 de propostas), token `smcp_` por agente, portão com `somente_humano`,
    limites, registro só de inserção, anotações e propostas. Guia: `docs/guia-mcp-openclaw.md`.
-10. `010-cenas`
+10. `010-cenas` 🚧 **API implementada** (`specs/010-cenas/`, 2026-10-06; telas e e2e em andamento; o teste no Flow
+   real e com o OpenClaw é com o dono). **Cena = tomada de até 8 s para o Flow/Veo; ambiente = cenário da 007.**
+   Biblioteca de cenas por perfil (avatar com look/pose, cenário, foto do produto, enquadramento, ação, fala),
+   prompt em inglês montado na ordem do shop-diretor (ao vivo em rascunho, congelado em pronta, "Remontar"),
+   ingredientes para baixar, tomadas no HD, vínculo com o vídeo próprio (`usada`), 5 tipos de IA `cena.*` e a
+   `proposta_cena` do agente pelo MCP (o humano aceita).
 11. `011-scripts`: roteiros por cena e avatar.
 12. `012-produtos-shop`
-13. `013-importacao`: migrar `../shared/perfis/*` e `../shared/shop/*` para o banco.
+13. `013-importacao` ✅ **implementada** (`specs/013-importacao/`, 2026-10-06): "Importar da agência" lê
+   `../shared` e `../media/clipes` por montagens só leitura e concilia com o banco (novo, igual, diverge, fora,
+   aguardando cota) numa prévia de 30 min; o dono humano confirma item a item (direito proposto conservador,
+   "manter o SociMan" como padrão), a gravação usa os services com histórico e a origem `importacao`,
+   reimportar não duplica, e desfazer arquiva o criado e reverte o trocado. O SociMan passa a ser a fonte da
+   verdade (os agentes leem pelo MCP).
 14. `014-central-de-conteudos` ✅ **implementada** (`specs/014-central-de-conteudos/`, 2026-09-30). Tela Conteúdos com todo
    vídeo publicável (cortes, vídeos próprios; depois avatar/afiliado), estado por conta, aprovação (donos aprovam,
    membros pedem), agendamento com modos, intervalo mínimo por conta, sequência com prévia, e a proposta do

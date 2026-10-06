@@ -62,18 +62,18 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ## Phase 1: Setup
 
-- [ ] T001 **Gate:**
+- [X] T001 **Gate:**
   - `ls apps/api/migrations/versions/` mostra a **`0015_cenas`** e nenhum `0016_*`;
     `docker compose exec api uv run alembic heads` mostra só `0015_cenas` (senão, pare e avise o líder);
   - `git status` só tem o esperado; `.specify/feature.json` aponta para a 013 (o líder cuida);
   - `ls ../shared/perfis ../media/clipes` existem no host (a montagem não pode criar pasta como root,
     armadilha 1).
-- [ ] T002 [P] `docker-compose.yml` (acréscimo, serviço `api`): volumes
+- [X] T002 [P] `docker-compose.yml` (acréscimo, serviço `api`): volumes
   `${AGENCIA_SHARED_HOST:-../shared}:/agencia/shared:ro` e `${AGENCIA_CLIPES_HOST:-../media/clipes}:/agencia/clipes:ro`;
   `docker-compose.e2e.yml`: `./e2e/fixtures/agencia/shared` e `./e2e/fixtures/agencia/clipes` nos mesmos
   destinos, `:ro`; `.env.example`: as 2 variáveis comentadas. Conferir `docker compose config` e, com a
   stack no ar, que `touch /agencia/shared/x` falha no container.
-- [ ] T003 [P] `e2e/fixtures/agencia/`: pasta sintética mínima (2 perfis de teste com `perfil.md`,
+- [X] T003 [P] `e2e/fixtures/agencia/`: pasta sintética mínima (2 perfis de teste com `perfil.md`,
   `fontes.md` com uma linha de cada status e uma sem YouTube, `pesquisa.md`, `registro-clipes.md` com 2
   linhas, 2 imagens PNG pequenas (uma com transparência), `shop/persona.md` + 1 imagem, um arquivo
   `nao-usar-ainda`, um `candidatos/…md`) e `clipes/<slug>/<data>/` com 2 MP4 de 2 s gerados por ffmpeg
@@ -83,33 +83,33 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ## Phase 2: Foundational (bloqueia todas as histórias)
 
-- [ ] T004 `agencia/models.py` + `migrations/versions/0016_importacao.py` (data-model): enums, as 2 tabelas,
+- [X] T004 `agencia/models.py` + `migrations/versions/0016_importacao.py` (data-model): enums, as 2 tabelas,
   CHECKs, índice parcial único de `processando`, trigger `agencia_itens_so_insercao`.
-- [ ] T005 [P] `tests/integration/test_migration_0016.py`: upgrade/downgrade/upgrade; trigger recusa UPDATE
+- [X] T005 [P] `tests/integration/test_migration_0016.py`: upgrade/downgrade/upgrade; trigger recusa UPDATE
   de outra coluna e DELETE; o índice recusa duas `processando`.
-- [ ] T006 [P] `config.py` (acréscimo): `agencia_shared_dir` e `agencia_clipes_dir`.
-- [ ] T007 [P] `agencia/pastas.py` (R2): `varrer(raiz)` com `followlinks=False`, link só dentro da raiz,
+- [X] T006 [P] `config.py` (acréscimo): `agencia_shared_dir` e `agencia_clipes_dir`.
+- [X] T007 [P] `agencia/pastas.py` (R2): `varrer(raiz)` com `followlinks=False`, link só dentro da raiz,
   limites (2.000 entradas, 2 MB markdown, 20 MB imagem), `sha256_arquivo` em blocos, erros
   `agencia_pasta_indisponivel` e `agencia_pasta_grande`. Teste unitário `test_agencia_pastas.py` com
   `tmp_path` (link para fora, limite, pasta vazia).
-- [ ] T008 [P] `agencia/markdown.py` (R3): `normalizar`, `frontmatter`, `secoes`, `campos`, `tabelas`,
+- [X] T008 [P] `agencia/markdown.py` (R3): `normalizar`, `frontmatter`, `secoes`, `campos`, `tabelas`,
   `links`. `tests/unit/test_agencia_markdown.py` com variações reais de agente (negrito, crases, nota antes
   da tabela, `|` escapado, valor em várias linhas, "A DEFINIR").
-- [ ] T009 [P] `agencia/mapa.py` (R1): `MAPA` e `classificar(caminho)`. `tests/unit/test_agencia_mapa.py`:
+- [X] T009 [P] `agencia/mapa.py` (R1): `MAPA` e `classificar(caminho)`. `tests/unit/test_agencia_mapa.py`:
   **cada um dos 71 caminhos do levantamento** (lista literal no teste, sem ler a pasta real) cai no leitor
   ou no motivo esperado; caminho desconhecido → "fora do mapeamento".
-- [ ] T010 [P] `agencia/itens.py` (R4): `Item`, situações, motivos e `chave_*` por tipo.
-- [ ] T011 `history.py` (acréscimo, R8): `origem_importacao` (contextvar) e `record` soma
+- [X] T010 [P] `agencia/itens.py` (R4): `Item`, situações, motivos e `chave_*` por tipo.
+- [X] T011 `history.py` (acréscimo, R8): `origem_importacao` (contextvar) e `record` soma
   `{"importacao": …}` aos `details` quando ativo. Teste unitário: fora do contexto, nada muda.
-- [ ] T012 `conteudos/video_proprio.py`: extrair `create_de_arquivo(db, actor, perfil_id, path, filename,
+- [X] T012 `conteudos/video_proprio.py`: extrair `create_de_arquivo(db, actor, perfil_id, path, filename,
   titulo, size, sha256)` do `create` atual, que passa a chamá-la. Rodar os testes da 014 de vídeo próprio
   (sem mudança de comportamento).
-- [ ] T013 `agencia/schemas.py` e `agencia/router.py` com as 6 rotas (H e `RequireUser`), por enquanto
+- [X] T013 `agencia/schemas.py` e `agencia/router.py` com as 6 rotas (H e `RequireUser`), por enquanto
   `previa` e `confirmar` devolvendo só o esqueleto; `main.py` (acréscimo). `npm run gen:contract`.
-- [ ] T014 [P] `tests/integration/agencia_helpers.py`: gerador da pasta sintética (perfil, fontes,
+- [X] T014 [P] `tests/integration/agencia_helpers.py`: gerador da pasta sintética (perfil, fontes,
   pesquisa, ideias, registro, imagens com/sem transparência, persona, clipes por ffmpeg) com parâmetros
   para cada caso; `configurar_raizes(monkeypatch, tmp_path)`.
-- [ ] T015 [P] `tests/integration/test_agencia_permissoes.py`: membro → 403 `somente_dono`; cliente MCP e
+- [X] T015 [P] `tests/integration/test_agencia_permissoes.py`: membro → 403 `somente_dono`; cliente MCP e
   `system:*` → 403 `somente_humano` + evento; lista, detalhe e estado abertos ao membro (SC-005).
 
 **Checkpoint:** migration, leitura segura, parser e rotas protegidas prontos.
@@ -122,10 +122,10 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Testes da US1
 
-- [ ] T016 [P] [US1] `tests/unit/test_agencia_leitores.py`: `ler_index` e `ler_perfil` (frontmatter, §1 e
+- [X] T016 [P] [US1] `tests/unit/test_agencia_leitores.py`: `ler_index` e `ler_perfil` (frontmatter, §1 e
   §2; status mapeado; contas do §1 com URL; "Nenhum" não cria; nicho > 200 com aviso); arquivo sem seção
   obrigatória → `nao_reconhecido` com o que faltou.
-- [ ] T017 [P] [US1] `tests/integration/test_agencia_previa.py`: pasta com 1 perfil novo, 1 igual, 1 com
+- [X] T017 [P] [US1] `tests/integration/test_agencia_previa.py`: pasta com 1 perfil novo, 1 igual, 1 com
   nicho diferente (diverge) e 1 arquivo fora do mapa → situações, contagens e origem; **nenhuma linha do
   banco muda** (contagem de `entity_versions` e das tabelas antes e depois); prévia expira (TTL reduzido no
   teste) e é de uso único; pasta inacessível → 503; perfil arquivado → `diverge(arquivado)`; slug que colide
@@ -133,18 +133,18 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Implementação da US1
 
-- [ ] T018 [US1] `agencia/leitores.py`: `ler_index`, `ler_perfil` (perfil e contas).
-- [ ] T019 [US1] `agencia/conciliar.py`: perfil e conta (R5).
-- [ ] T020 [US1] `agencia/previa.py`: varrer as 2 raízes, aplicar o mapa (itens `fora` com motivo), chamar
+- [X] T018 [US1] `agencia/leitores.py`: `ler_index`, `ler_perfil` (perfil e contas).
+- [X] T019 [US1] `agencia/conciliar.py`: perfil e conta (R5).
+- [X] T020 [US1] `agencia/previa.py`: varrer as 2 raízes, aplicar o mapa (itens `fora` com motivo), chamar
   os leitores e a conciliação, montar contagens, `base` de versões, gravar no Redis (`SET EX`), resposta
   `Previa`. Rota `agencia_previa` completa; 409 `importacao_em_andamento`. `npm run gen:contract`.
-- [ ] T021 [US1] `agencia_estado` (FR-028): raízes disponíveis, última importação, por perfil "arquivos
+- [X] T021 [US1] `agencia_estado` (FR-028): raízes disponíveis, última importação, por perfil "arquivos
   mudaram" pelas impressões digitais.
-- [ ] T022 [P] [US1] SPA: `lib/importacao.ts`, `pages/configuracoes/ImportacaoAgencia.tsx` (estado, "Ler a
+- [X] T022 [P] [US1] SPA: `lib/importacao.ts`, `pages/configuracoes/ImportacaoAgencia.tsx` (estado, "Ler a
   pasta", cartões de contagem, `DataTable` com filtros por perfil/tipo/situação, motivo, tempo restante),
   `components/importacao/PreviaTabela.tsx` e `ItemDiverge.tsx` (lado a lado); rota no `App.tsx` e link na
   Sidebar (acréscimos); botões só para dono.
-- [ ] T023 [US1] e2e `e2e/importacao.spec.ts` (US1): ler a pasta do fixture e conferir contagens, um
+- [X] T023 [US1] e2e `e2e/importacao.spec.ts` (US1): ler a pasta do fixture e conferir contagens, um
   `diverge` lado a lado e um `fora` com motivo; membro não vê "Ler".
 
 **Checkpoint:** o dono vê o relatório completo de perfis e contas, e todo arquivo com destino ou motivo.
@@ -157,29 +157,29 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Testes da US2
 
-- [ ] T024 [P] [US2] `tests/integration/test_agencia_confirmar.py`: 3 novos + 1 diverge "manter" → 3
+- [X] T024 [P] [US2] `tests/integration/test_agencia_confirmar.py`: 3 novos + 1 diverge "manter" → 3
   criados, 1 mantido; diverge "usar o markdown" → versão nova com `details.importacao` e o dono como autor
   (SC-004), revertível pelo histórico da entidade; escolhas inválidas → 422; segunda confirmação → 409
   `previa_expirada`; entidade editada entre prévia e confirmação → item `nao_gravado(editado_desde_a_leitura)`
   e o resto gravado; dono desativado antes da tarefa de fundo → `falhou(dono_inativo)`; arquivo alterado → `nao_gravado(mudou_desde_a_leitura)`; erro no meio → `falhou`, 0
   mutações de domínio; importação `processando` parada há 10 min → `falhou(interrompida)` ao ler.
-- [ ] T025 [P] [US2] `tests/integration/test_agencia_idempotencia.py`: importar a pasta completa duas vezes
+- [X] T025 [P] [US2] `tests/integration/test_agencia_idempotencia.py`: importar a pasta completa duas vezes
   → na 2ª, 0 entidades, 0 versões e 0 objetos novos no MinIO (SC-002); linha nova num `fontes.md` → só ela
   `novo`.
 
 ### Implementação da US2
 
-- [ ] T026 [US2] `agencia/aplicar.py` (R8): validar escolhas contra a prévia (`GETDEL`), criar a importação
+- [X] T026 [US2] `agencia/aplicar.py` (R8): validar escolhas contra a prévia (`GETDEL`), criar a importação
   `processando` (history `created`), 202; tarefa de fundo: reconferir impressões, `datadir.ensure_writable`
   do total, gravar arquivos com progresso, transação única aplicando os itens pelos services sob
   `history.origem_importacao`, gravar `ImportacaoItem`s, fechar `concluida` ou `falhou` (history `updated`).
   Aplicadores de perfil e conta.
-- [ ] T027 [US2] Rotas `agencia_confirmar`, `agencia_importacoes_list`, `agencia_importacoes_get` (com
+- [X] T027 [US2] Rotas `agencia_confirmar`, `agencia_importacoes_list`, `agencia_importacoes_get` (com
   filtros e a regra da importação interrompida). `npm run gen:contract`.
-- [ ] T028 [P] [US2] SPA: escolhas na tabela (checkbox de `novo`, `NativeSelect` "Manter o SociMan / Usar o
+- [X] T028 [P] [US2] SPA: escolhas na tabela (checkbox de `novo`, `NativeSelect` "Manter o SociMan / Usar o
   markdown"), AlertDialog de confirmação com o resumo (criar, trocar, MB no HD), `Andamento.tsx` (polling 2 s),
   lista de importações e `ImportacaoDetalhe.tsx` (itens e resultado).
-- [ ] T029 [US2] e2e (US2): confirmar com uma troca, ver "concluída", ler de novo → 0 novos.
+- [X] T029 [US2] e2e (US2): confirmar com uma troca, ver "concluída", ler de novo → 0 novos.
 
 **Checkpoint:** MVP (US1 + US2) — perfis e contas importáveis com segurança.
 
@@ -191,11 +191,11 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Testes da US3
 
-- [ ] T030 [P] [US3] `tests/unit/test_agencia_direito.py`: tabela de proposta e de aceitos (Q1, FR-015a)
+- [X] T030 [P] [US3] `tests/unit/test_agencia_direito.py`: tabela de proposta e de aceitos (Q1, FR-015a)
   para os 5 status do markdown e a linha própria; identificação de link (`/channel/`, `/@`, `/c/`,
   `/user/`, sem esquema, com TikTok/Twitch junto, "não confirmado", "a confirmar"); texto da nota de
   evidência e corte no limite.
-- [ ] T031 [P] [US3] `tests/integration/test_agencia_direito.py` (fake do YouTube): canal novo com o direito
+- [X] T031 [P] [US3] `tests/integration/test_agencia_direito.py` (fake do YouTube): canal novo com o direito
   proposto e a troca para `parceiro`; existente `parceiro` para `autorizado` → `igual`; existente
   `parceiro` para `pendente` → `diverge(direito)`, mantido por padrão, trocado só com "usar o markdown" via
   `mudar_direito` (histórico do canal com o dono); canal ligado a outro perfil → só o vínculo; duas linhas
@@ -204,14 +204,14 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Implementação da US3
 
-- [ ] T032 [US3] `leitores.ler_fontes` (colunas obrigatórias/opcionais, células com vários links).
-- [ ] T033 [US3] `conciliar` de canal e vínculo (R6), com cache do `resolver` na prévia e
+- [X] T032 [US3] `leitores.ler_fontes` (colunas obrigatórias/opcionais, células com vários links).
+- [X] T033 [US3] `conciliar` de canal e vínculo (R6), com cache do `resolver` na prévia e
   `aguardando_cota`; aplicadores `create_canal` (+ `mudar_direito` para o status escolhido e a evidência),
   `update_canal` (vínculo) e `mudar_direito` (diverge).
-- [ ] T034 [P] [US3] SPA: `components/importacao/EscolhaDireito.tsx` (`NativeSelect` dos 4 status, com o
+- [X] T034 [P] [US3] SPA: `components/importacao/EscolhaDireito.tsx` (`NativeSelect` dos 4 status, com o
   status do markdown e a explicação "autorizado = risco aceito pelo dono, sem acordo"), lista "fontes para
   cadastrar à mão" com o texto original.
-- [ ] T035 [US3] e2e (US3): canal novo `autorizado` trocado para `parceiro`; um `pendente` existente como
+- [X] T035 [US3] e2e (US3): canal novo `autorizado` trocado para `parceiro`; um `pendente` existente como
   `parceiro` aparece como divergência de direito.
 
 ---
@@ -220,7 +220,7 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Testes da US4
 
-- [ ] T036 [P] [US4] `tests/integration/test_agencia_imagens.py`: imagem com SHA-256 existente → `igual` e
+- [X] T036 [P] [US4] `tests/integration/test_agencia_imagens.py`: imagem com SHA-256 existente → `igual` e
   0 objetos; poses no mesmo asset avatar; sticker com transparência → `sticker`, sem → `imagem`; logo só se
   o perfil não tiver; `nao-usar-ainda` → `fora`; imagem inválida → `fora` com o motivo; HD sem marcador ou
   abaixo do piso → importação `falhou` antes de gravar; imagem citada no `perfil.md` que não existe →
@@ -228,7 +228,7 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Implementação da US4
 
-- [ ] T037 [US4] Leitor e conciliação de imagens do perfil (R9) e aplicadores (`create_asset`,
+- [X] T037 [US4] Leitor e conciliação de imagens do perfil (R9) e aplicadores (`create_asset`,
   `upload_file` com `role`/`label`, logo pelo `service_imagens`).
 
 ---
@@ -237,20 +237,20 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Testes da US5
 
-- [ ] T038 [P] [US5] `tests/integration/test_agencia_guia_anotacoes.py`: guia vazio → versão 1 com tom,
+- [X] T038 [P] [US5] `tests/integration/test_agencia_guia_anotacoes.py`: guia vazio → versão 1 com tom,
   vocabulário e "não faça" (sem proibidas); guia editado → `diverge(editado)`; §3/§6/§7 → 1 anotação cada;
   §8 com N linhas → N anotações; seção da pesquisa alterada → `diverge`, "usar o markdown" edita a
   anotação; texto > 4.000 dividido em partes; reimportar → `igual`; sugestões de bordão sem mudar o kit.
-- [ ] T039 [P] [US5] `tests/integration/test_agencia_persona.py`: persona no perfil que já tem a imagem
+- [X] T039 [P] [US5] `tests/integration/test_agencia_persona.py`: persona no perfil que já tem a imagem
   (padrão); sem imagem igual → exige escolha (422 sem perfil); campos diferentes → `diverge` campo a campo;
   cenários como assets `cenario`.
 
 ### Implementação da US5
 
-- [ ] T040 [US5] Leitores `pesquisa`, `ideias`, partes §3/§4/§6/§7/§8 do `perfil.md` e `persona.md`;
+- [X] T040 [US5] Leitores `pesquisa`, `ideias`, partes §3/§4/§6/§7/§8 do `perfil.md` e `persona.md`;
   conciliação e aplicadores de guia (`service_guia.put_perfil`), anotações (`anotacoes.criar`/`editar`) e
   persona (`create_asset`, `upload_file`, `update`).
-- [ ] T041 [P] [US5] SPA: escolha do perfil da persona na prévia; sugestões de bordão como informação.
+- [X] T041 [P] [US5] SPA: escolha do perfil da persona na prévia; sugestões de bordão como informação.
 
 ---
 
@@ -258,17 +258,17 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Testes da US6
 
-- [ ] T042 [P] [US6] `tests/integration/test_agencia_clipes.py`: linha + vídeo → conteúdo `video_proprio`
+- [X] T042 [P] [US6] `tests/integration/test_agencia_clipes.py`: linha + vídeo → conteúdo `video_proprio`
   sem destino, título do registro (≤ 100), anotação no conteúdo com a origem; vídeo já importado (SHA-256)
   → `igual`; linha sem vídeo, vídeo sem linha e vídeo inválido → `fora`; o total de bytes entra na
   conferência do HD; status e métricas do registro não entram.
 
 ### Implementação da US6
 
-- [ ] T043 [US6] `leitores.ler_registro` e conciliação de clipes; aplicador com
+- [X] T043 [US6] `leitores.ler_registro` e conciliação de clipes; aplicador com
   `video_proprio.create_de_arquivo` (vídeo e miniatura gravados na etapa de arquivos) + `anotacoes.criar`
   no alvo `conteudo`.
-- [ ] T044 [US6] e2e (US6): os 2 clipes do fixture viram conteúdos na Central, sem destino.
+- [X] T044 [US6] e2e (US6): os 2 clipes do fixture viram conteúdos na Central, sem destino.
 
 ---
 
@@ -276,7 +276,7 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Testes da US7
 
-- [ ] T045 [P] [US7] `tests/integration/test_agencia_desfazer.py`: criado e intocado → arquivado; atualizado
+- [X] T045 [P] [US7] `tests/integration/test_agencia_desfazer.py`: criado e intocado → arquivado; atualizado
   e intocado → revertido; editado depois → `nao_desfeito(editado_depois)`; canal com envio, conteúdo com
   destino ou asset no kit → `nao_desfeito(em_uso)`; nada apagado; importação `desfeita` com autor;
   guia criado pela importação → salvo vazio;
@@ -284,25 +284,25 @@ real da agência nunca entra nos testes nem no repositório**; só o quickstart 
 
 ### Implementação da US7
 
-- [ ] T046 [US7] `agencia/desfazer.py` (R10) e rota `agencia_desfazer`.
-- [ ] T047 [P] [US7] SPA: "Desfazer" no detalhe (AlertDialog com o que será arquivado ou revertido) e os
+- [X] T046 [US7] `agencia/desfazer.py` (R10) e rota `agencia_desfazer`.
+- [X] T047 [P] [US7] SPA: "Desfazer" no detalhe (AlertDialog com o que será arquivado ou revertido) e os
   itens "não desfeito" com o motivo.
-- [ ] T048 [US7] e2e (US7): desfazer e conferir o perfil de teste arquivado.
+- [X] T048 [US7] e2e (US7): desfazer e conferir o perfil de teste arquivado.
 
 ---
 
 ## Phase 10: Polish & Cross-Cutting
 
-- [ ] T049 `mcp/mapa.py` (acréscimo): `agencia_previa`, `agencia_confirmar`, `agencia_desfazer` em
+- [X] T049 `mcp/mapa.py` (acréscimo): `agencia_previa`, `agencia_confirmar`, `agencia_desfazer` em
   `_PROIBIDAS_DONO`; `agencia_estado` em `_FORA_INFRA`; `agencia_importacoes_list` e
   `agencia_importacoes_get` como leitura. Rodar o teste de cobertura do mapa da 009.
-- [ ] T050 [P] `tests/unit/test_constitution_guards.py` (+013): `agencia/` sem `publicacao`, `httpx` e
+- [X] T050 [P] `tests/unit/test_constitution_guards.py` (+013): `agencia/` sem `publicacao`, `httpx` e
   `canais.youtube` direto; sem escrita de arquivo (`open` em modo de escrita, `write_text`, `write_bytes`,
   `unlink`, `rename`, `mkdir`, `shutil`); sem "youtube"/"tiktok" nos `operationId` `agencia_*`.
-- [ ] T051 [P] Docs: `CLAUDE.md` (seção "Importação da agência (desde a spec 013)": montagens `:ro`, pacote,
+- [X] T051 [P] Docs: `CLAUDE.md` (seção "Importação da agência (desde a spec 013)": montagens `:ro`, pacote,
   regras de direito, fonte da verdade, armadilha da pasta inexistente); `docs/visao.md` (item 013);
   nota para a agência (fora do SociMan): trocar os AGENTS.md para ler pelo MCP (FR-027).
-- [ ] T052 Verificação final:
+- [X] T052 Verificação final:
   - `npm run test:api` inteiro, ruff, `npm run gen:contract && npm run check:web`;
   - a suíte e2e inteira (com trava);
   - quickstart §1–§4 no dev.

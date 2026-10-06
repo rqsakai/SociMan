@@ -27,7 +27,8 @@ ITEM_MAX = 400
 
 # Spec 014: "conteudo" (+ conta) antes de o destino existir; "corte" continua (mesmo id).
 # Spec 017: "guia" nas chamadas do "montar guia" (entity_id = a linha do guia, ou null).
-AlvoTipo = Literal["asset", "perfil", "kit", "postagem", "corte", "conteudo", "guia"]
+# Spec 010: "cena" (entity_id null numa cena ainda não salva, com `cenaContexto`).
+AlvoTipo = Literal["asset", "perfil", "kit", "postagem", "corte", "conteudo", "guia", "cena"]
 Item = Annotated[str, StringConstraints(max_length=ITEM_MAX)]
 
 
@@ -97,6 +98,28 @@ class Variacao(CamelModel):
     hashtags: list[str]
 
 
+class ValorCena(CamelModel):
+    """Spec 010: entrada e proposta do "Ajustar cena" (os 4 campos que vão ao prompt)."""
+
+    acao: Annotated[str, StringConstraints(max_length=1500)] | None = None
+    camera: Annotated[str, StringConstraints(max_length=750)] | None = None
+    estilo: Annotated[str, StringConstraints(max_length=750)] | None = None
+    audio: Annotated[str, StringConstraints(max_length=450)] | None = None
+
+
+class CenaContexto(CamelModel):
+    """Spec 010: o formulário atual da cena (obrigatório quando a cena ainda não foi salva).
+    O servidor confere que os ids são do perfil."""
+
+    avatar_id: UUID | None = None
+    avatar_arquivo_id: UUID | None = None
+    cenario_id: UUID | None = None
+    produto_nome: Annotated[str, StringConstraints(max_length=120)] | None = None
+    fala: Annotated[str, StringConstraints(max_length=300)] | None = None
+    duracao_s: Literal[4, 6, 8] | None = None
+    modo: Literal["ingredientes", "quadros", "estender"] | None = None
+
+
 class Valor(CamelModel):
     """Um formato por tipo: `texto`, `itens`, os três da postagem, o `guia` (proposta e
     entrada do "montar"; entrada do "testar") ou as `variacoes` (proposta do "testar")."""
@@ -108,6 +131,7 @@ class Valor(CamelModel):
     hashtags: Annotated[list[Item], Field(max_length=LISTA_MAX)] | None = None
     guia: GuiaCampos | None = None
     variacoes: list[Variacao] | None = None
+    cena: ValorCena | None = None  # spec 010: `cena.ajustar`
 
 
 class Selecao(CamelModel):
@@ -128,6 +152,7 @@ class GerarIn(CamelModel):
     anteriores: Annotated[list[UUID], Field(max_length=ANTERIORES_MAX)] = Field(
         default_factory=list)
     selecao: Selecao | None = None
+    cena_contexto: CenaContexto | None = None  # spec 010: tipos `cena.*`
 
 
 class IaChamada(CamelModel):

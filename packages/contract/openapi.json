@@ -1,6 +1,1149 @@
 {
   "components": {
     "schemas": {
+      "AgenciaConfirmar": {
+        "additionalProperties": false,
+        "properties": {
+          "escolhas": {
+            "items": {
+              "$ref": "#/components/schemas/AgenciaEscolha"
+            },
+            "maxItems": 5000,
+            "title": "Escolhas",
+            "type": "array"
+          },
+          "personaPerfil": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Personaperfil"
+          },
+          "previaId": {
+            "format": "uuid",
+            "title": "Previaid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "previaId"
+        ],
+        "title": "AgenciaConfirmar",
+        "type": "object"
+      },
+      "AgenciaContagens": {
+        "properties": {
+          "aguardandoCota": {
+            "default": 0,
+            "title": "Aguardandocota",
+            "type": "integer"
+          },
+          "diverge": {
+            "default": 0,
+            "title": "Diverge",
+            "type": "integer"
+          },
+          "fora": {
+            "default": 0,
+            "title": "Fora",
+            "type": "integer"
+          },
+          "igual": {
+            "default": 0,
+            "title": "Igual",
+            "type": "integer"
+          },
+          "naoReconhecido": {
+            "default": 0,
+            "title": "Naoreconhecido",
+            "type": "integer"
+          },
+          "novo": {
+            "default": 0,
+            "title": "Novo",
+            "type": "integer"
+          },
+          "sugestao": {
+            "default": 0,
+            "title": "Sugestao",
+            "type": "integer"
+          }
+        },
+        "title": "AgenciaContagens",
+        "type": "object"
+      },
+      "AgenciaContagensImportacao": {
+        "properties": {
+          "atualizado": {
+            "default": 0,
+            "title": "Atualizado",
+            "type": "integer"
+          },
+          "criado": {
+            "default": 0,
+            "title": "Criado",
+            "type": "integer"
+          },
+          "fora": {
+            "default": 0,
+            "title": "Fora",
+            "type": "integer"
+          },
+          "igual": {
+            "default": 0,
+            "title": "Igual",
+            "type": "integer"
+          },
+          "mantido": {
+            "default": 0,
+            "title": "Mantido",
+            "type": "integer"
+          },
+          "naoGravado": {
+            "default": 0,
+            "title": "Naogravado",
+            "type": "integer"
+          },
+          "sugestao": {
+            "default": 0,
+            "title": "Sugestao",
+            "type": "integer"
+          }
+        },
+        "title": "AgenciaContagensImportacao",
+        "type": "object"
+      },
+      "AgenciaDesfazerIn": {
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "AgenciaDesfazerIn",
+        "type": "object"
+      },
+      "AgenciaEntidade": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "tipo": {
+            "title": "Tipo",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "tipo",
+          "id",
+          "version"
+        ],
+        "title": "AgenciaEntidade",
+        "type": "object"
+      },
+      "AgenciaEscolha": {
+        "additionalProperties": false,
+        "properties": {
+          "direito": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CanalDireito"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "marcado": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marcado"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "usar": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sociman",
+                  "markdown"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usar"
+          }
+        },
+        "required": [
+          "n"
+        ],
+        "title": "AgenciaEscolha",
+        "type": "object"
+      },
+      "AgenciaEscolhaPadrao": {
+        "properties": {
+          "direito": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CanalDireito"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "marcado": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marcado"
+          },
+          "usar": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sociman",
+                  "markdown"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usar"
+          }
+        },
+        "title": "AgenciaEscolhaPadrao",
+        "type": "object"
+      },
+      "AgenciaEstado": {
+        "properties": {
+          "emAndamento": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgenciaImportacaoRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "perfis": {
+            "items": {
+              "$ref": "#/components/schemas/AgenciaPerfilEstado"
+            },
+            "title": "Perfis",
+            "type": "array"
+          },
+          "raizes": {
+            "$ref": "#/components/schemas/AgenciaRaizes"
+          },
+          "ultima": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgenciaImportacaoRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "raizes",
+          "ultima",
+          "perfis",
+          "emAndamento"
+        ],
+        "title": "AgenciaEstado",
+        "type": "object"
+      },
+      "AgenciaImportacao": {
+        "properties": {
+          "arquivos": {
+            "title": "Arquivos",
+            "type": "integer"
+          },
+          "concluidaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concluidaem"
+          },
+          "contagens": {
+            "$ref": "#/components/schemas/AgenciaContagensImportacao"
+          },
+          "criadaEm": {
+            "format": "date-time",
+            "title": "Criadaem",
+            "type": "string"
+          },
+          "criadaPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "desfeitaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desfeitaem"
+          },
+          "desfeitaPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Erro"
+          },
+          "estado": {
+            "enum": [
+              "processando",
+              "concluida",
+              "falhou",
+              "desfeita"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/AgenciaItemImportacao"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "progresso": {
+            "$ref": "#/components/schemas/AgenciaProgresso"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "estado",
+          "criadaEm",
+          "criadaPor",
+          "concluidaEm",
+          "desfeitaEm",
+          "desfeitaPor",
+          "erro",
+          "progresso",
+          "contagens",
+          "arquivos",
+          "itens"
+        ],
+        "title": "AgenciaImportacao",
+        "type": "object"
+      },
+      "AgenciaImportacaoRef": {
+        "properties": {
+          "criadaEm": {
+            "format": "date-time",
+            "title": "Criadaem",
+            "type": "string"
+          },
+          "criadaPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estado": {
+            "enum": [
+              "processando",
+              "concluida",
+              "falhou",
+              "desfeita"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "estado",
+          "criadaEm",
+          "criadaPor"
+        ],
+        "title": "AgenciaImportacaoRef",
+        "type": "object"
+      },
+      "AgenciaImportacaoResumo": {
+        "properties": {
+          "arquivos": {
+            "title": "Arquivos",
+            "type": "integer"
+          },
+          "concluidaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concluidaem"
+          },
+          "contagens": {
+            "$ref": "#/components/schemas/AgenciaContagensImportacao"
+          },
+          "criadaEm": {
+            "format": "date-time",
+            "title": "Criadaem",
+            "type": "string"
+          },
+          "criadaPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "desfeitaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desfeitaem"
+          },
+          "desfeitaPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Erro"
+          },
+          "estado": {
+            "enum": [
+              "processando",
+              "concluida",
+              "falhou",
+              "desfeita"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "progresso": {
+            "$ref": "#/components/schemas/AgenciaProgresso"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "version",
+          "estado",
+          "criadaEm",
+          "criadaPor",
+          "concluidaEm",
+          "desfeitaEm",
+          "desfeitaPor",
+          "erro",
+          "progresso",
+          "contagens",
+          "arquivos"
+        ],
+        "title": "AgenciaImportacaoResumo",
+        "type": "object"
+      },
+      "AgenciaImportacoesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgenciaImportacaoResumo"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AgenciaImportacoesList",
+        "type": "object"
+      },
+      "AgenciaItemImportacao": {
+        "properties": {
+          "desfazerMotivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desfazermotivo"
+          },
+          "desfazerTexto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desfazertexto"
+          },
+          "desfeitoEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desfeitoem"
+          },
+          "entidade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgenciaEntidade"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "escolha": {
+            "additionalProperties": true,
+            "title": "Escolha",
+            "type": "object"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "motivoTexto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivotexto"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "origem": {
+            "$ref": "#/components/schemas/AgenciaOrigem"
+          },
+          "perfilSlug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perfilslug"
+          },
+          "resultado": {
+            "enum": [
+              "criado",
+              "atualizado",
+              "mantido",
+              "igual",
+              "fora",
+              "nao_gravado",
+              "sugestao"
+            ],
+            "title": "Resultado",
+            "type": "string"
+          },
+          "resultadoMotivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultadomotivo"
+          },
+          "resultadoTexto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultadotexto"
+          },
+          "situacao": {
+            "enum": [
+              "novo",
+              "igual",
+              "diverge",
+              "fora",
+              "aguardando_cota",
+              "sugestao"
+            ],
+            "title": "Situacao",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "perfil",
+              "conta",
+              "guia",
+              "anotacao",
+              "canal",
+              "vinculo_canal",
+              "imagem_logo",
+              "asset",
+              "arquivo_asset",
+              "clipe",
+              "sugestao_bordao",
+              "arquivo"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "tipo",
+          "perfilSlug",
+          "origem",
+          "situacao",
+          "motivo",
+          "motivoTexto",
+          "escolha",
+          "resultado",
+          "resultadoMotivo",
+          "resultadoTexto",
+          "entidade",
+          "desfeitoEm",
+          "desfazerMotivo",
+          "desfazerTexto"
+        ],
+        "title": "AgenciaItemImportacao",
+        "type": "object"
+      },
+      "AgenciaItemPrevia": {
+        "properties": {
+          "atual": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atual"
+          },
+          "bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bytes"
+          },
+          "direitosAceitos": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/CanalDireito"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direitosaceitos"
+          },
+          "escolhaPadrao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgenciaEscolhaPadrao"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exigePerfil": {
+            "default": false,
+            "title": "Exigeperfil",
+            "type": "boolean"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "motivoTexto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivotexto"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "origem": {
+            "$ref": "#/components/schemas/AgenciaOrigem"
+          },
+          "origens": {
+            "items": {
+              "$ref": "#/components/schemas/AgenciaOrigem"
+            },
+            "title": "Origens",
+            "type": "array"
+          },
+          "perfilSlug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perfilslug"
+          },
+          "proposto": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposto"
+          },
+          "situacao": {
+            "enum": [
+              "novo",
+              "igual",
+              "diverge",
+              "fora",
+              "aguardando_cota",
+              "sugestao"
+            ],
+            "title": "Situacao",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "perfil",
+              "conta",
+              "guia",
+              "anotacao",
+              "canal",
+              "vinculo_canal",
+              "imagem_logo",
+              "asset",
+              "arquivo_asset",
+              "clipe",
+              "sugestao_bordao",
+              "arquivo"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "n",
+          "tipo",
+          "perfilSlug",
+          "origem",
+          "situacao"
+        ],
+        "title": "AgenciaItemPrevia",
+        "type": "object"
+      },
+      "AgenciaNaoReconhecido": {
+        "properties": {
+          "arquivo": {
+            "title": "Arquivo",
+            "type": "string"
+          },
+          "faltou": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Faltou",
+            "type": "array"
+          }
+        },
+        "required": [
+          "arquivo",
+          "faltou"
+        ],
+        "title": "AgenciaNaoReconhecido",
+        "type": "object"
+      },
+      "AgenciaOrigem": {
+        "properties": {
+          "arquivo": {
+            "title": "Arquivo",
+            "type": "string"
+          },
+          "linha": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linha"
+          },
+          "trecho": {
+            "title": "Trecho",
+            "type": "string"
+          }
+        },
+        "required": [
+          "arquivo",
+          "trecho"
+        ],
+        "title": "AgenciaOrigem",
+        "type": "object"
+      },
+      "AgenciaPerfilEstado": {
+        "properties": {
+          "arquivosMudaram": {
+            "title": "Arquivosmudaram",
+            "type": "boolean"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "ultimaImportacaoEm": {
+            "format": "date-time",
+            "title": "Ultimaimportacaoem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "ultimaImportacaoEm",
+          "arquivosMudaram"
+        ],
+        "title": "AgenciaPerfilEstado",
+        "type": "object"
+      },
+      "AgenciaPersona": {
+        "properties": {
+          "exigePerfil": {
+            "title": "Exigeperfil",
+            "type": "boolean"
+          },
+          "perfilPadrao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perfilpadrao"
+          }
+        },
+        "required": [
+          "perfilPadrao",
+          "exigePerfil"
+        ],
+        "title": "AgenciaPersona",
+        "type": "object"
+      },
+      "AgenciaPrevia": {
+        "properties": {
+          "arquivosNaoReconhecidos": {
+            "items": {
+              "$ref": "#/components/schemas/AgenciaNaoReconhecido"
+            },
+            "title": "Arquivosnaoreconhecidos",
+            "type": "array"
+          },
+          "bytesNovos": {
+            "title": "Bytesnovos",
+            "type": "integer"
+          },
+          "contagens": {
+            "$ref": "#/components/schemas/AgenciaContagens"
+          },
+          "expiraEm": {
+            "format": "date-time",
+            "title": "Expiraem",
+            "type": "string"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/AgenciaItemPrevia"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "persona": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgenciaPersona"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previaId": {
+            "format": "uuid",
+            "title": "Previaid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "previaId",
+          "expiraEm",
+          "contagens",
+          "bytesNovos",
+          "arquivosNaoReconhecidos",
+          "persona",
+          "itens"
+        ],
+        "title": "AgenciaPrevia",
+        "type": "object"
+      },
+      "AgenciaProgresso": {
+        "properties": {
+          "bytes": {
+            "default": 0,
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "etapa": {
+            "anyOf": [
+              {
+                "enum": [
+                  "conferindo",
+                  "gravando",
+                  "fim"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etapa"
+          },
+          "feitos": {
+            "default": 0,
+            "title": "Feitos",
+            "type": "integer"
+          },
+          "total": {
+            "default": 0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "title": "AgenciaProgresso",
+        "type": "object"
+      },
+      "AgenciaRaiz": {
+        "properties": {
+          "disponivel": {
+            "title": "Disponivel",
+            "type": "boolean"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          }
+        },
+        "required": [
+          "disponivel"
+        ],
+        "title": "AgenciaRaiz",
+        "type": "object"
+      },
+      "AgenciaRaizes": {
+        "properties": {
+          "clipes": {
+            "$ref": "#/components/schemas/AgenciaRaiz"
+          },
+          "shared": {
+            "$ref": "#/components/schemas/AgenciaRaiz"
+          }
+        },
+        "required": [
+          "shared",
+          "clipes"
+        ],
+        "title": "AgenciaRaizes",
+        "type": "object"
+      },
       "AgendarIn": {
         "properties": {
           "antecedenciaMin": {
@@ -230,7 +1373,8 @@
               "postagem",
               "corte",
               "conteudo",
-              "guia"
+              "guia",
+              "cena"
             ],
             "title": "Entitytype",
             "type": "string"
@@ -376,9 +1520,13 @@
                 "$ref": "#/components/schemas/CamposProposta"
               },
               {
+                "$ref": "#/components/schemas/CamposCena"
+              },
+              {
                 "type": "null"
               }
-            ]
+            ],
+            "title": "Campos"
           },
           "createdAt": {
             "format": "date-time",
@@ -476,7 +1624,8 @@
           "video_fonte",
           "corte",
           "conteudo",
-          "destino"
+          "destino",
+          "cena"
         ],
         "title": "AnotacaoAlvo",
         "type": "string"
@@ -506,7 +1655,8 @@
       "AnotacaoTipo": {
         "enum": [
           "observacao",
-          "proposta_texto"
+          "proposta_texto",
+          "proposta_cena"
         ],
         "title": "AnotacaoTipo",
         "type": "string"
@@ -1279,6 +2429,30 @@
         "title": "AssetPatch",
         "type": "object"
       },
+      "AssetRef": {
+        "properties": {
+          "arquivada": {
+            "title": "Arquivada",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "arquivada"
+        ],
+        "title": "AssetRef",
+        "type": "object"
+      },
       "AssetSummary": {
         "properties": {
           "archived": {
@@ -1533,45 +2707,6 @@
           "nome"
         ],
         "title": "Autor",
-        "type": "object"
-      },
-      "Aviso": {
-        "properties": {
-          "codigo": {
-            "enum": [
-              "diverge_da_coleta",
-              "dia_incompleto",
-              "dias_faltando",
-              "periodo_longo",
-              "ano_deduzido",
-              "colunas_ausentes",
-              "cabecalho_provisorio"
-            ],
-            "title": "Codigo",
-            "type": "string"
-          },
-          "detalhes": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Detalhes"
-          },
-          "mensagem": {
-            "title": "Mensagem",
-            "type": "string"
-          }
-        },
-        "required": [
-          "codigo",
-          "mensagem"
-        ],
-        "title": "Aviso",
         "type": "object"
       },
       "Body_assets_file_upload": {
@@ -2191,6 +3326,256 @@
         "title": "CalendarioOut",
         "type": "object"
       },
+      "CamposCena": {
+        "additionalProperties": false,
+        "description": "Os campos de uma proposta de cena (009): subconjunto não vazio de `CenaIn` sem tags nem\nnotas.",
+        "properties": {
+          "acao": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acao"
+          },
+          "audio": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio"
+          },
+          "avatarArquivoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatararquivoid"
+          },
+          "avatarId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarid"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera"
+          },
+          "cenarioArquivoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioarquivoid"
+          },
+          "cenarioId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioid"
+          },
+          "duracaoS": {
+            "anyOf": [
+              {
+                "enum": [
+                  4,
+                  6,
+                  8
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaos"
+          },
+          "estilo": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estilo"
+          },
+          "fala": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "pattern": "^[^\\r\\n]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fala"
+          },
+          "modo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaModo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "movimento": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaMovimento"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "negative": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Negative"
+          },
+          "nome": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "pattern": "^[^\\r\\n]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "plano": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaPlano"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "produtoImagemId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoimagemid"
+          },
+          "produtoNome": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtonome"
+          },
+          "quadroFinal": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadrofinal"
+          },
+          "quadroInicial": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadroinicial"
+          },
+          "textoTela": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Textotela"
+          }
+        },
+        "title": "CamposCena",
+        "type": "object"
+      },
       "CamposProposta": {
         "additionalProperties": false,
         "description": "Proposta de texto para um destino: pelo menos um campo (400 `campos_vazios`).",
@@ -2737,6 +4122,1311 @@
           "amostraPequena"
         ],
         "title": "CelulaMapa",
+        "type": "object"
+      },
+      "Cena": {
+        "properties": {
+          "acao": {
+            "title": "Acao",
+            "type": "string"
+          },
+          "arquivada": {
+            "title": "Arquivada",
+            "type": "boolean"
+          },
+          "audio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio"
+          },
+          "autor": {
+            "$ref": "#/components/schemas/Autor"
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "avatarArquivoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatararquivoid"
+          },
+          "avatarId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarid"
+          },
+          "avisos": {
+            "items": {
+              "$ref": "#/components/schemas/sociman_api__cenas__schemas__Aviso"
+            },
+            "title": "Avisos",
+            "type": "array"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera"
+          },
+          "cenario": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cenarioArquivoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioarquivoid"
+          },
+          "cenarioId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "duplicadaDe": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicadade"
+          },
+          "duracaoS": {
+            "title": "Duracaos",
+            "type": "integer"
+          },
+          "estilo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estilo"
+          },
+          "fala": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fala"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "ingredientes": {
+            "items": {
+              "$ref": "#/components/schemas/Ingrediente"
+            },
+            "title": "Ingredientes",
+            "type": "array"
+          },
+          "modo": {
+            "$ref": "#/components/schemas/CenaModo"
+          },
+          "movimento": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaMovimento"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "negative": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Negative"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "notas": {
+            "title": "Notas",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "plano": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaPlano"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "produtoImagem": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "produtoImagemId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoimagemid"
+          },
+          "produtoNome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtonome"
+          },
+          "prompt": {
+            "$ref": "#/components/schemas/PromptOut"
+          },
+          "quadroFinal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadrofinal"
+          },
+          "quadroInicial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadroinicial"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CenaStatus"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "textoTela": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Textotela"
+          },
+          "thumbUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumburl"
+          },
+          "tomadaEscolhida": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Tomada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tomadas": {
+            "title": "Tomadas",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "usos": {
+            "items": {
+              "$ref": "#/components/schemas/UsoOut"
+            },
+            "title": "Usos",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "nome",
+          "avatarId",
+          "avatarArquivoId",
+          "cenarioId",
+          "cenarioArquivoId",
+          "plano",
+          "movimento",
+          "camera",
+          "acao",
+          "fala",
+          "textoTela",
+          "estilo",
+          "audio",
+          "duracaoS",
+          "modo",
+          "quadroInicial",
+          "quadroFinal",
+          "produtoNome",
+          "produtoImagemId",
+          "negative",
+          "tags",
+          "notas",
+          "status",
+          "version",
+          "arquivada",
+          "avatar",
+          "cenario",
+          "produtoImagem",
+          "prompt",
+          "ingredientes",
+          "avisos",
+          "tomadaEscolhida",
+          "tomadas",
+          "usos",
+          "thumbUrl",
+          "duplicadaDe",
+          "createdAt",
+          "updatedAt",
+          "autor"
+        ],
+        "title": "Cena",
+        "type": "object"
+      },
+      "CenaContexto": {
+        "description": "Spec 010: o formulário atual da cena (obrigatório quando a cena ainda não foi salva).\nO servidor confere que os ids são do perfil.",
+        "properties": {
+          "avatarArquivoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatararquivoid"
+          },
+          "avatarId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarid"
+          },
+          "cenarioId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioid"
+          },
+          "duracaoS": {
+            "anyOf": [
+              {
+                "enum": [
+                  4,
+                  6,
+                  8
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaos"
+          },
+          "fala": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fala"
+          },
+          "modo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ingredientes",
+                  "quadros",
+                  "estender"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modo"
+          },
+          "produtoNome": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtonome"
+          }
+        },
+        "title": "CenaContexto",
+        "type": "object"
+      },
+      "CenaIn": {
+        "additionalProperties": false,
+        "properties": {
+          "acao": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Acao",
+            "type": "string"
+          },
+          "audio": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio"
+          },
+          "avatarArquivoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatararquivoid"
+          },
+          "avatarId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarid"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera"
+          },
+          "cenarioArquivoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioarquivoid"
+          },
+          "cenarioId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioid"
+          },
+          "duracaoS": {
+            "default": 8,
+            "enum": [
+              4,
+              6,
+              8
+            ],
+            "title": "Duracaos",
+            "type": "integer"
+          },
+          "estilo": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estilo"
+          },
+          "fala": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "pattern": "^[^\\r\\n]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fala"
+          },
+          "ia": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IaAplicacao"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ia"
+          },
+          "modo": {
+            "$ref": "#/components/schemas/CenaModo",
+            "default": "ingredientes"
+          },
+          "movimento": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaMovimento"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "negative": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Negative"
+          },
+          "nome": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n]*$",
+            "title": "Nome",
+            "type": "string"
+          },
+          "notas": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Notas",
+            "type": "string"
+          },
+          "plano": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaPlano"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "produtoImagemId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoimagemid"
+          },
+          "produtoNome": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtonome"
+          },
+          "propostaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Propostaid"
+          },
+          "quadroFinal": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadrofinal"
+          },
+          "quadroInicial": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadroinicial"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "textoTela": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Textotela"
+          }
+        },
+        "required": [
+          "nome",
+          "acao"
+        ],
+        "title": "CenaIn",
+        "type": "object"
+      },
+      "CenaModo": {
+        "enum": [
+          "ingredientes",
+          "quadros",
+          "estender"
+        ],
+        "title": "CenaModo",
+        "type": "string"
+      },
+      "CenaMovimento": {
+        "enum": [
+          "parada",
+          "aproximacao",
+          "afastamento",
+          "panoramica",
+          "camera_na_mao"
+        ],
+        "title": "CenaMovimento",
+        "type": "string"
+      },
+      "CenaPadroes": {
+        "properties": {
+          "estilo": {
+            "title": "Estilo",
+            "type": "string"
+          },
+          "negative": {
+            "title": "Negative",
+            "type": "string"
+          },
+          "padraoCodigo": {
+            "$ref": "#/components/schemas/CenaPadroesTexto"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "perfilId",
+          "estilo",
+          "negative",
+          "version",
+          "padraoCodigo"
+        ],
+        "title": "CenaPadroes",
+        "type": "object"
+      },
+      "CenaPadroesTexto": {
+        "properties": {
+          "estilo": {
+            "title": "Estilo",
+            "type": "string"
+          },
+          "negative": {
+            "title": "Negative",
+            "type": "string"
+          }
+        },
+        "required": [
+          "estilo",
+          "negative"
+        ],
+        "title": "CenaPadroesTexto",
+        "type": "object"
+      },
+      "CenaPatch": {
+        "additionalProperties": false,
+        "description": "Qualquer subconjunto dos campos. Nulo limpa os opcionais; em nome, ação, duração, modo,\ntags e notas, é ignorado.",
+        "properties": {
+          "acao": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acao"
+          },
+          "audio": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio"
+          },
+          "avatarArquivoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatararquivoid"
+          },
+          "avatarId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarid"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera"
+          },
+          "cenarioArquivoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioarquivoid"
+          },
+          "cenarioId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioid"
+          },
+          "duracaoS": {
+            "anyOf": [
+              {
+                "enum": [
+                  4,
+                  6,
+                  8
+                ],
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaos"
+          },
+          "estilo": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estilo"
+          },
+          "fala": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "pattern": "^[^\\r\\n]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fala"
+          },
+          "ia": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/IaAplicacao"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ia"
+          },
+          "modo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaModo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "movimento": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaMovimento"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "negative": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Negative"
+          },
+          "nome": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "pattern": "^[^\\r\\n]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "notas": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notas"
+          },
+          "plano": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaPlano"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "produtoImagemId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoimagemid"
+          },
+          "produtoNome": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtonome"
+          },
+          "propostaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Propostaid"
+          },
+          "quadroFinal": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadrofinal"
+          },
+          "quadroInicial": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadroinicial"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "textoTela": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Textotela"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "CenaPatch",
+        "type": "object"
+      },
+      "CenaPlano": {
+        "enum": [
+          "close",
+          "busto",
+          "medio",
+          "americano",
+          "aberto",
+          "detalhe_produto"
+        ],
+        "title": "CenaPlano",
+        "type": "string"
+      },
+      "CenaResumo": {
+        "properties": {
+          "arquivada": {
+            "title": "Arquivada",
+            "type": "boolean"
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cenario": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "duracaoS": {
+            "title": "Duracaos",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "modo": {
+            "$ref": "#/components/schemas/CenaModo"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "produtoNome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtonome"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CenaStatus"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "thumbUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumburl"
+          },
+          "tomadas": {
+            "title": "Tomadas",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "usos": {
+            "title": "Usos",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "nome",
+          "status",
+          "duracaoS",
+          "modo",
+          "avatar",
+          "cenario",
+          "produtoNome",
+          "thumbUrl",
+          "tags",
+          "arquivada",
+          "tomadas",
+          "usos",
+          "updatedAt"
+        ],
+        "title": "CenaResumo",
+        "type": "object"
+      },
+      "CenaStatus": {
+        "enum": [
+          "rascunho",
+          "pronta",
+          "usada"
+        ],
+        "title": "CenaStatus",
+        "type": "string"
+      },
+      "CenasList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CenaResumo"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "CenasList",
+        "type": "object"
+      },
+      "CenasResumoList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CenaResumo"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "CenasResumoList",
         "type": "object"
       },
       "ChamadaMcp": {
@@ -3947,6 +6637,13 @@
             "title": "Archived",
             "type": "boolean"
           },
+          "cenas": {
+            "items": {
+              "$ref": "#/components/schemas/CenaResumo"
+            },
+            "title": "Cenas",
+            "type": "array"
+          },
           "corteId": {
             "anyOf": [
               {
@@ -4922,9 +7619,13 @@
                 "$ref": "#/components/schemas/CamposProposta"
               },
               {
+                "$ref": "#/components/schemas/CamposCena"
+              },
+              {
                 "type": "null"
               }
-            ]
+            ],
+            "title": "Campos"
           },
           "texto": {
             "maxLength": 4000,
@@ -8083,6 +10784,16 @@
             "title": "Anteriores",
             "type": "array"
           },
+          "cenaContexto": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaContexto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "instrucao": {
             "default": "",
             "maxLength": 1000,
@@ -8125,7 +10836,12 @@
               "postagem.hashtags",
               "postagem.textos",
               "guia.montar",
-              "guia.testar"
+              "guia.testar",
+              "cena.acao",
+              "cena.camera",
+              "cena.estilo",
+              "cena.audio",
+              "cena.ajustar"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -8590,7 +11306,12 @@
               "postagem.hashtags",
               "postagem.textos",
               "guia.montar",
-              "guia.testar"
+              "guia.testar",
+              "cena.acao",
+              "cena.camera",
+              "cena.estilo",
+              "cena.audio",
+              "cena.ajustar"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -9318,6 +12039,61 @@
           "message"
         ],
         "title": "Inelegivel",
+        "type": "object"
+      },
+      "Ingrediente": {
+        "properties": {
+          "altura": {
+            "title": "Altura",
+            "type": "integer"
+          },
+          "arquivoId": {
+            "format": "uuid",
+            "title": "Arquivoid",
+            "type": "string"
+          },
+          "assetId": {
+            "format": "uuid",
+            "title": "Assetid",
+            "type": "string"
+          },
+          "downloadUrl": {
+            "title": "Downloadurl",
+            "type": "string"
+          },
+          "largura": {
+            "title": "Largura",
+            "type": "integer"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "papel": {
+            "enum": [
+              "avatar",
+              "produto",
+              "cenario"
+            ],
+            "title": "Papel",
+            "type": "string"
+          },
+          "thumbUrl": {
+            "title": "Thumburl",
+            "type": "string"
+          }
+        },
+        "required": [
+          "papel",
+          "assetId",
+          "arquivoId",
+          "nome",
+          "largura",
+          "altura",
+          "downloadUrl",
+          "thumbUrl"
+        ],
+        "title": "Ingrediente",
         "type": "object"
       },
       "IniciarOut": {
@@ -10907,7 +13683,8 @@
               "marca_dagua",
               "fundo",
               "imagem",
-              "conteudo_video"
+              "conteudo_video",
+              "cena_tomada"
             ],
             "title": "Kind",
             "type": "string"
@@ -11133,6 +13910,27 @@
           "naoLidas"
         ],
         "title": "NaoLidasOut",
+        "type": "object"
+      },
+      "NotaIn": {
+        "additionalProperties": false,
+        "properties": {
+          "nota": {
+            "maxLength": 300,
+            "title": "Nota",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "nota"
+        ],
+        "title": "NotaIn",
         "type": "object"
       },
       "Notificacao": {
@@ -11834,6 +14632,51 @@
         "title": "PadroesCorteOut",
         "type": "object"
       },
+      "PadroesIn": {
+        "additionalProperties": false,
+        "properties": {
+          "estilo": {
+            "maxLength": 500,
+            "title": "Estilo",
+            "type": "string"
+          },
+          "negative": {
+            "maxLength": 500,
+            "title": "Negative",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "estilo",
+          "negative"
+        ],
+        "title": "PadroesIn",
+        "type": "object"
+      },
+      "ParteOut": {
+        "properties": {
+          "parte": {
+            "title": "Parte",
+            "type": "string"
+          },
+          "texto": {
+            "title": "Texto",
+            "type": "string"
+          }
+        },
+        "required": [
+          "parte",
+          "texto"
+        ],
+        "title": "ParteOut",
+        "type": "object"
+      },
       "Pedido": {
         "properties": {
           "em": {
@@ -12470,7 +15313,7 @@
           },
           "avisos": {
             "items": {
-              "$ref": "#/components/schemas/Aviso"
+              "$ref": "#/components/schemas/sociman_api__metricas__studio__schemas__Aviso"
             },
             "title": "Avisos",
             "type": "array"
@@ -12519,6 +15362,61 @@
           "podeConfirmar"
         ],
         "title": "PreviaStudio",
+        "type": "object"
+      },
+      "PromptOut": {
+        "properties": {
+          "avatarVersion": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarversion"
+          },
+          "cenarioVersion": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioversion"
+          },
+          "congelado": {
+            "title": "Congelado",
+            "type": "boolean"
+          },
+          "negative": {
+            "title": "Negative",
+            "type": "string"
+          },
+          "partes": {
+            "items": {
+              "$ref": "#/components/schemas/ParteOut"
+            },
+            "title": "Partes",
+            "type": "array"
+          },
+          "texto": {
+            "title": "Texto",
+            "type": "string"
+          }
+        },
+        "required": [
+          "texto",
+          "negative",
+          "partes",
+          "congelado",
+          "avatarVersion",
+          "cenarioVersion"
+        ],
+        "title": "PromptOut",
         "type": "object"
       },
       "PropostaOpenshorts": {
@@ -14320,7 +17218,8 @@
               "perfil",
               "kit",
               "postagem",
-              "guia"
+              "guia",
+              "cena"
             ],
             "title": "Entidade",
             "type": "string"
@@ -14332,7 +17231,8 @@
               "sugestoes",
               "textos_postagem",
               "guia",
-              "variacoes"
+              "variacoes",
+              "campos_cena"
             ],
             "title": "Formato",
             "type": "string"
@@ -14353,7 +17253,12 @@
               "postagem.hashtags",
               "postagem.textos",
               "guia.montar",
-              "guia.testar"
+              "guia.testar",
+              "cena.acao",
+              "cena.camera",
+              "cena.estilo",
+              "cena.audio",
+              "cena.ajustar"
             ],
             "title": "Id",
             "type": "string"
@@ -14456,6 +17361,141 @@
         "title": "TodasResultado",
         "type": "object"
       },
+      "Tomada": {
+        "properties": {
+          "altura": {
+            "title": "Altura",
+            "type": "integer"
+          },
+          "arquivada": {
+            "title": "Arquivada",
+            "type": "boolean"
+          },
+          "autor": {
+            "$ref": "#/components/schemas/Autor"
+          },
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "cenaId": {
+            "format": "uuid",
+            "title": "Cenaid",
+            "type": "string"
+          },
+          "contentType": {
+            "title": "Contenttype",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "duracaoMs": {
+            "title": "Duracaoms",
+            "type": "integer"
+          },
+          "escolhida": {
+            "title": "Escolhida",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "largura": {
+            "title": "Largura",
+            "type": "integer"
+          },
+          "naoVertical": {
+            "title": "Naovertical",
+            "type": "boolean"
+          },
+          "negativeUsado": {
+            "title": "Negativeusado",
+            "type": "string"
+          },
+          "nota": {
+            "title": "Nota",
+            "type": "string"
+          },
+          "origem": {
+            "$ref": "#/components/schemas/TomadaOrigem"
+          },
+          "promptUsado": {
+            "title": "Promptusado",
+            "type": "string"
+          },
+          "thumbUrl": {
+            "title": "Thumburl",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "videoUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Videourl"
+          }
+        },
+        "required": [
+          "id",
+          "cenaId",
+          "origem",
+          "duracaoMs",
+          "largura",
+          "altura",
+          "naoVertical",
+          "bytes",
+          "contentType",
+          "thumbUrl",
+          "videoUrl",
+          "promptUsado",
+          "negativeUsado",
+          "nota",
+          "escolhida",
+          "arquivada",
+          "version",
+          "createdAt",
+          "autor"
+        ],
+        "title": "Tomada",
+        "type": "object"
+      },
+      "TomadaOrigem": {
+        "description": "Como a tomada nasceu. Ponto de extensão: a 021 (geração local) poderá acrescentar valores.",
+        "enum": [
+          "flow_manual"
+        ],
+        "title": "TomadaOrigem",
+        "type": "string"
+      },
+      "TomadasList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Tomada"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "TomadasList",
+        "type": "object"
+      },
       "TotaisSeguidores": {
         "properties": {
           "ganhos": {
@@ -14549,9 +17589,13 @@
                 "$ref": "#/components/schemas/CamposProposta"
               },
               {
+                "$ref": "#/components/schemas/CamposCena"
+              },
+              {
                 "type": "null"
               }
-            ]
+            ],
+            "title": "Campos"
           },
           "texto": {
             "anyOf": [
@@ -15242,9 +18286,89 @@
         "title": "Uso24h",
         "type": "object"
       },
+      "UsoOut": {
+        "properties": {
+          "conteudoId": {
+            "format": "uuid",
+            "title": "Conteudoid",
+            "type": "string"
+          },
+          "link": {
+            "title": "Link",
+            "type": "string"
+          },
+          "titulo": {
+            "title": "Titulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "conteudoId",
+          "titulo",
+          "link"
+        ],
+        "title": "UsoOut",
+        "type": "object"
+      },
+      "UsosIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cenaIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Cenaids",
+            "type": "array"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "cenaIds"
+        ],
+        "title": "UsosIn",
+        "type": "object"
+      },
+      "UsosOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CenaResumo"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "version"
+        ],
+        "title": "UsosOut",
+        "type": "object"
+      },
       "Valor": {
         "description": "Um formato por tipo: `texto`, `itens`, os três da postagem, o `guia` (proposta e\nentrada do \"montar\"; entrada do \"testar\") ou as `variacoes` (proposta do \"testar\").",
         "properties": {
+          "cena": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValorCena"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "descricao": {
             "anyOf": [
               {
@@ -15339,6 +18463,61 @@
           }
         },
         "title": "Valor",
+        "type": "object"
+      },
+      "ValorCena": {
+        "description": "Spec 010: entrada e proposta do \"Ajustar cena\" (os 4 campos que vão ao prompt).",
+        "properties": {
+          "acao": {
+            "anyOf": [
+              {
+                "maxLength": 1500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acao"
+          },
+          "audio": {
+            "anyOf": [
+              {
+                "maxLength": 450,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "maxLength": 750,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Camera"
+          },
+          "estilo": {
+            "anyOf": [
+              {
+                "maxLength": 750,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estilo"
+          }
+        },
+        "title": "ValorCena",
         "type": "object"
       },
       "Variacao": {
@@ -15464,20 +18643,6 @@
           "details"
         ],
         "title": "Version",
-        "type": "object"
-      },
-      "VersionIn": {
-        "properties": {
-          "version": {
-            "minimum": 1.0,
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "version"
-        ],
-        "title": "VersionIn",
         "type": "object"
       },
       "VersionsList": {
@@ -16625,6 +19790,78 @@
         "title": "VideosList",
         "type": "object"
       },
+      "sociman_api__cenas__schemas__Aviso": {
+        "properties": {
+          "campo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campo"
+          },
+          "codigo": {
+            "title": "Codigo",
+            "type": "string"
+          },
+          "detalhe": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detalhe"
+          },
+          "mensagem": {
+            "title": "Mensagem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensagem",
+          "campo",
+          "detalhe"
+        ],
+        "title": "Aviso",
+        "type": "object"
+      },
+      "sociman_api__cenas__schemas__VersionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "VersionIn",
+        "type": "object"
+      },
+      "sociman_api__mcp__schemas__VersionIn": {
+        "properties": {
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "VersionIn",
+        "type": "object"
+      },
       "sociman_api__metricas__schemas__VideosList": {
         "properties": {
           "items": {
@@ -16657,6 +19894,59 @@
         ],
         "title": "VideosList",
         "type": "object"
+      },
+      "sociman_api__metricas__studio__schemas__Aviso": {
+        "properties": {
+          "codigo": {
+            "enum": [
+              "diverge_da_coleta",
+              "dia_incompleto",
+              "dias_faltando",
+              "periodo_longo",
+              "ano_deduzido",
+              "colunas_ausentes",
+              "cabecalho_provisorio"
+            ],
+            "title": "Codigo",
+            "type": "string"
+          },
+          "detalhes": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detalhes"
+          },
+          "mensagem": {
+            "title": "Mensagem",
+            "type": "string"
+          }
+        },
+        "required": [
+          "codigo",
+          "mensagem"
+        ],
+        "title": "Aviso",
+        "type": "object"
+      },
+      "sociman_api__perfis__schemas__VersionIn": {
+        "properties": {
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "VersionIn",
+        "type": "object"
       }
     }
   },
@@ -16666,6 +19956,459 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/agencia/estado": {
+      "get": {
+        "operationId": "agencia_estado",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgenciaEstado"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Agencia Estado"
+      }
+    },
+    "/api/agencia/importacoes": {
+      "get": {
+        "operationId": "agencia_importacoes_list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgenciaImportacoesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Agencia Importacoes List"
+      },
+      "post": {
+        "description": "Registra a importação (`processando`) e grava numa tarefa de fundo; acompanhe pelo\ndetalhe até `concluida` ou `falhou`.",
+        "operationId": "agencia_confirmar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgenciaConfirmar"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgenciaImportacao"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Agencia Confirmar"
+      }
+    },
+    "/api/agencia/importacoes/{importacao_id}": {
+      "get": {
+        "operationId": "agencia_importacoes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "importacao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Importacao Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "situacao",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "novo",
+                    "igual",
+                    "diverge",
+                    "fora",
+                    "aguardando_cota",
+                    "sugestao"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Situacao"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "perfil",
+                    "conta",
+                    "guia",
+                    "anotacao",
+                    "canal",
+                    "vinculo_canal",
+                    "imagem_logo",
+                    "asset",
+                    "arquivo_asset",
+                    "clipe",
+                    "sugestao_bordao",
+                    "arquivo"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfil",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 60,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfil"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgenciaImportacao"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Agencia Importacoes Get"
+      }
+    },
+    "/api/agencia/importacoes/{importacao_id}/desfazer": {
+      "post": {
+        "operationId": "agencia_desfazer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "importacao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Importacao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgenciaDesfazerIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgenciaImportacao"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Agencia Desfazer"
+      }
+    },
+    "/api/agencia/previa": {
+      "post": {
+        "description": "Lê as pastas da agência e concilia com o banco; nada é gravado (30 min, uso único).",
+        "operationId": "agencia_previa",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgenciaPrevia"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Agencia Previa"
+      }
+    },
     "/api/agendamentos": {
       "post": {
         "operationId": "agendamentos_create",
@@ -19368,7 +23111,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -19678,7 +23421,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -19778,7 +23521,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -19958,7 +23701,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -21180,7 +24923,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -21360,7 +25103,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -21691,6 +25434,1592 @@
         "summary": "List Versions"
       }
     },
+    "/api/cenas/tomadas/{tomada_id}": {
+      "patch": {
+        "operationId": "cenas_tomadas_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tomada_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tomada Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tomada"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Tomada Update"
+      }
+    },
+    "/api/cenas/tomadas/{tomada_id}/arquivar": {
+      "post": {
+        "operationId": "cenas_tomadas_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tomada_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tomada Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__cenas__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tomada"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Tomada Archive"
+      }
+    },
+    "/api/cenas/tomadas/{tomada_id}/restaurar": {
+      "post": {
+        "operationId": "cenas_tomadas_restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tomada_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tomada Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__cenas__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tomada"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Tomada Restore"
+      }
+    },
+    "/api/cenas/tomadas/{tomada_id}/revert": {
+      "post": {
+        "operationId": "cenas_tomadas_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tomada_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tomada Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tomada"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Tomada Revert"
+      }
+    },
+    "/api/cenas/tomadas/{tomada_id}/versions": {
+      "get": {
+        "operationId": "cenas_tomadas_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tomada_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tomada Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Tomada Versions"
+      }
+    },
+    "/api/cenas/{cena_id}": {
+      "get": {
+        "operationId": "cenas_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Get"
+      },
+      "patch": {
+        "operationId": "cenas_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CenaPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Update"
+      }
+    },
+    "/api/cenas/{cena_id}/arquivar": {
+      "post": {
+        "operationId": "cenas_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__cenas__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Archive"
+      }
+    },
+    "/api/cenas/{cena_id}/duplicar": {
+      "post": {
+        "operationId": "cenas_duplicar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Duplicar"
+      }
+    },
+    "/api/cenas/{cena_id}/pronta": {
+      "post": {
+        "operationId": "cenas_pronta",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__cenas__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Pronta"
+      }
+    },
+    "/api/cenas/{cena_id}/rascunho": {
+      "post": {
+        "operationId": "cenas_rascunho",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__cenas__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Rascunho"
+      }
+    },
+    "/api/cenas/{cena_id}/remontar": {
+      "post": {
+        "operationId": "cenas_remontar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__cenas__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Remontar"
+      }
+    },
+    "/api/cenas/{cena_id}/restaurar": {
+      "post": {
+        "operationId": "cenas_restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__cenas__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Restore"
+      }
+    },
+    "/api/cenas/{cena_id}/revert": {
+      "post": {
+        "operationId": "cenas_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Revert"
+      }
+    },
+    "/api/cenas/{cena_id}/tomadas": {
+      "get": {
+        "operationId": "cenas_tomadas_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "arquivadas",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Arquivadas",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TomadasList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Tomadas List"
+      },
+      "post": {
+        "operationId": "cenas_tomadas_upload",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "description": "MP4, MOV ou WebM, de 1 a 30 s, até 200 MB, qualquer proporção",
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tomada"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Tomadas Upload"
+      }
+    },
+    "/api/cenas/{cena_id}/tomadas/{tomada_id}/escolher": {
+      "post": {
+        "operationId": "cenas_tomadas_escolher",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tomada_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tomada Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__cenas__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Tomadas Escolher"
+      }
+    },
+    "/api/cenas/{cena_id}/versions": {
+      "get": {
+        "operationId": "cenas_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cena_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Cena Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Versions"
+      }
+    },
     "/api/conexoes/retorno": {
       "post": {
         "operationId": "conexoes_retorno",
@@ -21916,7 +27245,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -22933,7 +28262,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -24132,7 +29461,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -24201,6 +29530,164 @@
           }
         },
         "summary": "Archive Conteudo"
+      }
+    },
+    "/api/conteudos/{conteudo_id}/cenas": {
+      "get": {
+        "operationId": "conteudos_cenas_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conteudo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conteudo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CenasResumoList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Conteudo Cenas"
+      },
+      "put": {
+        "operationId": "conteudos_cenas_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conteudo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conteudo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UsosIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsosOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Conteudo Cenas Put"
       }
     },
     "/api/conteudos/{conteudo_id}/desaprovar-todas": {
@@ -24403,7 +29890,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -24931,7 +30418,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -25021,7 +30508,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -25111,7 +30598,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -25815,7 +31302,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -25905,7 +31392,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -25995,7 +31482,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -26085,7 +31572,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -26606,7 +32093,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -27184,7 +32671,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -27541,7 +33028,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -27721,7 +33208,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -28034,7 +33521,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -28124,7 +33611,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -29955,7 +35442,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__mcp__schemas__VersionIn"
               }
             }
           },
@@ -30046,7 +35533,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__mcp__schemas__VersionIn"
               }
             }
           },
@@ -30137,7 +35624,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__mcp__schemas__VersionIn"
               }
             }
           },
@@ -30227,7 +35714,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__mcp__schemas__VersionIn"
               }
             }
           },
@@ -31673,7 +37160,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -32339,7 +37826,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -32408,6 +37895,638 @@
           }
         },
         "summary": "Clear Banner"
+      }
+    },
+    "/api/perfis/{perfil_id}/cenas": {
+      "get": {
+        "operationId": "cenas_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Nome, ação, fala ou produto (sem acento)",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Nome, ação, fala ou produto (sem acento)",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Status (OU)",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/CenaStatus"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Status (OU)",
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "avatarId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Avatarid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cenarioId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cenarioid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "produtoImagemId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Produtoimagemid"
+            }
+          },
+          {
+            "description": "Tags (E)",
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Tags (E)",
+              "title": "Tag"
+            }
+          },
+          {
+            "in": "query",
+            "name": "arquivadas",
+            "required": false,
+            "schema": {
+              "default": "false",
+              "enum": [
+                "false",
+                "true",
+                "all"
+              ],
+              "title": "Arquivadas",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CenasList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "List "
+      },
+      "post": {
+        "operationId": "cenas_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CenaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cena"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Create"
+      }
+    },
+    "/api/perfis/{perfil_id}/cenas/padroes": {
+      "get": {
+        "operationId": "cenas_padroes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CenaPadroes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Padroes Get"
+      },
+      "put": {
+        "operationId": "cenas_padroes_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PadroesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CenaPadroes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Padroes Put"
+      }
+    },
+    "/api/perfis/{perfil_id}/cenas/padroes/revert": {
+      "post": {
+        "operationId": "cenas_padroes_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CenaPadroes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Padroes Revert"
+      }
+    },
+    "/api/perfis/{perfil_id}/cenas/padroes/versions": {
+      "get": {
+        "operationId": "cenas_padroes_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Padroes Versions"
       }
     },
     "/api/perfis/{perfil_id}/contas": {
@@ -34346,7 +40465,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },
@@ -34924,7 +41043,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VersionIn"
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
               }
             }
           },

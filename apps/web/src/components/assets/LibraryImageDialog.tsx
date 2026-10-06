@@ -23,7 +23,8 @@ export function LibraryImageDialog({
   tipos: readonly AssetTipo[];
   value: string | null;
   transparent?: boolean;
-  onPick: (image: ImageRef) => void;
+  // spec 010: o item inteiro (assetId, nome) vem como 2º argumento.
+  onPick: (image: ImageRef, item: LibraryImage) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -94,7 +95,7 @@ export function LibraryImageDialog({
                     aria-label={`Escolher ${label}`}
                     aria-pressed={item.image.id === value}
                     onClick={() => {
-                      onPick(item.image);
+                      onPick(item.image, item);
                       setOpen(false);
                     }}
                     className={cn(

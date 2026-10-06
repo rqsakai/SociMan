@@ -9,6 +9,7 @@ from pydantic import BaseModel, TypeAdapter, ValidationError
 
 from sociman_api.assets.models import Asset
 from sociman_api.assets.schemas import AssetPatch
+from sociman_api.cenas.schemas import CenaPatch
 from sociman_api.ia.regras_padrao import PADROES
 from sociman_api.ia.tipos import TIPOS, TipoCampoId
 from sociman_api.marca.tokens import KitTokens
@@ -18,7 +19,9 @@ from sociman_api.postagem import textos
 from sociman_api.postagem.schemas import CreateDestinoIn, UpdateDestinoIn
 
 SCHEMAS: dict[str, type[BaseModel]] = {"asset": AssetPatch, "perfil": UpdatePerfilIn,
-                                       "kit": KitTokens, "postagem": UpdateDestinoIn}
+                                       "kit": KitTokens, "postagem": UpdateDestinoIn,
+                                       "cena": CenaPatch}  # spec 010
+CENA = {"cena.acao", "cena.camera", "cena.estilo", "cena.audio", "cena.ajustar"}
 
 
 def _adapter(model: type[BaseModel], campo: str) -> TypeAdapter:
@@ -35,9 +38,10 @@ def _aceita(adapter: TypeAdapter, valor) -> bool:
     return True
 
 
-def test_os_15_ids_e_o_literal():
-    # 13 da 008 + guia.montar e guia.testar (spec 017); o testar usa as regras de outro tipo.
-    assert len(TIPOS) == 15
+def test_os_20_ids_e_o_literal():
+    # 13 da 008 + guia.montar e guia.testar (spec 017) + 5 da cena (spec 010); o testar usa as
+    # regras de outro tipo.
+    assert len(TIPOS) == 20
     assert set(get_args(TipoCampoId)) == set(TIPOS)
     assert set(PADROES) == set(TIPOS) - {"guia.testar"}
     for tid, tipo in TIPOS.items():
@@ -50,7 +54,7 @@ def test_os_15_ids_e_o_literal():
 
 def test_so_os_prompts_de_imagem_sao_em_ingles():
     ingles = {t.id for t in TIPOS.values() if t.idioma == "en"}
-    assert ingles == {"avatar.descricao_prompt", "cenario.prompt_ambiente"}
+    assert ingles == {"avatar.descricao_prompt", "cenario.prompt_ambiente"} | CENA
     assert TIPOS["avatar.regras_imagem"].idioma == "perfil"  # Q2 = B
 
 
@@ -96,11 +100,13 @@ def test_limites_das_hashtags_batem_com_a_postagem():
 
 
 def test_campos_existem_no_modelo_e_no_schema():
+    from sociman_api.cenas.models import Cena
     from sociman_api.marca.models import BrandKit
     from sociman_api.perfis.models import Perfil
     from sociman_api.postagem.models import Postagem
 
-    modelos = {"asset": Asset, "perfil": Perfil, "kit": BrandKit, "postagem": Postagem}
+    modelos = {"asset": Asset, "perfil": Perfil, "kit": BrandKit, "postagem": Postagem,
+               "cena": Cena}
     for tipo in TIPOS.values():
         if tipo.id.startswith("guia."):
             continue  # sem entidade salva com esses campos (spec 017; o montar é cruzado abaixo)
@@ -135,6 +141,7 @@ def test_literal_e_tipo_do_typing():
 def test_usa_guia_so_proibidas_nos_3_campos_visuais():
     """Spec 017 (Q1): a voz do guia não entra nos prompts de imagem nem nas regras visuais."""
     visuais = {"avatar.descricao_prompt", "cenario.prompt_ambiente", "avatar.regras_imagem"}
+    visuais |= CENA  # spec 010: os campos da cena para o Flow também
     assert {t.id for t in TIPOS.values() if t.usa_guia == "so_proibidas"} == visuais
     assert all(t.usa_guia == "completo" for t in TIPOS.values() if t.id not in visuais)
 
@@ -153,3 +160,19 @@ def test_guia_montar_bate_com_o_guia_salvo():
         assert campo in GuiaCampos.model_fields, campo
         assert campo in PropostaGuia.model_fields, campo
     assert not {"hashtags_fixas", "max_hashtags_fixas", "exemplos"} & set(tipo.campos)
+
+
+def test_tipos_da_cena():
+    """Spec 010 (T035): só proibidas do guia; `campos_cena` só no ajustar, com os limites do
+    `CenaPatch` em cada um dos 4 campos."""
+    from sociman_api.ia.tipos import CAMPOS_CENA_IA, LIMITES_CENA
+
+    for tid in CENA:
+        assert TIPOS[tid].entidade == "cena" and TIPOS[tid].usa_guia == "so_proibidas"
+    assert {t.id for t in TIPOS.values() if t.formato == "campos_cena"} == {"cena.ajustar"}
+    assert TIPOS["cena.ajustar"].campos == CAMPOS_CENA_IA
+    for campo, limite in LIMITES_CENA.items():
+        adapter = _adapter(CenaPatch, campo)
+        assert _aceita(adapter, "a" * limite) and not _aceita(adapter, "a" * (limite + 1))
+        if campo != "acao":
+            assert TIPOS[f"cena.{campo}"].limites.max_chars == limite

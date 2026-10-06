@@ -39,6 +39,7 @@ import { MarcaTab } from "./tabs/MarcaTab";
 import { AssetsTab } from "./tabs/AssetsTab";
 import { PadroesCorteTab } from "./tabs/PadroesCorteTab";
 import { GuiaTab } from "./tabs/GuiaTab";
+import { CenasTab } from "./tabs/CenasTab";
 
 const tabs = [
   { id: "dados", label: "Dados" },
@@ -49,6 +50,7 @@ const tabs = [
   { id: "cortes", label: "Cortes" },
   { id: "padroes", label: "Padrões de corte" },
   { id: "assets", label: "Assets" },
+  { id: "cenas", label: "Cenas" },
   { id: "historico", label: "Histórico" },
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
@@ -201,6 +203,9 @@ export default function PerfilDetalhe() {
         </TabsContent>
         <TabsContent value="assets">
           <AssetsTab perfil={perfil} />
+        </TabsContent>
+        <TabsContent value="cenas">
+          <CenasTab perfil={perfil} />
         </TabsContent>
         <TabsContent value="historico">
           <PerfilHistorico perfil={perfil} onReverted={refresh} />

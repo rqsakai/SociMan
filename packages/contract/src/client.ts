@@ -206,6 +206,13 @@ type StudioJson<T> = T extends { content: { "application/json": infer B } } ? B 
 export type StudioPrevia = StudioJson<paths["/api/contas/{conta_id}/studio/previa"]["post"]["responses"]["201"]>;
 export type StudioImportacao = components["schemas"]["Importacao"];
 export type StudioCobertura = components["schemas"]["Cobertura"];
+// 013-importacao (tipos pelas rotas: os nomes das classes da API colidem com os de outras specs)
+type AgenciaJson<T> = T extends { content: { "application/json": infer B } } ? B : never;
+export type AgenciaEstado = AgenciaJson<paths["/api/agencia/estado"]["get"]["responses"]["200"]>;
+export type AgenciaPrevia = AgenciaJson<paths["/api/agencia/previa"]["post"]["responses"]["201"]>;
+export type AgenciaImportacao = AgenciaJson<paths["/api/agencia/importacoes/{importacao_id}"]["get"]["responses"]["200"]>;
+export type AgenciaImportacaoResumo = AgenciaJson<paths["/api/agencia/importacoes"]["get"]["responses"]["200"]>["items"][number];
+export type AgenciaConfirmarRequest = NonNullable<paths["/api/agencia/importacoes"]["post"]["requestBody"]>["content"]["application/json"];
 // 009-mcp (tipos pelas rotas, para não depender do nome das classes da API)
 type Json<T> = T extends { content: { "application/json": infer B } } ? B : never;
 export type McpCliente = Json<paths["/api/mcp/clientes/{cliente_id}"]["get"]["responses"][200]>["cliente"];
@@ -221,6 +228,23 @@ export type Anotacao = Json<paths["/api/anotacoes/{anotacao_id}"]["get"]["respon
 export type AnotacaoFilters = NonNullable<paths["/api/anotacoes"]["get"]["parameters"]["query"]>;
 export type AnotacaoCreateRequest = NonNullable<paths["/api/anotacoes"]["post"]["requestBody"]>["content"]["application/json"];
 export type AnotacaoResumoFilters = NonNullable<paths["/api/anotacoes/resumo"]["get"]["parameters"]["query"]>;
+// 010-cenas
+export type Cena = components["schemas"]["Cena"];
+export type CenaResumo = components["schemas"]["CenaResumo"];
+export type CenaStatus = components["schemas"]["CenaStatus"];
+export type CenaModo = components["schemas"]["CenaModo"];
+export type CenaPlano = components["schemas"]["CenaPlano"];
+export type CenaMovimento = components["schemas"]["CenaMovimento"];
+export type CenaTomada = components["schemas"]["Tomada"];
+export type CenaPadroes = components["schemas"]["CenaPadroes"];
+export type CenaAviso = Cena["avisos"][number]; // pelo Cena: o nome "Aviso" colide com o da 020
+export type CenaIngrediente = components["schemas"]["Ingrediente"];
+export type CenaPrompt = components["schemas"]["PromptOut"];
+export type CenaCreateRequest = components["schemas"]["CenaIn"];
+export type CenaPatchRequest = components["schemas"]["CenaPatch"];
+export type AnotacaoCamposTexto = components["schemas"]["CamposProposta"];
+export type AnotacaoCamposCena = components["schemas"]["CamposCena"];
+export type CenaFilters = NonNullable<paths["/api/perfis/{perfil_id}/cenas"]["get"]["parameters"]["query"]>;
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -641,6 +665,23 @@ export function createApiClient(options: ApiClientOptions = {}) {
           }),
         ),
     },
+    // Importação da agência (spec 013): prévia, confirmar e desfazer só do dono humano; o estado, a
+    // lista e o detalhe são leitura de todos.
+    agencia: {
+      estado: () => unwrap(client.GET("/api/agencia/estado")),
+      previa: () => unwrap(client.POST("/api/agencia/previa")),
+      confirmar: (body: AgenciaConfirmarRequest) => unwrap(client.POST("/api/agencia/importacoes", { body })),
+      importacoes: () => unwrap(client.GET("/api/agencia/importacoes")),
+      importacao: (importacaoId: string) =>
+        unwrap(client.GET("/api/agencia/importacoes/{importacao_id}", { params: { path: { importacao_id: importacaoId } } })),
+      desfazer: (importacaoId: string, version: number) =>
+        unwrap(
+          client.POST("/api/agencia/importacoes/{importacao_id}/desfazer", {
+            params: { path: { importacao_id: importacaoId } },
+            body: { version },
+          }),
+        ),
+    },
     // Interruptor "Envios automáticos" (spec 015): só o dono humano muda; o nível do servidor é leitura.
     publicacao: {
       config: () => unwrap(client.GET("/api/publicacao/config")),
@@ -921,6 +962,54 @@ export function createApiClient(options: ApiClientOptions = {}) {
       updateConfig: (body: { version: number; habilitado: boolean }) => unwrap(client.PUT("/api/mcp/config", { body })),
       configVersions: () => unwrap(client.GET("/api/mcp/config/versions")),
       chamadas: (query: McpChamadaFilters = {}) => unwrap(client.GET("/api/mcp/chamadas", { params: { query } })),
+    },
+    // Cenas para o Flow/Veo (spec 010). O envio de tomada (multipart) fica no app, por XHR, para ter o
+    // progresso. Nenhuma rota DELETE.
+    cenas: {
+      list: (perfilId: string, query: CenaFilters = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/cenas", { params: { path: { perfil_id: perfilId }, query } })),
+      create: (perfilId: string, body: CenaCreateRequest) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/cenas", { params: { path: { perfil_id: perfilId } }, body })),
+      get: (cenaId: string) => unwrap(client.GET("/api/cenas/{cena_id}", { params: { path: { cena_id: cenaId } } })),
+      update: (cenaId: string, body: CenaPatchRequest) =>
+        unwrap(client.PATCH("/api/cenas/{cena_id}", { params: { path: { cena_id: cenaId } }, body })),
+      duplicar: (cenaId: string) => unwrap(client.POST("/api/cenas/{cena_id}/duplicar", { params: { path: { cena_id: cenaId } } })),
+      pronta: (cenaId: string, version: number) =>
+        unwrap(client.POST("/api/cenas/{cena_id}/pronta", { params: { path: { cena_id: cenaId } }, body: { version } })),
+      rascunho: (cenaId: string, version: number) =>
+        unwrap(client.POST("/api/cenas/{cena_id}/rascunho", { params: { path: { cena_id: cenaId } }, body: { version } })),
+      remontar: (cenaId: string, version: number) =>
+        unwrap(client.POST("/api/cenas/{cena_id}/remontar", { params: { path: { cena_id: cenaId } }, body: { version } })),
+      archive: (cenaId: string, version: number) =>
+        unwrap(client.POST("/api/cenas/{cena_id}/arquivar", { params: { path: { cena_id: cenaId } }, body: { version } })),
+      restore: (cenaId: string, version: number) =>
+        unwrap(client.POST("/api/cenas/{cena_id}/restaurar", { params: { path: { cena_id: cenaId } }, body: { version } })),
+      versions: (cenaId: string) => unwrap(client.GET("/api/cenas/{cena_id}/versions", { params: { path: { cena_id: cenaId } } })),
+      revert: (cenaId: string, version: number, toVersion: number) =>
+        unwrap(client.POST("/api/cenas/{cena_id}/revert", { params: { path: { cena_id: cenaId } }, body: { version, toVersion } })),
+      tomadas: (cenaId: string, arquivadas = false) =>
+        unwrap(client.GET("/api/cenas/{cena_id}/tomadas", { params: { path: { cena_id: cenaId }, query: { arquivadas } } })),
+      escolher: (cenaId: string, tomadaId: string, version: number) =>
+        unwrap(
+          client.POST("/api/cenas/{cena_id}/tomadas/{tomada_id}/escolher", {
+            params: { path: { cena_id: cenaId, tomada_id: tomadaId } },
+            body: { version },
+          }),
+        ),
+      tomadaUpdate: (tomadaId: string, version: number, nota: string) =>
+        unwrap(client.PATCH("/api/cenas/tomadas/{tomada_id}", { params: { path: { tomada_id: tomadaId } }, body: { version, nota } })),
+      tomadaArchive: (tomadaId: string, version: number) =>
+        unwrap(client.POST("/api/cenas/tomadas/{tomada_id}/arquivar", { params: { path: { tomada_id: tomadaId } }, body: { version } })),
+      tomadaRestore: (tomadaId: string, version: number) =>
+        unwrap(client.POST("/api/cenas/tomadas/{tomada_id}/restaurar", { params: { path: { tomada_id: tomadaId } }, body: { version } })),
+      padroes: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/cenas/padroes", { params: { path: { perfil_id: perfilId } } })),
+      padroesPut: (perfilId: string, body: { version: number; estilo: string; negative: string }) =>
+        unwrap(client.PUT("/api/perfis/{perfil_id}/cenas/padroes", { params: { path: { perfil_id: perfilId } }, body })),
+      doConteudo: (conteudoId: string) =>
+        unwrap(client.GET("/api/conteudos/{conteudo_id}/cenas", { params: { path: { conteudo_id: conteudoId } } })),
+      definirDoConteudo: (conteudoId: string, version: number, cenaIds: string[]) =>
+        unwrap(client.PUT("/api/conteudos/{conteudo_id}/cenas", { params: { path: { conteudo_id: conteudoId } }, body: { version, cenaIds } })),
     },
     // Anotações e propostas dos agentes (spec 009, US4). Aplicar é pelo save do destino
     // (`propostaId` no `destinos.update`); descartar é humano, reverter só do dono.

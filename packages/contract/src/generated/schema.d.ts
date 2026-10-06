@@ -4,6 +4,99 @@
  */
 
 export interface paths {
+    "/api/agencia/estado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agencia Estado */
+        get: operations["agencia_estado"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agencia/importacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agencia Importacoes List */
+        get: operations["agencia_importacoes_list"];
+        put?: never;
+        /**
+         * Agencia Confirmar
+         * @description Registra a importação (`processando`) e grava numa tarefa de fundo; acompanhe pelo
+         *     detalhe até `concluida` ou `falhou`.
+         */
+        post: operations["agencia_confirmar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agencia/importacoes/{importacao_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agencia Importacoes Get */
+        get: operations["agencia_importacoes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agencia/importacoes/{importacao_id}/desfazer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Agencia Desfazer */
+        post: operations["agencia_desfazer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agencia/previa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Agencia Previa
+         * @description Lê as pastas da agência e concilia com o banco; nada é gravado (30 min, uso único).
+         */
+        post: operations["agencia_previa"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/agendamentos": {
         parameters: {
             query?: never;
@@ -900,6 +993,280 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cenas/tomadas/{tomada_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Tomada Update */
+        patch: operations["cenas_tomadas_update"];
+        trace?: never;
+    };
+    "/api/cenas/tomadas/{tomada_id}/arquivar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tomada Archive */
+        post: operations["cenas_tomadas_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/tomadas/{tomada_id}/restaurar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tomada Restore */
+        post: operations["cenas_tomadas_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/tomadas/{tomada_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tomada Revert */
+        post: operations["cenas_tomadas_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/tomadas/{tomada_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tomada Versions */
+        get: operations["cenas_tomadas_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get */
+        get: operations["cenas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update */
+        patch: operations["cenas_update"];
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/arquivar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive */
+        post: operations["cenas_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/duplicar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Duplicar */
+        post: operations["cenas_duplicar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/pronta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pronta */
+        post: operations["cenas_pronta"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/rascunho": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rascunho */
+        post: operations["cenas_rascunho"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/remontar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remontar */
+        post: operations["cenas_remontar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/restaurar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore */
+        post: operations["cenas_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revert */
+        post: operations["cenas_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/tomadas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tomadas List */
+        get: operations["cenas_tomadas_list"];
+        put?: never;
+        /** Tomadas Upload */
+        post: operations["cenas_tomadas_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/tomadas/{tomada_id}/escolher": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tomadas Escolher */
+        post: operations["cenas_tomadas_escolher"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/cenas/{cena_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versions */
+        get: operations["cenas_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conexoes/retorno": {
         parameters: {
             query?: never;
@@ -1329,6 +1696,24 @@ export interface paths {
         put?: never;
         /** Archive Conteudo */
         post: operations["conteudos_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/conteudos/{conteudo_id}/cenas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Conteudo Cenas */
+        get: operations["conteudos_cenas_get"];
+        /** Conteudo Cenas Put */
+        put: operations["conteudos_cenas_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2855,6 +3240,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/perfis/{perfil_id}/cenas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List */
+        get: operations["cenas_list"];
+        put?: never;
+        /** Create */
+        post: operations["cenas_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/cenas/padroes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Padroes Get */
+        get: operations["cenas_padroes_get"];
+        /** Padroes Put */
+        put: operations["cenas_padroes_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/cenas/padroes/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Padroes Revert */
+        post: operations["cenas_padroes_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/cenas/padroes/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Padroes Versions */
+        get: operations["cenas_padroes_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/perfis/{perfil_id}/contas": {
         parameters: {
             query?: never;
@@ -3447,6 +3902,399 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AgenciaConfirmar */
+        AgenciaConfirmar: {
+            /** Escolhas */
+            escolhas?: components["schemas"]["AgenciaEscolha"][];
+            /** Personaperfil */
+            personaPerfil?: string | null;
+            /**
+             * Previaid
+             * Format: uuid
+             */
+            previaId: string;
+        };
+        /** AgenciaContagens */
+        AgenciaContagens: {
+            /**
+             * Aguardandocota
+             * @default 0
+             */
+            aguardandoCota: number;
+            /**
+             * Diverge
+             * @default 0
+             */
+            diverge: number;
+            /**
+             * Fora
+             * @default 0
+             */
+            fora: number;
+            /**
+             * Igual
+             * @default 0
+             */
+            igual: number;
+            /**
+             * Naoreconhecido
+             * @default 0
+             */
+            naoReconhecido: number;
+            /**
+             * Novo
+             * @default 0
+             */
+            novo: number;
+            /**
+             * Sugestao
+             * @default 0
+             */
+            sugestao: number;
+        };
+        /** AgenciaContagensImportacao */
+        AgenciaContagensImportacao: {
+            /**
+             * Atualizado
+             * @default 0
+             */
+            atualizado: number;
+            /**
+             * Criado
+             * @default 0
+             */
+            criado: number;
+            /**
+             * Fora
+             * @default 0
+             */
+            fora: number;
+            /**
+             * Igual
+             * @default 0
+             */
+            igual: number;
+            /**
+             * Mantido
+             * @default 0
+             */
+            mantido: number;
+            /**
+             * Naogravado
+             * @default 0
+             */
+            naoGravado: number;
+            /**
+             * Sugestao
+             * @default 0
+             */
+            sugestao: number;
+        };
+        /** AgenciaDesfazerIn */
+        AgenciaDesfazerIn: {
+            /** Version */
+            version: number;
+        };
+        /** AgenciaEntidade */
+        AgenciaEntidade: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Tipo */
+            tipo: string;
+            /** Version */
+            version: number | null;
+        };
+        /** AgenciaEscolha */
+        AgenciaEscolha: {
+            direito?: components["schemas"]["CanalDireito"] | null;
+            /** Marcado */
+            marcado?: boolean | null;
+            /** N */
+            n: number;
+            /** Usar */
+            usar?: ("sociman" | "markdown") | null;
+        };
+        /** AgenciaEscolhaPadrao */
+        AgenciaEscolhaPadrao: {
+            direito?: components["schemas"]["CanalDireito"] | null;
+            /** Marcado */
+            marcado?: boolean | null;
+            /** Usar */
+            usar?: ("sociman" | "markdown") | null;
+        };
+        /** AgenciaEstado */
+        AgenciaEstado: {
+            emAndamento: components["schemas"]["AgenciaImportacaoRef"] | null;
+            /** Perfis */
+            perfis: components["schemas"]["AgenciaPerfilEstado"][];
+            raizes: components["schemas"]["AgenciaRaizes"];
+            ultima: components["schemas"]["AgenciaImportacaoRef"] | null;
+        };
+        /** AgenciaImportacao */
+        AgenciaImportacao: {
+            /** Arquivos */
+            arquivos: number;
+            /** Concluidaem */
+            concluidaEm: string | null;
+            contagens: components["schemas"]["AgenciaContagensImportacao"];
+            /**
+             * Criadaem
+             * Format: date-time
+             */
+            criadaEm: string;
+            criadaPor: components["schemas"]["UserRef"] | null;
+            /** Desfeitaem */
+            desfeitaEm: string | null;
+            desfeitaPor: components["schemas"]["UserRef"] | null;
+            /** Erro */
+            erro: string | null;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "processando" | "concluida" | "falhou" | "desfeita";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Itens */
+            itens: components["schemas"]["AgenciaItemImportacao"][];
+            progresso: components["schemas"]["AgenciaProgresso"];
+            /** Version */
+            version: number;
+        };
+        /** AgenciaImportacaoRef */
+        AgenciaImportacaoRef: {
+            /**
+             * Criadaem
+             * Format: date-time
+             */
+            criadaEm: string;
+            criadaPor: components["schemas"]["UserRef"] | null;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "processando" | "concluida" | "falhou" | "desfeita";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** AgenciaImportacaoResumo */
+        AgenciaImportacaoResumo: {
+            /** Arquivos */
+            arquivos: number;
+            /** Concluidaem */
+            concluidaEm: string | null;
+            contagens: components["schemas"]["AgenciaContagensImportacao"];
+            /**
+             * Criadaem
+             * Format: date-time
+             */
+            criadaEm: string;
+            criadaPor: components["schemas"]["UserRef"] | null;
+            /** Desfeitaem */
+            desfeitaEm: string | null;
+            desfeitaPor: components["schemas"]["UserRef"] | null;
+            /** Erro */
+            erro: string | null;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "processando" | "concluida" | "falhou" | "desfeita";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            progresso: components["schemas"]["AgenciaProgresso"];
+            /** Version */
+            version: number;
+        };
+        /** AgenciaImportacoesList */
+        AgenciaImportacoesList: {
+            /** Items */
+            items: components["schemas"]["AgenciaImportacaoResumo"][];
+        };
+        /** AgenciaItemImportacao */
+        AgenciaItemImportacao: {
+            /** Desfazermotivo */
+            desfazerMotivo: string | null;
+            /** Desfazertexto */
+            desfazerTexto: string | null;
+            /** Desfeitoem */
+            desfeitoEm: string | null;
+            entidade: components["schemas"]["AgenciaEntidade"] | null;
+            /** Escolha */
+            escolha: {
+                [key: string]: unknown;
+            };
+            /** Motivo */
+            motivo: string | null;
+            /** Motivotexto */
+            motivoTexto: string | null;
+            /** N */
+            n: number;
+            origem: components["schemas"]["AgenciaOrigem"];
+            /** Perfilslug */
+            perfilSlug: string | null;
+            /**
+             * Resultado
+             * @enum {string}
+             */
+            resultado: "criado" | "atualizado" | "mantido" | "igual" | "fora" | "nao_gravado" | "sugestao";
+            /** Resultadomotivo */
+            resultadoMotivo: string | null;
+            /** Resultadotexto */
+            resultadoTexto: string | null;
+            /**
+             * Situacao
+             * @enum {string}
+             */
+            situacao: "novo" | "igual" | "diverge" | "fora" | "aguardando_cota" | "sugestao";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "perfil" | "conta" | "guia" | "anotacao" | "canal" | "vinculo_canal" | "imagem_logo" | "asset" | "arquivo_asset" | "clipe" | "sugestao_bordao" | "arquivo";
+        };
+        /** AgenciaItemPrevia */
+        AgenciaItemPrevia: {
+            /** Atual */
+            atual?: {
+                [key: string]: unknown;
+            } | null;
+            /** Bytes */
+            bytes?: number | null;
+            /** Direitosaceitos */
+            direitosAceitos?: components["schemas"]["CanalDireito"][] | null;
+            escolhaPadrao?: components["schemas"]["AgenciaEscolhaPadrao"] | null;
+            /**
+             * Exigeperfil
+             * @default false
+             */
+            exigePerfil: boolean;
+            /** Motivo */
+            motivo?: string | null;
+            /** Motivotexto */
+            motivoTexto?: string | null;
+            /** N */
+            n: number;
+            origem: components["schemas"]["AgenciaOrigem"];
+            /** Origens */
+            origens?: components["schemas"]["AgenciaOrigem"][];
+            /** Perfilslug */
+            perfilSlug: string | null;
+            /** Proposto */
+            proposto?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Situacao
+             * @enum {string}
+             */
+            situacao: "novo" | "igual" | "diverge" | "fora" | "aguardando_cota" | "sugestao";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "perfil" | "conta" | "guia" | "anotacao" | "canal" | "vinculo_canal" | "imagem_logo" | "asset" | "arquivo_asset" | "clipe" | "sugestao_bordao" | "arquivo";
+        };
+        /** AgenciaNaoReconhecido */
+        AgenciaNaoReconhecido: {
+            /** Arquivo */
+            arquivo: string;
+            /** Faltou */
+            faltou: string[];
+        };
+        /** AgenciaOrigem */
+        AgenciaOrigem: {
+            /** Arquivo */
+            arquivo: string;
+            /** Linha */
+            linha?: number | null;
+            /** Trecho */
+            trecho: string;
+        };
+        /** AgenciaPerfilEstado */
+        AgenciaPerfilEstado: {
+            /** Arquivosmudaram */
+            arquivosMudaram: boolean;
+            /** Slug */
+            slug: string;
+            /**
+             * Ultimaimportacaoem
+             * Format: date-time
+             */
+            ultimaImportacaoEm: string;
+        };
+        /** AgenciaPersona */
+        AgenciaPersona: {
+            /** Exigeperfil */
+            exigePerfil: boolean;
+            /** Perfilpadrao */
+            perfilPadrao: string | null;
+        };
+        /** AgenciaPrevia */
+        AgenciaPrevia: {
+            /** Arquivosnaoreconhecidos */
+            arquivosNaoReconhecidos: components["schemas"]["AgenciaNaoReconhecido"][];
+            /** Bytesnovos */
+            bytesNovos: number;
+            contagens: components["schemas"]["AgenciaContagens"];
+            /**
+             * Expiraem
+             * Format: date-time
+             */
+            expiraEm: string;
+            /** Itens */
+            itens: components["schemas"]["AgenciaItemPrevia"][];
+            persona: components["schemas"]["AgenciaPersona"] | null;
+            /**
+             * Previaid
+             * Format: uuid
+             */
+            previaId: string;
+        };
+        /** AgenciaProgresso */
+        AgenciaProgresso: {
+            /**
+             * Bytes
+             * @default 0
+             */
+            bytes: number;
+            /** Etapa */
+            etapa?: ("conferindo" | "gravando" | "fim") | null;
+            /**
+             * Feitos
+             * @default 0
+             */
+            feitos: number;
+            /**
+             * Total
+             * @default 0
+             */
+            total: number;
+        };
+        /** AgenciaRaiz */
+        AgenciaRaiz: {
+            /** Disponivel */
+            disponivel: boolean;
+            /** Motivo */
+            motivo?: string | null;
+        };
+        /** AgenciaRaizes */
+        AgenciaRaizes: {
+            clipes: components["schemas"]["AgenciaRaiz"];
+            shared: components["schemas"]["AgenciaRaiz"];
+        };
         /** AgendarIn */
         AgendarIn: {
             /** Antecedenciamin */
@@ -3520,7 +4368,7 @@ export interface components {
              * Entitytype
              * @enum {string}
              */
-            entityType: "asset" | "perfil" | "kit" | "postagem" | "corte" | "conteudo" | "guia";
+            entityType: "asset" | "perfil" | "kit" | "postagem" | "corte" | "conteudo" | "guia" | "cena";
         };
         /** AlvoAlerta */
         AlvoAlerta: {
@@ -3577,7 +4425,8 @@ export interface components {
         Anotacao: {
             alvo: components["schemas"]["AlvoRef"];
             autor: components["schemas"]["Autor"];
-            campos: components["schemas"]["CamposProposta"] | null;
+            /** Campos */
+            campos: components["schemas"]["CamposProposta"] | components["schemas"]["CamposCena"] | null;
             /**
              * Createdat
              * Format: date-time
@@ -3606,7 +4455,7 @@ export interface components {
          * AnotacaoAlvo
          * @enum {string}
          */
-        AnotacaoAlvo: "perfil" | "conta" | "canal" | "video_fonte" | "corte" | "conteudo" | "destino";
+        AnotacaoAlvo: "perfil" | "conta" | "canal" | "video_fonte" | "corte" | "conteudo" | "destino" | "cena";
         /** AnotacaoOut */
         AnotacaoOut: {
             anotacao: components["schemas"]["Anotacao"];
@@ -3620,7 +4469,7 @@ export interface components {
          * AnotacaoTipo
          * @enum {string}
          */
-        AnotacaoTipo: "observacao" | "proposta_texto";
+        AnotacaoTipo: "observacao" | "proposta_texto" | "proposta_cena";
         /** AnotacaoVersionIn */
         AnotacaoVersionIn: {
             /** Version */
@@ -3854,6 +4703,18 @@ export interface components {
             /** Voicetone */
             voiceTone?: string | null;
         };
+        /** AssetRef */
+        AssetRef: {
+            /** Arquivada */
+            arquivada: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nome */
+            nome: string;
+        };
         /** AssetSummary */
         AssetSummary: {
             /** Archived */
@@ -3950,20 +4811,6 @@ export interface components {
              * @enum {string}
              */
             tipo: "usuario" | "mcp_client" | "sistema";
-        };
-        /** Aviso */
-        Aviso: {
-            /**
-             * Codigo
-             * @enum {string}
-             */
-            codigo: "diverge_da_coleta" | "dia_incompleto" | "dias_faltando" | "periodo_longo" | "ano_deduzido" | "colunas_ausentes" | "cabecalho_provisorio";
-            /** Detalhes */
-            detalhes?: {
-                [key: string]: unknown;
-            } | null;
-            /** Mensagem */
-            mensagem: string;
         };
         /** Body_assets_file_upload */
         Body_assets_file_upload: {
@@ -4164,6 +5011,50 @@ export interface components {
             semData: components["schemas"]["SemData"][];
         };
         /**
+         * CamposCena
+         * @description Os campos de uma proposta de cena (009): subconjunto não vazio de `CenaIn` sem tags nem
+         *     notas.
+         */
+        CamposCena: {
+            /** Acao */
+            acao?: string | null;
+            /** Audio */
+            audio?: string | null;
+            /** Avatararquivoid */
+            avatarArquivoId?: string | null;
+            /** Avatarid */
+            avatarId?: string | null;
+            /** Camera */
+            camera?: string | null;
+            /** Cenarioarquivoid */
+            cenarioArquivoId?: string | null;
+            /** Cenarioid */
+            cenarioId?: string | null;
+            /** Duracaos */
+            duracaoS?: (4 | 6 | 8) | null;
+            /** Estilo */
+            estilo?: string | null;
+            /** Fala */
+            fala?: string | null;
+            modo?: components["schemas"]["CenaModo"] | null;
+            movimento?: components["schemas"]["CenaMovimento"] | null;
+            /** Negative */
+            negative?: string | null;
+            /** Nome */
+            nome?: string | null;
+            plano?: components["schemas"]["CenaPlano"] | null;
+            /** Produtoimagemid */
+            produtoImagemId?: string | null;
+            /** Produtonome */
+            produtoNome?: string | null;
+            /** Quadrofinal */
+            quadroFinal?: string | null;
+            /** Quadroinicial */
+            quadroInicial?: string | null;
+            /** Textotela */
+            textoTela?: string | null;
+        };
+        /**
          * CamposProposta
          * @description Proposta de texto para um destino: pelo menos um campo (400 `campos_vazios`).
          */
@@ -4350,6 +5241,316 @@ export interface components {
             n: number;
             /** Valor */
             valor: number | null;
+        };
+        /** Cena */
+        Cena: {
+            /** Acao */
+            acao: string;
+            /** Arquivada */
+            arquivada: boolean;
+            /** Audio */
+            audio: string | null;
+            autor: components["schemas"]["Autor"];
+            avatar: components["schemas"]["AssetRef"] | null;
+            /** Avatararquivoid */
+            avatarArquivoId: string | null;
+            /** Avatarid */
+            avatarId: string | null;
+            /** Avisos */
+            avisos: components["schemas"]["sociman_api__cenas__schemas__Aviso"][];
+            /** Camera */
+            camera: string | null;
+            cenario: components["schemas"]["AssetRef"] | null;
+            /** Cenarioarquivoid */
+            cenarioArquivoId: string | null;
+            /** Cenarioid */
+            cenarioId: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Duplicadade */
+            duplicadaDe: string | null;
+            /** Duracaos */
+            duracaoS: number;
+            /** Estilo */
+            estilo: string | null;
+            /** Fala */
+            fala: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ingredientes */
+            ingredientes: components["schemas"]["Ingrediente"][];
+            modo: components["schemas"]["CenaModo"];
+            movimento: components["schemas"]["CenaMovimento"] | null;
+            /** Negative */
+            negative: string | null;
+            /** Nome */
+            nome: string;
+            /** Notas */
+            notas: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            plano: components["schemas"]["CenaPlano"] | null;
+            produtoImagem: components["schemas"]["AssetRef"] | null;
+            /** Produtoimagemid */
+            produtoImagemId: string | null;
+            /** Produtonome */
+            produtoNome: string | null;
+            prompt: components["schemas"]["PromptOut"];
+            /** Quadrofinal */
+            quadroFinal: string | null;
+            /** Quadroinicial */
+            quadroInicial: string | null;
+            status: components["schemas"]["CenaStatus"];
+            /** Tags */
+            tags: string[];
+            /** Textotela */
+            textoTela: string | null;
+            /** Thumburl */
+            thumbUrl: string | null;
+            tomadaEscolhida: components["schemas"]["Tomada"] | null;
+            /** Tomadas */
+            tomadas: number;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Usos */
+            usos: components["schemas"]["UsoOut"][];
+            /** Version */
+            version: number;
+        };
+        /**
+         * CenaContexto
+         * @description Spec 010: o formulário atual da cena (obrigatório quando a cena ainda não foi salva).
+         *     O servidor confere que os ids são do perfil.
+         */
+        CenaContexto: {
+            /** Avatararquivoid */
+            avatarArquivoId?: string | null;
+            /** Avatarid */
+            avatarId?: string | null;
+            /** Cenarioid */
+            cenarioId?: string | null;
+            /** Duracaos */
+            duracaoS?: (4 | 6 | 8) | null;
+            /** Fala */
+            fala?: string | null;
+            /** Modo */
+            modo?: ("ingredientes" | "quadros" | "estender") | null;
+            /** Produtonome */
+            produtoNome?: string | null;
+        };
+        /** CenaIn */
+        CenaIn: {
+            /** Acao */
+            acao: string;
+            /** Audio */
+            audio?: string | null;
+            /** Avatararquivoid */
+            avatarArquivoId?: string | null;
+            /** Avatarid */
+            avatarId?: string | null;
+            /** Camera */
+            camera?: string | null;
+            /** Cenarioarquivoid */
+            cenarioArquivoId?: string | null;
+            /** Cenarioid */
+            cenarioId?: string | null;
+            /**
+             * Duracaos
+             * @default 8
+             * @enum {integer}
+             */
+            duracaoS: 4 | 6 | 8;
+            /** Estilo */
+            estilo?: string | null;
+            /** Fala */
+            fala?: string | null;
+            /** Ia */
+            ia?: components["schemas"]["IaAplicacao"][] | null;
+            /** @default ingredientes */
+            modo: components["schemas"]["CenaModo"];
+            movimento?: components["schemas"]["CenaMovimento"] | null;
+            /** Negative */
+            negative?: string | null;
+            /** Nome */
+            nome: string;
+            /**
+             * Notas
+             * @default
+             */
+            notas: string;
+            plano?: components["schemas"]["CenaPlano"] | null;
+            /** Produtoimagemid */
+            produtoImagemId?: string | null;
+            /** Produtonome */
+            produtoNome?: string | null;
+            /** Propostaid */
+            propostaId?: string | null;
+            /** Quadrofinal */
+            quadroFinal?: string | null;
+            /** Quadroinicial */
+            quadroInicial?: string | null;
+            /** Tags */
+            tags?: string[];
+            /** Textotela */
+            textoTela?: string | null;
+        };
+        /**
+         * CenaModo
+         * @enum {string}
+         */
+        CenaModo: "ingredientes" | "quadros" | "estender";
+        /**
+         * CenaMovimento
+         * @enum {string}
+         */
+        CenaMovimento: "parada" | "aproximacao" | "afastamento" | "panoramica" | "camera_na_mao";
+        /** CenaPadroes */
+        CenaPadroes: {
+            /** Estilo */
+            estilo: string;
+            /** Negative */
+            negative: string;
+            padraoCodigo: components["schemas"]["CenaPadroesTexto"];
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Version */
+            version: number;
+        };
+        /** CenaPadroesTexto */
+        CenaPadroesTexto: {
+            /** Estilo */
+            estilo: string;
+            /** Negative */
+            negative: string;
+        };
+        /**
+         * CenaPatch
+         * @description Qualquer subconjunto dos campos. Nulo limpa os opcionais; em nome, ação, duração, modo,
+         *     tags e notas, é ignorado.
+         */
+        CenaPatch: {
+            /** Acao */
+            acao?: string | null;
+            /** Audio */
+            audio?: string | null;
+            /** Avatararquivoid */
+            avatarArquivoId?: string | null;
+            /** Avatarid */
+            avatarId?: string | null;
+            /** Camera */
+            camera?: string | null;
+            /** Cenarioarquivoid */
+            cenarioArquivoId?: string | null;
+            /** Cenarioid */
+            cenarioId?: string | null;
+            /** Duracaos */
+            duracaoS?: (4 | 6 | 8) | null;
+            /** Estilo */
+            estilo?: string | null;
+            /** Fala */
+            fala?: string | null;
+            /** Ia */
+            ia?: components["schemas"]["IaAplicacao"][] | null;
+            modo?: components["schemas"]["CenaModo"] | null;
+            movimento?: components["schemas"]["CenaMovimento"] | null;
+            /** Negative */
+            negative?: string | null;
+            /** Nome */
+            nome?: string | null;
+            /** Notas */
+            notas?: string | null;
+            plano?: components["schemas"]["CenaPlano"] | null;
+            /** Produtoimagemid */
+            produtoImagemId?: string | null;
+            /** Produtonome */
+            produtoNome?: string | null;
+            /** Propostaid */
+            propostaId?: string | null;
+            /** Quadrofinal */
+            quadroFinal?: string | null;
+            /** Quadroinicial */
+            quadroInicial?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Textotela */
+            textoTela?: string | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * CenaPlano
+         * @enum {string}
+         */
+        CenaPlano: "close" | "busto" | "medio" | "americano" | "aberto" | "detalhe_produto";
+        /** CenaResumo */
+        CenaResumo: {
+            /** Arquivada */
+            arquivada: boolean;
+            avatar: components["schemas"]["AssetRef"] | null;
+            cenario: components["schemas"]["AssetRef"] | null;
+            /** Duracaos */
+            duracaoS: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            modo: components["schemas"]["CenaModo"];
+            /** Nome */
+            nome: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Produtonome */
+            produtoNome: string | null;
+            status: components["schemas"]["CenaStatus"];
+            /** Tags */
+            tags: string[];
+            /** Thumburl */
+            thumbUrl: string | null;
+            /** Tomadas */
+            tomadas: number;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Usos */
+            usos: number;
+        };
+        /**
+         * CenaStatus
+         * @enum {string}
+         */
+        CenaStatus: "rascunho" | "pronta" | "usada";
+        /** CenasList */
+        CenasList: {
+            /** Items */
+            items: components["schemas"]["CenaResumo"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+        };
+        /** CenasResumoList */
+        CenasResumoList: {
+            /** Items */
+            items: components["schemas"]["CenaResumo"][];
         };
         /** ChamadaMcp */
         ChamadaMcp: {
@@ -4780,6 +5981,8 @@ export interface components {
         Conteudo: {
             /** Archived */
             archived: boolean;
+            /** Cenas */
+            cenas?: components["schemas"]["CenaResumo"][];
             /** Corteid */
             corteId: string | null;
             /**
@@ -5087,7 +6290,8 @@ export interface components {
              */
             alvoId: string;
             alvoTipo: components["schemas"]["AnotacaoAlvo"];
-            campos?: components["schemas"]["CamposProposta"] | null;
+            /** Campos */
+            campos?: components["schemas"]["CamposProposta"] | components["schemas"]["CamposCena"] | null;
             /** Texto */
             texto: string;
             /** @default observacao */
@@ -6119,6 +7323,7 @@ export interface components {
             alvo: components["schemas"]["Alvo"];
             /** Anteriores */
             anteriores?: string[];
+            cenaContexto?: components["schemas"]["CenaContexto"] | null;
             /**
              * Instrucao
              * @default
@@ -6139,7 +7344,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar";
             valorAtual?: components["schemas"]["Valor"];
         };
         /** Guia */
@@ -6319,7 +7524,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar";
         };
         /** IaChamada */
         IaChamada: {
@@ -6541,6 +7746,34 @@ export interface components {
             conteudoId: string;
             /** Message */
             message: string;
+        };
+        /** Ingrediente */
+        Ingrediente: {
+            /** Altura */
+            altura: number;
+            /**
+             * Arquivoid
+             * Format: uuid
+             */
+            arquivoId: string;
+            /**
+             * Assetid
+             * Format: uuid
+             */
+            assetId: string;
+            /** Downloadurl */
+            downloadUrl: string;
+            /** Largura */
+            largura: number;
+            /** Nome */
+            nome: string;
+            /**
+             * Papel
+             * @enum {string}
+             */
+            papel: "avatar" | "produto" | "cenario";
+            /** Thumburl */
+            thumbUrl: string;
         };
         /** IniciarOut */
         IniciarOut: {
@@ -7104,7 +8337,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video";
+            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video" | "cena_tomada";
         };
         /** MidiaLink */
         MidiaLink: {
@@ -7181,6 +8414,13 @@ export interface components {
         NaoLidasOut: {
             /** Naolidas */
             naoLidas: number;
+        };
+        /** NotaIn */
+        NotaIn: {
+            /** Nota */
+            nota: string;
+            /** Version */
+            version: number;
         };
         /** Notificacao */
         Notificacao: {
@@ -7452,6 +8692,22 @@ export interface components {
         PadroesCorteOut: {
             padroes: components["schemas"]["PadroesCorte"];
         };
+        /** PadroesIn */
+        PadroesIn: {
+            /** Estilo */
+            estilo: string;
+            /** Negative */
+            negative: string;
+            /** Version */
+            version: number;
+        };
+        /** ParteOut */
+        ParteOut: {
+            /** Parte */
+            parte: string;
+            /** Texto */
+            texto: string;
+        };
         /** Pedido */
         Pedido: {
             /**
@@ -7676,7 +8932,7 @@ export interface components {
             /** Arquivos */
             arquivos: components["schemas"]["ArquivoPrevia"][];
             /** Avisos */
-            avisos: components["schemas"]["Aviso"][];
+            avisos: components["schemas"]["sociman_api__metricas__studio__schemas__Aviso"][];
             conta: components["schemas"]["ContaPrevia"];
             /** Exigeconfirmacaoconta */
             exigeConfirmacaoConta: boolean;
@@ -7695,6 +8951,21 @@ export interface components {
             previaId: string;
             /** Secoes */
             secoes: components["schemas"]["SecaoPrevia"][];
+        };
+        /** PromptOut */
+        PromptOut: {
+            /** Avatarversion */
+            avatarVersion: number | null;
+            /** Cenarioversion */
+            cenarioVersion: number | null;
+            /** Congelado */
+            congelado: boolean;
+            /** Negative */
+            negative: string;
+            /** Partes */
+            partes: components["schemas"]["ParteOut"][];
+            /** Texto */
+            texto: string;
         };
         /**
          * PropostaOpenshorts
@@ -8344,17 +9615,17 @@ export interface components {
              * Entidade
              * @enum {string}
              */
-            entidade: "asset" | "perfil" | "kit" | "postagem" | "guia";
+            entidade: "asset" | "perfil" | "kit" | "postagem" | "guia" | "cena";
             /**
              * Formato
              * @enum {string}
              */
-            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes";
+            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes" | "campos_cena";
             /**
              * Id
              * @enum {string}
              */
-            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar";
+            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar";
             /**
              * Idioma
              * @enum {string}
@@ -8392,6 +9663,65 @@ export interface components {
             /** Ok */
             ok: components["schemas"]["Destino"][];
         };
+        /** Tomada */
+        Tomada: {
+            /** Altura */
+            altura: number;
+            /** Arquivada */
+            arquivada: boolean;
+            autor: components["schemas"]["Autor"];
+            /** Bytes */
+            bytes: number;
+            /**
+             * Cenaid
+             * Format: uuid
+             */
+            cenaId: string;
+            /** Contenttype */
+            contentType: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Duracaoms */
+            duracaoMs: number;
+            /** Escolhida */
+            escolhida: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Largura */
+            largura: number;
+            /** Naovertical */
+            naoVertical: boolean;
+            /** Negativeusado */
+            negativeUsado: string;
+            /** Nota */
+            nota: string;
+            origem: components["schemas"]["TomadaOrigem"];
+            /** Promptusado */
+            promptUsado: string;
+            /** Thumburl */
+            thumbUrl: string;
+            /** Version */
+            version: number;
+            /** Videourl */
+            videoUrl: string | null;
+        };
+        /**
+         * TomadaOrigem
+         * @description Como a tomada nasceu. Ponto de extensão: a 021 (geração local) poderá acrescentar valores.
+         * @enum {string}
+         */
+        TomadaOrigem: "flow_manual";
+        /** TomadasList */
+        TomadasList: {
+            /** Items */
+            items: components["schemas"]["Tomada"][];
+        };
         /** TotaisSeguidores */
         TotaisSeguidores: {
             /** Ganhos */
@@ -8416,7 +9746,8 @@ export interface components {
         };
         /** UpdateAnotacaoIn */
         UpdateAnotacaoIn: {
-            campos?: components["schemas"]["CamposProposta"] | null;
+            /** Campos */
+            campos?: components["schemas"]["CamposProposta"] | components["schemas"]["CamposCena"] | null;
             /** Texto */
             texto?: string | null;
             /** Version */
@@ -8601,12 +9932,39 @@ export interface components {
             /** Recusas */
             recusas: number;
         };
+        /** UsoOut */
+        UsoOut: {
+            /**
+             * Conteudoid
+             * Format: uuid
+             */
+            conteudoId: string;
+            /** Link */
+            link: string;
+            /** Titulo */
+            titulo: string;
+        };
+        /** UsosIn */
+        UsosIn: {
+            /** Cenaids */
+            cenaIds: string[];
+            /** Version */
+            version: number;
+        };
+        /** UsosOut */
+        UsosOut: {
+            /** Items */
+            items: components["schemas"]["CenaResumo"][];
+            /** Version */
+            version: number;
+        };
         /**
          * Valor
          * @description Um formato por tipo: `texto`, `itens`, os três da postagem, o `guia` (proposta e
          *     entrada do "montar"; entrada do "testar") ou as `variacoes` (proposta do "testar").
          */
         Valor: {
+            cena?: components["schemas"]["ValorCena"] | null;
             /** Descricao */
             descricao?: string | null;
             guia?: components["schemas"]["GuiaCampos"] | null;
@@ -8620,6 +9978,20 @@ export interface components {
             titulo?: string | null;
             /** Variacoes */
             variacoes?: components["schemas"]["Variacao"][] | null;
+        };
+        /**
+         * ValorCena
+         * @description Spec 010: entrada e proposta do "Ajustar cena" (os 4 campos que vão ao prompt).
+         */
+        ValorCena: {
+            /** Acao */
+            acao?: string | null;
+            /** Audio */
+            audio?: string | null;
+            /** Camera */
+            camera?: string | null;
+            /** Estilo */
+            estilo?: string | null;
         };
         /** Variacao */
         Variacao: {
@@ -8665,11 +10037,6 @@ export interface components {
              * Format: date-time
              */
             occurredAt: string;
-            /** Version */
-            version: number;
-        };
-        /** VersionIn */
-        VersionIn: {
             /** Version */
             version: number;
         };
@@ -8964,6 +10331,29 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** Aviso */
+        sociman_api__cenas__schemas__Aviso: {
+            /** Campo */
+            campo: string | null;
+            /** Codigo */
+            codigo: string;
+            /** Detalhe */
+            detalhe: {
+                [key: string]: unknown;
+            } | null;
+            /** Mensagem */
+            mensagem: string;
+        };
+        /** VersionIn */
+        sociman_api__cenas__schemas__VersionIn: {
+            /** Version */
+            version: number;
+        };
+        /** VersionIn */
+        sociman_api__mcp__schemas__VersionIn: {
+            /** Version */
+            version: number;
+        };
         /** VideosList */
         sociman_api__metricas__schemas__VideosList: {
             /** Items */
@@ -8972,6 +10362,25 @@ export interface components {
             nextCursor: string | null;
             /** Total */
             total: number;
+        };
+        /** Aviso */
+        sociman_api__metricas__studio__schemas__Aviso: {
+            /**
+             * Codigo
+             * @enum {string}
+             */
+            codigo: "diverge_da_coleta" | "dia_incompleto" | "dias_faltando" | "periodo_longo" | "ano_deduzido" | "colunas_ausentes" | "cabecalho_provisorio";
+            /** Detalhes */
+            detalhes?: {
+                [key: string]: unknown;
+            } | null;
+            /** Mensagem */
+            mensagem: string;
+        };
+        /** VersionIn */
+        sociman_api__perfis__schemas__VersionIn: {
+            /** Version */
+            version: number;
         };
     };
     responses: never;
@@ -8982,6 +10391,349 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    agencia_estado: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgenciaEstado"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    agencia_importacoes_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgenciaImportacoesList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    agencia_confirmar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgenciaConfirmar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgenciaImportacao"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    agencia_importacoes_get: {
+        parameters: {
+            query?: {
+                situacao?: ("novo" | "igual" | "diverge" | "fora" | "aguardando_cota" | "sugestao") | null;
+                tipo?: ("perfil" | "conta" | "guia" | "anotacao" | "canal" | "vinculo_canal" | "imagem_logo" | "asset" | "arquivo_asset" | "clipe" | "sugestao_bordao" | "arquivo") | null;
+                perfil?: string | null;
+            };
+            header?: never;
+            path: {
+                importacao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgenciaImportacao"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    agencia_desfazer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                importacao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgenciaDesfazerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgenciaImportacao"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    agencia_previa: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgenciaPrevia"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     agendamentos_create: {
         parameters: {
             query?: never;
@@ -10577,7 +12329,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -10810,7 +12562,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -10882,7 +12634,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -11024,7 +12776,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -11999,7 +13751,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -12141,7 +13893,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -12415,6 +14167,1264 @@ export interface operations {
             };
         };
     };
+    cenas_tomadas_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tomada_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tomada"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_tomadas_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tomada_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__cenas__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tomada"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_tomadas_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tomada_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__cenas__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tomada"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_tomadas_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tomada_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tomada"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_tomadas_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tomada_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CenaPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__cenas__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_duplicar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_pronta: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__cenas__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_rascunho: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__cenas__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_remontar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__cenas__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__cenas__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_tomadas_list: {
+        parameters: {
+            query?: {
+                arquivadas?: boolean;
+            };
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TomadasList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_tomadas_upload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description MP4, MOV ou WebM, de 1 a 30 s, até 200 MB, qualquer proporção
+                     */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Tomada"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_tomadas_escolher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+                tomada_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__cenas__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cena_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     conexoes_retorno: {
         parameters: {
             query?: never;
@@ -12604,7 +15614,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -13401,7 +16411,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -14198,7 +17208,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -14209,6 +17219,135 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConteudoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    conteudos_cenas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conteudo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CenasResumoList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    conteudos_cenas_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conteudo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UsosIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsosOut"];
                 };
             };
             /** @description Bad Request */
@@ -14411,7 +17550,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -14845,7 +17984,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -14916,7 +18055,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -14987,7 +18126,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -15565,7 +18704,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -15636,7 +18775,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -15707,7 +18846,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -15778,7 +18917,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -16191,7 +19330,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -16658,7 +19797,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -16909,7 +20048,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -17051,7 +20190,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -17311,7 +20450,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -17382,7 +20521,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -18737,7 +21876,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__mcp__schemas__VersionIn"];
             };
         };
         responses: {
@@ -18808,7 +21947,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__mcp__schemas__VersionIn"];
             };
         };
         responses: {
@@ -18879,7 +22018,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__mcp__schemas__VersionIn"];
             };
         };
         responses: {
@@ -18950,7 +22089,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__mcp__schemas__VersionIn"];
             };
         };
         responses: {
@@ -19952,7 +23091,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -20385,7 +23524,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -20436,6 +23575,406 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_list: {
+        parameters: {
+            query?: {
+                /** @description Nome, ação, fala ou produto (sem acento) */
+                q?: string | null;
+                /** @description Status (OU) */
+                status?: components["schemas"]["CenaStatus"][] | null;
+                avatarId?: string | null;
+                cenarioId?: string | null;
+                produtoImagemId?: string | null;
+                /** @description Tags (E) */
+                tag?: string[] | null;
+                arquivadas?: "false" | "true" | "all";
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CenasList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CenaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cena"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_padroes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CenaPadroes"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_padroes_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PadroesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CenaPadroes"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_padroes_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CenaPadroes"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    cenas_padroes_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -21919,7 +25458,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {
@@ -22386,7 +25925,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["VersionIn"];
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
             };
         };
         responses: {

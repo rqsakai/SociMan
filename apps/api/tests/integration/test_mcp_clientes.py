@@ -34,7 +34,7 @@ def test_token_uma_vez_no_store(client, dono):  # noqa: F811
     for url in ("/api/mcp/clientes", f"/api/mcp/clientes/{cliente['id']}",
                 f"/api/mcp/clientes/{cliente['id']}/versions"):
         corpo = client.get(url, headers=h).text
-        assert token not in corpo and token.rsplit("_", 1)[1] not in corpo
+        assert token not in corpo and token.split("_", 2)[2] not in corpo
         assert '"token"' not in corpo and "hash" not in corpo.lower()
 
 
@@ -138,7 +138,7 @@ def test_historico_e_eventos_sem_segredo(client, dono, db):  # noqa: F811
     _, h = dono
     cliente, token = criar_cliente(client, h)
     _acao(client, h, cliente, "rotacionar")
-    segredos = (token, token.rsplit("_", 1)[1])
+    segredos = (token, token.split("_", 2)[2])
     for row in db.scalars(select(EntityVersion)):
         assert not any(s in str(row.after) + str(row.before) + str(row.details) for s in segredos)
     tipos = {e.type for e in db.scalars(select(SecurityEvent))}

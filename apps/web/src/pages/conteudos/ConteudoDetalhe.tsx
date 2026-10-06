@@ -18,6 +18,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
+import { SeletorCenas } from "@/components/cenas/SeletorCenas";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { AgendarDialog } from "@/components/conteudos/AgendarDialog";
 import { DestinosSection } from "@/components/conteudos/DestinoPanel";
@@ -138,6 +139,7 @@ export default function ConteudoDetalhe() {
         <div className="min-w-0 space-y-6">
           <Player conteudo={c} />
           <PropostaCard conteudo={c} />
+          {c.origem === "video_proprio" && <SeletorCenas conteudo={c} />}
           <Desempenho conteudo={c} onChanged={refresh} />
           <AnotacoesCard alvoTipo="conteudo" alvoId={c.id} arquivado={c.archived} titulo="Anotações do conteúdo" />
           <Historico conteudo={c} onReverted={refresh} />

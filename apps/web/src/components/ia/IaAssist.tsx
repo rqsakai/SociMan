@@ -16,7 +16,7 @@
  *   "Aplicar" fica desabilitado e o "Editar e aplicar" continua liberado (editado por um humano, a
  *   decisão é dele). "Guia usado" mostra as versões dos guias que entraram no pedido.
  */
-import type { IaAlvo, IaChamada, TipoCampo, TipoCampoId } from "@sociman/contract";
+import type { IaAlvo, IaChamada, IaGerarRequest, TipoCampo, TipoCampoId } from "@sociman/contract";
 import { ApiError } from "@sociman/contract";
 import { Loader2, PencilLine, RefreshCw, Save, Sparkles, TriangleAlert, X } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
@@ -78,6 +78,8 @@ export interface IaAssistProps<V extends IaValorCampo> {
   botaoLabel?: string;
   // "Recarregar" do aviso de conflito de versão.
   onReload?: () => void;
+  // Spec 010: o formulário atual da cena (obrigatório para a cena ainda não salva).
+  cenaContexto?: IaGerarRequest["cenaContexto"];
   children: (botao: ReactNode) => ReactNode;
 }
 
@@ -91,6 +93,7 @@ export function IaAssist<V extends IaValorCampo>({
   sessaoKey,
   botaoLabel,
   onReload,
+  cenaContexto,
   children,
 }: IaAssistProps<V>) {
   const info = useIaTipo(tipo);
@@ -131,6 +134,7 @@ export function IaAssist<V extends IaValorCampo>({
         instrucao: s.instrucao.trim(),
         sessaoId: s.sessaoId,
         anteriores: outra ? s.chamadas.slice(-5).map((c) => c.id) : [],
+        ...(cenaContexto ? { cenaContexto } : {}),
       });
       set((cur) => ({ ...cur, chamadas: [...cur.chamadas, nova], atual: nova.id, edicao: null }));
     } catch (err) {

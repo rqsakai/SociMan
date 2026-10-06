@@ -11,18 +11,23 @@ from typing import Literal
 
 from sociman_api.ia.regras_padrao import PADROES
 
-Entidade = Literal["asset", "perfil", "kit", "postagem", "guia"]
+Entidade = Literal["asset", "perfil", "kit", "postagem", "guia", "cena"]
 Idioma = Literal["en", "perfil"]
 UsaGuia = Literal["completo", "so_proibidas"]
-Formato = Literal["texto", "lista", "sugestoes", "textos_postagem", "guia", "variacoes"]
+Formato = Literal["texto", "lista", "sugestoes", "textos_postagem", "guia", "variacoes",
+                  "campos_cena"]
 TipoCampoId = Literal[
     "avatar.descricao_prompt", "avatar.tom_de_voz", "avatar.regras_imagem",
     "cenario.prompt_ambiente", "asset.nome", "asset.descricao", "perfil.bio", "kit.bordoes",
     "kit.series", "postagem.titulo", "postagem.descricao", "postagem.hashtags",
     "postagem.textos", "guia.montar", "guia.testar",
+    "cena.acao", "cena.camera", "cena.estilo", "cena.audio", "cena.ajustar",  # spec 010
 ]
 
 MAX_SUGESTOES = 10
+# Spec 010: os campos que o "Ajustar cena" propõe, com o limite de cada um (os de `CenaPatch`).
+CAMPOS_CENA_IA = ("acao", "camera", "estilo", "audio")
+LIMITES_CENA = {"acao": 1000, "camera": 500, "estilo": 500, "audio": 300}
 
 
 @dataclass(frozen=True)
@@ -119,6 +124,22 @@ _LISTA: tuple[TipoCampo, ...] = (
               Limites(max_chars=100, max_itens=8, min_itens=3, max_chars_item=50, unicos=True,
                       normalizar="hashtag"),
               regras_de="postagem.textos", listar_regras=False),
+    # Spec 010 (R10): os campos da cena que vão ao prompt do Flow; a descrição do avatar e o
+    # cenário não são campos da cena (a IA não tem como mudá-los). Só as proibidas do perfil.
+    TipoCampo("cena.acao", "Ação da cena", "cena", ("acao",), "Cenas › Cena › Ação", "en",
+              "texto", Limites(max_chars=1000, min_chars=1), usa_guia="so_proibidas"),
+    TipoCampo("cena.camera", "Detalhe de câmera da cena", "cena", ("camera",),
+              "Cenas › Cena › Câmera", "en", "texto", Limites(max_chars=500),
+              usa_guia="so_proibidas"),
+    TipoCampo("cena.estilo", "Iluminação e estilo da cena", "cena", ("estilo",),
+              "Cenas › Cena › Iluminação e estilo", "en", "texto", Limites(max_chars=500),
+              usa_guia="so_proibidas"),
+    TipoCampo("cena.audio", "Áudio ambiente da cena", "cena", ("audio",),
+              "Cenas › Cena › Áudio", "en", "texto", Limites(max_chars=300),
+              usa_guia="so_proibidas"),
+    TipoCampo("cena.ajustar", "Ajustar cena (ação, câmera, estilo e áudio)", "cena",
+              CAMPOS_CENA_IA, "Cenas › Cena › Ajustar cena com IA", "en", "campos_cena",
+              Limites(max_chars=1000), usa_guia="so_proibidas"),
 )
 
 TIPOS: dict[str, TipoCampo] = {t.id: t for t in _LISTA}

@@ -12,8 +12,11 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  aceitarCenaHref,
   alvoTipoLabel,
   arquivarAnotacao,
+  camposCena,
+  camposTexto,
   descartarAnotacao,
   invalidarAnotacoes,
   MOTIVO_DESCARTE_MAX,
@@ -51,7 +54,10 @@ export function PropostaCard({
   const [motivo, setMotivo] = useState("");
   const aberta = a.situacao === "aberta";
   const podeArquivar = aberta && (user?.role === "dono" || (a.autor.tipo === "usuario" && a.autor.id === user?.id));
-  const campos = a.tipo === "proposta_texto" ? a.campos : null;
+  const campos = camposTexto(a);
+  // spec 010: proposta de cena; "Aceitar" abre o formulário da cena preenchido (nada salvo).
+  const cena = camposCena(a);
+  const aceitarCena = cena ? aceitarCenaHref(a) : null;
 
   async function run(kind: NonNullable<typeof busy>, fn: () => Promise<unknown>, msg: string) {
     setBusy(kind);
@@ -115,6 +121,29 @@ export function PropostaCard({
           )}
         </dl>
       )}
+      {cena && (
+        <dl className="grid gap-x-3 gap-y-1 rounded-md bg-muted/40 p-2 text-sm sm:grid-cols-[auto_1fr]">
+          {(
+            [
+              ["Nome", cena.nome],
+              ["Ação", cena.acao],
+              ["Fala", cena.fala],
+              ["Câmera", cena.camera],
+              ["Iluminação e estilo", cena.estilo],
+              ["Áudio", cena.audio],
+              ["Produto", cena.produtoNome],
+              ["Duração", cena.duracaoS != null ? `${cena.duracaoS} s` : null],
+            ] as const
+          )
+            .filter(([, v]) => v != null && v !== "")
+            .map(([rotulo, v]) => (
+              <div key={rotulo} className="contents">
+                <dt className="text-muted-foreground">{rotulo}</dt>
+                <dd className="break-words whitespace-pre-wrap">{v}</dd>
+              </div>
+            ))}
+        </dl>
+      )}
       {!aberta && (a.resolvidaPor || a.motivoDescarte) && (
         <p className="text-xs text-muted-foreground">
           {a.resolvidaPor && `${situacaoAnotacaoLabel[a.situacao]} por ${a.resolvidaPor.name}${a.resolvidaEm ? ` em ${formatDateTime(a.resolvidaEm)}` : ""}.`}
@@ -123,6 +152,14 @@ export function PropostaCard({
       )}
       {aberta && (
         <div className="flex flex-wrap gap-2" role="group" aria-label="Ações da anotação">
+          {aceitarCena && (
+            <Button type="button" size="sm" asChild>
+              <Link to={aceitarCena}>
+                <ClipboardPaste aria-hidden="true" />
+                Aceitar
+              </Link>
+            </Button>
+          )}
           {onAplicar && campos && (
             <Button type="button" size="sm" disabled={Boolean(aplicarBloqueado)} title={aplicarBloqueado ?? undefined} onClick={() => onAplicar(a)}>
               <ClipboardPaste aria-hidden="true" />

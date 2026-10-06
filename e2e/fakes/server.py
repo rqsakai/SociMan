@@ -69,6 +69,11 @@ CANAIS = {
                                  "subscribers": 45600},
     "UCe2eOutroCanalFake0000B": {"title": "Outro Canal Fake", "handle": "outrocanalfake",
                                  "subscribers": 1200},
+    # Spec 013: só os fontes.md da pasta sintética (e2e/fixtures/agencia) citam estes dois.
+    "UCe2eImportacaoNovo0000C": {"title": "Canal da Importação", "handle": "canalimportacao",
+                                 "subscribers": 3300},
+    "UCe2eImportacaoPar00000D": {"title": "Parceiro da Importação", "handle": "parceiroimportacao",
+                                 "subscribers": 2100},
 }
 # (id de 11, canal, título, dias atrás, duração ISO, views, likes, comentários)
 VIDEOS = [
@@ -435,6 +440,11 @@ def claude(body: dict) -> tuple[int, dict]:
                                 "descricao": f"Descrição da variação {v}, versão {n}.",
                                 "hashtags": ["#achadinhos", f"#variacao{v}", f"#dica{n}"]}
                                for v in (1, 2, 3)]}
+    elif "acao" in props:  # spec 010: `cena.ajustar` (os 4 campos da cena, em inglês)
+        dados = {"acao": f"lifts the lid slowly and smiles, take {n}",
+                 "camera": "eye level, shallow depth of field",
+                 "estilo": "warm soft light, retro color grading",
+                 "audio": "gentle kitchen ambience"}
     elif "tom" in props:
         dados = {"tom": f"Descontraído e direto, versão {n} do Claude falso.",
                  "faca": ["Fale com o público de você", "Comece pelo gancho"],

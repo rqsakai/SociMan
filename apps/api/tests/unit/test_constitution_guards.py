@@ -933,3 +933,179 @@ def test_nenhum_arquivo_real_do_studio_na_api():
     achados = [str(p.relative_to(API_DIR)) for padrao in ARQUIVOS_REAIS_020
                for p in API_DIR.rglob(padrao) if ".venv" not in p.parts]
     assert not achados, f"arquivo do TikTok Studio no repositório (privacidade): {achados}"
+
+
+# ---- spec 010 (cenas): sem rede, sem publicação, reverts de dono humano, histórico ----
+
+CENAS = SRC / "cenas"
+IMPORTS_PROIBIDOS_010 = ("sociman_api.publicacao", "httpx", "httpx2", "requests", "urllib",
+                         "anthropic")
+# Mutações de domínio e o que cada uma usa para gravar o histórico (direto ou pelo `_record`
+# do próprio módulo, que chama `history.record`).
+MUTACOES_010 = {
+    "service.py": ("criar", "editar", "marcar_pronta", "voltar_rascunho", "remontar", "duplicar",
+                   "arquivar", "restaurar", "reverter"),
+    "tomadas.py": ("registrar_tomada", "escolher", "editar_nota", "arquivar", "restaurar", "reverter"),
+    "usos.py": ("definir",),
+    "padroes.py": ("salvar", "reverter"),
+}
+_GRAVA_010 = {"record", "_record", "_record_cena", "_recalcula", "_solta_escolha"}
+
+
+def _chamadas_010(fn: ast.AST) -> set[str]:
+    out = set()
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Call):
+            f = node.func
+            out.add(f.attr if isinstance(f, ast.Attribute) else getattr(f, "id", ""))
+    return out
+
+
+def test_cenas_nao_importa_rede_nem_publicacao():
+    fontes = sorted(CENAS.rglob("*.py"))
+    assert (CENAS / "service.py") in fontes and (CENAS / "tomadas.py") in fontes  # vivo
+    achados = [f"{p.relative_to(SRC)}: {m}" for p in fontes
+               for m in IMPORTS_PROIBIDOS_010 if _importa(ast.parse(p.read_text()), m)]
+    assert not achados, f"cenas/ importa rede ou publicação: {achados}"
+
+
+def test_rotas_das_cenas_sem_rede_social():
+    rotas = [(m.upper(), path, op.get("operationId", ""))
+             for path, ops in app.openapi()["paths"].items() for m, op in ops.items()
+             if "/cenas" in path]
+    assert len(rotas) >= 20 and not [r for r in rotas if r[0] == "DELETE"]
+    for _, path, op in rotas:
+        assert op.startswith(("cenas_", "conteudos_cenas_")), op
+        texto = f"{_norm(path)} {_norm(op)}"
+        assert not [t for t in PUBLISH_TERMS if t in texto], (op, path)
+
+
+def test_reverts_das_cenas_so_dono_humano():
+    from sociman_api.auth.deps import require_human_owner
+    from sociman_api.cenas.router import router as cenas_router
+    from sociman_api.cenas.router_perfil import router as perfil_router
+
+    def chamadas(dependant) -> set:
+        out = set()
+        for d in dependant.dependencies:
+            out.add(d.call)
+            out |= chamadas(d)
+        return out
+
+    rotas = [r for rt in (cenas_router, perfil_router) for r in rt.routes
+             if hasattr(r, "dependant")]
+    reverts = [r for r in rotas if r.path.endswith("/revert")]
+    assert len(reverts) == 3
+    for r in rotas:
+        assert (require_human_owner in chamadas(r.dependant)) == (r in reverts), r.path
+
+
+def test_toda_mutacao_de_cena_grava_historico():
+    faltando = []
+    for arquivo, funcoes in MUTACOES_010.items():
+        tree = ast.parse((CENAS / arquivo).read_text())
+        defs = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
+        for nome in funcoes:
+            assert nome in defs, f"{arquivo}:{nome} sumiu (atualize a guarda)"
+            if not _chamadas_010(defs[nome]) & _GRAVA_010:
+                faltando.append(f"{arquivo}:{nome}")
+    assert not faltando, f"mutação sem histórico (princípio VII): {faltando}"
+
+
+# ---- spec 013 (importação da agência): só lê a pasta da agência, nunca escreve nela ----
+
+AGENCIA = SRC / "agencia"
+OPERATIONS_013 = {"agencia_estado", "agencia_previa", "agencia_confirmar",
+                  "agencia_importacoes_list", "agencia_importacoes_get", "agencia_desfazer"}
+# Rede só pelo service de canais da 006 (resolver e cadastro, com a cota); nada de publicação.
+IMPORTS_PROIBIDOS_013 = ("sociman_api.publicacao", "httpx", "requests", "urllib.request",
+                         "sociman_api.canais.youtube")
+ESCRITA_013 = {"write_text", "write_bytes", "unlink", "rename", "replace", "mkdir", "rmdir",
+               "touch", "symlink_to", "chmod", "remove", "makedirs", "removedirs"}
+
+
+def _escrita_013(tree: ast.AST) -> list[tuple[int, str]]:
+    achados = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            nomes = [a.name for a in node.names] + [getattr(node, "module", "") or ""]
+            if any(n == "shutil" or n.startswith("shutil.") for n in nomes):
+                achados.append((node.lineno, "shutil"))
+        if not isinstance(node, ast.Call):
+            continue
+        f = node.func
+        nome = f.attr if isinstance(f, ast.Attribute) else f.id if isinstance(f, ast.Name) \
+            else ""
+        if nome in ESCRITA_013 and not (nome == "replace" and not _e_path_replace(node)):
+            achados.append((node.lineno, nome))
+        elif nome == "open":
+            modo = node.args[1] if len(node.args) > 1 else next(
+                (k.value for k in node.keywords if k.arg == "mode"), None)
+            if isinstance(f, ast.Attribute) and node.args:  # Path.open(modo)
+                modo = node.args[0]
+            if modo is None:  # sem modo: leitura
+                continue
+            texto = modo.value if isinstance(modo, ast.Constant) else None
+            if not isinstance(texto, str) or any(c in texto for c in "wax+"):
+                achados.append((node.lineno, f"open({texto!r})"))
+    return achados
+
+
+def _e_path_replace(node: ast.Call) -> bool:
+    """`Path.replace(destino)`: um argumento posicional e nada mais (o `str.replace` tem dois;
+    o `dataclasses.replace`, palavras-chave)."""
+    return len(node.args) == 1 and not node.keywords
+
+
+def test_agencia_nao_importa_rede_nem_publicacao():
+    fontes = sorted(AGENCIA.rglob("*.py"))
+    assert (AGENCIA / "pastas.py") in fontes and (AGENCIA / "router.py") in fontes  # vivo
+    achados = [f"{p.relative_to(SRC)}: {m}" for p in fontes
+               for m in IMPORTS_PROIBIDOS_013 if _importa(ast.parse(p.read_text()), m)]
+    assert not achados, f"agencia/ importa rede, publicação ou o cliente do YouTube: {achados}"
+
+
+def test_agencia_nao_escreve_arquivos():
+    achados = [f"{p.relative_to(SRC)}:{linha}: {o}" for p in sorted(AGENCIA.rglob("*.py"))
+               for linha, o in _escrita_013(ast.parse(p.read_text()))]
+    assert not achados, f"agencia/ escreve em disco (FR-004): {achados}"
+
+
+def test_guarda_da_013_pega_escrita():
+    codigo = ("open('x', 'w')\np.open('ab')\np.write_text('x')\np.unlink()\nimport shutil\n"
+              "p.open('rb')\nopen('y')\n'a'.replace('a', 'b')\np.replace(q)\n"
+              "dataclasses.replace(c, tom='x')\n")
+    assert {o for _, o in _escrita_013(ast.parse(codigo))} == {
+        "open('w')", "open('ab')", "write_text", "unlink", "shutil", "replace"}
+
+
+def test_rotas_da_agencia():
+    rotas = {op.get("operationId", ""): (m.upper(), path)
+             for path, ops in app.openapi()["paths"].items() for m, op in ops.items()
+             if path.startswith("/api/agencia")}
+    assert set(rotas) == OPERATIONS_013
+    assert not [r for r in rotas.values() if r[0] == "DELETE"]
+    for op, (_, path) in rotas.items():
+        texto = f"{_norm(path)} {_norm(op)}"
+        assert not [t for t in PUBLISH_TERMS if t in texto], (op, path)
+
+
+def test_escritas_da_agencia_so_para_dono_humano():
+    from sociman_api.agencia.router import router as agencia_router
+    from sociman_api.auth.deps import require_human_owner, require_user
+
+    def chamadas(dependant) -> set:
+        out = set()
+        for d in dependant.dependencies:
+            out.add(d.call)
+            out |= chamadas(d)
+        return out
+
+    rotas = [r for r in agencia_router.routes if hasattr(r, "dependant")]
+    assert len(rotas) == len(OPERATIONS_013)
+    for r in rotas:
+        deps = chamadas(r.dependant)
+        if r.methods & {"POST", "PUT", "PATCH", "DELETE"}:
+            assert require_human_owner in deps, r.path
+        else:
+            assert require_user in deps, r.path

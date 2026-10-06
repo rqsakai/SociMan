@@ -29,7 +29,8 @@ def propositor(client, dono, mcp_habilitado):  # noqa: F811
 
 
 def test_contagem_do_mapa():
-    assert len(LEITURA) == 62 and len(TODAS) == 67
+    # spec 010: +8 leituras de cena; spec 013: +2 do registro de importações da agência
+    assert len(LEITURA) == 62 + 8 + 2 and len(TODAS) == 67 + 8 + 2
 
 
 @pytest.mark.parametrize("modo", ["legacy", "2026-07-28", "auto"])

@@ -240,6 +240,8 @@ def conteudo_out(db: Session, conteudo_id: uuid.UUID) -> s.Conteudo:
     height = corte.height if corte is not None else conteudo.height
     users = user_refs(db, [conteudo.updated_by])
     prop = proposta.do_corte(corte)
+    from sociman_api.cenas.usos import conteudo_tem_cenas  # spec 010 (import tardio: ciclo)
+
     return s.Conteudo(
         **_item_campos(row, destinos, not any(not d.archived for d in destinos)),
         width=width, height=height,
@@ -252,6 +254,7 @@ def conteudo_out(db: Session, conteudo_id: uuid.UUID) -> s.Conteudo:
         proposta_openshorts=s.PropostaOpenshorts(titulo=prop.titulo, descricao=prop.descricao,
                                                  gancho=prop.gancho, score=prop.score)
         if prop is not None else None,
+        cenas=conteudo_tem_cenas(db, conteudo),
     )
 
 

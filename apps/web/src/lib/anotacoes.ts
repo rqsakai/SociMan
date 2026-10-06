@@ -1,4 +1,4 @@
-import { ApiError, type Anotacao, type AnotacaoCreateRequest, type AnotacaoFilters } from "@sociman/contract";
+import { ApiError, type Anotacao, type AnotacaoCamposCena, type AnotacaoCamposTexto, type AnotacaoCreateRequest, type AnotacaoFilters } from "@sociman/contract";
 import { useInfiniteQuery, useQuery, type QueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 
@@ -31,6 +31,8 @@ export const situacaoAnotacaoTone: Record<AnotacaoSituacao, string> = {
 export const tipoAnotacaoLabel: Record<AnotacaoTipo, string> = {
   observacao: "Observação",
   proposta_texto: "Proposta de texto",
+  // spec 010
+  proposta_cena: "Proposta de cena",
 };
 
 export const alvoTipoLabel: Record<AlvoTipo, string> = {
@@ -41,7 +43,29 @@ export const alvoTipoLabel: Record<AlvoTipo, string> = {
   corte: "Corte",
   conteudo: "Conteúdo",
   destino: "Destino",
+  // spec 010
+  cena: "Cena",
 };
+
+// `campos` é uma união pelo `tipo` (spec 010): texto do destino ou campos de uma cena.
+export type CamposTexto = AnotacaoCamposTexto;
+export type CamposCenaProposta = AnotacaoCamposCena;
+
+export function camposTexto(a: Anotacao): CamposTexto | null {
+  return a.tipo === "proposta_texto" && a.campos ? (a.campos as CamposTexto) : null;
+}
+
+export function camposCena(a: Anotacao): CamposCenaProposta | null {
+  return a.tipo === "proposta_cena" && a.campos ? (a.campos as CamposCenaProposta) : null;
+}
+
+// "Aceitar" de uma proposta de cena: o formulário da cena nova (alvo perfil) ou da cena (alvo cena).
+export function aceitarCenaHref(a: Anotacao): string | null {
+  if (a.tipo !== "proposta_cena" || a.situacao !== "aberta") return null;
+  if (a.alvo.tipo === "cena") return `/app/cenas/${a.alvo.id}?proposta=${a.id}`;
+  if (a.alvo.tipo === "perfil") return `/app/perfis/${a.alvo.id}/cenas/nova?proposta=${a.id}`;
+  return null;
+}
 
 // Sem retry em 404 (rota ausente numa API antiga): não fica em loop no console.
 const semRetry404 = (falhas: number, err: unknown) => !(err instanceof ApiError && err.status === 404) && falhas < 1;

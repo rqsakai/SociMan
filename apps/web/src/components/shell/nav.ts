@@ -1,4 +1,4 @@
-import { Bot, CalendarDays, ChartLine, Inbox, Send, CircleUser, Clapperboard, House, LayoutGrid, Scissors, ShieldCheck, Sparkles, Tv, Users, WandSparkles, type LucideIcon } from "lucide-react";
+import { Bot, CalendarDays, FolderInput, ChartLine, Inbox, Send, CircleUser, Clapperboard, House, LayoutGrid, Scissors, ShieldCheck, Sparkles, Tv, Users, WandSparkles, type LucideIcon } from "lucide-react";
 
 // Itens do menu lateral (spec 005, US1). `ownerOnly` some para o membro.
 // `end`: só fica ativo na rota exata (senão "Início" ficaria ativo em /app/*).
@@ -34,6 +34,8 @@ export const navItems: NavItem[] = [
   { label: "Publicação automática", to: "/app/configuracoes/publicacao", icon: Send, ownerOnly: true },
   // 009-mcp
   { label: "Agentes (MCP)", to: "/app/configuracoes/agentes", icon: Bot, ownerOnly: true },
+  // 013-importacao (o membro vê o estado e a lista)
+  { label: "Importar da agência", to: "/app/configuracoes/importacao", icon: FolderInput },
   { label: "Minha conta", to: "/app/conta", icon: CircleUser },
 ];
 

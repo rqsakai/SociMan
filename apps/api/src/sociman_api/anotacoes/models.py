@@ -25,11 +25,13 @@ class AnotacaoAlvo(enum.StrEnum):
     corte = "corte"
     conteudo = "conteudo"
     destino = "destino"
+    cena = "cena"  # spec 010
 
 
 class AnotacaoTipo(enum.StrEnum):
     observacao = "observacao"
     proposta_texto = "proposta_texto"  # só em destino (primeiro corte)
+    proposta_cena = "proposta_cena"  # spec 010: em perfil (cena nova) ou cena (alteração)
 
 
 class AnotacaoSituacao(enum.StrEnum):
@@ -47,8 +49,10 @@ class Anotacao(AuditMixin, Base):
             "(autor_kind = 'mcp_client' AND autor_mcp_cliente_id IS NOT NULL "
             "AND autor_user_id IS NULL) OR (autor_kind = 'user' AND autor_user_id IS NOT NULL "
             "AND autor_mcp_cliente_id IS NULL)", name="ck_anotacoes_autor"),
-        CheckConstraint("tipo = 'observacao' OR alvo_tipo = 'destino'",
-                        name="ck_anotacoes_proposta_em_destino"),
+        CheckConstraint(  # spec 010 (migration 0015)
+            "tipo = 'observacao' OR (tipo = 'proposta_texto' AND alvo_tipo = 'destino') "
+            "OR (tipo = 'proposta_cena' AND alvo_tipo IN ('perfil', 'cena'))",
+            name="ck_anotacoes_proposta_alvo"),
     )
     __versioned_fields__ = ("texto", "campos", "situacao", "motivo_descarte")
 
