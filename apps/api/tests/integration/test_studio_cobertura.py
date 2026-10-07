@@ -63,3 +63,35 @@ def test_desfeitas_ficam_fora_e_membro_ve(st, membro):  # noqa: F811
     c = st.cobertura(h=membro[1])
     assert _secao(c, "visao_geral")["faixas"] == [] and c["importacoesAtivas"] == 0
     assert [i["estado"] for i in st.importacoes(h=membro[1])] == ["desfeita"]
+
+
+# ---- spec 022 (T042): o público na cobertura ----
+
+def test_cobertura_do_publico(st):  # noqa: F811
+    from integration.studio_helpers import (
+        csv_atividade,
+        csv_genero,
+        viewers_dias,
+        zip_viewers,
+    )
+
+    vazio = st.cobertura()["publico"]
+    assert vazio == {"fotos": [], "atividade": {"faixas": [], "buracos": []},
+                     "espectadores": {"faixas": [], "buracos": []}, "vazias": []}
+    imp = st.importar(zip_seguidores(seguidores_dias(local(1).date(), 3), H))  # 3 vazias
+    st.importar(("FollowerGender.csv", csv_genero()), confirmo=True)
+    dias_ = [local(k).date() for k in (5, 4, 2)]
+    st.importar(("FollowerActivity.csv", csv_atividade(dias_, (1,))), confirmo=True)
+    vw = viewers_dias(local(1).date())
+    st.importar(zip_viewers(vw, H))
+    c = st.cobertura()["publico"]
+    assert [(f["tipo"], f["dataFoto"]) for f in c["fotos"]] == [("genero", _d(0))]
+    assert c["atividade"] == {"faixas": [{"de": _d(5), "ate": _d(4)},
+                                         {"de": _d(2), "ate": _d(2)}],
+                              "buracos": [{"de": _d(3), "ate": _d(3)}]}
+    assert c["espectadores"]["faixas"] == [{"de": str(vw[0][0]), "ate": str(vw[-1][0])}]
+    # gênero e atividade vieram com dado depois da vazia; territórios, não
+    assert [v["secao"] for v in c["vazias"]] == ["territorios"]
+    st.desfazer(imp)
+    c = st.cobertura()["publico"]
+    assert c["vazias"] == [] and c["fotos"]  # a desfeita sai

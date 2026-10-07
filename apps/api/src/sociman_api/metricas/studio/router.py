@@ -22,7 +22,8 @@ def _errors(*statuses: int) -> dict[int | str, dict]:
 
 
 Arquivos = Annotated[list[UploadFile], File(
-    description="De 1 a 2 arquivos (.zip ou .csv) do TikTok Studio, até 5 MB no total")]
+    description="De 1 a 3 arquivos (.zip, .csv ou .xlsx) do TikTok Studio: os ZIPs da Visão "
+                "geral, de Seguidores e/ou de Espectadores, até 5 MB no total")]
 
 
 @router.post("/contas/{conta_id}/studio/previa", operation_id="studio_previa",

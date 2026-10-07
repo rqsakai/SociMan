@@ -74,3 +74,47 @@ def test_nao_humano_recebe_somente_humano_e_fica_registrado(st, kind):  # noqa: 
     assert eventos[0].details["contaId"] == st.conta_id
     # a prévia do dono continua valendo (a recusa não a consumiu)
     assert st.confirmar(p["previaId"]).status_code == 201
+
+
+# ---- spec 022 (T048): o envio com XLSX e público nas 3 rotas H; a leitura nova aceita membro ----
+
+def _escritas_publico(st, imp: dict, previa_id: str) -> list[tuple[str, dict]]:  # noqa: F811
+    from integration.studio_helpers import viewers_dias, xlsx_viewers, zip_viewers
+
+    conta = st.conta_id
+    return [
+        (f"/api/contas/{conta}/studio/previa",
+         {"files": files(zip_viewers(viewers_dias(), H))}),
+        (f"/api/contas/{conta}/studio/previa",
+         {"files": files(("Viewers.xlsx", xlsx_viewers()))}),
+        (f"/api/contas/{conta}/studio/importacoes",
+         {"json": {"previaId": previa_id, "confirmoConta": True}}),
+        (f"/api/studio/importacoes/{imp['id']}/desfazer", {"json": {"version": imp["version"]}}),
+    ]
+
+
+def test_publico_membro_e_nao_humano(st, membro):  # noqa: F811
+    from integration.studio_helpers import (
+        seguidores_dias,
+        viewers_dias,
+        zip_seguidores,
+        zip_viewers,
+    )
+
+    imp = st.importar(zip_seguidores(seguidores_dias(n=3), H, publico=True))
+    p = st.previa_ok(zip_viewers(viewers_dias(), H))
+    antes = st.contar()
+    for rota, kw in _escritas_publico(st, imp, p["previaId"]):
+        r = st.client.post(rota, headers=membro[1], **kw)
+        assert (r.status_code, err(r)) == (403, "somente_dono"), rota
+    dono = st.dono
+    app.dependency_overrides[current_user] = lambda: ator_fake("system:agente", dono)
+    for rota, kw in _escritas_publico(st, imp, p["previaId"]):
+        r = st.client.post(rota, headers=st.h, **kw)
+        assert (r.status_code, err(r)) == (403, "somente_humano"), rota
+    app.dependency_overrides.clear()
+    assert st.contar() == antes
+    assert len(_eventos(st.db)) == 4
+    assert st.cobertura(h=membro[1])["publico"]["fotos"]
+    r = st.client.get("/api/analytics/publico", headers=membro[1])
+    assert r.status_code == 200 and r.json()["contas"][0]["genero"] is not None

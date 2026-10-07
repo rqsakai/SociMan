@@ -99,10 +99,8 @@ def test_tudo_zero_e_valido():
     assert lt.problemas == [] and lt.linhas[0].valores["views"] == 0
 
 
+# Spec 022 (FR-004): Atividade, Gênero e Territórios saem daqui (passam a ser importados).
 @pytest.mark.parametrize(("cab", "secao"), [
-    (("Date", "Hour", "Active followers"), "Atividade dos seguidores"),
-    (("Gender", "Distribution"), "Gênero dos seguidores"),
-    (("Top territories", "Distribution"), "Territórios dos seguidores"),
     (("Video title", "Video link", "Post time", "Video views"), "Conteúdo")])
 def test_secao_nao_importada(cab, secao):
     with pytest.raises(ApiError) as e:
@@ -129,3 +127,27 @@ def test_vazio_e_codificacao():
     with pytest.raises(ApiError) as e:
         formato.ler("Overview.csv", '"Date","Video Views"\n"Março 1","3"'.encode("latin-1"))
     assert e.value.code == "studio_formato" and e.value.details["motivo"] == "codificacao"
+
+
+# ---- spec 022: os cabeçalhos reais das 4 seções de público ----
+
+@pytest.mark.parametrize(("cab", "secao"), [
+    (("Gender", "Distribution"), "genero"),
+    (("Top territories", "Distribution"), "territorios"),
+    (("Date", "Hour", "Active followers"), "atividade"),
+    (("Date", "Total Viewers", "New Viewers", "Returning Viewers"), "espectadores"),
+    (("Gênero", "Distribuição"), "genero"),
+    (("Data", "Hora", "Seguidores ativos"), "atividade")])
+def test_secoes_de_publico_pelo_cabecalho(cab, secao):
+    assert formato.secao_de(list(cab)) == (secao, None)
+
+
+def test_espectadores_sem_as_opcionais():
+    lt = _ler(("Date", "Total Viewers"), [("May 1", "3")], "Viewers.xlsx")
+    assert lt.secao == "espectadores"
+    assert lt.ausentes == ["New Viewers", "Returning Viewers"]
+
+
+def test_undefined_na_visao_geral_continua_erro():
+    lt = _ler(("Date", "Video Views"), [("May 1", "undefined")])
+    assert [p.motivo for p in lt.problemas] == [formato.MOTIVO_NUMERO]

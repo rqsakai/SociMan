@@ -115,14 +115,23 @@ def test_fora_de_ordem_e_nome_que_nao_bate(st):  # noqa: F811
 
 @pytest.mark.parametrize("arquivo", [
     zip_conteudo(H),
-    ("Viewers_atavernanerd.zip", zip_bytes({"Viewers.xlsx": b"PK"})),
-    ("Viewers.xlsx", zip_bytes({"[Content_Types].xml": b"<x/>"})),
-    ("planilha.xlsx", b"qualquer"),
     ("user_data.json", b'{"Profile": {}}'),
 ])
 def test_secao_nao_importada(st, arquivo):  # noqa: F811
     e = _recusa(st, "studio_secao_nao_importada", arquivo)
     assert "Visão geral" in e["message"] and e["details"]["orientacao"]
+
+
+# Spec 022 (FR-003, FR-005): o ZIP de Espectadores e o XLSX deixam de ser "seção não importada";
+# o que não é uma planilha legível vira `studio_planilha`.
+@pytest.mark.parametrize("arquivo", [
+    ("Viewers_atavernanerd.zip", zip_bytes({"Viewers.xlsx": b"PK"})),
+    ("Viewers.xlsx", zip_bytes({"[Content_Types].xml": b"<x/>"})),
+    ("planilha.xlsx", b"qualquer"),
+])
+def test_planilha_ilegivel(st, arquivo):  # noqa: F811
+    e = _recusa(st, "studio_planilha", arquivo)
+    assert e["details"]["motivo"]
 
 
 @pytest.mark.parametrize("arquivo", [
@@ -146,6 +155,7 @@ def test_numero_de_arquivos_e_secao_repetida(st):  # noqa: F811
     assert (r.status_code, err(r)) == (400, "studio_arquivos")
     a = zip_overview(overview_dias(n=3), H)
     _recusa(st, "studio_arquivos", a, a, a)
+    _recusa(st, "studio_arquivos", a, a, a, a)  # spec 022: até 3 arquivos
     _recusa(st, "studio_arquivos", a, ("Overview.csv", csv_overview(overview_dias(n=3))))
 
 

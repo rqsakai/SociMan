@@ -2,7 +2,7 @@
 // importados da série da 016. Prévia (nada gravado, uso único, 30 min), confirmar, desfazer e a
 // cobertura. Escrever é só do dono humano (a API recusa o resto com 403); ler é de todos.
 
-import type { StudioCobertura, StudioImportacao, StudioPrevia } from "@sociman/contract";
+import type { StudioCobertura, StudioCoberturaPublico, StudioImportacao, StudioPrevia, StudioSecaoPublicoPrevia } from "@sociman/contract";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 
@@ -57,7 +57,17 @@ export function useStudioMutations(contaId: string) {
 // ---------------------------------------------------------------------------------------------
 // Rótulos
 
-export const secaoLabel: Record<SecaoStudio, string> = { visao_geral: "Visão geral", seguidores: "Seguidores" };
+export const secaoLabel: Record<SecaoStudio, string> = {
+  visao_geral: "Visão geral",
+  seguidores: "Seguidores",
+  // spec 022
+  genero: "Gênero",
+  territorios: "Territórios",
+  atividade: "Atividade dos seguidores",
+  espectadores: "Espectadores",
+};
+// as seções diárias da 020 (as de público têm blocos próprios na prévia)
+export type SecaoDiaria = "visao_geral" | "seguidores";
 
 export const anoOrigemLabel: Record<AnoOrigem, string> = {
   nome_zip: "ano pelo nome do ZIP",
@@ -74,7 +84,7 @@ export const situacaoLabel: Record<SituacaoDia, string> = {
 };
 
 // Os totais da prévia, na ordem da tela.
-export const totaisLabel: Record<SecaoStudio, [string, string][]> = {
+export const totaisLabel: Record<SecaoDiaria, [string, string][]> = {
   visao_geral: [
     ["views", "Views"],
     ["visitasPerfil", "Visitas ao perfil"],
@@ -89,7 +99,7 @@ export const totaisLabel: Record<SecaoStudio, [string, string][]> = {
   ],
 };
 
-export const colunasAmostra: Record<SecaoStudio, [string, string][]> = {
+export const colunasAmostra: Record<SecaoDiaria, [string, string][]> = {
   visao_geral: [
     ["views", "Views"],
     ["visitasPerfil", "Visitas"],
@@ -108,3 +118,29 @@ export const periodoBr = (f: Faixa) => (f.de === f.ate ? dataBr(f.de) : `${dataB
 
 // Onde fica a tela da conta.
 export const studioContaPath = (contaId: string) => `/app/contas/${contaId}/studio`;
+
+// ---------------------------------------------------------------------------------------------
+// Público (spec 022): gênero, territórios, atividade e espectadores entram na mesma importação.
+// Os campos novos são aditivos no contrato (opcionais): lidos por acessores, com padrão vazio.
+
+export type SecaoPublicoPrevia = StudioSecaoPublicoPrevia;
+export type SecaoPublico = SecaoPublicoPrevia["secao"];
+export type DataFotoOrigem = NonNullable<SecaoPublicoPrevia["dataFotoOrigem"]>;
+export type ContagensPublico = NonNullable<SecaoPublicoPrevia["contagens"]>;
+export type CoberturaPublico = StudioCoberturaPublico;
+
+// Rótulo de qualquer seção (as da 020 e as de público; a "territorio" das fotos da cobertura também).
+export const rotuloSecao = (s: string): string => (secaoLabel as Record<string, string>)[s === "territorio" ? "territorios" : s] ?? s;
+
+export const dataFotoOrigemLabel: Record<DataFotoOrigem, string> = {
+  historico: "dia seguinte ao último do histórico de seguidores",
+  importacao: "dia da importação",
+};
+
+export const MENSAGEM_VAZIA =
+  "Ainda sem dados de público: a TikTok libera esses dados quando a conta tem mais seguidores (cerca de 100). Reimporte quando a conta crescer.";
+
+export const publicoDaPrevia = (p: Previa): SecaoPublicoPrevia[] => p.publico ?? [];
+export const publicoDaCobertura = (c: CoberturaStudio): CoberturaPublico | null => c.publico ?? null;
+export const secoesVaziasDe = (i: ImportacaoStudio): SecaoPublico[] => i.secoesVazias ?? [];
+export const dataFotoDe = (i: ImportacaoStudio): string | null => i.dataFoto ?? null;

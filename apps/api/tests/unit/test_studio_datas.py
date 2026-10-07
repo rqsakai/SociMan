@@ -132,3 +132,21 @@ def test_mesmo_mapa_da_visao_geral():
 
 def test_handle_normalizado():
     assert datas.normalizar_handle(" @AtavernaNerd ") == "atavernanerd"
+
+
+# ---- spec 022 ----
+
+def test_atividade_dias_distintos_por_dia_e_por_hora_com_virada():
+    por_dia = [datas.ler_data(t) for t in ("Dec 31", "Dec 31", "Jan 1", "Jan 1")]
+    por_hora = [datas.ler_data(t) for t in ("Dec 31", "Jan 1", "Dec 31", "Jan 1")]
+    for ds in (por_dia, por_hora):
+        distintos = datas.dias_distintos(ds)
+        assert [(d.mes, d.dia) for d in distintos] == [(12, 31), (1, 1)]
+        assert datas.deduzir(distintos, date(2027, 1, 5)) == [date(2026, 12, 31),
+                                                              date(2027, 1, 1)]
+
+
+@pytest.mark.parametrize("nome", ["Viewers_contateste.zip", "Viewers_contateste (1).zip"])
+def test_nome_do_zip_de_espectadores(nome):
+    n = datas.nome_zip(nome, TZ)
+    assert n is not None and (n.secao, n.handle) == ("espectadores", "contateste")

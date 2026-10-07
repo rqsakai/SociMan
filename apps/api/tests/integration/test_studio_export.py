@@ -74,8 +74,10 @@ def test_studio_dias_com_efetivo_e_dicionario(st):  # noqa: F811
     dic = list(csv.DictReader(io.StringIO(zf.read("dicionario.csv").decode("utf-8-sig"))))
     assert {d["coluna"] for d in dic if d["arquivo"] == "studio_dias.csv"} == set(
         dicionario.colunas("studio_dias"))
-    assert dicionario.DICIONARIO_VERSAO == 2
-    assert "Versão do dicionário: 2" in zf.read("LEIAME.txt").decode("utf-8-sig")
+    # spec 022: o dicionário vai para a versão 3 (o público do Studio); o studio_dias não muda
+    assert dicionario.DICIONARIO_VERSAO >= 3
+    assert f"Versão do dicionário: {dicionario.DICIONARIO_VERSAO}" in zf.read(
+        "LEIAME.txt").decode("utf-8-sig")
 
 
 def test_jsonl_e_serie_anonima(st):  # noqa: F811

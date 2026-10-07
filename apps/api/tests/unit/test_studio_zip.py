@@ -49,9 +49,10 @@ def test_zips_do_formato_real():
     assert [c.entrada for c in a.csvs] == ["Overview.csv"] and len(a.csvs[0].sha) == 64
     nome, dados = zip_seguidores()
     a = _ler(nome, dados)
-    assert [c.entrada for c in a.csvs] == ["FollowerHistory.csv"]
-    assert a.ignorados == ["FollowerActivity.csv", "FollowerGender.csv",
-                           "FollowerTopTerritories.csv"]
+    # spec 022 (FR-004): os 3 CSVs de público passam a ser lidos, não ignorados
+    assert [c.entrada for c in a.csvs] == ["FollowerHistory.csv", "FollowerActivity.csv",
+                                           "FollowerGender.csv", "FollowerTopTerritories.csv"]
+    assert a.ignorados == []
 
 
 def test_sha_e_do_csv_e_nao_do_zip():
@@ -101,6 +102,10 @@ def test_link_simbolico():
     _recusa("x.zip", _zip_cru([(info, b"/etc/passwd")]))
 
 
+def test_viewers_xlsx_que_nao_e_planilha_vai_para_studio_planilha():
+    _recusa("Viewers_conta.zip", zip_bytes({"Viewers.xlsx": b"PK"}), "studio_planilha")
+
+
 def test_cifrado_aninhado_e_metodo():
     _recusa("x.zip", _cifrado(zip_bytes({"Overview.csv": CSV})))
     _recusa("x.zip", zip_bytes({"Overview.csv": CSV, "dentro.zip": zip_bytes({"a": b"1"})}))
@@ -124,12 +129,10 @@ def test_csv_renomeado_de_zip_e_lido_pela_assinatura():
     assert a.tipo == "zip"
 
 
+# Spec 022 (FR-003, FR-005): XLSX, `.xls` e o ZIP de Espectadores saem daqui e viram casos de
+# `test_studio_planilha.py` (`studio_planilha`); só o "Baixar seus dados" continua.
 @pytest.mark.parametrize(("nome", "dados"), [
-    ("Viewers.xlsx", zip_bytes({"[Content_Types].xml": b"<x/>", "xl_workbook.xml": b""})),
-    ("planilha.xlsx", b"qualquer coisa"),
-    ("antigo.xls", b"\xd0\xcf\x11\xe0" + b"0" * 10),
     ("user_data.json", b'{"Activity": {}}'),
-    ("Viewers_conta.zip", zip_bytes({"Viewers.xlsx": b"PK"})),
 ])
 def test_secoes_nao_importadas(nome, dados):
     _recusa(nome, dados, "studio_secao_nao_importada")
@@ -151,7 +154,7 @@ def test_envio_de_5mb_mais_1_byte():
     assert len(arquivos.ler_envio([_Up("a.csv", b"1" * arquivos.LIMITE_ENVIO)])) == 1
 
 
-@pytest.mark.parametrize("n", [0, 3])
+@pytest.mark.parametrize("n", [0, 4])  # spec 022: até 3 arquivos
 def test_numero_de_arquivos(n):
     with pytest.raises(ApiError) as e:
         arquivos.ler_envio([_Up(f"{i}.csv", b"1") for i in range(n)])

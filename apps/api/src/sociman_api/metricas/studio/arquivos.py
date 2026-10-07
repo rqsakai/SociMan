@@ -1,14 +1,18 @@
 """Envio → CSVs, tudo em memória (research R2). Nada é extraído nem gravado em disco.
 
 - A requisição tem no máximo `LIMITE_ENVIO` bytes no total (`read(limite + 1)` → 413
-  `arquivo_grande`), com 1 ou 2 arquivos.
+  `arquivo_grande`), com 1 a 3 arquivos (spec 022, R3).
 - ZIP pela **assinatura** (`PK\\x03\\x04`), não pela extensão, aberto com `ZipFile(BytesIO)`.
   Recusado (`studio_zip_inseguro`) com mais de `ZIP_ENTRADAS` entradas, mais de `ZIP_EXPANDIDO`
   expandidos, razão acima de `ZIP_RAZAO`, caminho absoluto, `\\`, `..`, unidade, pasta, link,
   ZIP dentro de ZIP, entrada cifrada ou método fora de *stored*/*deflate*.
-- Só `Overview.csv` e `FollowerHistory.csv` são abertos (com teto na leitura). As outras entradas
-  são listadas como ignoradas e **nunca abertas** (o `Content.csv` traz títulos e links).
-- XLSX, o "Baixar seus dados" (JSON/TXT) e os ZIPs de outras seções: `studio_secao_nao_importada`.
+- Só as `ENTRADAS` são abertas (com teto na leitura). As outras entradas são listadas como
+  ignoradas e **nunca abertas** (o `Content.csv` traz títulos e links).
+- **XLSX (022):** o `Viewers.xlsx` dentro do ZIP de Espectadores é o único aninhado aceito (um
+  nível só), e o XLSX solto (assinatura de ZIP com `[Content_Types].xml`) também; os dois vão para
+  `planilha`, e o SHA é dos bytes do XLSX. O `.xls` antigo (OLE) e o `.xlsx` que não é ZIP dão
+  `studio_planilha`.
+- O "Baixar seus dados" (JSON/TXT) e os ZIPs de Conteúdo: `studio_secao_nao_importada`.
 """
 
 import hashlib
@@ -20,7 +24,7 @@ from typing import BinaryIO, Protocol
 from zoneinfo import ZoneInfo
 
 from sociman_api.errors import ApiError
-from sociman_api.metricas.studio import datas
+from sociman_api.metricas.studio import datas, planilha
 from sociman_api.metricas.studio.formato import ORIENTACAO
 
 LIMITE_ENVIO = 5 * 1024 * 1024
@@ -28,11 +32,13 @@ ZIP_ENTRADAS = 20
 ZIP_EXPANDIDO = 20 * 1024 * 1024
 ZIP_RAZAO = 100
 CSV_TETO = LIMITE_ENVIO
-ENTRADAS = ("Overview.csv", "FollowerHistory.csv")
+ENTRADAS = ("Overview.csv", "FollowerHistory.csv", "FollowerGender.csv",
+            "FollowerTopTerritories.csv", "FollowerActivity.csv", "Viewers.xlsx")
+XLSX = "Viewers.xlsx"
 METODOS = (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
 ASSINATURAS_ZIP = (b"PK\x03\x04", b"PK\x05\x06")
 OLE = b"\xd0\xcf\x11\xe0"  # .xls antigo
-SECAO_DO_NOME = {"Content": "Conteúdo", "Viewers": "Espectadores"}
+SECAO_DO_NOME = {"Content": "Conteúdo"}
 
 
 class Upload(Protocol):
@@ -51,15 +57,16 @@ class Enviado:
 @dataclass(frozen=True)
 class Csv:
     arquivo: str  # o nome enviado (ZIP ou CSV)
-    entrada: str  # o nome do CSV
+    entrada: str  # o nome do CSV (ou do XLSX)
     dados: bytes
     sha: str
+    lida: planilha.Planilha | None = None  # o XLSX já lido (spec 022)
 
 
 @dataclass
 class Arquivo:
     nome: str
-    tipo: str  # zip | csv
+    tipo: str  # zip | csv | xlsx
     handle: str | None
     nome_zip: datas.NomeZip | None
     csvs: list[Csv] = field(default_factory=list)
@@ -75,10 +82,10 @@ def _grande() -> ApiError:
 
 def ler_envio(uploads: list[Upload]) -> list[Enviado]:
     """Os bytes de cada arquivo, com o teto do envio inteiro."""
-    if not 1 <= len(uploads) <= 2:
+    if not 1 <= len(uploads) <= 3:
         raise ApiError(400, "studio_arquivos",
-                       "Envie 1 ou 2 arquivos: o ZIP da Visão geral e/ou o de Seguidores.",
-                       details={"recebidos": len(uploads)})
+                       "Envie de 1 a 3 arquivos: os ZIPs da Visão geral, de Seguidores e/ou de "
+                       "Espectadores.", details={"recebidos": len(uploads)})
     restante, out = LIMITE_ENVIO, []
     for up in uploads:
         dados = up.file.read(restante + 1)
@@ -137,9 +144,6 @@ def _ler_zip(env: Enviado, tz: ZoneInfo) -> Arquivo:
         infos = zf.infolist()
         if len(infos) > ZIP_ENTRADAS:
             raise _inseguro(env.nome, f"mais de {ZIP_ENTRADAS} entradas")
-        nomes = {i.filename for i in infos}
-        if "[Content_Types].xml" in nomes or env.nome.lower().endswith((".xlsx", ".xls")):
-            raise _nao_importada(env.nome, "Planilha XLSX")
         if sum(i.file_size for i in infos) > ZIP_EXPANDIDO:
             raise _inseguro(env.nome, "expande demais")
         for zi in infos:
@@ -155,8 +159,9 @@ def _ler_zip(env: Enviado, tz: ZoneInfo) -> Arquivo:
                 dados = f.read(CSV_TETO + 1)
             if len(dados) > CSV_TETO:
                 raise _inseguro(env.nome, "expande demais")
+            lida = planilha.ler(f"{env.nome}/{XLSX}", dados) if zi.filename == XLSX else None
             arquivo.csvs.append(Csv(env.nome, zi.filename, dados,
-                                    hashlib.sha256(dados).hexdigest()))
+                                    hashlib.sha256(dados).hexdigest(), lida))
     if not arquivo.csvs:
         outra = SECAO_DO_NOME.get(nome.outra or "") if nome else None
         raise _nao_importada(env.nome, outra)
@@ -164,12 +169,19 @@ def _ler_zip(env: Enviado, tz: ZoneInfo) -> Arquivo:
 
 
 def ler_arquivo(env: Enviado, tz: ZoneInfo) -> Arquivo:
-    """Um arquivo do envio: ZIP (pela assinatura) ou CSV solto."""
+    """Um arquivo do envio: XLSX ou ZIP (pela assinatura), ou CSV solto."""
+    if planilha.eh_xlsx(env.dados):
+        return Arquivo(env.nome, "xlsx", None, None,
+                       [Csv(env.nome, XLSX, env.dados, hashlib.sha256(env.dados).hexdigest(),
+                            planilha.ler(env.nome, env.dados))])
+    xlsx = env.nome.lower().endswith((".xlsx", ".xls", ".xlsm"))
+    if env.dados.startswith(OLE) or (xlsx and not env.dados.startswith(ASSINATURAS_ZIP)):
+        raise planilha.recusa(env.nome, "planilha antiga (.xls), cifrada ou que não é XLSX")
     if env.dados.startswith(ASSINATURAS_ZIP):
+        if xlsx:
+            raise planilha.recusa(env.nome, "não é uma planilha XLSX")
         return _ler_zip(env, tz)
     inicio = env.dados.lstrip(b"\xef\xbb\xbf \t\r\n")[:1]
-    if env.dados.startswith(OLE) or env.nome.lower().endswith((".xlsx", ".xls")):
-        raise _nao_importada(env.nome, "Planilha XLSX")
     if inicio in (b"{", b"[") or env.nome.lower().endswith((".json", ".txt")):
         raise _nao_importada(env.nome, "Baixar seus dados")
     return Arquivo(env.nome, "csv", None, None,

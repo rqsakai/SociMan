@@ -84,3 +84,41 @@ def test_previa_feita_antes_do_desfazer(st):  # noqa: F811
     st.desfazer(a)
     r = st.confirmar(p["previaId"])
     assert (r.status_code, err(r)) == (409, "previa_desatualizada")
+
+
+# ---- spec 022 (T020): desfazer tira de uso todas as seções, as da 020 e as de público ----
+
+def test_desfazer_tira_o_publico_de_uso_e_reimportar_grava_de_novo(st):  # noqa: F811
+    from sqlalchemy import func
+
+    from integration.studio_helpers import (
+        seguidores_dias,
+        viewers_dias,
+        zip_seguidores,
+        zip_viewers,
+    )
+    from sociman_api.metricas.studio.models import (
+        AtividadeStudio,
+        EspectadoresStudio,
+        FotoDistribuicao,
+    )
+
+    ate = local(1).date()
+    arquivos = (zip_seguidores(seguidores_dias(ate, 3), H, publico=True),
+                zip_viewers(viewers_dias(ate), H))
+    imp = st.importar(*arquivos)
+    serie = st.serie()
+    assert efetivo.espectadores(st.db, [serie]) and efetivo.fotos(st.db, [serie], "genero")
+    assert st.desfazer(imp).status_code == 200
+    st.db.expire_all()
+    assert efetivo.dias(st.db, [serie]) == {}
+    assert efetivo.fotos(st.db, [serie], "genero") == {}
+    assert efetivo.atividade(st.db, [serie]) == {}
+    assert efetivo.espectadores(st.db, [serie]) == {}
+    contagem = [st.db.scalar(select(func.count()).select_from(m))
+                for m in (FotoDistribuicao, AtividadeStudio, EspectadoresStudio)]
+    assert contagem == [6, 72, 7]  # nada apagado
+    de_novo = st.importar(*arquivos)
+    assert de_novo["id"] != imp["id"] and de_novo["gravados"] == imp["gravados"]
+    st.db.expire_all()
+    assert len(efetivo.espectadores(st.db, [serie])[serie]) == 7

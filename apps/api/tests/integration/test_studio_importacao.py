@@ -70,7 +70,10 @@ def test_confirmar_grava_dias_importacao_e_historico(st):  # noqa: F811
     [v] = st.db.scalars(select(EntityVersion).where(
         EntityVersion.entity_type == "studio_importacao")).all()
     assert (v.version, v.action, v.actor_user_id) == (1, "created", st.dono.id)
-    assert v.details == {"secoes": ["visao_geral", "seguidores"], "gravados": 7}
+    # spec 022 (FR-006): o ZIP de Seguidores real traz os 3 de público só com o cabeçalho, e a
+    # importação anota as seções vazias
+    assert v.details == {"secoes": ["visao_geral", "seguidores"], "gravados": 7,
+                         "vazias": ["genero", "territorios", "atividade"]}
     bruto = json.dumps([v.after, v.details])
     assert H not in bruto and ".zip" not in bruto and "nomes_arquivos" not in v.after
     assert st.importacoes()[0]["id"] == imp["id"]

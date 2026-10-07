@@ -96,7 +96,8 @@ test("020 US1/US2: prévia, confirmar, já importado, conta errada, CSV solto e 
   await lerArquivos(page, [zips.overview, zips.seguidores]);
   await expect(previa(page)).toContainText(`${br(dias[0]!.dia)} a ${br(dias[6]!.dia)}`);
   await expect(previa(page)).toContainText("ano pelo nome do ZIP");
-  await expect(previa(page)).toContainText("FollowerActivity.csv");
+  // spec 022: os 3 CSVs de público só com o cabeçalho viram "ainda sem dados de público" (antes, ignorados)
+  await expect(previa(page).locator("[data-sem-dados-publico]")).toHaveCount(3);
   const fmt = (n: number) => new Intl.NumberFormat("pt-BR").format(n);
   await expect(previa(page).locator('[data-secao="visao_geral"]')).toContainText(`Views: ${fmt(dias.reduce((t, d) => t + d.views, 0))}`);
   await expect(previa(page).locator('[data-secao="seguidores"]')).toBeVisible();

@@ -34,8 +34,11 @@ def test_previa_com_os_dois_zips_nao_grava(st):  # noqa: F811
     assert p["periodo"] == {"de": str(vg[0].dia), "ate": str(ate), "anoOrigem": "nome_zip"}
     arquivos = {a["secao"]: a for a in p["arquivos"]}
     assert arquivos["visao_geral"]["tipo"] == "zip" and arquivos["visao_geral"]["handle"] == H
-    assert arquivos["seguidores"]["ignorados"] == [
-        "FollowerActivity.csv", "FollowerGender.csv", "FollowerTopTerritories.csv"]
+    # spec 022 (FR-004, FR-006): os 3 CSVs de público são lidos; só com o cabeçalho, aparecem
+    # como seções vazias em `publico[]`, e não mais em `ignorados`
+    assert arquivos["seguidores"]["ignorados"] == []
+    assert [(x["secao"], x["vazia"]) for x in p["publico"]] == [
+        ("genero", True), ("territorios", True), ("atividade", True)]
     s = _secao(p, "visao_geral")
     assert s["jaImportada"] is None
     assert s["contagens"] == {"gravados": 12, "iguais": 0, "divergentes": 0, "coletados": 0,

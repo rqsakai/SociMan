@@ -2,8 +2,8 @@
 
 - **Datas aceitas:** "September 25", "Sep 25" (inglês); "25 de setembro", "setembro 25", "25 set"
   (pt-BR, provisório); `AAAA-MM-DD` e `DD/MM/AAAA` (com ano, sem dedução).
-- **Nome do ZIP:** `Overview_<AAAA-MM-DD>_<epoch>_<handle>.zip` e `Followers_<handle>.zip`, com o
-  " (1)" do navegador. O início é o 1º dia, e o epoch (em `APP_TZ`) é o último.
+- **Nome do ZIP:** `Overview_<AAAA-MM-DD>_<epoch>_<handle>.zip`, `Followers_<handle>.zip` e,
+  desde a 022, `Viewers_<handle>.zip` (espectadores), com o " (1)" do navegador. O início é o 1º dia, e o epoch (em `APP_TZ`) é o último.
 - **Ano pelo nome do ZIP:** o 1º dia tem de bater com o início; os seguintes avançam o ano na
   virada (dez → jan), e o último tem de ser igual ao fim do nome.
 - **Dedução:** o último dia é a ocorrência mais recente daquele dia e mês que não passa de hoje, e
@@ -38,7 +38,10 @@ _COPIA = r"(?: \(\d+\))?"
 _OVERVIEW = re.compile(rf"^Overview_(\d{{4}}-\d{{2}}-\d{{2}})_(\d{{9,11}})_{_HANDLE}{_COPIA}\.zip$",
                        re.IGNORECASE)
 _FOLLOWERS = re.compile(rf"^Followers_{_HANDLE}{_COPIA}\.zip$", re.IGNORECASE)
-_OUTRAS = re.compile(rf"^(Content|Viewers)_{_HANDLE}{_COPIA}\.zip$", re.IGNORECASE)
+_VIEWERS = re.compile(rf"^Viewers_{_HANDLE}{_COPIA}\.zip$", re.IGNORECASE)
+_OUTRAS = re.compile(rf"^(Content)_{_HANDLE}{_COPIA}\.zip$", re.IGNORECASE)
+# Âncora do ano entre as seções do mesmo envio (R4 da 022): cada uma usa a 1ª já resolvida.
+ORDEM_ANCORA = ("visao_geral", "seguidores", "espectadores", "atividade")
 
 _ISO = re.compile(r"^(\d{4})-(\d{1,2})-(\d{1,2})$")
 _BR = re.compile(r"^(\d{1,2})/(\d{1,2})/(\d{4})$")
@@ -48,11 +51,11 @@ _DIA_MES = re.compile(r"^(\d{1,2}) (?:de )?([a-z]+)\.?$")  # 25 de setembro / 25
 
 @dataclass(frozen=True)
 class NomeZip:
-    secao: str  # visao_geral | seguidores | outra
+    secao: str  # visao_geral | seguidores | espectadores | outra
     handle: str  # normalizado (sem @, sem caixa)
     inicio: date | None = None  # só na Visão geral
     fim: date | None = None
-    outra: str | None = None  # Content | Viewers
+    outra: str | None = None  # Content
 
 
 @dataclass(frozen=True)
@@ -86,6 +89,8 @@ def nome_zip(nome: str, tz: ZoneInfo) -> NomeZip | None:
                        epoch_para_dia(int(m.group(2)), tz))
     if m := _FOLLOWERS.match(base):
         return NomeZip("seguidores", normalizar_handle(m.group(1)))
+    if m := _VIEWERS.match(base):
+        return NomeZip("espectadores", normalizar_handle(m.group(1)))
     if m := _OUTRAS.match(base):
         return NomeZip("outra", normalizar_handle(m.group(2)), outra=m.group(1).capitalize())
     return None
@@ -194,6 +199,17 @@ def mesmo_mapa(datas: list[DataLida], referencia: list[DataLida], anos: list[dat
         return None
     out = [mapa[(d.mes, d.dia)] for d in datas]
     return out if all(a < b for a, b in pairwise(out)) else None
+
+
+def dias_distintos(datas: list[DataLida]) -> list[DataLida]:
+    """Os dias distintos na ordem da 1ª aparição (a atividade repete o dia, uma vez por hora)."""
+    vistos: set[DataLida] = set()
+    out = []
+    for d in datas:
+        if d not in vistos:
+            vistos.add(d)
+            out.append(d)
+    return out
 
 
 def hoje(tz: ZoneInfo) -> date:

@@ -12,6 +12,9 @@ derivadas"). Só leitura: o `analytics/` importa daqui, nunca o contrário.
   (última foto antes do fim do dia − última antes do início; 0 sem foto antes; nunca negativo;
   só fotos com o contador) e os seguidores ganhos (última foto da conta antes do fim − última
   antes do início, ou a 1ª do dia). Somar os dias dá o mesmo que o delta do período da 019.
+- **Público (spec 022):** fotos de gênero e territórios por data (a foto inteira da importação
+  ativa mais antiga daquela data), a foto válida de um período e a comparação, a atividade por
+  (dia, hora), os espectadores por dia e a regra "veio vazia" (`vazias`).
 """
 
 import bisect
@@ -27,7 +30,14 @@ from sqlalchemy.orm import Session
 
 from sociman_api.config import get_settings
 from sociman_api.metricas.models import FotoConta, FotoVideo, VideoRede
-from sociman_api.metricas.studio.models import DiaStudio, Importacao, ImportacaoEstado
+from sociman_api.metricas.studio.models import (
+    AtividadeStudio,
+    DiaStudio,
+    EspectadoresStudio,
+    FotoDistribuicao,
+    Importacao,
+    ImportacaoEstado,
+)
 
 CONTADORES = ("views", "likes", "comments", "shares")
 COLETADO, STUDIO = "coletado", "studio"
@@ -245,3 +255,188 @@ def faixas(dias_: Iterable[date]) -> list[tuple[date, date]]:
         else:
             out.append([d, d])
     return [(a, b) for a, b in out]
+
+
+# ---- público (spec 022, research R7) ----
+# A mesma precedência: a importação **ativa** mais antiga (`criada_em`, `id`) vale. Na foto, vale
+# a foto inteira (os rótulos não se misturam entre importações).
+
+TIPO_DA_SECAO = {"genero": "genero", "territorios": "territorio"}
+
+
+@dataclass(frozen=True)
+class Foto:
+    tipo: str  # genero | territorio
+    data_foto: date
+    importacao_id: uuid.UUID
+    itens: dict[str, float | None]  # rótulo → % (None = sem dado), na ordem da maior %
+
+
+@dataclass(frozen=True)
+class ValorAtividade:
+    importacao_id: uuid.UUID
+    ativos: int | None
+
+
+@dataclass(frozen=True)
+class ValorEspectadores:
+    importacao_id: uuid.UUID
+    total: int | None
+    novos: int | None
+    recorrentes: int | None
+
+    def numeros(self) -> tuple:
+        return (self.total, self.novos, self.recorrentes)
+
+
+def fotos(db: Session, serie_ids: Iterable[uuid.UUID], tipo: str, ate: date | None = None
+          ) -> dict[uuid.UUID, list[Foto]]:
+    """As fotos efetivas de um tipo por série, da mais antiga para a mais nova."""
+    ids = list(serie_ids)
+    if not ids:
+        return {}
+    escolhidas = (select(FotoDistribuicao.serie_id, FotoDistribuicao.data_foto,
+                         FotoDistribuicao.importacao_id)
+                  .join(Importacao, Importacao.id == FotoDistribuicao.importacao_id)
+                  .where(Importacao.estado == ImportacaoEstado.ativa,
+                         FotoDistribuicao.serie_id.in_(ids), FotoDistribuicao.tipo == tipo)
+                  .order_by(FotoDistribuicao.serie_id, FotoDistribuicao.data_foto,
+                            Importacao.criada_em, Importacao.id)
+                  .ext(distinct_on(FotoDistribuicao.serie_id, FotoDistribuicao.data_foto)))
+    if ate is not None:
+        escolhidas = escolhidas.where(FotoDistribuicao.data_foto <= ate)
+    chaves = {(imp, d): sid for sid, d, imp in db.execute(escolhidas)}
+    if not chaves:
+        return {}
+    itens: dict[tuple[uuid.UUID, date], dict[str, float | None]] = {}
+    for imp, d, rotulo, pct in db.execute(
+            select(FotoDistribuicao.importacao_id, FotoDistribuicao.data_foto,
+                   FotoDistribuicao.rotulo, FotoDistribuicao.pct)
+            .where(FotoDistribuicao.importacao_id.in_({i for i, _ in chaves}),
+                   FotoDistribuicao.tipo == tipo)
+            .order_by(FotoDistribuicao.pct.desc().nulls_last(), FotoDistribuicao.rotulo)):
+        if (imp, d) in chaves:
+            itens.setdefault((imp, d), {})[rotulo] = float(pct) if pct is not None else None
+    out: dict[uuid.UUID, list[Foto]] = {}
+    for (imp, d), sid in sorted(chaves.items(), key=lambda kv: kv[0][1]):
+        out.setdefault(sid, []).append(Foto(tipo, d, imp, itens.get((imp, d), {})))
+    return out
+
+
+def foto_valida(fotos_serie: Sequence[Foto], fim: date) -> Foto | None:
+    """A foto de maior data até `fim` (FR-016, resposta A)."""
+    validas = [f for f in fotos_serie if f.data_foto <= fim]
+    return validas[-1] if validas else None
+
+
+def comparacao(fotos_serie: Sequence[Foto], inicio: date, valida: Foto | None) -> Foto | None:
+    """A foto válida no fim do período anterior (`inicio − 1`), só quando é outra data."""
+    anterior = foto_valida(fotos_serie, inicio - timedelta(days=1))
+    if anterior is None or valida is None or anterior.data_foto == valida.data_foto:
+        return None
+    return anterior
+
+
+def atividade(db: Session, serie_ids: Iterable[uuid.UUID], de: date | None = None,
+              ate: date | None = None
+              ) -> dict[uuid.UUID, dict[tuple[date, int], ValorAtividade]]:
+    """A atividade efetiva por série e (dia, hora)."""
+    ids = list(serie_ids)
+    out: dict[uuid.UUID, dict[tuple[date, int], ValorAtividade]] = {}
+    if not ids:
+        return out
+    stmt = (select(AtividadeStudio)
+            .join(Importacao, Importacao.id == AtividadeStudio.importacao_id)
+            .where(Importacao.estado == ImportacaoEstado.ativa,
+                   AtividadeStudio.serie_id.in_(ids))
+            .order_by(AtividadeStudio.serie_id, AtividadeStudio.dia, AtividadeStudio.hora,
+                      Importacao.criada_em, Importacao.id)
+            .ext(distinct_on(AtividadeStudio.serie_id, AtividadeStudio.dia,
+                             AtividadeStudio.hora)))
+    if de is not None:
+        stmt = stmt.where(AtividadeStudio.dia >= de)
+    if ate is not None:
+        stmt = stmt.where(AtividadeStudio.dia <= ate)
+    for a in db.scalars(stmt):
+        out.setdefault(a.serie_id, {})[(a.dia, a.hora)] = ValorAtividade(
+            a.importacao_id, int(a.ativos) if a.ativos is not None else None)
+    return out
+
+
+def ultimo_dia_atividade(db: Session, serie_ids: Iterable[uuid.UUID]
+                         ) -> dict[uuid.UUID, date | None]:
+    """O maior dia efetivo com `ativos` não nulo, em qualquer período (o atalho de FR-017)."""
+    ids = list(serie_ids)
+    ultimos: dict[uuid.UUID, date] = {}
+    for sid, por_chave in atividade(db, ids).items():
+        dias_ = [d for (d, _), v in por_chave.items() if v.ativos is not None]
+        if dias_:
+            ultimos[sid] = max(dias_)
+    return {sid: ultimos.get(sid) for sid in ids}
+
+
+def espectadores(db: Session, serie_ids: Iterable[uuid.UUID], de: date | None = None,
+                 ate: date | None = None
+                 ) -> dict[uuid.UUID, dict[date, ValorEspectadores]]:
+    """Os espectadores efetivos por série e dia."""
+    ids = list(serie_ids)
+    out: dict[uuid.UUID, dict[date, ValorEspectadores]] = {}
+    if not ids:
+        return out
+    stmt = (select(EspectadoresStudio)
+            .join(Importacao, Importacao.id == EspectadoresStudio.importacao_id)
+            .where(Importacao.estado == ImportacaoEstado.ativa,
+                   EspectadoresStudio.serie_id.in_(ids))
+            .order_by(EspectadoresStudio.serie_id, EspectadoresStudio.dia,
+                      Importacao.criada_em, Importacao.id)
+            .ext(distinct_on(EspectadoresStudio.serie_id, EspectadoresStudio.dia)))
+    if de is not None:
+        stmt = stmt.where(EspectadoresStudio.dia >= de)
+    if ate is not None:
+        stmt = stmt.where(EspectadoresStudio.dia <= ate)
+
+    def _int(v: int | None) -> int | None:
+        return int(v) if v is not None else None
+
+    for e in db.scalars(stmt):
+        out.setdefault(e.serie_id, {})[e.dia] = ValorEspectadores(
+            e.importacao_id, _int(e.total), _int(e.novos), _int(e.recorrentes))
+    return out
+
+
+@dataclass(frozen=True)
+class EstadoSecao:
+    com_dado: datetime | None  # a importação ativa mais recente que trouxe dado da seção
+    vazia_em: datetime | None  # a importação ativa mais recente que a trouxe vazia
+
+    @property
+    def veio_vazia(self) -> bool:
+        """A regra "veio vazia" (R5): a vazia é mais nova que a última com dado."""
+        return self.vazia_em is not None and (self.com_dado is None
+                                              or self.vazia_em > self.com_dado)
+
+    @property
+    def sem_importacao(self) -> bool:
+        return self.com_dado is None and self.vazia_em is None
+
+
+def vazias(db: Session, serie_ids: Iterable[uuid.UUID]
+           ) -> dict[uuid.UUID, dict[str, EstadoSecao]]:
+    """Por série e seção de público, a última importação ativa com dado e a última vazia."""
+    ids = list(serie_ids)
+    secoes = ("genero", "territorios", "atividade", "espectadores")
+    com: dict[tuple[uuid.UUID, str], datetime] = {}
+    vaz: dict[tuple[uuid.UUID, str], datetime] = {}
+    if ids:
+        for sid, s, v, em in db.execute(
+                select(Importacao.serie_id, Importacao.secoes, Importacao.secoes_vazias,
+                       Importacao.criada_em)
+                .where(Importacao.serie_id.in_(ids),
+                       Importacao.estado == ImportacaoEstado.ativa)):
+            for secao in secoes:
+                for alvo, lista in ((com, s), (vaz, v)):
+                    atual = alvo.get((sid, secao))
+                    if secao in (lista or []) and (atual is None or em > atual):
+                        alvo[(sid, secao)] = em
+    return {sid: {s: EstadoSecao(com.get((sid, s)), vaz.get((sid, s))) for s in secoes}
+            for sid in ids}
