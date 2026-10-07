@@ -1,0 +1,25 @@
+{
+ "workflow": "V2 - Cutout (BiRefNet, fundo branco).api.json",
+ "params": {
+  "image": {
+   "node": "1",
+   "input": "image",
+   "kind": "image",
+   "default": "p1.png",
+   "doc": "Foto do produto"
+  },
+  "prefix": {
+   "node": "7",
+   "input": "value",
+   "kind": "value",
+   "default": "v2/cutout",
+   "doc": "Prefixo do arquivo"
+  }
+ },
+ "outputs": {
+  "image": {
+   "node": "8",
+   "kind": "image"
+  }
+ }
+}

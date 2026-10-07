@@ -28,6 +28,11 @@ const valuePatterns = [
     name: "TIKTOK_CLIENT_SECRET com valor",
     re: /\bTIKTOK_CLIENT_SECRET\s*[=:]\s*["']?([A-Za-z0-9_\-]{16,})/g,
   },
+  // Spec 021: o token do dockerctl (poder sobre o docker.sock), gerado pelo dono.
+  {
+    name: "DOCKERCTL_TOKEN com valor",
+    re: /\bDOCKERCTL_TOKEN\s*[=:]\s*["']?([A-Za-z0-9_\-]{16,})/g,
+  },
 ];
 // Valores FIXOS de teste, públicos de propósito (stack efêmera do pytest e do e2e). Lista
 // explícita de valores, nunca uma liberação por arquivo.
@@ -35,6 +40,7 @@ const allowedTestValues = new Set([
   "dGVzdGUtZWZlbWVyby1jaGF2ZS1kby10b2tlbi0zMmI=", // pytest: "teste-efemero-chave-do-token-32b"
   "ZTJlLWVmZW1lcm8tY2hhdmUtZG9zLXRva2Vucy0zMmI=", // e2e: "e2e-efemero-chave-dos-tokens-32b"
   "e2e-client-secret-de-teste", // e2e: TIKTOK_CLIENT_SECRET do fake
+  "e2e-token-do-dockerctl-de-teste", // e2e (spec 021): DOCKERCTL_TOKEN do fake
 ]);
 
 // caminhos onde exemplos/placeholders são esperados (não são segredos reais)

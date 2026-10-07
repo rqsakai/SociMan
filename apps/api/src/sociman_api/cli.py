@@ -5,7 +5,9 @@
 - `reset-db`: zera banco e Redis para o e2e (nunca em produção);
 - `worker`: processa a fila de cortes (spec 004, serviço `worker` do compose);
 - `agendador`: tarefas periódicas da spec 006 (serviço `agendador` do compose);
-- `tokens recifrar`: regrava as credenciais da publicação com a chave atual (spec 015, R4).
+- `tokens recifrar`: regrava as credenciais da publicação com a chave atual (spec 015, R4);
+- `gerador`: a fila da geração local (spec 021, serviço `gerador` do compose);
+- `geracoes limpar [--dry-run]`: a limpeza de 90 dias das opções não escolhidas (spec 021, R12).
 
 Cada comando faz o próprio commit e grava o evento com o autor `system:cli`.
 """
@@ -176,6 +178,36 @@ def agendador() -> None:
     from sociman_api.agendador import main
 
     main()
+
+
+@app.command("gerador")
+def gerador() -> None:
+    """Roda a fila da geração local (spec 021): a linha GPU e a linha Claude."""
+    from sociman_api.geracao.gerador import main
+
+    main()
+
+
+geracoes_app = typer.Typer(help="Geração local (spec 021).", no_args_is_help=True)
+app.add_typer(geracoes_app, name="geracoes")
+
+
+@geracoes_app.command("limpar")
+def geracoes_limpar(
+    dry_run: Annotated[bool, typer.Option("--dry-run",
+                                          help="Só lista o que seria apagado; não apaga.")] = False,
+) -> None:
+    """Apaga as opções não escolhidas das gerações terminadas há mais de 90 dias (exceção 1 da
+    constitution 4.3.0). Imprime só contagens."""
+    from sociman_api.agendador import _registrar_modelos
+    from sociman_api.geracao import limpeza
+
+    _registrar_modelos()
+    with get_sessionmaker()() as db:
+        r = limpeza.limpar(db, CLI, dry_run=dry_run)
+    acao = "seriam apagadas" if dry_run else "apagadas"
+    typer.echo(f"Gerações: {r.geracoes}; opções {acao}: {r.candidatos} ({r.imagens} imagens, "
+               f"{r.audios} áudios, {r.bytes} bytes); mantidas por estarem em uso: {r.mantidos}.")
 
 
 tokens_app = typer.Typer(help="Credenciais da publicação (spec 015).", no_args_is_help=True)

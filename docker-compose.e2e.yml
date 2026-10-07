@@ -189,6 +189,29 @@ services:
       openshorts-fake:
         condition: service_healthy
 
+  # Spec 021 (T029): o gerador com o ComfyUI, o shop-tts e o dockerctl falsos (o
+  # `openshorts-fake`). O token do dockerctl é FIXO de teste (liberado por valor no
+  # check:secrets). Nenhum docker.sock aqui: o dockerctl é o fake.
+  gerador:
+    image: sociman-api-e2e:latest
+    user: "1000:1000"
+    environment:
+      <<: [*api-env, *integracoes-env]
+      COMFYUI_URL: http://openshorts-fake:8000/comfyui
+      SHOP_TTS_URL: http://openshorts-fake:8000/shop-tts
+      DOCKERCTL_URL: http://openshorts-fake:8000/dockerctl
+      DOCKERCTL_TOKEN: e2e-token-do-dockerctl-de-teste
+    volumes:
+      - sociman-data:/srv/sociman-data
+    entrypoint: *data-entrypoint
+    command: ["sociman", "gerador"]
+    stop_grace_period: 10s
+    depends_on:
+      api:
+        condition: service_healthy   # a API aplica as migrations
+      openshorts-fake:
+        condition: service_healthy
+
   web:
     image: node:22-bookworm
     profiles: ["dev"]
@@ -265,7 +288,7 @@ services:
       - -c
       - >
         mc alias set e2e http://minio:9000 sociman-e2e sociman-e2e-secret &&
-        mc mb -p e2e/sociman e2e/sociman-fonts e2e/sociman-videos
+        mc mb -p e2e/sociman e2e/sociman-fonts e2e/sociman-videos e2e/sociman-audios
     depends_on:
       minio:
         condition: service_healthy

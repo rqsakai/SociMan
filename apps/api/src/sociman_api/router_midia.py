@@ -134,6 +134,15 @@ def resolve(db: Session, kind: str, entity_id: uuid.UUID) -> Target:
         ext = _VIDEO_EXT.get(tomada.content_type, "mp4")
         stem = f"{_slug(db, cena.perfil_id) if cena else 'cena'}-tomada-{tomada.id.hex[:8]}"
         return Target("videos", tomada.video_key, tomada.content_type, f"{stem}.{ext}")
+    if kind == "audio":  # spec 021 (R11)
+        from sociman_api.geracao.audios import CONTENT_TYPES as AUDIO_CONTENT_TYPES
+        from sociman_api.geracao.models import Audio
+
+        audio = db.get(Audio, entity_id)
+        if audio is None:
+            raise _not_found()
+        return Target("audios", audio.object_key, AUDIO_CONTENT_TYPES[audio.formato],
+                      f"{_slug(db, audio.perfil_id)}-audio-{audio.id.hex[:8]}.{audio.formato}")
     if kind in midia.VIDEO_KINDS:
         corte = db.get(Corte, entity_id)
         if corte is None:

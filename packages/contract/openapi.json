@@ -1424,6 +1424,29 @@
         "title": "AlvoAlerta",
         "type": "object"
       },
+      "AlvoGeracao": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/GeracaoAlvo"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "tipo",
+          "id",
+          "version"
+        ],
+        "title": "AlvoGeracao",
+        "type": "object"
+      },
       "AlvoRef": {
         "properties": {
           "arquivado": {
@@ -5400,6 +5423,72 @@
         "title": "Atalhos",
         "type": "object"
       },
+      "Audio": {
+        "properties": {
+          "bytes": {
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "duracaoMs": {
+            "title": "Duracaoms",
+            "type": "integer"
+          },
+          "formato": {
+            "title": "Formato",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "link": {
+            "$ref": "#/components/schemas/Link"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "sampleRate": {
+            "title": "Samplerate",
+            "type": "integer"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "formato",
+          "sampleRate",
+          "duracaoMs",
+          "sha256",
+          "bytes",
+          "link",
+          "createdAt",
+          "createdBy"
+        ],
+        "title": "Audio",
+        "type": "object"
+      },
       "AuthSession": {
         "properties": {
           "accessToken": {
@@ -5576,6 +5665,20 @@
           "tipo"
         ],
         "title": "Body_assets_upload",
+        "type": "object"
+      },
+      "Body_audios_enviar": {
+        "properties": {
+          "arquivo": {
+            "contentMediaType": "application/octet-stream",
+            "title": "Arquivo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "arquivo"
+        ],
+        "title": "Body_audios_enviar",
         "type": "object"
       },
       "Body_fontes_upload": {
@@ -6745,6 +6848,87 @@
           "minutosDaAncora"
         ],
         "title": "Candidato",
+        "type": "object"
+      },
+      "CandidatoGeracao": {
+        "properties": {
+          "audio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Audio"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "imagem": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImagemCandidato"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "imagemPar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImagemCandidato"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "metricas": {
+            "additionalProperties": true,
+            "title": "Metricas",
+            "type": "object"
+          },
+          "numero": {
+            "title": "Numero",
+            "type": "integer"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seed"
+          },
+          "testeAudio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Audio"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "numero",
+          "seed",
+          "imagem",
+          "imagemPar",
+          "audio",
+          "metricas",
+          "testeAudio"
+        ],
+        "title": "CandidatoGeracao",
         "type": "object"
       },
       "CardFinal": {
@@ -12446,6 +12630,24 @@
         "title": "EnviosList",
         "type": "object"
       },
+      "Erro": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "Erro",
+        "type": "object"
+      },
       "ErroColeta": {
         "properties": {
           "codigo": {
@@ -12510,6 +12712,30 @@
           "error"
         ],
         "title": "ErrorEnvelope",
+        "type": "object"
+      },
+      "EscolherIn": {
+        "properties": {
+          "alvoVersion": {
+            "title": "Alvoversion",
+            "type": "integer"
+          },
+          "candidatoId": {
+            "format": "uuid",
+            "title": "Candidatoid",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "candidatoId",
+          "version",
+          "alvoVersion"
+        ],
+        "title": "EscolherIn",
         "type": "object"
       },
       "EstadoColeta": {
@@ -13547,6 +13773,954 @@
           "duracao_s"
         ],
         "title": "Gancho",
+        "type": "object"
+      },
+      "GeracaoAlvo": {
+        "enum": [
+          "asset",
+          "voz",
+          "produto"
+        ],
+        "title": "GeracaoAlvo",
+        "type": "string"
+      },
+      "GeracaoDetalhe": {
+        "properties": {
+          "alvoId": {
+            "format": "uuid",
+            "title": "Alvoid",
+            "type": "string"
+          },
+          "alvoTipo": {
+            "$ref": "#/components/schemas/GeracaoAlvo"
+          },
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "candidatos": {
+            "items": {
+              "$ref": "#/components/schemas/CandidatoGeracao"
+            },
+            "title": "Candidatos",
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deGeracaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Degeracaoid"
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Erro"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "escolhidoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escolhidoid"
+          },
+          "etapaMensagem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etapamensagem"
+          },
+          "extras": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extras"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finishedat"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "instrucao": {
+            "title": "Instrucao",
+            "type": "string"
+          },
+          "limpaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limpaem"
+          },
+          "miniaturaEscolhido": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Miniaturaescolhido"
+          },
+          "motor": {
+            "$ref": "#/components/schemas/GeracaoMotor"
+          },
+          "nCandidatos": {
+            "title": "Ncandidatos",
+            "type": "integer"
+          },
+          "nOpcoes": {
+            "title": "Nopcoes",
+            "type": "integer"
+          },
+          "nextAttemptAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextattemptat"
+          },
+          "passo": {
+            "title": "Passo",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "progress": {
+            "title": "Progress",
+            "type": "integer"
+          },
+          "referencias": {
+            "items": {
+              "$ref": "#/components/schemas/ImageRef"
+            },
+            "title": "Referencias",
+            "type": "array"
+          },
+          "rotulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotulo"
+          },
+          "semEscolha": {
+            "title": "Semescolha",
+            "type": "boolean"
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Startedat"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GeracaoStatus"
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "alvoTipo",
+          "alvoId",
+          "passo",
+          "motor",
+          "instrucao",
+          "referencias",
+          "rotulo",
+          "texto",
+          "extras",
+          "nOpcoes",
+          "status",
+          "progress",
+          "etapaMensagem",
+          "attempts",
+          "nextAttemptAt",
+          "erro",
+          "escolhidoId",
+          "startedAt",
+          "finishedAt",
+          "limpaEm",
+          "semEscolha",
+          "deGeracaoId",
+          "version",
+          "createdAt",
+          "createdBy",
+          "updatedAt",
+          "nCandidatos",
+          "miniaturaEscolhido",
+          "candidatos"
+        ],
+        "title": "GeracaoDetalhe",
+        "type": "object"
+      },
+      "GeracaoEscolhida": {
+        "properties": {
+          "alvo": {
+            "$ref": "#/components/schemas/AlvoGeracao"
+          },
+          "alvoId": {
+            "format": "uuid",
+            "title": "Alvoid",
+            "type": "string"
+          },
+          "alvoTipo": {
+            "$ref": "#/components/schemas/GeracaoAlvo"
+          },
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "candidatos": {
+            "items": {
+              "$ref": "#/components/schemas/CandidatoGeracao"
+            },
+            "title": "Candidatos",
+            "type": "array"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deGeracaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Degeracaoid"
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Erro"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "escolhidoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escolhidoid"
+          },
+          "etapaMensagem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etapamensagem"
+          },
+          "extras": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extras"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finishedat"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "instrucao": {
+            "title": "Instrucao",
+            "type": "string"
+          },
+          "limpaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limpaem"
+          },
+          "miniaturaEscolhido": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Miniaturaescolhido"
+          },
+          "motor": {
+            "$ref": "#/components/schemas/GeracaoMotor"
+          },
+          "nCandidatos": {
+            "title": "Ncandidatos",
+            "type": "integer"
+          },
+          "nOpcoes": {
+            "title": "Nopcoes",
+            "type": "integer"
+          },
+          "nextAttemptAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextattemptat"
+          },
+          "passo": {
+            "title": "Passo",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "progress": {
+            "title": "Progress",
+            "type": "integer"
+          },
+          "referencias": {
+            "items": {
+              "$ref": "#/components/schemas/ImageRef"
+            },
+            "title": "Referencias",
+            "type": "array"
+          },
+          "rotulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotulo"
+          },
+          "semEscolha": {
+            "title": "Semescolha",
+            "type": "boolean"
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Startedat"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GeracaoStatus"
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "alvoTipo",
+          "alvoId",
+          "passo",
+          "motor",
+          "instrucao",
+          "referencias",
+          "rotulo",
+          "texto",
+          "extras",
+          "nOpcoes",
+          "status",
+          "progress",
+          "etapaMensagem",
+          "attempts",
+          "nextAttemptAt",
+          "erro",
+          "escolhidoId",
+          "startedAt",
+          "finishedAt",
+          "limpaEm",
+          "semEscolha",
+          "deGeracaoId",
+          "version",
+          "createdAt",
+          "createdBy",
+          "updatedAt",
+          "nCandidatos",
+          "miniaturaEscolhido",
+          "candidatos",
+          "alvo"
+        ],
+        "title": "GeracaoEscolhida",
+        "type": "object"
+      },
+      "GeracaoIn": {
+        "properties": {
+          "alvoId": {
+            "format": "uuid",
+            "title": "Alvoid",
+            "type": "string"
+          },
+          "alvoTipo": {
+            "$ref": "#/components/schemas/GeracaoAlvo"
+          },
+          "extras": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extras"
+          },
+          "instrucao": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Instrucao",
+            "type": "string"
+          },
+          "nOpcoes": {
+            "anyOf": [
+              {
+                "maximum": 4.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nopcoes"
+          },
+          "passo": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Passo",
+            "type": "string"
+          },
+          "referencias": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Referencias",
+            "type": "array"
+          },
+          "rotulo": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotulo"
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          }
+        },
+        "required": [
+          "alvoTipo",
+          "alvoId",
+          "passo"
+        ],
+        "title": "GeracaoIn",
+        "type": "object"
+      },
+      "GeracaoMotor": {
+        "enum": [
+          "comfyui",
+          "tts",
+          "claude"
+        ],
+        "title": "GeracaoMotor",
+        "type": "string"
+      },
+      "GeracaoResumo": {
+        "properties": {
+          "alvoId": {
+            "format": "uuid",
+            "title": "Alvoid",
+            "type": "string"
+          },
+          "alvoTipo": {
+            "$ref": "#/components/schemas/GeracaoAlvo"
+          },
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deGeracaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Degeracaoid"
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Erro"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "escolhidoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escolhidoid"
+          },
+          "etapaMensagem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etapamensagem"
+          },
+          "extras": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extras"
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finishedat"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "instrucao": {
+            "title": "Instrucao",
+            "type": "string"
+          },
+          "limpaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limpaem"
+          },
+          "miniaturaEscolhido": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Miniaturaescolhido"
+          },
+          "motor": {
+            "$ref": "#/components/schemas/GeracaoMotor"
+          },
+          "nCandidatos": {
+            "title": "Ncandidatos",
+            "type": "integer"
+          },
+          "nOpcoes": {
+            "title": "Nopcoes",
+            "type": "integer"
+          },
+          "nextAttemptAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextattemptat"
+          },
+          "passo": {
+            "title": "Passo",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "progress": {
+            "title": "Progress",
+            "type": "integer"
+          },
+          "referencias": {
+            "items": {
+              "$ref": "#/components/schemas/ImageRef"
+            },
+            "title": "Referencias",
+            "type": "array"
+          },
+          "rotulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotulo"
+          },
+          "semEscolha": {
+            "title": "Semescolha",
+            "type": "boolean"
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Startedat"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GeracaoStatus"
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "alvoTipo",
+          "alvoId",
+          "passo",
+          "motor",
+          "instrucao",
+          "referencias",
+          "rotulo",
+          "texto",
+          "extras",
+          "nOpcoes",
+          "status",
+          "progress",
+          "etapaMensagem",
+          "attempts",
+          "nextAttemptAt",
+          "erro",
+          "escolhidoId",
+          "startedAt",
+          "finishedAt",
+          "limpaEm",
+          "semEscolha",
+          "deGeracaoId",
+          "version",
+          "createdAt",
+          "createdBy",
+          "updatedAt",
+          "nCandidatos",
+          "miniaturaEscolhido"
+        ],
+        "title": "GeracaoResumo",
+        "type": "object"
+      },
+      "GeracaoStatus": {
+        "enum": [
+          "na_fila",
+          "rodando",
+          "revisao",
+          "escolhido",
+          "descartada",
+          "cancelada",
+          "entregue",
+          "falhou"
+        ],
+        "title": "GeracaoStatus",
+        "type": "string"
+      },
+      "GeracoesPagina": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/GeracaoResumo"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "proximo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proximo"
+          }
+        },
+        "required": [
+          "itens",
+          "proximo"
+        ],
+        "title": "GeracoesPagina",
         "type": "object"
       },
       "GerarIn": {
@@ -14600,6 +15774,39 @@
         "title": "ImageUrls",
         "type": "object"
       },
+      "ImagemCandidato": {
+        "properties": {
+          "height": {
+            "title": "Height",
+            "type": "integer"
+          },
+          "imageId": {
+            "format": "uuid",
+            "title": "Imageid",
+            "type": "string"
+          },
+          "link": {
+            "$ref": "#/components/schemas/Link"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "width": {
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "imageId",
+          "width",
+          "height",
+          "url",
+          "link"
+        ],
+        "title": "ImagemCandidato",
+        "type": "object"
+      },
       "Importacao": {
         "properties": {
           "anoOrigem": {
@@ -15037,6 +16244,64 @@
         "title": "Insight",
         "type": "object"
       },
+      "IntegracaoGeracao": {
+        "properties": {
+          "comfyui": {
+            "enum": [
+              "ok",
+              "fora",
+              "nao_configurado"
+            ],
+            "title": "Comfyui",
+            "type": "string"
+          },
+          "gerador": {
+            "enum": [
+              "ativo",
+              "parado"
+            ],
+            "title": "Gerador",
+            "type": "string"
+          },
+          "gpu": {
+            "enum": [
+              "livre",
+              "openshorts",
+              "pouca_vram",
+              "desconhecida"
+            ],
+            "title": "Gpu",
+            "type": "string"
+          },
+          "memoriaComfyui": {
+            "enum": [
+              "ok",
+              "travada",
+              "nao_configurado"
+            ],
+            "title": "Memoriacomfyui",
+            "type": "string"
+          },
+          "shopTts": {
+            "enum": [
+              "ok",
+              "fora",
+              "nao_configurado"
+            ],
+            "title": "Shoptts",
+            "type": "string"
+          }
+        },
+        "required": [
+          "comfyui",
+          "shopTts",
+          "memoriaComfyui",
+          "gpu",
+          "gerador"
+        ],
+        "title": "IntegracaoGeracao",
+        "type": "object"
+      },
       "Integracoes": {
         "properties": {
           "claude": {
@@ -15049,6 +16314,9 @@
           },
           "cotaYoutube": {
             "$ref": "#/components/schemas/CotaYoutube"
+          },
+          "geracao": {
+            "$ref": "#/components/schemas/IntegracaoGeracao"
           },
           "openshorts": {
             "enum": [
@@ -15072,7 +16340,8 @@
           "youtube",
           "openshorts",
           "claude",
-          "cotaYoutube"
+          "cotaYoutube",
+          "geracao"
         ],
         "title": "Integracoes",
         "type": "object"
@@ -15797,6 +17066,32 @@
           "amostra"
         ],
         "title": "LinhaRanking",
+        "type": "object"
+      },
+      "Link": {
+        "properties": {
+          "expiresAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiresat"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt"
+        ],
+        "title": "Link",
         "type": "object"
       },
       "LoginIn": {
@@ -16552,7 +17847,8 @@
               "fundo",
               "imagem",
               "conteudo_video",
-              "cena_tomada"
+              "cena_tomada",
+              "audio"
             ],
             "title": "Kind",
             "type": "string"
@@ -22517,6 +23813,19 @@
           "token"
         ],
         "title": "VerifyIn",
+        "type": "object"
+      },
+      "VersaoIn": {
+        "properties": {
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "VersaoIn",
         "type": "object"
       },
       "Version": {
@@ -29275,6 +30584,76 @@
           }
         },
         "summary": "Versions"
+      }
+    },
+    "/api/audios/{audio_id}": {
+      "get": {
+        "operationId": "audios_detalhe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "audio_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Audio Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Audio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Detalhe"
       }
     },
     "/api/auth/login": {
@@ -39097,6 +40476,506 @@
         "summary": "Versions"
       }
     },
+    "/api/geracoes/{geracao_id}": {
+      "get": {
+        "operationId": "geracoes_detalhe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "geracao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Geracao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracaoDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Detalhe"
+      }
+    },
+    "/api/geracoes/{geracao_id}/cancelar": {
+      "post": {
+        "operationId": "geracoes_cancelar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "geracao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Geracao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracaoDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Cancelar"
+      }
+    },
+    "/api/geracoes/{geracao_id}/escolher": {
+      "post": {
+        "operationId": "geracoes_escolher",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "geracao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Geracao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EscolherIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracaoEscolhida"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Escolher"
+      }
+    },
+    "/api/geracoes/{geracao_id}/gerar-outras": {
+      "post": {
+        "operationId": "geracoes_gerar_outras",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "geracao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Geracao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracaoDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Gerar Outras"
+      }
+    },
+    "/api/geracoes/{geracao_id}/tentar-de-novo": {
+      "post": {
+        "operationId": "geracoes_tentar_de_novo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "geracao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Geracao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracaoDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Tentar De Novo"
+      }
+    },
+    "/api/geracoes/{geracao_id}/versoes": {
+      "get": {
+        "operationId": "geracoes_versoes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "geracao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Geracao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Versoes"
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "health_api_health_get",
@@ -44792,6 +46671,126 @@
         "summary": "Images"
       }
     },
+    "/api/perfis/{perfil_id}/audios": {
+      "post": {
+        "operationId": "audios_enviar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_audios_enviar"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Audio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Enviar"
+      }
+    },
     "/api/perfis/{perfil_id}/banner": {
       "put": {
         "operationId": "perfis_upload_banner",
@@ -46711,6 +48710,272 @@
           }
         },
         "summary": "Upload"
+      }
+    },
+    "/api/perfis/{perfil_id}/geracoes": {
+      "get": {
+        "operationId": "geracoes_listar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "alvoTipo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/GeracaoAlvo"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Alvotipo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "alvoId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Alvoid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/GeracaoStatus"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "passo",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Passo"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limite",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limite",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracoesPagina"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Listar"
+      },
+      "post": {
+        "operationId": "geracoes_criar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeracaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracaoDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Criar"
       }
     },
     "/api/perfis/{perfil_id}/guia": {

@@ -343,13 +343,13 @@ def executor(p, db):
 
 
 def test_agendador_sem_trilha_nova():
-    """Guarda 6 (R16.6): as trilhas novas são a `publicacao` da 015, a `metricas` da 016 e a
-    `aprendizado` da 023 (plan da 023, Complexity Tracking; a lista só cresce por spec)."""
+    """Guarda 6 (R16.6): as trilhas novas são a `publicacao` da 015, a `metricas` da 016, a
+    `aprendizado` da 023 e a `geracao_limpeza` da 021 (R12) (a lista só cresce por spec)."""
     from sociman_api.agendador import trilhas_padrao
 
     assert {t.nome for t in trilhas_padrao()} == {"sync", "openshorts", "importacao",
                                                   "lembretes", "publicacao", "metricas",
-                                                  "aprendizado"}
+                                                  "aprendizado", "geracao_limpeza"}
 
 
 # ---- spec 015 (publicação no TikTok), parte 1: R16.1, R16.2, R16.3 e R16.8 ----
@@ -1305,3 +1305,133 @@ def test_analytics_e_canais_so_importam_a_afinidade_do_aprendizado():
                     continue
                 achados.append(f"{path.relative_to(SRC)}: {node.module} {sorted(nomes)}")
     assert not achados, f"leitura do aprendizado fora da afinidade: {achados}"
+
+
+# ---- spec 021 (geração local): princípios I e VII e o delete restrito da 4.3.0 ----
+
+GERACAO = SRC / "geracao"
+# Quem pode chamar o único delete do `storage.py` (exceções de eliminação da 4.3.0). A 025
+# acrescenta o módulo da revogação LGPD aqui, quando existir.
+DELETE_PERMITIDO = {SRC / "storage.py", GERACAO / "limpeza.py"}
+COMFYUI_ALLOWED_021 = {("GET", "/system_stats"), ("POST", "/upload/image"), ("POST", "/prompt"),
+                       ("GET", "/history/"), ("GET", "/view"), ("GET", "/queue"),
+                       ("POST", "/queue"), ("POST", "/interrupt"), ("POST", "/free")}
+SHOPTTS_ALLOWED_021 = {("GET", "/health"), ("GET", "/voices"), ("POST", "/unload"),
+                       ("POST", "/v2/voices/register"), ("POST", "/v2/voices/design"),
+                       ("POST", "/v2/voices/import"), ("POST", "/v2/tts"),
+                       ("POST", "/v2/tts_paragraph"), ("GET", "/v2/lotes/"),
+                       ("DELETE", "/v2/lotes/"), ("DELETE", "/v2/voices/")}
+MEMORIA_ALLOWED_021 = {("GET", "/comfyui/memoria"), ("POST", "/comfyui/memoria/subir"),
+                       ("POST", "/comfyui/memoria/devolver")}
+
+
+def _imports(path: Path) -> set[str]:
+    out: set[str] = set()
+    for node in ast.walk(ast.parse(path.read_text())):
+        if isinstance(node, ast.ImportFrom) and node.module:
+            out.add(node.module)
+            out |= {f"{node.module}.{a.name}" for a in node.names}
+        elif isinstance(node, ast.Import):
+            out |= {a.name for a in node.names}
+    return out
+
+
+def test_geracao_nao_fala_com_rede_social():
+    """Princípio I (FR-027): o pacote `geracao/` só fala com o ComfyUI, o shop-tts, o
+    `dockerctl` e o Claude; não importa `publicacao` nem `mcp` e não cita host de rede social."""
+    for path in GERACAO.rglob("*.py"):
+        mods = _imports(path)
+        ruins = [m for m in mods if m.startswith(("sociman_api.publicacao", "sociman_api.mcp"))]
+        assert not ruins, f"{path.name} importa {ruins}"
+        texto = path.read_text().lower()
+        hosts = [h for h in PUBLISH_ENDPOINTS + ("tiktok", "youtube") if h in texto]
+        assert not hosts, f"{path.name} cita {hosts}"
+
+
+def test_rotas_da_021_neutras_humanas_e_sem_delete():
+    paths = app.openapi()["paths"]
+    ops = {(m, p): op for p, v in paths.items() for m, op in v.items()
+           if op.get("operationId", "").startswith(("geracoes_", "audios_"))}
+    assert len(ops) == 10, sorted(op["operationId"] for op in ops.values())
+    for (metodo, path), op in ops.items():
+        texto = f"{path} {op['operationId']}".lower()
+        assert "tiktok" not in texto and "youtube" not in texto, texto
+        assert metodo != "delete", path
+
+
+def _referencias(path: Path, nome: str) -> bool:
+    for node in ast.walk(ast.parse(path.read_text())):
+        if isinstance(node, ast.Name) and node.id == nome:
+            return True
+        if isinstance(node, ast.Attribute) and node.attr == nome:
+            return True
+        if isinstance(node, ast.ImportFrom) and any(a.name == nome for a in node.names):
+            return True
+        if isinstance(node, ast.FunctionDef) and node.name == nome:
+            return True
+    return False
+
+
+def test_delete_so_nas_excecoes():
+    """Constitution 4.3.0 (princípio VII): só a limpeza de 90 dias (e, na 025, a revogação LGPD)
+    alcança o `storage.apagar_por_excecao`; nada de `mcp/` nem de `ia/` importa a limpeza; nenhum
+    router a chama; e nenhum outro módulo apaga objeto do MinIO."""
+    for path in SRC.rglob("*.py"):
+        if path in DELETE_PERMITIDO:
+            continue
+        assert not _referencias(path, "apagar_por_excecao"), f"{path} chama o delete restrito"
+        texto = path.read_text()
+        assert "remove_object" not in texto, f"{path} apaga objeto do MinIO"
+        if path.name.startswith("router") or path.parent.name in ("mcp", "ia"):
+            mods = _imports(path)
+            assert not any(m.startswith("sociman_api.geracao.limpeza") or
+                           m == "sociman_api.geracao.limpeza" for m in mods), path
+    storage_src = (SRC / "storage.py").read_text()
+    assert storage_src.count("remove_object") == 1
+
+
+def test_gerador_nunca_escolhe_sozinho():
+    """FR-008: o gerador só chama `Aplicador.aplicar` dentro de um `if` que testa
+    `sem_escolha` (passos de texto e `produto.recorte`); os outros vão para revisão humana."""
+    arvore = ast.parse((GERACAO / "gerador.py").read_text())
+    pais: dict[ast.AST, ast.AST] = {}
+    for node in ast.walk(arvore):
+        for filho in ast.iter_child_nodes(node):
+            pais[filho] = node
+    chamadas = [n for n in ast.walk(arvore) if isinstance(n, ast.Call)
+                and isinstance(n.func, ast.Attribute) and n.func.attr == "aplicar"]
+    assert chamadas, "o gerador deveria aplicar os passos sem escolha"
+    for chamada in chamadas:
+        node, guardada = chamada, False
+        while node in pais:
+            node = pais[node]
+            if isinstance(node, ast.If) and "sem_escolha" in ast.unparse(node.test):
+                guardada = True
+                break
+        assert guardada, f"aplicar sem guarda de sem_escolha na linha {chamada.lineno}"
+
+
+def test_clientes_da_geracao_com_lista_fechada():
+    from sociman_api.geracao import comfyui, memoria, shoptts
+
+    assert set(comfyui.ALLOWED) == COMFYUI_ALLOWED_021
+    assert set(shoptts.ALLOWED) == SHOPTTS_ALLOWED_021
+    assert set(memoria.ALLOWED) == MEMORIA_ALLOWED_021
+
+
+def test_docker_sock_so_no_dockerctl():
+    """R4 (D1 = A): o `docker.sock` dá poder total no host; só o `dockerctl` o monta."""
+    import yaml
+
+    candidatos = [Path("/repo/docker-compose.yml")]  # montado só leitura na stack de teste
+    if len(API_DIR.parents) > 1:
+        candidatos.append(API_DIR.parents[1] / "docker-compose.yml")
+    compose = next((p for p in candidatos if p.is_file()), None)
+    assert compose is not None, "docker-compose.yml não encontrado (montagem da stack de teste)"
+    servicos = yaml.safe_load(compose.read_text())["services"]
+    com_sock = sorted(nome for nome, svc in servicos.items()
+                      if "docker.sock" in str(svc.get("volumes", [])))
+    assert com_sock == ["dockerctl"], com_sock
+    assert servicos["dockerctl"].get("read_only") is True
+    assert servicos["dockerctl"].get("cap_drop") == ["ALL"]
+    assert "ports" not in servicos["dockerctl"]

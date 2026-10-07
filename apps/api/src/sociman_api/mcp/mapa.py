@@ -307,6 +307,12 @@ _PROIBIDAS_DONO |= {op: "aprendizado: decisão do dono (spec 023)" for op in (
     "aprendizado_analises_estimativa", "aprendizado_analises_create",
     "aprendizado_hipotese_recomendar", "aprendizado_conferencias_put")}
 
+# Spec 021: pedir, escolher, cancelar, tentar de novo e gerar outras são atos humanos (FR-008,
+# FR-014), como enviar um áudio. A geração local fica só pela interface no primeiro corte.
+_PROIBIDAS_DONO |= {op: "geração local: ato humano (spec 021)" for op in (
+    "geracoes_criar", "geracoes_escolher", "geracoes_cancelar", "geracoes_tentar_de_novo",
+    "geracoes_gerar_outras", "audios_enviar")}
+
 PROIBIDAS: dict[str, str] = {**_PROIBIDAS_I, **_PROIBIDAS_II, **_PROIBIDAS_VII,
                              **_PROIBIDAS_DONO, **_PROIBIDAS_PESSOAS, **_PROIBIDAS_MCP}
 
@@ -349,6 +355,10 @@ _FORA_DONO = {op: "IA paga ou dado de dono" for op in (
 _FORA_DONO |= {op: "IA paga ou dado de dono" for op in (
     "aprendizado_analises_list", "aprendizado_analises_get", "aprendizado_temas_versions",
     "aprendizado_classificacoes_versions", "aprendizado_preferencias_versions")}
+
+# Spec 021: as leituras da geração local ficam fora do primeiro corte do MCP.
+_FORA_DONO |= {op: "geração local só pela interface no primeiro corte (spec 021)" for op in (
+    "geracoes_listar", "geracoes_detalhe", "geracoes_versoes", "audios_detalhe")}
 
 FORA: dict[str, str] = {**_FORA_UPLOAD, **_FORA_DEPRECATED, **_FORA_INFRA, **_FORA_ESCRITAS,
                         **_FORA_DONO}

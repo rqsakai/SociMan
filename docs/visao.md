@@ -134,7 +134,7 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    o dono importa os ZIPs da Visão geral e de Seguidores exportados do TikTok Studio, com pré-visualização e
    confirmação (só dono humano), como uma fonte separada e desfazível; o analytics da 019 usa esses dias
    antes da 1ª coleta e no dia dela, sempre dizendo a fonte. Os arquivos nunca são guardados.
-21. `021-geracao-local` 📋 **spec pronta** (`specs/021-geracao-local/`, 2026-10-07; 60 tarefas; constitution 4.3.0 na T001):
+21. `021-geracao-local` ✅ **implementada** (`specs/021-geracao-local/`, 2026-10-07; constitution 4.3.0 aplicada; falta com o dono: X1 (rede `gpu-local` no `comfyui-docker`), o `DOCKERCTL_TOKEN` e o quickstart §2–§4 na GPU real; X2 (shop-tts v2) antes da 025):
    o SociMan orquestra o ComfyUI e o shop-tts da máquina (`geracoes`, `geracao_candidatos`, `audios`), com
    um job de GPU por vez e só com a GPU livre, a RAM do ComfyUI em 28 GB só durante o job (pelo `dockerctl`),
    escolha humana dos candidatos (exceto passos de texto e o recorte), rede `gpu-local` e limpeza dos não

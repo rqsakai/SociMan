@@ -927,6 +927,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/audios/{audio_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe */
+        get: operations["audios_detalhe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -2775,6 +2792,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/geracoes/{geracao_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe */
+        get: operations["geracoes_detalhe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/geracoes/{geracao_id}/cancelar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancelar */
+        post: operations["geracoes_cancelar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/geracoes/{geracao_id}/escolher": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Escolher */
+        post: operations["geracoes_escolher"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/geracoes/{geracao_id}/gerar-outras": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Gerar Outras */
+        post: operations["geracoes_gerar_outras"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/geracoes/{geracao_id}/tentar-de-novo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tentar De Novo */
+        post: operations["geracoes_tentar_de_novo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/geracoes/{geracao_id}/versoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versoes */
+        get: operations["geracoes_versoes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -3706,6 +3825,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/perfis/{perfil_id}/audios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enviar */
+        post: operations["audios_enviar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/perfis/{perfil_id}/banner": {
         parameters: {
             query?: never;
@@ -3938,6 +4074,24 @@ export interface paths {
          * @deprecated
          */
         post: operations["fundos_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/geracoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar */
+        get: operations["geracoes_listar"];
+        put?: never;
+        /** Criar */
+        post: operations["geracoes_criar"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4881,6 +5035,17 @@ export interface components {
              * @enum {string}
              */
             tipo: "video" | "serie" | "destino";
+        };
+        /** AlvoGeracao */
+        AlvoGeracao: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            tipo: components["schemas"]["GeracaoAlvo"];
+            /** Version */
+            version: number;
         };
         /** AlvoRef */
         AlvoRef: {
@@ -6155,6 +6320,36 @@ export interface components {
             /** Vencidos */
             vencidos: number;
         };
+        /** Audio */
+        Audio: {
+            /** Bytes */
+            bytes: number;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Duracaoms */
+            duracaoMs: number;
+            /** Formato */
+            formato: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            link: components["schemas"]["Link"];
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Samplerate */
+            sampleRate: number;
+            /** Sha256 */
+            sha256: string;
+        };
         /** AuthSession */
         AuthSession: {
             /** Accesstoken */
@@ -6211,6 +6406,11 @@ export interface components {
             tags?: string | null;
             /** @description fundo, sticker, marca_dagua ou imagem */
             tipo: components["schemas"]["AssetTipo"];
+        };
+        /** Body_audios_enviar */
+        Body_audios_enviar: {
+            /** Arquivo */
+            arquivo: string;
         };
         /** Body_fontes_upload */
         Body_fontes_upload: {
@@ -6553,6 +6753,26 @@ export interface components {
             /** Minutosdaancora */
             minutosDaAncora: number | null;
             video: components["schemas"]["VideoResumo"];
+        };
+        /** CandidatoGeracao */
+        CandidatoGeracao: {
+            audio: components["schemas"]["Audio"] | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            imagem: components["schemas"]["ImagemCandidato"] | null;
+            imagemPar: components["schemas"]["ImagemCandidato"] | null;
+            /** Metricas */
+            metricas: {
+                [key: string]: unknown;
+            };
+            /** Numero */
+            numero: number;
+            /** Seed */
+            seed: number | null;
+            testeAudio: components["schemas"]["Audio"] | null;
         };
         /** CardFinal */
         CardFinal: {
@@ -8325,6 +8545,13 @@ export interface components {
             /** Items */
             items: components["schemas"]["Envio"][];
         };
+        /** Erro */
+        Erro: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
         /** ErroColeta */
         ErroColeta: {
             /** Codigo */
@@ -8351,6 +8578,18 @@ export interface components {
         /** ErrorEnvelope */
         ErrorEnvelope: {
             error: components["schemas"]["ErrorBody"];
+        };
+        /** EscolherIn */
+        EscolherIn: {
+            /** Alvoversion */
+            alvoVersion: number;
+            /**
+             * Candidatoid
+             * Format: uuid
+             */
+            candidatoId: string;
+            /** Version */
+            version: number;
         };
         /** EstadoColeta */
         EstadoColeta: {
@@ -8706,6 +8945,286 @@ export interface components {
              */
             tamanho: "P" | "M" | "G";
         };
+        /**
+         * GeracaoAlvo
+         * @enum {string}
+         */
+        GeracaoAlvo: "asset" | "voz" | "produto";
+        /** GeracaoDetalhe */
+        GeracaoDetalhe: {
+            /**
+             * Alvoid
+             * Format: uuid
+             */
+            alvoId: string;
+            alvoTipo: components["schemas"]["GeracaoAlvo"];
+            /** Attempts */
+            attempts: number;
+            /** Candidatos */
+            candidatos: components["schemas"]["CandidatoGeracao"][];
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Degeracaoid */
+            deGeracaoId: string | null;
+            erro: components["schemas"]["Erro"] | null;
+            /** Escolhidoid */
+            escolhidoId: string | null;
+            /** Etapamensagem */
+            etapaMensagem: string | null;
+            /** Extras */
+            extras: {
+                [key: string]: unknown;
+            } | null;
+            /** Finishedat */
+            finishedAt: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Instrucao */
+            instrucao: string;
+            /** Limpaem */
+            limpaEm: string | null;
+            /** Miniaturaescolhido */
+            miniaturaEscolhido: string | null;
+            motor: components["schemas"]["GeracaoMotor"];
+            /** Ncandidatos */
+            nCandidatos: number;
+            /** Nopcoes */
+            nOpcoes: number;
+            /** Nextattemptat */
+            nextAttemptAt: string | null;
+            /** Passo */
+            passo: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Progress */
+            progress: number;
+            /** Referencias */
+            referencias: components["schemas"]["ImageRef"][];
+            /** Rotulo */
+            rotulo: string | null;
+            /** Semescolha */
+            semEscolha: boolean;
+            /** Startedat */
+            startedAt: string | null;
+            status: components["schemas"]["GeracaoStatus"];
+            /** Texto */
+            texto: string | null;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Version */
+            version: number;
+        };
+        /** GeracaoEscolhida */
+        GeracaoEscolhida: {
+            alvo: components["schemas"]["AlvoGeracao"];
+            /**
+             * Alvoid
+             * Format: uuid
+             */
+            alvoId: string;
+            alvoTipo: components["schemas"]["GeracaoAlvo"];
+            /** Attempts */
+            attempts: number;
+            /** Candidatos */
+            candidatos: components["schemas"]["CandidatoGeracao"][];
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Degeracaoid */
+            deGeracaoId: string | null;
+            erro: components["schemas"]["Erro"] | null;
+            /** Escolhidoid */
+            escolhidoId: string | null;
+            /** Etapamensagem */
+            etapaMensagem: string | null;
+            /** Extras */
+            extras: {
+                [key: string]: unknown;
+            } | null;
+            /** Finishedat */
+            finishedAt: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Instrucao */
+            instrucao: string;
+            /** Limpaem */
+            limpaEm: string | null;
+            /** Miniaturaescolhido */
+            miniaturaEscolhido: string | null;
+            motor: components["schemas"]["GeracaoMotor"];
+            /** Ncandidatos */
+            nCandidatos: number;
+            /** Nopcoes */
+            nOpcoes: number;
+            /** Nextattemptat */
+            nextAttemptAt: string | null;
+            /** Passo */
+            passo: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Progress */
+            progress: number;
+            /** Referencias */
+            referencias: components["schemas"]["ImageRef"][];
+            /** Rotulo */
+            rotulo: string | null;
+            /** Semescolha */
+            semEscolha: boolean;
+            /** Startedat */
+            startedAt: string | null;
+            status: components["schemas"]["GeracaoStatus"];
+            /** Texto */
+            texto: string | null;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Version */
+            version: number;
+        };
+        /** GeracaoIn */
+        GeracaoIn: {
+            /**
+             * Alvoid
+             * Format: uuid
+             */
+            alvoId: string;
+            alvoTipo: components["schemas"]["GeracaoAlvo"];
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Instrucao
+             * @default
+             */
+            instrucao: string;
+            /** Nopcoes */
+            nOpcoes?: number | null;
+            /** Passo */
+            passo: string;
+            /** Referencias */
+            referencias?: string[];
+            /** Rotulo */
+            rotulo?: string | null;
+            /** Texto */
+            texto?: string | null;
+        };
+        /**
+         * GeracaoMotor
+         * @enum {string}
+         */
+        GeracaoMotor: "comfyui" | "tts" | "claude";
+        /** GeracaoResumo */
+        GeracaoResumo: {
+            /**
+             * Alvoid
+             * Format: uuid
+             */
+            alvoId: string;
+            alvoTipo: components["schemas"]["GeracaoAlvo"];
+            /** Attempts */
+            attempts: number;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Degeracaoid */
+            deGeracaoId: string | null;
+            erro: components["schemas"]["Erro"] | null;
+            /** Escolhidoid */
+            escolhidoId: string | null;
+            /** Etapamensagem */
+            etapaMensagem: string | null;
+            /** Extras */
+            extras: {
+                [key: string]: unknown;
+            } | null;
+            /** Finishedat */
+            finishedAt: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Instrucao */
+            instrucao: string;
+            /** Limpaem */
+            limpaEm: string | null;
+            /** Miniaturaescolhido */
+            miniaturaEscolhido: string | null;
+            motor: components["schemas"]["GeracaoMotor"];
+            /** Ncandidatos */
+            nCandidatos: number;
+            /** Nopcoes */
+            nOpcoes: number;
+            /** Nextattemptat */
+            nextAttemptAt: string | null;
+            /** Passo */
+            passo: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Progress */
+            progress: number;
+            /** Referencias */
+            referencias: components["schemas"]["ImageRef"][];
+            /** Rotulo */
+            rotulo: string | null;
+            /** Semescolha */
+            semEscolha: boolean;
+            /** Startedat */
+            startedAt: string | null;
+            status: components["schemas"]["GeracaoStatus"];
+            /** Texto */
+            texto: string | null;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * GeracaoStatus
+         * @enum {string}
+         */
+        GeracaoStatus: "na_fila" | "rodando" | "revisao" | "escolhido" | "descartada" | "cancelada" | "entregue" | "falhou";
+        /** GeracoesPagina */
+        GeracoesPagina: {
+            /** Itens */
+            itens: components["schemas"]["GeracaoResumo"][];
+            /** Proximo */
+            proximo: string | null;
+        };
         /** GerarIn */
         GerarIn: {
             alvo: components["schemas"]["Alvo"];
@@ -9050,6 +9569,21 @@ export interface components {
             /** Thumb */
             thumb: string;
         };
+        /** ImagemCandidato */
+        ImagemCandidato: {
+            /** Height */
+            height: number;
+            /**
+             * Imageid
+             * Format: uuid
+             */
+            imageId: string;
+            link: components["schemas"]["Link"];
+            /** Url */
+            url: string;
+            /** Width */
+            width: number;
+        };
         /** Importacao */
         Importacao: {
             /**
@@ -9202,6 +9736,34 @@ export interface components {
             /** Valor */
             valor: number | null;
         };
+        /** IntegracaoGeracao */
+        IntegracaoGeracao: {
+            /**
+             * Comfyui
+             * @enum {string}
+             */
+            comfyui: "ok" | "fora" | "nao_configurado";
+            /**
+             * Gerador
+             * @enum {string}
+             */
+            gerador: "ativo" | "parado";
+            /**
+             * Gpu
+             * @enum {string}
+             */
+            gpu: "livre" | "openshorts" | "pouca_vram" | "desconhecida";
+            /**
+             * Memoriacomfyui
+             * @enum {string}
+             */
+            memoriaComfyui: "ok" | "travada" | "nao_configurado";
+            /**
+             * Shoptts
+             * @enum {string}
+             */
+            shopTts: "ok" | "fora" | "nao_configurado";
+        };
         /** Integracoes */
         Integracoes: {
             /**
@@ -9210,6 +9772,7 @@ export interface components {
              */
             claude: "ok" | "ausente";
             cotaYoutube: components["schemas"]["CotaYoutube"];
+            geracao: components["schemas"]["IntegracaoGeracao"];
             /**
              * Openshorts
              * @enum {string}
@@ -9464,6 +10027,13 @@ export interface components {
             n: number;
             /** Rotulo */
             rotulo: string;
+        };
+        /** Link */
+        Link: {
+            /** Expiresat */
+            expiresAt: string | null;
+            /** Url */
+            url: string;
         };
         /** LoginIn */
         LoginIn: {
@@ -9742,7 +10312,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video" | "cena_tomada";
+            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video" | "cena_tomada" | "audio";
         };
         /** MidiaLink */
         MidiaLink: {
@@ -11709,6 +12279,11 @@ export interface components {
         VerifyIn: {
             /** Token */
             token: string;
+        };
+        /** VersaoIn */
+        VersaoIn: {
+            /** Version */
+            version: number;
         };
         /** Version */
         Version: {
@@ -15642,6 +16217,64 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    audios_detalhe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                audio_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Audio"];
                 };
             };
             /** @description Dados inválidos (validation_error) */
@@ -23356,6 +23989,406 @@ export interface operations {
             };
         };
     };
+    geracoes_detalhe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                geracao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracaoDetalhe"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    geracoes_cancelar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                geracao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracaoDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    geracoes_escolher: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                geracao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EscolherIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracaoEscolhida"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    geracoes_gerar_outras: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                geracao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracaoDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    geracoes_tentar_de_novo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                geracao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracaoDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    geracoes_versoes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                geracao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     health_api_health_get: {
         parameters: {
             query?: never;
@@ -27325,6 +28358,104 @@ export interface operations {
             };
         };
     };
+    audios_enviar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_audios_enviar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Audio"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     perfis_upload_banner: {
         parameters: {
             query?: never;
@@ -28673,6 +29804,151 @@ export interface operations {
             };
             /** @description Insufficient Storage */
             507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    geracoes_listar: {
+        parameters: {
+            query?: {
+                alvoTipo?: components["schemas"]["GeracaoAlvo"] | null;
+                alvoId?: string | null;
+                status?: components["schemas"]["GeracaoStatus"][] | null;
+                passo?: string | null;
+                cursor?: string | null;
+                limite?: number;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracoesPagina"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    geracoes_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GeracaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracaoDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

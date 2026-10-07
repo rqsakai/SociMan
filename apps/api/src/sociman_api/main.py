@@ -24,6 +24,8 @@ from sociman_api.cortes.router import router as cortes_router
 from sociman_api.db import get_engine
 from sociman_api.envios.router import router as envios_router
 from sociman_api.errors import install_openapi_error_contract, register_error_handlers
+from sociman_api.geracao.router import router as geracao_router  # spec 021
+from sociman_api.geracao.router_audios import router as audios_router  # spec 021
 from sociman_api.ia.router import router as ia_router
 from sociman_api.ia.router_guia import router as guia_router  # spec 017
 from sociman_api.integracoes import router as integracoes_router
@@ -87,6 +89,8 @@ app.include_router(cenas_perfil_router)  # spec 010: cenas do perfil e padrões
 app.include_router(cenas_router)  # spec 010: cena, tomadas e vínculo com o conteúdo
 app.include_router(agencia_router)  # spec 013: importação da agência (só dono humano grava)
 app.include_router(aprendizado_router)  # spec 023: aprender com o desempenho
+app.include_router(geracao_router)  # spec 021: geração local com candidatos
+app.include_router(audios_router)  # spec 021: áudios do perfil
 install_openapi_error_contract(app)
 
 

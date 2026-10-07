@@ -9,7 +9,9 @@ payload é `{k: tipo, id, v?: variante, exp?: epoch}`:
   decisão do dono em 2026-09-29): valem enquanto o arquivo existir, e arquivos nunca são
   apagados.
 - `imagem` (spec 007, R7): o original de qualquer imagem da biblioteca, sem `exp` no
-  "Copiar link" e no "Baixar original" do asset (token determinístico, portanto estável).
+  "Copiar link" e no "Baixar original" do asset (token determinístico, portanto estável). Os
+  candidatos de geração (spec 021) usam o `imagem` **com** `exp` (a limpeza pode apagá-los);
+- `audio` (spec 021, R11): sempre com `exp`, `Range` e `Content-Type` pelo formato.
 
 Streaming (T010): `stream_object` serve o objeto do MinIO com `Range` (206/416) e 503 com o HD
 fora. As rotas (`GET /api/midia/{token}`, sem login, e `POST /api/midia/links`) ficam em
@@ -41,10 +43,13 @@ from sociman_api.errors import ApiError
 MidiaKind = Literal["corte_original", "corte_marcado", "fonte", "marca_dagua", "fundo",
                     "imagem",  # imagem: qualquer `images.id` (biblioteca da 007)
                     "conteudo_video",  # vídeo próprio (spec 014)
-                    "cena_tomada"]  # tomada de uma cena (spec 010)
+                    "cena_tomada",  # tomada de uma cena (spec 010)
+                    "audio"]  # áudio do perfil (spec 021, R11): sempre com validade
 KINDS: frozenset[str] = frozenset(get_args(MidiaKind))
 VIDEO_KINDS: frozenset[str] = frozenset({"corte_original", "corte_marcado", "conteudo_video",
                                          "cena_tomada"})
+# Nunca saem sem `exp`: os vídeos e, na spec 021, os áudios (podem ser apagados pela limpeza).
+COM_VALIDADE: frozenset[str] = VIDEO_KINDS | {"audio"}
 LINK_TTL = 60 * 60  # 1 h (interface)
 PATH_PREFIX = "/api/midia/"
 _DOMAIN = b"midia:"
@@ -85,8 +90,8 @@ def sign(kind: MidiaKind, entity_id: uuid.UUID, *, ttl: int | None = LINK_TTL,
     """Token para `/api/midia/{token}`. `ttl=None` (sem validade) só para o que não é vídeo."""
     if kind not in KINDS:
         raise ValueError(f"tipo de mídia desconhecido: {kind}")
-    if ttl is None and kind in VIDEO_KINDS:
-        raise ValueError("link de vídeo sempre tem validade")
+    if ttl is None and kind in COM_VALIDADE:
+        raise ValueError("link de vídeo ou áudio sempre tem validade")
     if ttl is not None and ttl <= 0:
         raise ValueError("ttl precisa ser positivo")
     payload: dict[str, object] = {"k": kind, "id": str(entity_id)}
@@ -132,7 +137,7 @@ def verify(token: str, *, now: float | None = None) -> MidiaClaims:
     if kind not in KINDS or (variant is not None and not isinstance(variant, str)):
         raise _invalid()
     if exp is None:
-        if kind in VIDEO_KINDS:  # vídeo nunca sai sem validade (R6)
+        if kind in COM_VALIDADE:  # vídeo e áudio nunca saem sem validade (R6; 021, R11)
             raise _invalid()
     elif not isinstance(exp, int) or exp <= (time.time() if now is None else now):
         raise _invalid()

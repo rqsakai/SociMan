@@ -14,6 +14,7 @@ from sociman_api.conteudos import models as _conteudos_models  # noqa: F401 — 
 from sociman_api.cortes import models as _cortes_models  # noqa: F401
 from sociman_api.db import Base
 from sociman_api.envios import models as _envios_models  # noqa: F401
+from sociman_api.geracao import models as _geracao_models  # noqa: F401 — spec 021
 from sociman_api.ia import models as _ia_models  # noqa: F401
 from sociman_api.marca import models as _marca_models  # noqa: F401
 from sociman_api.metricas import models as _metricas_models  # noqa: F401 — spec 016

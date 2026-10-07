@@ -201,6 +201,72 @@ services:
       minio:
         condition: service_healthy
 
+  # Geração local (spec 021, R1): a mesma imagem da API rodando `sociman gerador`, com a linha
+  # GPU (um job do ComfyUI ou do shop-tts por vez) e a linha Claude. É o ÚNICO serviço na rede
+  # `gpu-local` (ComfyUI e shop-tts, D2) e na `dockerctl` (ajuste de RAM do ComfyUI, D1). Sem
+  # porta. Sem o ComfyUI na rede, fica na fila com "O serviço de geração está fora do ar".
+  gerador:
+    build: ./apps/api
+    image: sociman-api
+    user: "1000:1000"
+    command: ["sociman", "gerador"]
+    env_file: .env.docker
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_NO_SYNC: "1"
+      IMGPROXY_KEY: ${IMGPROXY_KEY:-}
+      IMGPROXY_SALT: ${IMGPROXY_SALT:-}
+      SOCIMAN_DATA_DIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}
+      DATA_MIN_FREE_GB: ${DATA_MIN_FREE_GB:-20}
+      TMPDIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}/work/tmp
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      COMFYUI_URL: ${COMFYUI_URL:-http://comfyui:8188}
+      SHOP_TTS_URL: ${SHOP_TTS_URL:-http://shop-tts:8200}
+      DOCKERCTL_URL: http://dockerctl:8080
+      # Segredo do .env da raiz, gerado pelo dono (quickstart §0.3); vazio = sem jobs do ComfyUI.
+      DOCKERCTL_TOKEN: ${DOCKERCTL_TOKEN:-}
+      GERACAO_VRAM_MIN_GB_COMFYUI: ${GERACAO_VRAM_MIN_GB_COMFYUI:-12}
+      GERACAO_VRAM_MIN_GB_TTS: ${GERACAO_VRAM_MIN_GB_TTS:-6}
+    networks: [default, gpu-local, dockerctl]
+    volumes:
+      - ./apps/api:/app
+      - type: bind
+        source: /media/sakai
+        target: /media/sakai
+        bind:
+          create_host_path: false
+          propagation: rslave
+    # SIGTERM devolve a geração em andamento à fila (sem contar tentativa) e a RAM a 12 GB.
+    stop_grace_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # Ajuste de RAM do ComfyUI (spec 021, R4, D1 = A; contracts/dockerctl.md). RISCO: o
+  # docker.sock dá poder total no host. Este é o ÚNICO serviço que o monta (guarda em
+  # test_constitution_guards.py) — nunca o monte em outro. 3 ações fixas, sem parâmetros; rede
+  # `internal` só com o gerador; sem porta; sem DOCKERCTL_TOKEN, sai sem subir.
+  dockerctl:
+    build: ./docker/dockerctl
+    image: sociman-dockerctl
+    user: "1000:${DOCKER_GID:-984}"   # gid do grupo docker do host (data-setup.sh check)
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      DOCKERCTL_TOKEN: ${DOCKERCTL_TOKEN:-}
+      DOCKERCTL_CONTAINER: comfyui
+      DOCKERCTL_MEM_JOB: 28g
+      DOCKERCTL_MEM_NORMAL: 12g
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock   # PODER TOTAL: só aqui
+    networks: [dockerctl]
+
   web:
     image: node:22-bookworm
     working_dir: /repo
@@ -300,7 +366,7 @@ services:
       - -c
       - >
         mc alias set local http://minio:9000 minioadmin minioadmin &&
-        mc mb -p local/sociman local/sociman-fonts local/sociman-videos
+        mc mb -p local/sociman local/sociman-fonts local/sociman-videos local/sociman-audios
 
   # Thumbnails/redimensionamento on-the-fly em /img/* — fontes RESTRITAS ao bucket
   imgproxy:
@@ -320,6 +386,15 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+
+networks:
+  # Spec 021 (D2): a rede do ComfyUI e do shop-tts (../comfyui-docker). Externa: tem de existir
+  # antes do `up` (`./scripts/data-setup.sh init` cria).
+  gpu-local:
+    external: true
+  # Spec 021 (D1): só o gerador e o dockerctl; sem saída para fora.
+  dockerctl:
+    internal: true
 
 volumes:
   postgres-data:

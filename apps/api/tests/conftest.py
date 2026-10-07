@@ -96,6 +96,9 @@ _TABLES += ("cena_usos", "cena_tomadas", "cenas", "cena_padroes")
 # Spec 023: o aprendizado (o CASCADE cobre a ordem das FKs).
 _TABLES += ("aprendizado_fonte_temas", "aprendizado_conferencias", "aprendizado_decisoes", "aprendizado_classificacoes",
             "aprendizado_analises", "aprendizado_preferencias", "aprendizado_temas")
+# Spec 021: gerações, opções e áudios (o CASCADE cobre o ciclo `escolhido_id` e a FK de
+# `ia_chamadas.geracao_id`).
+_TABLES += ("geracao_candidatos", "geracoes", "audios")
 
 
 @pytest.fixture(autouse=True)

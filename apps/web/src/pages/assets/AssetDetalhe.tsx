@@ -19,6 +19,8 @@ import { AssetUpload } from "../../components/assets/AssetUpload";
 import { AvatarCampos, PROMPT_MAX, type PromptFields } from "../../components/assets/AvatarCampos";
 import { IaAssist } from "../../components/ia/IaAssist";
 import { LooksSection } from "../../components/assets/LooksSection";
+import { ListaGeracoes } from "../../components/geracao/ListaGeracoes";
+import { PedirGeracao } from "../../components/geracao/PedirGeracao";
 import { PosesGrid } from "../../components/assets/PosesGrid";
 import { UsosList, usosText } from "../../components/assets/UsosList";
 import { api } from "../../lib/api";
@@ -255,6 +257,48 @@ export default function AssetDetalhe() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* spec 021: gerar cenas do cenário no ComfyUI local; a opção escolhida vira uma referência nova. */}
+      {asset.tipo === "cenario" && (
+        <>
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>
+                <h2>Gerar cena</h2>
+              </CardTitle>
+              <CardDescription>
+                {asset.archived
+                  ? "Restaure o cenário antes de gerar."
+                  : "Gera imagens do ambiente no computador da casa. Você compara as opções e escolhe uma, que entra como imagem de referência."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PedirGeracao
+                perfilId={asset.perfilId}
+                alvoTipo="asset"
+                alvoId={asset.id}
+                passo="cenario.cena"
+                nPadrao={2}
+                nMax={2}
+                tiposReferencia={["cenario", "fundo", "imagem"]}
+                instrucaoHint="Descreva o ambiente, a luz e o clima. Ex.: quarto claro e aconchegante, sol da manhã"
+                disabled={asset.archived}
+              />
+            </CardContent>
+          </Card>
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>
+                <h2>Gerações deste cenário</h2>
+              </CardTitle>
+              <CardDescription>As abertas e as recentes. Opções não escolhidas são apagadas 90 dias depois do fim da geração.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ListaGeracoes perfilId={asset.perfilId} alvoTipo="asset" alvoId={asset.id} alvoVersion={asset.version} disabled={asset.archived} />
+            </CardContent>
+          </Card>
+        </>
       )}
     </div>
   );

@@ -1,0 +1,140 @@
+{
+ "1": {
+  "class_type": "PrimitiveStringMultiline",
+  "inputs": {
+   "value": "RAW photo, close-up portrait of a woman, natural skin texture, soft daylight, 85mm"
+  }
+ },
+ "2": {
+  "class_type": "PrimitiveStringMultiline",
+  "inputs": {
+   "value": "cartoon, painting, illustration, 3d render, cgi, anime, plastic skin, airbrushed, doll, deformed face, asymmetric eyes, cross-eyed, bad teeth, extra fingers, bad hands, blurry, lowres, jpeg artifacts, watermark, text"
+  }
+ },
+ "3": {
+  "class_type": "PrimitiveInt",
+  "inputs": {
+   "value": 832
+  }
+ },
+ "4": {
+  "class_type": "PrimitiveInt",
+  "inputs": {
+   "value": 1216
+  }
+ },
+ "5": {
+  "class_type": "PrimitiveInt",
+  "inputs": {
+   "value": 1
+  }
+ },
+ "6": {
+  "class_type": "PrimitiveString",
+  "inputs": {
+   "value": "v3/retrato"
+  }
+ },
+ "7": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": {
+   "ckpt_name": "Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors"
+  }
+ },
+ "8": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": [
+    "1",
+    0
+   ],
+   "clip": [
+    "7",
+    1
+   ]
+  }
+ },
+ "9": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": [
+    "2",
+    0
+   ],
+   "clip": [
+    "7",
+    1
+   ]
+  }
+ },
+ "10": {
+  "class_type": "EmptyLatentImage",
+  "inputs": {
+   "width": [
+    "3",
+    0
+   ],
+   "height": [
+    "4",
+    0
+   ],
+   "batch_size": 1
+  }
+ },
+ "11": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "7",
+    0
+   ],
+   "positive": [
+    "8",
+    0
+   ],
+   "negative": [
+    "9",
+    0
+   ],
+   "latent_image": [
+    "10",
+    0
+   ],
+   "seed": [
+    "5",
+    0
+   ],
+   "steps": 30,
+   "cfg": 4.5,
+   "sampler_name": "dpmpp_2m",
+   "scheduler": "karras",
+   "denoise": 1.0
+  }
+ },
+ "12": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "11",
+    0
+   ],
+   "vae": [
+    "7",
+    2
+   ]
+  }
+ },
+ "13": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "12",
+    0
+   ],
+   "filename_prefix": [
+    "6",
+    0
+   ]
+  }
+ }
+}

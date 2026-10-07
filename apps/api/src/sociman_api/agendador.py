@@ -4,7 +4,7 @@ Um processo por stack (serviço `agendador` do compose, a mesma imagem da API):
 1. pega o advisory lock `0x50C1` do Postgres numa conexão dedicada. Sem o lock (outra instância
    ativa), espera sem trabalhar e tenta de novo;
 2. com o lock, sobe uma thread por trilha (`sync`, `openshorts`, `importacao`, `lembretes`,
-   `publicacao`, `metricas` e, na spec 023, `aprendizado`).
+   `publicacao`, `metricas`, na spec 023, `aprendizado` e, na 021, `geracao_limpeza`).
    Cada volta abre uma sessão própria, chama `rodar(db)` do módulo da trilha e faz o commit; uma
    exceção vai para o log (rollback) e a trilha segue na próxima volta, sem derrubar as outras;
 3. SIGTERM ou SIGINT param as trilhas no fim da volta atual e soltam o lock.
@@ -56,6 +56,12 @@ def _sem_hd() -> str | None:
     return None
 
 
+def _sem_hd_limpeza() -> str | None:
+    if datadir.status().reason == "sem_sentinela":
+        return "HD de dados sem o sentinela: nenhuma opção de geração é limpa"
+    return None
+
+
 def _publicacao_ociosa() -> str | None:
     """Spec 015 (R6): a trilha `publicacao` só roda com o nível do servidor ligado, a chave dos
     tokens e o HD. Com ela ociosa, nenhum pedido sai para a rede (princípio I)."""
@@ -90,6 +96,7 @@ def trilhas_padrao() -> list[Trilha]:
     from sociman_api.aprendizado import trilha as aprendizado
     from sociman_api.canais import sync
     from sociman_api.envios import acompanhamento, importacao
+    from sociman_api.geracao import limpeza as geracao_limpeza
     from sociman_api.metricas import coleta as metricas
     from sociman_api.postagem import lembretes
     from sociman_api.publicacao import trilha as publicacao
@@ -105,6 +112,9 @@ def trilhas_padrao() -> list[Trilha]:
         # Spec 023: o casamento vídeo-fonte × tema (sem IA), a classificação (≤ 50/perfil/dia) e
         # as análises da IA (estas só com a chave; a trilha decide por dentro).
         Trilha("aprendizado", s.agendador_aprendizado_s, aprendizado.rodar),
+        # Spec 021 (R12): a limpeza de 90 dias das opções não escolhidas (exceção 1 da 4.3.0).
+        Trilha("geracao_limpeza", s.agendador_geracao_limpeza_s, geracao_limpeza.rodar,
+               _sem_hd_limpeza),
     ]
 
 
@@ -118,6 +128,7 @@ def _registrar_modelos() -> None:
     from sociman_api.conteudos import models as _conteudos  # noqa: F401 — spec 014
     from sociman_api.cortes import models as _cortes  # noqa: F401
     from sociman_api.envios import models as _envios  # noqa: F401
+    from sociman_api.geracao import models as _geracao  # noqa: F401 — spec 021
     from sociman_api.marca import models as _marca  # noqa: F401
     from sociman_api.metricas import models as _metricas  # noqa: F401 — spec 016
     from sociman_api.notificacoes import models as _notificacoes  # noqa: F401

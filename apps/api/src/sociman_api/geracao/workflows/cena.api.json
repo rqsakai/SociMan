@@ -1,0 +1,135 @@
+{
+ "1": {
+  "class_type": "PrimitiveStringMultiline",
+  "inputs": {
+   "value": "cozy bright minimalist bedroom, vertical phone photo, natural light, photorealistic"
+  }
+ },
+ "2": {
+  "class_type": "PrimitiveInt",
+  "inputs": {
+   "value": 768
+  }
+ },
+ "3": {
+  "class_type": "PrimitiveInt",
+  "inputs": {
+   "value": 1344
+  }
+ },
+ "4": {
+  "class_type": "PrimitiveInt",
+  "inputs": {
+   "value": 42
+  }
+ },
+ "5": {
+  "class_type": "PrimitiveString",
+  "inputs": {
+   "value": "v3/txt2img"
+  }
+ },
+ "6": {
+  "class_type": "UnetLoaderGGUF",
+  "inputs": {
+   "unet_name": "flux1-schnell-Q8_0.gguf"
+  }
+ },
+ "7": {
+  "class_type": "DualCLIPLoader",
+  "inputs": {
+   "clip_name1": "t5xxl_fp8_e4m3fn.safetensors",
+   "clip_name2": "clip_l.safetensors",
+   "type": "flux"
+  }
+ },
+ "8": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "ae.safetensors"
+  }
+ },
+ "9": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "clip": [
+    "7",
+    0
+   ],
+   "text": [
+    "1",
+    0
+   ]
+  }
+ },
+ "10": {
+  "class_type": "EmptySD3LatentImage",
+  "inputs": {
+   "width": [
+    "2",
+    0
+   ],
+   "height": [
+    "3",
+    0
+   ],
+   "batch_size": 1
+  }
+ },
+ "11": {
+  "class_type": "KSampler",
+  "inputs": {
+   "model": [
+    "6",
+    0
+   ],
+   "positive": [
+    "9",
+    0
+   ],
+   "negative": [
+    "9",
+    0
+   ],
+   "latent_image": [
+    "10",
+    0
+   ],
+   "seed": [
+    "4",
+    0
+   ],
+   "steps": 4,
+   "cfg": 1.0,
+   "sampler_name": "euler",
+   "scheduler": "simple",
+   "denoise": 1.0
+  }
+ },
+ "12": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "11",
+    0
+   ],
+   "vae": [
+    "8",
+    0
+   ]
+  }
+ },
+ "13": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "12",
+    0
+   ],
+   "filename_prefix": [
+    "5",
+    0
+   ]
+  }
+ }
+}

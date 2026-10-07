@@ -46,6 +46,17 @@ export type Armazenamento = components["schemas"]["Armazenamento"];
 export type MidiaLink = components["schemas"]["MidiaLink"];
 export type MidiaKind = "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video";
 export type CorteFilters = NonNullable<paths["/api/perfis/{perfil_id}/cortes"]["get"]["parameters"]["query"]>;
+// 021-geracao-local
+export type GeracaoDetalhe = components["schemas"]["GeracaoDetalhe"];
+export type GeracaoResumo = components["schemas"]["GeracaoResumo"];
+export type GeracaoEscolhida = components["schemas"]["GeracaoEscolhida"];
+export type GeracaoInRequest = components["schemas"]["GeracaoIn"];
+export type GeracaoStatus = components["schemas"]["GeracaoStatus"];
+export type GeracaoAlvo = components["schemas"]["GeracaoAlvo"];
+export type CandidatoGeracao = components["schemas"]["CandidatoGeracao"];
+export type ImagemCandidato = components["schemas"]["ImagemCandidato"];
+export type AudioPerfil = components["schemas"]["Audio"];
+export type GeracaoFilters = NonNullable<paths["/api/perfis/{perfil_id}/geracoes"]["get"]["parameters"]["query"]>;
 // 007-assets-do-perfil
 export type Asset = components["schemas"]["Asset"];
 export type AssetSummary = components["schemas"]["AssetSummary"];
@@ -1169,6 +1180,27 @@ export function createApiClient(options: ApiClientOptions = {}) {
         unwrap(client.GET("/api/aprendizado/posts/{video_id}/diagnostico", { params: { path: { video_id: videoId } } })),
       conferencia: (videoId: string, item: string, body: AprendizadoConferenciaPut) =>
         unwrap(client.PUT("/api/aprendizado/posts/{video_id}/conferencias/{item}", { params: { path: { video_id: videoId, item } }, body })),
+    },
+    // Geração local (spec 021): pedir, acompanhar e decidir (escritas só de humano). O envio de
+    // áudio (multipart) fica no app, por XHR, para ter o progresso. Nenhuma rota DELETE.
+    geracoes: {
+      criar: (perfilId: string, body: GeracaoInRequest) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/geracoes", { params: { path: { perfil_id: perfilId } }, body })),
+      listar: (perfilId: string, query: GeracaoFilters = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/geracoes", { params: { path: { perfil_id: perfilId }, query } })),
+      detalhe: (geracaoId: string) =>
+        unwrap(client.GET("/api/geracoes/{geracao_id}", { params: { path: { geracao_id: geracaoId } } })),
+      versoes: (geracaoId: string) =>
+        unwrap(client.GET("/api/geracoes/{geracao_id}/versoes", { params: { path: { geracao_id: geracaoId } } })),
+      escolher: (geracaoId: string, body: { candidatoId: string; version: number; alvoVersion: number }) =>
+        unwrap(client.POST("/api/geracoes/{geracao_id}/escolher", { params: { path: { geracao_id: geracaoId } }, body })),
+      cancelar: (geracaoId: string, version: number) =>
+        unwrap(client.POST("/api/geracoes/{geracao_id}/cancelar", { params: { path: { geracao_id: geracaoId } }, body: { version } })),
+      tentarDeNovo: (geracaoId: string, version: number) =>
+        unwrap(client.POST("/api/geracoes/{geracao_id}/tentar-de-novo", { params: { path: { geracao_id: geracaoId } }, body: { version } })),
+      gerarOutras: (geracaoId: string, version: number) =>
+        unwrap(client.POST("/api/geracoes/{geracao_id}/gerar-outras", { params: { path: { geracao_id: geracaoId } }, body: { version } })),
+      audio: (audioId: string) => unwrap(client.GET("/api/audios/{audio_id}", { params: { path: { audio_id: audioId } } })),
     },
     config: () => unwrap(client.GET("/api/config")),
     health: () => unwrap(client.GET("/api/health")),

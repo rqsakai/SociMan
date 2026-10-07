@@ -55,12 +55,13 @@ services:
       MC_BUCKET: ${TEST_S3_BUCKET:-sociman-test}
       MC_FONTS_BUCKET: ${TEST_S3_FONTS_BUCKET:-sociman-fonts-test}
       MC_VIDEOS_BUCKET: ${TEST_S3_VIDEOS_BUCKET:-sociman-videos-test}
+      MC_AUDIOS_BUCKET: ${TEST_S3_AUDIOS_BUCKET:-sociman-audios-test}   # spec 021
     entrypoint:
       - /bin/sh
       - -c
       - >
         mc alias set t http://minio:9000 "$$MC_USER" "$$MC_PASSWORD" &&
-        mc mb -p "t/$$MC_BUCKET" "t/$$MC_FONTS_BUCKET" "t/$$MC_VIDEOS_BUCKET"
+        mc mb -p "t/$$MC_BUCKET" "t/$$MC_FONTS_BUCKET" "t/$$MC_VIDEOS_BUCKET" "t/$$MC_AUDIOS_BUCKET"
     depends_on:
       minio:
         condition: service_healthy
@@ -86,6 +87,8 @@ services:
       TEST_S3_FONTS_BUCKET: *fonts-bucket
       S3_VIDEOS_BUCKET: &videos-bucket ${TEST_S3_VIDEOS_BUCKET:-sociman-videos-test}
       TEST_S3_VIDEOS_BUCKET: *videos-bucket
+      S3_AUDIOS_BUCKET: &audios-bucket ${TEST_S3_AUDIOS_BUCKET:-sociman-audios-test}   # spec 021
+      TEST_S3_AUDIOS_BUCKET: *audios-bucket
       # HD de dados de mentira (tmpfs abaixo); piso baixo porque o tmpfs é pequeno.
       SOCIMAN_DATA_DIR: /srv/sociman-data
       DATA_MIN_FREE_GB: "0.01"
@@ -108,6 +111,8 @@ services:
       UV_NO_SYNC: "1"               # o venv (/opt/venv) já vem pronto da imagem
     volumes:
       - ./apps/api:/app   # código ao vivo; o venv fica em /opt/venv na imagem
+      - ./docker/dockerctl:/dockerctl:ro   # spec 021: test_dockerctl_server.py importa o server.py
+      - ./docker-compose.yml:/repo/docker-compose.yml:ro   # spec 021: guarda do docker.sock
     tmpfs:
       - /srv/sociman-data:uid=1000,gid=1000,mode=0755
     # Monta o "HD" (sentinela e work/) antes de qualquer comando, inclusive o do test-api.sh.

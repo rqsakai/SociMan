@@ -23193,6 +23193,58 @@
               "renovaEm"
             ],
             "type": "object"
+          },
+          "IntegracaoGeracao": {
+            "properties": {
+              "comfyui": {
+                "enum": [
+                  "ok",
+                  "fora",
+                  "nao_configurado"
+                ],
+                "type": "string"
+              },
+              "gerador": {
+                "enum": [
+                  "ativo",
+                  "parado"
+                ],
+                "type": "string"
+              },
+              "gpu": {
+                "enum": [
+                  "livre",
+                  "openshorts",
+                  "pouca_vram",
+                  "desconhecida"
+                ],
+                "type": "string"
+              },
+              "memoriaComfyui": {
+                "enum": [
+                  "ok",
+                  "travada",
+                  "nao_configurado"
+                ],
+                "type": "string"
+              },
+              "shopTts": {
+                "enum": [
+                  "ok",
+                  "fora",
+                  "nao_configurado"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "comfyui",
+              "shopTts",
+              "memoriaComfyui",
+              "gpu",
+              "gerador"
+            ],
+            "type": "object"
           }
         },
         "properties": {
@@ -23205,6 +23257,9 @@
           },
           "cotaYoutube": {
             "$ref": "#/$defs/CotaYoutube"
+          },
+          "geracao": {
+            "$ref": "#/$defs/IntegracaoGeracao"
           },
           "openshorts": {
             "enum": [
@@ -23226,7 +23281,8 @@
           "youtube",
           "openshorts",
           "claude",
-          "cotaYoutube"
+          "cotaYoutube",
+          "geracao"
         ],
         "type": "object"
       },
@@ -25608,7 +25664,8 @@
                   "fundo",
                   "imagem",
                   "conteudo_video",
-                  "cena_tomada"
+                  "cena_tomada",
+                  "audio"
                 ],
                 "type": "string"
               }

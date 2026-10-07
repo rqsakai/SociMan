@@ -108,6 +108,20 @@ class Settings(BaseSettings):
     agencia_shared_dir: str = "/agencia/shared"
     agencia_clipes_dir: str = "/agencia/clipes"
 
+    # Geração local (spec 021): o `gerador` fala com o ComfyUI e o shop-tts pela rede `gpu-local`
+    # (R5) e com o `dockerctl` pela rede `dockerctl` (R4). `DOCKERCTL_TOKEN` é segredo do `.env`
+    # da raiz, gerado pelo dono; vazio = o gerador não roda jobs `comfyui` (R4).
+    comfyui_url: str = "http://comfyui:8188"
+    shop_tts_url: str = "http://shop-tts:8200"
+    dockerctl_url: str = "http://dockerctl:8080"
+    dockerctl_token: SecretStr = SecretStr("")
+    s3_audios_bucket: str = "sociman-audios"
+    # Pisos de VRAM por motor (R3, calibrados no quickstart §3) e teto de uma opção no ComfyUI.
+    geracao_vram_min_gb_comfyui: float = Field(12, gt=0)
+    geracao_vram_min_gb_tts: float = Field(6, gt=0)
+    geracao_comfyui_teto_s: float = Field(1200, gt=0)
+    agendador_geracao_limpeza_s: float = Field(3600, gt=0)
+
     @field_validator("mcp_origens_permitidas", mode="before")
     @classmethod
     def _origens(cls, value: object) -> object:

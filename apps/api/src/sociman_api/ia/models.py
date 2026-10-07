@@ -231,6 +231,9 @@ class IaChamada(Base):
     desempenho_exemplos: Mapped[list[uuid.UUID]] = mapped_column(
         ARRAY(Uuid), nullable=False, default=list, server_default=text("'{}'")
     )
+    # Spec 021 (R14): a geração do motor `claude` que fez a chamada. A FK para `geracoes` fica
+    # na migration 0020 (sem FK no ORM: o `ia` não importa o pacote `geracao`).
+    geracao_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

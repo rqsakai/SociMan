@@ -91,7 +91,7 @@ Nada chama serviço real: nem o ComfyUI, nem o shop-tts, nem o Docker, nem o Cla
 
 ## Phase 1: Setup
 
-- [ ] T001 **Gate:**
+- [X] T001 **Gate:**
   - **aplicar a emenda 4.2.0 → 4.3.0** com o `/speckit-constitution`, com o texto aprovado pelo dono. No
     fim do princípio VII de `.specify/memory/constitution.md`, acrescentar:
     > **Exceções de eliminação (4.3.0):** dois casos podem apagar dados de fato, sempre registrados como
@@ -112,7 +112,7 @@ Nada chama serviço real: nem o ComfyUI, nem o shop-tts, nem o Docker, nem o Cla
     `npm run test:api -- tests/ -k "asset or ia_ or corte" -q`;
   - `git status` só tem o esperado;
   - `.specify/feature.json` aponta para a 021 (o líder cuida).
-- [ ] T002 [P] `config.py` (acréscimo):
+- [X] T002 [P] `config.py` (acréscimo):
   - `comfyui_url` (padrão `http://comfyui:8188`) e `shop_tts_url` (`http://shop-tts:8200`);
   - `dockerctl_url` (`http://dockerctl:8080`) e `dockerctl_token` (padrão vazio);
   - `s3_audios_bucket` (`sociman-audios`);
@@ -120,7 +120,7 @@ Nada chama serviço real: nem o ComfyUI, nem o shop-tts, nem o Docker, nem o Cla
   - `agendador_geracao_limpeza_s = 3600`.
 
   Nenhum segredo com valor padrão. O `.env.example`, se existir, ganha as chaves vazias.
-- [ ] T003 [P] `scripts/data-setup.sh` (acréscimo):
+- [X] T003 [P] `scripts/data-setup.sh` (acréscimo):
   - `check` mostra o bucket `sociman-audios`, a rede `gpu-local` e o `DOCKER_GID` (gid do grupo `docker`);
   - `init` cria a rede `gpu-local` se faltar (`docker network create gpu-local`) e o bucket.
 
@@ -132,7 +132,7 @@ Nada chama serviço real: nem o ComfyUI, nem o shop-tts, nem o Docker, nem o Cla
 
 **Objetivo:** banco, modelos, registro de passos, delete restrito, guardas e fakes.
 
-- [ ] T004 Migration `apps/api/migrations/versions/0020_geracao_local.py`, conforme o data-model:
+- [X] T004 Migration `apps/api/migrations/versions/0020_geracao_local.py`, conforme o data-model:
   - os 3 enums e as tabelas `audios`, `geracoes` e `geracao_candidatos` (com `image_par_id`);
   - a FK `fk_geracoes_escolhido` adicionada depois (`use_alter`);
   - os CHECKs (`ck_geracoes_passo` com os 15 passos, `_escolhido`, `_erro`, `_final`, `_entregue`,
@@ -141,13 +141,13 @@ Nada chama serviço real: nem o ComfyUI, nem o shop-tts, nem o Docker, nem o Cla
   - os índices, inclusive o **`uq_geracoes_gpu_rodando`**;
   - `ia_chamadas.geracao_id` com índice;
   - o downgrade recusa se houver linha em `geracoes` ou em `audios`.
-- [ ] T005 [P] `tests/integration/test_migration_0020.py`:
+- [X] T005 [P] `tests/integration/test_migration_0020.py`:
   - sobe sobre a 0019 com `ia_chamadas` existentes, que ficam com `geracao_id` NULL;
   - cada CHECK e o trigger recusam com `INSERT` direto: par fora do `rostos_34`, mídia num passo de texto,
     `entregue` fora do `voz.teste`;
   - dois `rodando` de GPU → violação do índice único;
   - down vazio e up; down com dados → recusa.
-- [ ] T006 `geracao/models.py`:
+- [X] T006 `geracao/models.py`:
   - `Geracao` (`version`, `AuditMixin`, `__versioned_fields__ = (status, escolhido_id, error_code,
     error_message)`, `__immutable_fields__ = (alvo_tipo, alvo_id, passo, motor)`);
   - `GeracaoCandidato` e `Audio`;
@@ -155,25 +155,25 @@ Nada chama serviço real: nem o ComfyUI, nem o shop-tts, nem o Docker, nem o Cla
     cancelada, entregue}`).
 
   Em `ia/models.py` (acréscimo): `geracao_id`. Registrar no metadata e no `env.py`, se necessário.
-- [ ] T007 [P] `geracao/passos.py` (R15): o registro `Passo(id, motor, alvo_tipo, resultado, n_padrao,
+- [X] T007 [P] `geracao/passos.py` (R15): o registro `Passo(id, motor, alvo_tipo, resultado, n_padrao,
   n_max, sem_escolha, aplica_alvo, bloco, image_kind)` dos 15 passos, mais os sufixos `REALISMO` e
   `MANTER` (R6) e a sobrescrita do registro **só em teste**. Em `tests/unit/test_geracao_passos.py`:
   - a lista bate com o `ck_geracoes_passo` (lê a migration);
   - `sem_escolha` só em `produto.ficha`, `avatar.identidade`, `produto.recorte` e `voz.teste`;
   - `aplica_alvo = False` só em `voz.teste`;
   - `n_padrao` 2, `rosto_origem` 4, voz ≤ 3, `voz.teste` 1.
-- [ ] T008 [P] `geracao/seeds.py` (R7) e `geracao/erros.py` (R8: códigos, `MENSAGENS` em pt-BR, espera
+- [X] T008 [P] `geracao/seeds.py` (R7) e `geracao/erros.py` (R8: códigos, `MENSAGENS` em pt-BR, espera
   crescente de 30 s a 15 min e 6 tentativas). Em `tests/unit/test_geracao_seeds.py` e `test_geracao_erros.py`:
   - "Gerar outras" nunca repete uma seed;
   - a GPU ocupada não conta tentativa;
   - na 7ª tentativa de `sem_memoria` ou `servico_fora`, a geração vai para `falhou`;
   - nenhuma mensagem vaza texto do serviço.
-- [ ] T009 [P] `storage.py` (acréscimo, R11 e R12):
+- [X] T009 [P] `storage.py` (acréscimo, R11 e R12):
   - `Bucket` ganha `"audios"`, e o `ensure_buckets` o cria;
   - **`apagar_por_excecao(key, *, bucket, excecao: Literal["candidatos_90d", "lgpd_revogacao"])`**, o
     único delete do módulo, com a docstring da emenda 4.3.0. A docstring do módulo passa a citar as 2
     exceções.
-- [ ] T010 [P] `tests/unit/test_constitution_guards.py` (acréscimo):
+- [X] T010 [P] `tests/unit/test_constitution_guards.py` (acréscimo):
   - `geracao/` não importa `publicacao`, `mcp` nem hosts de rede social;
   - sem "tiktok" nem "youtube" em `geracoes_*` e `audios_*`;
   - **delete restrito:** por AST, só `geracao/limpeza.py` (e, na 025, o módulo da revogação LGPD,
@@ -182,22 +182,22 @@ Nada chama serviço real: nem o ComfyUI, nem o shop-tts, nem o Docker, nem o Cla
   - **nunca auto:** o `gerador` só chama `Aplicador.aplicar` para passos com `sem_escolha = True`;
   - os clientes `comfyui`, `shoptts` e `memoria` têm `ALLOWED` fechado;
   - o `docker.sock` não aparece em nenhum serviço do `docker-compose.yml` além do `dockerctl`.
-- [ ] T011 [P] `geracao/workflows/` (R6): copiar de `../comfyui-docker/workflows/api/` os pares `cena`
+- [X] T011 [P] `geracao/workflows/` (R6): copiar de `../comfyui-docker/workflows/api/` os pares `cena`
   (`V3 - Imagem FLUX schnell (txt2img)`), `keyframe`, `retrato` (`V3 - Retrato Juggernaut XL (txt2img)`)
   e `cutout`, com `MANIFEST.json` (origem e sha256). Em `tests/unit/test_workflows_manifest.py`: os
   hashes batem, e cada `params.json` tem os nós que o `api.json` declara.
-- [ ] T012 [P] `tests/fakes/comfyui_fake.py` (R13): `/system_stats` com VRAM programável, `/upload/image`,
+- [X] T012 [P] `tests/fakes/comfyui_fake.py` (R13): `/system_stats` com VRAM programável, `/upload/image`,
   `/prompt` (confere os nós preenchidos), `/history` (N voltas "rodando"), `/view` (PNG sintético com a
   seed), `/free`, `/interrupt` e `/queue`. Falhas: fora do ar, `OutOfMemoryError` e saída vazia. Registra
   `.requests`.
-- [ ] T013 [P] `tests/fakes/shoptts_fake.py`: exatamente o contrato `v2` (`contracts/shop-tts.md`),
+- [X] T013 [P] `tests/fakes/shoptts_fake.py`: exatamente o contrato `v2` (`contracts/shop-tts.md`),
   inclusive `GET /v2/lotes/...` (WAV sintético), `DELETE`, `/unload`, `/health` e 503 programável.
-- [ ] T014 [P] `tests/fakes/dockerctl_fake.py`: o limite atual. Falhas: "não volta para 12 GB", "fora do
+- [X] T014 [P] `tests/fakes/dockerctl_fake.py`: o limite atual. Falhas: "não volta para 12 GB", "fora do
   ar", "não coube" e token errado → 401.
-- [ ] T015 `geracao/schemas.py` (camelCase): `GeracaoIn` (com `texto` e `extras` ≤ 2 KB), `Geracao`,
+- [X] T015 `geracao/schemas.py` (camelCase): `GeracaoIn` (com `texto` e `extras` ≤ 2 KB), `Geracao`,
   `GeracaoResumo`, `Candidato` (com `imagemPar` e `testeAudio`), `Audio`, `Link` e os corpos de ação com
   `version`, conforme `contracts/http-api.md`.
-- [ ] T016 `geracao/aplicadores.py` (R15): o protocolo `Aplicador` (`validar_alvo`, `montar_params`,
+- [X] T016 `geracao/aplicadores.py` (R15): o protocolo `Aplicador` (`validar_alvo`, `montar_params`,
   `aplicar` e `ao_mudar_estado`, que por padrão não faz nada) e o registro `APLICADORES` por passo. Em
   `geracao/fila.py`, o helper `abertas_do_alvo(db, alvo_tipo, alvo_id, exceto=None)`.
 
@@ -212,30 +212,30 @@ cenário, com histórico.
 
 **Independent Test:** spec US1 (ComfyUI falso, 2 opções, escolher a 2).
 
-- [ ] T017 [US1] `geracao/fila.py` (R2): `claim(motor_grupo)` com `SKIP LOCKED` e a espera
+- [X] T017 [US1] `geracao/fila.py` (R2): `claim(motor_grupo)` com `SKIP LOCKED` e a espera
   (`next_attempt_at`), `heartbeat`, `requeue_stale` (120 s; 3ª vez → `falhou`), e os fins "é meu"
   (`para_revisao`, `para_falhou`, `para_espera`, `para_escolhido_auto` e `para_entregue`).
   **Toda transição chama `Aplicador.ao_mudar_estado` na mesma transação.** Cada candidato é gravado
   quando a opção dele fica pronta.
-- [ ] T018 [P] [US1] `tests/integration/test_geracao_fila.py`:
+- [X] T018 [P] [US1] `tests/integration/test_geracao_fila.py`:
   - a ordem de pedido;
   - dois claims de GPU ao mesmo tempo → um só (índice);
   - `requeue_stale` (devolve e, na 3ª vez, falha);
   - um fim "é meu" não sobrescreve uma geração cancelada;
   - o gancho é chamado em cada transição, e uma exceção no gancho desfaz a transição.
-- [ ] T019 [US1] `geracao/comfyui.py` (R6): o cliente com `ALLOWED` e o `run_bloco(bloco, params,
+- [X] T019 [US1] `geracao/comfyui.py` (R6): o cliente com `ALLOWED` e o `run_bloco(bloco, params,
   heartbeat)` (porte do `run_block`: `upload`, `drop`, `consumers`, `rewire`, `prompt`, `history`,
   `view` e `free(unload_models=False)`), mais `normalizar_9x16` (Pillow, 768×1344) e `validate_image`.
   Em `tests/unit/test_geracao_comfyui.py` (com o fake): o preenchimento do contrato, a referência
   opcional ausente, o erro de execução → `sem_memoria`/`internal` e o 768×1344.
-- [ ] T020 [US1] Aplicador do **`cenario.cena`** em `geracao/aplicadores.py`:
+- [X] T020 [US1] Aplicador do **`cenario.cena`** em `geracao/aplicadores.py`:
   - `validar_alvo`: asset `cenario` do perfil, ativo;
   - `montar_params`: prompt + `REALISMO` (bloco `cena`) ou foto + `MANTER` (bloco `keyframe`), e as seeds;
   - `aplicar`: `assets.service._attach` `referencia` (`notes = "Gerado (opção N)"`) e
     `history.record(asset, "updated", details={geracao_id, candidato})`.
 
   Os outros 14 passos ficam sem aplicador → 409 `passo_indisponivel`.
-- [ ] T021 [US1] `geracao/service.py`:
+- [X] T021 [US1] `geracao/service.py`:
   - `pedir`: valida o passo, o alvo, `nOpcoes`, `rotulo`, `texto` e `extras` pelo aplicador. As
     `referencias` também são validadas pelo `Aplicador.montar_params`: o service só confere que são imagens
     do mesmo perfil, e o padrão "arquivo ativo de asset ativo" é o helper `aplicadores.referencia_de_asset_ativo`
@@ -243,18 +243,18 @@ cenário, com histórico.
   - `escolher` (`FOR UPDATE`, `revisao`, `version` e `alvoVersion`; o aplicador; `history.record`;
     gancho);
   - `listar` e `detalhe` (com os links: `imagem` com validade).
-- [ ] T022 [US1] `geracao/router.py`: `geracoes_criar` e `geracoes_escolher` (**`RequireHuman`**);
+- [X] T022 [US1] `geracao/router.py`: `geracoes_criar` e `geracoes_escolher` (**`RequireHuman`**);
   `geracoes_listar`, `geracoes_detalhe` e `geracoes_versoes` (`RequireUser`). `include_router` no
   `main.py`.
-- [ ] T023 [US1] `mcp/mapa.py` (acréscimo): `geracoes_criar` e `geracoes_escolher` em `PROIBIDAS`;
+- [X] T023 [US1] `mcp/mapa.py` (acréscimo): `geracoes_criar` e `geracoes_escolher` em `PROIBIDAS`;
   `geracoes_listar`, `geracoes_detalhe` e `geracoes_versoes` em `FORA` ("geração local só pela interface
   no primeiro corte"). O `test_mcp_mapa` continua verde. Depois, `npm run gen:contract`.
-- [ ] T024 [US1] `geracao/gerador.py` + `cli.py` (`sociman gerador`):
+- [X] T024 [US1] `geracao/gerador.py` + `cli.py` (`sociman gerador`):
   - advisory lock;
   - a linha GPU, ainda **sem** as conferências de GPU e de RAM (que entram na US2), com o heartbeat de 5 s;
   - SIGTERM devolve a geração à fila sem contar tentativa;
   - os clientes por parâmetro (padrão das fábricas).
-- [ ] T025 [P] [US1] `tests/integration/test_geracao_escolher.py` (SC-005):
+- [X] T025 [P] [US1] `tests/integration/test_geracao_escolher.py` (SC-005):
   - o ciclo completo com o fake (pedir → rodar → revisão → escolher a 2): o arquivo no cenário, a versão
     do cenário com `geracao_id` e a geração `escolhido`;
   - a opção 1 continua visível;
@@ -264,26 +264,26 @@ cenário, com histórico.
   - o alvo arquivado → 409 `alvo_arquivado`;
   - referência de outro perfil → 400;
   - `alvoTipo = produto` no POST genérico → 409 `alvo_incompativel`.
-- [ ] T026 [P] [US1] `tests/integration/test_geracao_permissoes.py` (SC-004):
+- [X] T026 [P] [US1] `tests/integration/test_geracao_permissoes.py` (SC-004):
   - pedir e escolher com membro humano → ok;
   - com token MCP ou `system:*` → 403 `somente_humano` mais o evento `publicacao_recusada`;
   - as leituras aceitam membro;
   - nenhum caminho escolhe sem humano (passo com escolha nunca vai a `escolhido` pelo gerador).
-- [ ] T027 [P] [US1] SPA:
+- [X] T027 [P] [US1] SPA:
   - `lib/geracoes.ts` (hooks com o cliente gerado, `refetchInterval` de 2 s enquanto não for final);
   - `components/geracao/PedirGeracao.tsx` (instrução, foto de referência opcional pela biblioteca,
     número de opções);
   - `AndamentoGeracao.tsx` (porcentagem + mensagem);
   - `OpcoesGeracao.tsx` (grade numerada, comparação lado a lado, "Usar opção N" com AlertDialog; mostra o
     par quando houver `imagemPar`).
-- [ ] T028 [US1] `pages/assets/AssetDetalhe.tsx` (acréscimo): no **cenário**, a seção "Gerar cena" e as
+- [X] T028 [US1] `pages/assets/AssetDetalhe.tsx` (acréscimo): no **cenário**, a seção "Gerar cena" e as
   gerações abertas e recentes. Escolher atualiza o detalhe do asset.
-- [ ] T029 [P] [US1] `e2e/fakes/server.py` (acréscimo): `/comfyui/*` com o comportamento do fake do pytest
+- [X] T029 [P] [US1] `e2e/fakes/server.py` (acréscimo): `/comfyui/*` com o comportamento do fake do pytest
   (PNG sintético com `zlib`/`struct`) e `GET /geracao-e2e/pedidos`. Em `docker-compose.e2e.yml`, o serviço
   `gerador` com `COMFYUI_URL=http://openshorts-fake:8000/comfyui`,
   `SHOP_TTS_URL=http://openshorts-fake:8000/shop-tts` e `DOCKERCTL_URL=http://openshorts-fake:8000/dockerctl`
   (com um token de teste fixo, liberado por valor no `check:secrets`).
-- [ ] T030 [US1] `e2e/geracao.spec.ts`, cenário US1: no cenário de teste, pedir uma cena, ver o andamento,
+- [X] T030 [US1] `e2e/geracao.spec.ts`, cenário US1: no cenário de teste, pedir uma cena, ver o andamento,
   ver as 2 opções e usar a 2. O arquivo aparece no cenário, e o histórico mostra a geração.
 
 **Checkpoint:** o ciclo do piloto funciona de ponta a ponta com fakes.
@@ -296,11 +296,11 @@ cenário, com histórico.
 
 **Independent Test:** spec US2.
 
-- [ ] T031 [P] [US2] `geracao/gpu.py` (R3): `gpu_livre(db, motor, comfy)` (envios da 006 em
+- [X] T031 [P] [US2] `geracao/gpu.py` (R3): `gpu_livre(db, motor, comfy)` (envios da 006 em
   `processando`; `vram_free + torch_vram_total` contra o piso) → `livre | openshorts | pouca_vram | fora`.
-- [ ] T032 [P] [US2] `geracao/memoria.py` (R4): o cliente do `dockerctl` (`ALLOWED`, Bearer), com
+- [X] T032 [P] [US2] `geracao/memoria.py` (R4): o cliente do `dockerctl` (`ALLOWED`, Bearer), com
   `ler`, `subir` e `devolver`, que conferem o valor lido depois.
-- [ ] T033 [US2] `geracao/gerador.py` (acréscimo):
+- [X] T033 [US2] `geracao/gerador.py` (acréscimo):
   - **ao subir:** conferir 12 GB (senão, logar, devolver e só liberar a linha GPU depois de ler 12 GB);
   - **antes do claim de GPU:** soltar o outro motor (`/unload` ou `/free(unload_models=True)`, FR-022) e
     `gpu_livre`. Se a GPU não estiver livre, "Aguardando a GPU ficar livre" com +30 s, sem tentativa
@@ -309,16 +309,16 @@ cenário, com histórico.
     "travada" e tenta de novo a cada 30 s, sem pegar outro job de GPU (FR-021);
   - **sem `DOCKERCTL_TOKEN`:** não pega job `comfyui` (fica na fila com "Ajuste de memória do ComfyUI não
     configurado").
-- [ ] T034 [P] [US2] `tests/integration/test_geracao_gpu.py` (SC-002):
+- [X] T034 [P] [US2] `tests/integration/test_geracao_gpu.py` (SC-002):
   - o cenário do Independent Test (3 `comfyui`, 1 `tts`, 1 `claude`; a GPU ocupada pelo OpenShorts e
     depois livre; um por vez, em ordem);
   - a `claude` roda com a GPU ocupada;
   - pouca VRAM → espera sem contar tentativa;
   - a ordem `/unload` → `comfyui` e `/free` → `tts`.
-- [ ] T035 [P] [US2] `tests/integration/test_geracao_memoria.py` (SC-003): 28 → 12 em sucesso, falha,
+- [X] T035 [P] [US2] `tests/integration/test_geracao_memoria.py` (SC-003): 28 → 12 em sucesso, falha,
   cancelamento e SIGTERM; o worker reiniciado com 28 GB devolve antes do próximo job; "não volta" trava a
   linha; "não coube" chama `/free` e tenta de novo.
-- [ ] T036 [P] [US2] `docker/dockerctl/server.py` + `Dockerfile` (`python:3.12-alpine`, só a stdlib;
+- [X] T036 [P] [US2] `docker/dockerctl/server.py` + `Dockerfile` (`python:3.12-alpine`, só a stdlib;
   `contracts/dockerctl.md`):
   - as 3 rotas;
   - o token com `hmac.compare_digest`;
@@ -329,7 +329,7 @@ cenário, com histórico.
 
   Em `apps/api/tests/unit/test_dockerctl_server.py` (importa o arquivo por caminho, com um socket Unix
   falso): a allowlist, o token, o corpo fixo de `update` e o 404.
-- [ ] T037 [US2] `docker-compose.yml` (acréscimo):
+- [X] T037 [US2] `docker-compose.yml` (acréscimo):
   - o serviço **`gerador`**: a mesma imagem, `sociman gerador`, as envs do HD, `ANTHROPIC_API_KEY`, as
     URLs e o token; as redes `default`, `gpu-local` e `dockerctl`; os binds do HD; `stop_grace_period`;
   - o serviço **`dockerctl`**: `read_only`, `cap_drop: [ALL]`, `no-new-privileges`,
@@ -337,9 +337,9 @@ cenário, com histórico.
   - as redes `gpu-local: external: true` e `dockerctl: internal: true`.
 
   O `check:secrets` cobre o `DOCKERCTL_TOKEN`.
-- [ ] T038 [P] [US2] `integracoes.py` (acréscimo): o bloco `geracao` (`comfyui`, `shopTts`,
+- [X] T038 [P] [US2] `integracoes.py` (acréscimo): o bloco `geracao` (`comfyui`, `shopTts`,
   `memoriaComfyui`, `gpu`, `gerador`; sem valores) e o teste. Depois, `npm run gen:contract`.
-- [ ] T039 [US2] e2e: `/dockerctl/*` e `POST /geracao-e2e/gpu` no fake; em `e2e/geracao.spec.ts`, com a
+- [X] T039 [US2] e2e: `/dockerctl/*` e `POST /geracao-e2e/gpu` no fake; em `e2e/geracao.spec.ts`, com a
   GPU ocupada, a tela mostra "Aguardando a GPU ficar livre". Ao liberar, a geração roda, e
   `GET /geracao-e2e/memoria` mostra 28 → 12.
 
@@ -349,15 +349,15 @@ cenário, com histórico.
 
 **Independent Test:** spec US3.
 
-- [ ] T040 [US3] `geracao/service.py` (acréscimo): `cancelar`, `tentar_de_novo` e `gerar_outras` (a nova é
+- [X] T040 [US3] `geracao/service.py` (acréscimo): `cancelar`, `tentar_de_novo` e `gerar_outras` (a nova é
   criada, com o gancho chamado, **antes** de a antiga virar `descartada`; seeds novas), cada um com
   `version`, `history.record` (os `details` do R10) e o gancho.
-- [ ] T041 [US3] `geracao/gerador.py` (acréscimo, R9): o heartbeat lê o status. Se estiver `cancelada`:
+- [X] T041 [US3] `geracao/gerador.py` (acréscimo, R9): o heartbeat lê o status. Se estiver `cancelada`:
   `/interrupt` (se for o prompt em execução) e `/queue delete`, e o resultado que chegar é descartado. O
   `finally` devolve a RAM.
-- [ ] T042 [US3] Rotas `geracoes_cancelar`, `geracoes_tentar_de_novo` e `geracoes_gerar_outras`
+- [X] T042 [US3] Rotas `geracoes_cancelar`, `geracoes_tentar_de_novo` e `geracoes_gerar_outras`
   (`RequireHuman`). No `mcp/mapa.py`, em `PROIBIDAS`. Depois, `npm run gen:contract`.
-- [ ] T043 [P] [US3] `tests/integration/test_geracao_estados.py`:
+- [X] T043 [P] [US3] `tests/integration/test_geracao_estados.py`:
   - cancelar em cada estado não final (na rodando, o fake recebe `/interrupt`);
   - recusas nos finais;
   - "tentar de novo" só em `falhou` (zera a espera; o erro anterior fica no histórico);
@@ -367,10 +367,10 @@ cenário, com histórico.
   - referência arquivada ou sumida antes do job → `falhou` com `entrada_invalida`, dizendo qual;
   - o HD sem sentinela no meio do job → `falhou`, sem gravar fora do HD;
   - o alvo arquivado com geração aberta: cancelar é aceito.
-- [ ] T044 [P] [US3] SPA: em `OpcoesGeracao.tsx`, os botões "Gerar outras", "Cancelar" e "Tentar de
+- [X] T044 [P] [US3] SPA: em `OpcoesGeracao.tsx`, os botões "Gerar outras", "Cancelar" e "Tentar de
   novo" (com AlertDialog); `ListaGeracoes.tsx` (estado, erro em pt-BR, "veio 1 de 2"); e o acesso ao
   histórico da geração.
-- [ ] T045 [US3] `e2e/geracao.spec.ts`, cenários US3: cancelar na fila, e "gerar outras", com a antiga
+- [X] T045 [US3] `e2e/geracao.spec.ts`, cenários US3: cancelar na fila, e "gerar outras", com a antiga
   descartada e a nova em revisão.
 
 ---
@@ -380,15 +380,15 @@ cenário, com histórico.
 **Independent Test:** spec US4, com o Claude falso e um tipo e um aplicador **injetados no teste** (os
 tipos reais `produto.ficha` e `avatar.identidade` chegam com a 012 e a 025, R14).
 
-- [ ] T046 [US4] `geracao/motor_claude.py` (R14): usa `ia/cliente.py` e `ia/custo.py`; grava
+- [X] T046 [US4] `geracao/motor_claude.py` (R14): usa `ia/cliente.py` e `ia/custo.py`; grava
   `ia_chamadas` com `tipo_campo = passo`, `entity_type = alvo_tipo`, `entity_id` e `geracao_id`. No
   sucesso, `desfecho = aplicada` (`desfecho_por = created_by`); no erro, `erro`. Sem chave → `falhou` com
   `servico_fora` e a mensagem "O Claude não está configurado" (sem ficar presa na fila).
-- [ ] T047 [US4] `geracao/gerador.py` (acréscimo): a **linha Claude** (thread própria, uma de cada vez,
+- [X] T047 [US4] `geracao/gerador.py` (acréscimo): a **linha Claude** (thread própria, uma de cada vez,
   sem conferir GPU). O caminho `sem_escolha`: `rodando → escolhido` com `aplicar` e uma versão do alvo
   com autor = quem pediu e `details.automatico = true`. O caminho do `produto.recorte` (FR-031), na linha
   GPU, segue a mesma regra.
-- [ ] T048 [P] [US4] `tests/integration/test_geracao_claude.py` (SC-007):
+- [X] T048 [P] [US4] `tests/integration/test_geracao_claude.py` (SC-007):
   - passo de texto injetado → `escolhido` sem `revisao`, o alvo com o resultado e a versão com
     `geracao_id`;
   - a chamada em `ia_chamadas` com custo e `geracao_id`, inclusive no erro;
@@ -403,26 +403,26 @@ tipos reais `produto.ficha` e `avatar.identidade` chegam com a 012 e a 025, R14)
 
 **Independent Test:** spec US5.
 
-- [ ] T049 [US5] `geracao/audios.py` (R11):
+- [X] T049 [US5] `geracao/audios.py` (R11):
   - o upload com teto de 25 MB, em `work/tmp` no HD;
   - o `ffprobe` (formatos, 1 fluxo de áudio, sem vídeo, ≤ 10 min) e o `sha256`;
   - `storage.put_file(bucket="audios")` com `perfis/{id}/audios/{uuid}.{ext}`;
   - `datadir.ensure_writable`.
-- [ ] T050 [US5] `geracao/router_audios.py`: `audios_enviar` (`RequireHuman`, multipart) e
+- [X] T050 [US5] `geracao/router_audios.py`: `audios_enviar` (`RequireHuman`, multipart) e
   `audios_detalhe` (`RequireUser`). `midia.py` + `router_midia.py`: `MidiaKind "audio"` (sempre com
   `exp`, `Range`, `Content-Type` por formato, bucket `audios`). No `mcp/mapa.py`, `audios_enviar` em
   `PROIBIDAS` e `audios_detalhe` em `FORA`. Depois, `npm run gen:contract`.
-- [ ] T051 [P] [US5] `docker/nginx/default.conf.template`: `location ~ ^/api/perfis/[^/]+/audios$`
+- [X] T051 [P] [US5] `docker/nginx/default.conf.template`: `location ~ ^/api/perfis/[^/]+/audios$`
   (`client_max_body_size 26m`, `proxy_request_buffering off`), no padrão das outras rotas de upload
   grande. Depois, `docker compose restart edge` (armadilha 13).
-- [ ] T052 [US5] `geracao/shoptts.py` (contrato `v2`; o `ALLOWED` inclui o `DELETE /v2/voices/{nome}` da 025) e o motor `tts` no gerador:
+- [X] T052 [US5] `geracao/shoptts.py` (contrato `v2`; o `ALLOWED` inclui o `DELETE /v2/voices/{nome}` da 025) e o motor `tts` no gerador:
   - `register`/`design`/`tts`/`voz.teste`;
   - baixar o lote, validar, gravar `audios` e os candidatos (`metricas`, `teste_audio_id`);
   - `DELETE` do lote;
   - `voz.teste` → `entregue`.
 
   Uso real só depois da X2 (antes da 025).
-- [ ] T053 [P] [US5] `tests/integration/test_audios.py`:
+- [X] T053 [P] [US5] `tests/integration/test_audios.py`:
   - wav e m4a válidos (duração, formato, taxa, `sha256`);
   - > 25 MB → 413;
   - um vídeo ou um texto renomeado → 400;
@@ -432,7 +432,7 @@ tipos reais `produto.ficha` e `avatar.identidade` chegam com a 012 e a 025, R14)
 
   E `tests/integration/test_geracao_tts.py` (com o fake e um aplicador injetado de `voz.design` e
   `voz.teste`): os candidatos com áudio e teste, `entregue` e o `DELETE` do lote.
-- [ ] T054 [P] [US5] SPA: `components/geracao/PlayerAudio.tsx` (`<audio controls>` nativo, link com
+- [X] T054 [P] [US5] SPA: `components/geracao/PlayerAudio.tsx` (`<audio controls>` nativo, link com
   validade renovado ao vencer). Em `OpcoesGeracao.tsx`, o candidato de áudio com o teste e as métricas.
 
 ---
@@ -441,10 +441,10 @@ tipos reais `produto.ficha` e `avatar.identidade` chegam com a 012 e a 025, R14)
 
 **Independent Test:** spec US6.
 
-- [ ] T055 [US6] `geracao/uso.py` (R12): `midia_em_uso(db, image_id | audio_id)`, com os provedores
+- [X] T055 [US6] `geracao/uso.py` (R12): `midia_em_uso(db, image_id | audio_id)`, com os provedores
   `asset_files`, escolhido de outra geração, `params` vivo, tokens de kit e ingredientes de cena (010).
   O registro fica aberto para a 025 e a 012.
-- [ ] T056 [US6] `geracao/limpeza.py` (R12):
+- [X] T056 [US6] `geracao/limpeza.py` (R12):
   - gerações finais (inclusive `entregue` e `falhou`) com mais de 90 dias e `limpa_em` nulo, em lotes;
   - candidatos não escolhidos, inclusive `image_par_id` e `teste_audio_id`;
   - pular o que estiver em uso e os candidatos com a mídia já nula (revogação LGPD da 025);
@@ -455,7 +455,7 @@ tipos reais `produto.ficha` e `avatar.identidade` chegam com a 012 e a 025, R14)
 
   A trilha `geracao_limpeza` no `agendador.py` e o CLI `sociman geracoes limpar [--dry-run]`
   (`system:cli`).
-- [ ] T057 [P] [US6] `tests/integration/test_geracao_limpeza.py` (SC-006):
+- [X] T057 [P] [US6] `tests/integration/test_geracao_limpeza.py` (SC-006):
   - 89 × 91 dias em cada estado final;
   - o escolhido intacto (os dois lados do par);
   - `revisao` antiga intocada;
@@ -471,9 +471,9 @@ tipos reais `produto.ficha` e `avatar.identidade` chegam com a 012 e a 025, R14)
 
 ## Phase 9: Polish & Cross-Cutting
 
-- [ ] T058 [P] `tests/unit/test_constitution_guards.py`: rodar de novo com todo o código (T010). O teste
+- [X] T058 [P] `tests/unit/test_constitution_guards.py`: rodar de novo com todo o código (T010). O teste
   "toda rota `RequireHuman` está em `PROIBIDAS`" continua verde.
-- [ ] T059 [P] `CLAUDE.md` (acréscimo), seção "Geração local (desde a spec 021)":
+- [X] T059 [P] `CLAUDE.md` (acréscimo), seção "Geração local (desde a spec 021)":
   - o pacote, as tabelas e os estados (com `entregue`);
   - o serviço `gerador` e os logs (`docker compose logs -f gerador`);
   - **o `dockerctl` é o único com o socket do Docker** (risco; nunca montar em outro serviço);
@@ -484,7 +484,7 @@ tipos reais `produto.ficha` e `avatar.identidade` chegam com a 012 e a 025, R14)
 
   Em "Armadilhas": a rede `gpu-local` tem de existir antes do `up`; depois de mudar o `gerador`, rodar
   `docker compose restart gerador`. Em `docs/visao.md`: o item 021 no backlog.
-- [ ] T060 Verificação final:
+- [X] T060 Verificação final (2026-10-07: pytest 3146+ verdes, e2e 86/87 com o `assets-escala` intermitente, verde sozinho; §2–§4 pendentes com o dono):
   - `npm run test:api` inteiro, ruff, `npm run gen:contract && npm run check:web`;
   - a suíte e2e inteira (com trava);
   - o quickstart §1 no dev.

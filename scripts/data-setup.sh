@@ -4,6 +4,7 @@
 #
 #   ./scripts/data-setup.sh check              # HD montado (fora do /), dono 1000, sentinela, espaço
 #   ./scripts/data-setup.sh init               # cria minio/, work/tmp, work/cortes e o sentinela
+#                                              # (spec 021: + rede gpu-local e bucket de áudios)
 #   ./scripts/data-setup.sh count volume       # objetos e bytes por bucket no volume antigo (offline)
 #   ./scripts/data-setup.sh count hd           # idem em $SOCIMAN_DATA_DIR/minio
 #   ./scripts/data-setup.sh count s3           # idem pelo MinIO no ar (mc du)
@@ -65,8 +66,27 @@ cmd_check() {
       && ok "livre: ${free_gb} GB (piso ${MIN_FREE_GB} GB)" \
       || { echo "FALHA: livre ${free_gb} GB, abaixo do piso de ${MIN_FREE_GB} GB"; fail=1; }
   fi
+  check_geracao
   [ "$fail" = 0 ] || die "o HD de dados não está pronto"
   ok "HD de dados pronto"
+}
+
+AUDIOS_BUCKET=${S3_AUDIOS_BUCKET:-sociman-audios}
+GPU_NETWORK=gpu-local
+
+# Spec 021 (geração local): só informa; nada aqui reprova o HD.
+check_geracao() {
+  docker network inspect "$GPU_NETWORK" >/dev/null 2>&1 && ok "rede $GPU_NETWORK" \
+    || echo "aviso: rede $GPU_NETWORK não existe (rode init; o compose não sobe sem ela)"
+  gid=$(getent group docker | cut -d: -f3 || true)
+  [ -n "$gid" ] && ok "DOCKER_GID=$gid (gid do grupo docker; vai no .env da raiz)" \
+    || echo "aviso: grupo docker não encontrado"
+  if minio_running; then
+    mc_sh "mc ls l/$AUDIOS_BUCKET" >/dev/null 2>&1 && ok "bucket $AUDIOS_BUCKET" \
+      || echo "aviso: falta o bucket $AUDIOS_BUCKET (rode init ou o minio-init)"
+  else
+    echo "aviso: minio fora do ar; bucket $AUDIOS_BUCKET não conferido"
+  fi
 }
 
 cmd_init() {
@@ -82,6 +102,17 @@ cmd_init() {
       echo "criado em $(date -Iseconds)"
       findmnt -T "$DIR"; } > "$SENTINEL"
     ok "sentinela criado: $SENTINEL"
+  fi
+  # Spec 021: a rede externa do gerador com o ComfyUI e o shop-tts (D2) e o bucket de áudios.
+  if docker network inspect "$GPU_NETWORK" >/dev/null 2>&1; then
+    ok "rede $GPU_NETWORK já existe"
+  else
+    docker network create "$GPU_NETWORK" >/dev/null && ok "rede $GPU_NETWORK criada"
+  fi
+  if minio_running; then
+    mc_sh "mc mb -p l/$AUDIOS_BUCKET" >/dev/null && ok "bucket $AUDIOS_BUCKET"
+  else
+    echo "aviso: minio fora do ar; o bucket $AUDIOS_BUCKET é criado pelo minio-init no próximo up"
   fi
   ls -la "$DIR"
 }

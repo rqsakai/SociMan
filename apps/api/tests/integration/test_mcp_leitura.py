@@ -147,4 +147,5 @@ def test_integracoes_sem_valores(cenario):
         return await c.call_tool("integracoes_get", {})
 
     r = com_mcp(token, chamar)
-    assert set(r.structured_content) == {"youtube", "openshorts", "claude", "cotaYoutube"}
+    assert set(r.structured_content) == {"youtube", "openshorts", "claude", "cotaYoutube",
+                                         "geracao"}  # spec 021: só estados, sem valores

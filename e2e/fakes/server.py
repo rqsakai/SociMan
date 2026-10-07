@@ -34,6 +34,9 @@ tem o ffmpeg) e atende, na porta 8000:
   `publicaly_available_post_id` de um rascunho que o dono "finalizou" no app, com contadores que
   evoluem no tempo e rotas de controle próprias (ver o bloco "leitura de métricas" abaixo).
 
+- `/comfyui/*`, `/shop-tts/*`, `/dockerctl/*` e `/geracao-e2e/*` (spec 021, T029): os motores
+  da geração local e o ajuste de RAM do ComfyUI, em `geracao_fake.py`.
+
 Nada aqui publica: não existe `/api/social` (princípio I).
 """
 
@@ -52,6 +55,8 @@ from datetime import UTC, datetime, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
+
+import geracao_fake  # spec 021 (o mesmo diretório: /fake)
 
 PORTA = 8000
 N_CLIPES = 3
@@ -994,9 +999,38 @@ class Handler(BaseHTTPRequestHandler):
             return None
         return self._json(*resposta)
 
+    def _geracao(self, url, corpo: bytes) -> bool:
+        """Spec 021: ComfyUI, shop-tts, dockerctl e o controle do e2e. False = não é daqui."""
+        path = url.path
+        if path.startswith("/comfyui/"):
+            codigo, dados, tipo = geracao_fake.comfyui(self.command, path.removeprefix("/comfyui"),
+                                                       corpo, url.query)
+            if tipo == "json":
+                self._json(codigo, dados)
+            else:
+                self.send_response(codigo)
+                self.send_header("content-type", tipo)
+                self.send_header("content-length", str(len(dados)))
+                self.end_headers()
+                self.wfile.write(dados)
+            return True
+        if path.startswith("/shop-tts/"):
+            self._json(*geracao_fake.shop_tts(self.command, path.removeprefix("/shop-tts")))
+            return True
+        if path.startswith("/dockerctl/"):
+            self._json(*geracao_fake.dockerctl(self.command, path.removeprefix("/dockerctl"),
+                                               self.headers.get("authorization", "")))
+            return True
+        if path.startswith("/geracao-e2e/"):
+            self._json(*geracao_fake.controle(self.command, path, corpo))
+            return True
+        return False
+
     def do_GET(self) -> None:  # noqa: N802
         url = urlsplit(self.path)
         partes = url.path.strip("/").split("/")
+        if self._geracao(url, b""):
+            return None
         if url.path.startswith("/tiktok"):
             return self._tiktok(url, b"")
         if url.path == "/health":
@@ -1015,6 +1049,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         path = urlsplit(self.path).path
         corpo = self._corpo()
+        if self._geracao(urlsplit(self.path), corpo):
+            return None
         if path.startswith("/tiktok"):
             return self._tiktok(urlsplit(self.path), corpo)
         if path == "/api/uploads":

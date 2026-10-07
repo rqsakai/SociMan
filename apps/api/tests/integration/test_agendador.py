@@ -140,7 +140,7 @@ def test_volta_com_erro_faz_rollback(rodar, db):
 def test_trilhas_padrao_e_ociosidade(monkeypatch):
     nomes = [t.nome for t in agendador_mod.trilhas_padrao()]
     assert nomes == ["sync", "openshorts", "importacao", "lembretes", "publicacao",  # + 015
-                     "metricas", "aprendizado"]  # + 016, + 023
+                     "metricas", "aprendizado", "geracao_limpeza"]  # + 016, + 023, + 021
 
     trilhas = {t.nome: t for t in agendador_mod.trilhas_padrao()}
     # Stack de teste sem YOUTUBE_API_KEY: a sync fica ociosa com motivo claro, sem vazar valor.

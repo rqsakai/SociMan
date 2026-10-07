@@ -1,3 +1,16 @@
+<!--
+Sync Impact Report
+- Versão: 4.2.0 → 4.3.0 (MINOR: exceção nova e nomeada no princípio VII)
+- Princípio modificado: VII. Humano no controle (+ "Exceções de eliminação (4.3.0)")
+- Seções adicionadas: nenhuma; seções removidas: nenhuma
+- Origem: spec 021-geracao-local (limpeza de candidatos aos 90 dias) e 025-cadastro-padronizado
+  (revogação LGPD); aprovada pelo dono em 2026-10-06, texto final de 2026-10-07
+- Templates: ✅ plan-template (Constitution Check já cita os oito princípios; sem mudança)
+  ✅ spec-template / tasks-template (sem mudança)
+- Docs: ✅ CLAUDE.md não contradiz (a regra "não existe DELETE no domínio" continua; a exceção é só
+  `storage.apagar_por_excecao`, citada na seção da 021)
+- TODOs: nenhum
+-->
 # Constitution do SociMan
 
 ## Core Principles
@@ -85,6 +98,14 @@ identificado), a data e o estado anterior. Nada é apagado de fato (soft-delete)
 poder ver o histórico e reverter uma mudança. Os limites do que o MCP pode escrever são
 definidos na spec `009-mcp`, dentro deste princípio.
 
+**Exceções de eliminação (4.3.0):** dois casos podem apagar dados de fato, sempre registrados como
+evento (quem, quando, contagem e motivo) e nunca disparados por IA, agente ou MCP: (1) candidatos de
+geração não escolhidos, 90 dias depois da geração (o escolhido nunca); (2) revogação de
+consentimento de pessoa real (LGPD), só pelo dono: os arquivos e os textos que descrevem a pessoa
+(inclusive em versões antigas do histórico) são apagados; o registro de que houve consentimento e
+revogação fica, sem a mídia nem a descrição. Fora desses dois casos, continua valendo: nada é
+apagado de fato.
+
 **Por quê:** agentes de IA escrevem no mesmo banco que o dono, e um erro de agente precisa ser
 rastreável e desfeito sem perda.
 
@@ -152,4 +173,4 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 - **Conformidade:** toda spec, plano e revisão de código verifica a aderência aos princípios.
   Uma violação dos princípios I, II ou VII bloqueia a entrega.
 
-**Version**: 4.2.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-05
+**Version**: 4.3.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-07

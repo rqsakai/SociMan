@@ -7,7 +7,9 @@ de chave**:
 - `openshorts`: `/health` pelo cliente da trilha B, com timeout de 2 s e cache de 30 s;
 - `claude`: `ok` ou `ausente` (a chave só é validada de fato na primeira sugestão);
 - `cotaYoutube`: unidades do dia (fuso do Pacífico, quando o Google zera; `cota_atual` da
-  trilha A) e a renovação em `APP_TZ`.
+  trilha A) e a renovação em `APP_TZ`;
+- `geracao` (spec 021): o que o `gerador` publicou há menos de 1 min (a API não alcança a rede
+  `gpu-local`): ComfyUI, shop-tts, RAM do ComfyUI, GPU e se o gerador está no ar.
 """
 
 import logging
@@ -41,11 +43,36 @@ class CotaYoutube(CamelModel):
     renova_em: datetime  # meia-noite do Pacífico, em APP_TZ
 
 
+class IntegracaoGeracao(CamelModel):
+    comfyui: Literal["ok", "fora", "nao_configurado"]
+    shop_tts: Literal["ok", "fora", "nao_configurado"]
+    memoria_comfyui: Literal["ok", "travada", "nao_configurado"]
+    gpu: Literal["livre", "openshorts", "pouca_vram", "desconhecida"]
+    gerador: Literal["ativo", "parado"]
+
+
 class Integracoes(CamelModel):
     youtube: Literal["ok", "ausente", "invalida"]
     openshorts: Literal["ok", "fora"]
     claude: Literal["ok", "ausente"]
     cota_youtube: CotaYoutube
+    geracao: IntegracaoGeracao  # spec 021
+
+
+def geracao_status() -> IntegracaoGeracao:
+    """Sem nada no Redis, o gerador está parado e o resto é desconhecido (nunca um valor)."""
+    from sociman_api.geracao import memoria
+    from sociman_api.geracao.gerador import estado
+
+    e = estado() or {}
+    s = get_settings()
+    nao_cfg = "nao_configurado"
+    return IntegracaoGeracao(
+        comfyui=e.get("comfyui") or (nao_cfg if not s.comfyui_url.strip() else "fora"),
+        shop_tts=e.get("shopTts") or (nao_cfg if not s.shop_tts_url.strip() else "fora"),
+        memoria_comfyui=e.get("memoriaComfyui") or ("ok" if memoria.configurado() else nao_cfg),
+        gpu=e.get("gpu") or "desconhecida",
+        gerador="ativo" if e else "parado")
 
 
 # ---- OpenShorts (/health com cache) ----
@@ -110,4 +137,5 @@ def get_integracoes(actor: RequireUser, db: DbSession) -> Integracoes:
         openshorts=openshorts_status(),
         claude="ok" if s.anthropic_api_key.get_secret_value() else "ausente",
         cota_youtube=cota_youtube(db),
+        geracao=geracao_status(),
     )
