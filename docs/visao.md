@@ -99,7 +99,10 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    ingredientes para baixar, tomadas no HD, vínculo com o vídeo próprio (`usada`), 5 tipos de IA `cena.*` e a
    `proposta_cena` do agente pelo MCP (o humano aceita).
 11. `011-scripts`: roteiros por cena e avatar.
-12. `012-produtos-shop`
+12. `012-produtos-shop` 📋 **spec pronta** (`specs/012-produtos-shop/`, 2026-10-07; 49 tarefas; depende da 021): catálogo de
+   produtos do perfil (`produtos`, `produto_variantes`), com fotos, recorte direto, flat lay com 2 opções e
+   escolha humana, ficha técnica pelo Claude (editável, registro da 008), aprovação por dono ou membro,
+   `url_loja` opcional (preço e comissão ficam para uma spec de afiliados) e a ponte com as cenas da 010.
 13. `013-importacao` ✅ **implementada** (`specs/013-importacao/`, 2026-10-06): "Importar da agência" lê
    `../shared` e `../media/clipes` por montagens só leitura e concilia com o banco (novo, igual, diverge, fora,
    aguardando cota) numa prévia de 30 min; o dono humano confirma item a item (direito proposto conservador,
@@ -131,6 +134,11 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    o dono importa os ZIPs da Visão geral e de Seguidores exportados do TikTok Studio, com pré-visualização e
    confirmação (só dono humano), como uma fonte separada e desfazível; o analytics da 019 usa esses dias
    antes da 1ª coleta e no dia dela, sempre dizendo a fonte. Os arquivos nunca são guardados.
+21. `021-geracao-local` 📋 **spec pronta** (`specs/021-geracao-local/`, 2026-10-07; 60 tarefas; constitution 4.3.0 na T001):
+   o SociMan orquestra o ComfyUI e o shop-tts da máquina (`geracoes`, `geracao_candidatos`, `audios`), com
+   um job de GPU por vez e só com a GPU livre, a RAM do ComfyUI em 28 GB só durante o job (pelo `dockerctl`),
+   escolha humana dos candidatos (exceto passos de texto e o recorte), rede `gpu-local` e limpeza dos não
+   escolhidos em 90 dias. Dependências externas no `comfyui-docker`: rede `gpu-local` (X1) e shop-tts v2 (X2).
 22. `022-publico` (`specs/022-publico/`, 2026-10-06; API pronta, SPA e e2e em andamento): a importação
    do Studio passa a ler o público (gênero, territórios e atividade do ZIP de Seguidores, e o
    `Viewers.xlsx` do ZIP de Espectadores, lido pela biblioteca padrão), na mesma importação da 020; a
@@ -142,3 +150,8 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    recomendações por regra, decididas pelo dono, que viram preferências (e "fixar" no guia da 017); a
    análise da IA dos melhores, sob demanda, com quadros opcionais; a afinidade no Descobrir e no Mercado;
    e o bloco `<desempenho>` do assistente (`ia/3`).
+25. `025-cadastro-padronizado` 📋 **spec pronta** (`specs/025-cadastro-padronizado/`, 2026-10-07; 51 tarefas; a
+   antiga 007b; depende da 021 e do shop-tts v2): kit padronizado do avatar (rosto de origem, frontal, 3/4
+   em par, corpo-base e checagem de identidade), vozes do perfil (`vozes`, gravação ou sintética, teste e voz
+   padrão do avatar), pessoa real só com consentimento (menor recusado, famoso avisado), looks, poses e
+   cenários gerados, e o "Revogar" LGPD só do dono (apaga arquivos e textos, também nas versões antigas).
