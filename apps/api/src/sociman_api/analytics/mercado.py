@@ -16,6 +16,10 @@ e não entra.
   existente ("Descobrir"); o aviso de direito continua lá (princípio II).
 - **Canais:** por canal, os vídeos publicados no período e a mediana da velocidade da janela.
 
+Spec 023 (R9): com perfil no filtro, cada oportunidade ganha a afinidade com o perfil
+(`aprendizado.afinidade`, até ±20%: a ordem usa `velocidade × (1 + pontos/100)`), e as de tema
+cortado ficam ocultas salvo com `mostrarCortados` (`ocultosPorTema` conta). Neutra = a 019.
+
 Só leitura.
 """
 
@@ -78,7 +82,8 @@ def velocidade(views: int | None, publicado: datetime, lido_em: datetime) -> flo
     return views / idade_h
 
 
-def calcular(db: Session, filtro: Filtro, agora: datetime | None = None) -> schemas.MercadoOut:
+def calcular(db: Session, filtro: Filtro, agora: datetime | None = None,
+             mostrar_cortados: bool = False) -> schemas.MercadoOut:
     agora = agora or datetime.now(ZoneInfo("UTC"))
     tz = ZoneInfo(fuso())
     perfil_id = _perfil(db, filtro)
@@ -118,20 +123,38 @@ def calcular(db: Session, filtro: Filtro, agora: datetime | None = None) -> sche
                            Envio.status != EnvioStatus.descartado)
     if perfil_id is not None:
         envio = envio.where(Envio.perfil_id == perfil_id)
-    rows = db.execute(_escopo(
-        select(VideoFonte, CanalFonte.title, CanalFonte.direito, vel.label("vel"))
-        .select_from(VideoFonte), perfil_id)
-        .where(VideoFonte.disponivel, ~envio, vel.is_not(None),
-               VideoFonte.published_at <= agora)
-        .order_by(vel.desc(), VideoFonte.published_at.desc(), VideoFonte.id)
-        .limit(OPORTUNIDADES)).all()
+    valores = exprs = None
+    if perfil_id is not None:  # spec 023: import tardio (o aprendizado lê `analytics.base`)
+        from sociman_api.aprendizado import afinidade
+
+        valores = afinidade.valores(db, perfil_id)
+        if valores is not None:
+            exprs = afinidade.expressoes(valores, VideoFonte.id, VideoFonte.canal_id)
+    base_op = _escopo(select(VideoFonte, CanalFonte.title, CanalFonte.direito, vel.label("vel"))
+                      .select_from(VideoFonte), perfil_id).where(
+        VideoFonte.disponivel, ~envio, vel.is_not(None), VideoFonte.published_at <= agora)
+    ordem = vel
+    ocultos = 0
+    if exprs is not None:
+        base_op = base_op.add_columns(exprs.pontos.label("af_pontos"),
+                                      exprs.tema_id.label("af_tema"),
+                                      exprs.cortado.label("af_cortado"))
+        ordem = vel * (1 + exprs.pontos / 100)
+        if valores.cortados:
+            ocultos = db.scalar(select(func.count()).select_from(
+                base_op.where(exprs.cortado).subquery())) or 0
+            if not mostrar_cortados:
+                base_op = base_op.where(~exprs.cortado)
+    rows = db.execute(base_op.order_by(ordem.desc(), VideoFonte.published_at.desc(),
+                                       VideoFonte.id).limit(OPORTUNIDADES)).all()
     oportunidades = [schemas.Oportunidade(
-        video_fonte_id=v.id, titulo_curto=base.titulo_curto(v.title),
-        canal=schemas.CanalOportunidade(id=v.canal_id, titulo=titulo, direito=direito),
-        idade_h=round((agora - v.published_at).total_seconds() / 3600, 2), views=v.views,
-        velocidade=round(float(vel_v), 2),
-        link_gerar_cortes=f"/app/descobrir?canal={v.canal_id}&video={v.id}")
-        for v, titulo, direito, vel_v in rows]
+        video_fonte_id=r[0].id, titulo_curto=base.titulo_curto(r[0].title),
+        canal=schemas.CanalOportunidade(id=r[0].canal_id, titulo=r[1], direito=r[2]),
+        idade_h=round((agora - r[0].published_at).total_seconds() / 3600, 2), views=r[0].views,
+        velocidade=round(float(r[3]), 2),
+        link_gerar_cortes=f"/app/descobrir?canal={r[0].canal_id}&video={r[0].id}",
+        afinidade=_afinidade(valores, r) if exprs is not None else None)
+        for r in rows]
 
     ids = set(por_canal) | set(vel_canal)
     canais = db.execute(select(CanalFonte.id, CanalFonte.title, CanalFonte.direito)
@@ -146,4 +169,15 @@ def calcular(db: Session, filtro: Filtro, agora: datetime | None = None) -> sche
         contexto=base.contexto(filtro, base.posts(db, filtro, agora=agora)),
         publicacao=_mapa(publicados, contagem=True),
         velocidade_por_horario=_mapa(rapidez, contagem=False),
-        oportunidades=oportunidades, canais=lista)
+        oportunidades=oportunidades, canais=lista, ocultos_por_tema=ocultos)
+
+
+def _afinidade(valores, r) -> schemas.AprendizadoAfinidade:
+    """Spec 023: a afinidade da oportunidade (o motivo cita o tema quando ele pesa)."""
+    from sociman_api.aprendizado import afinidade
+
+    pontos = round(float(r.af_pontos), 1)
+    tema = afinidade.tema(valores, r.af_tema)
+    return schemas.AprendizadoAfinidade(
+        pontos=pontos, tema_id=tema.id if tema else None, tema_nome=tema.nome if tema else None,
+        cortado=bool(r.af_cortado), motivo=afinidade.motivo(valores, r.af_tema, pontos, 0.0))

@@ -388,6 +388,49 @@ def _com_proibida(dados: dict, palavra: str) -> None:
             dados[campo] = f"{dados[campo]} {palavra}"
 
 
+# Spec 023 (T013): os 3 formatos do aprendizado, iguais ao `tests/fakes/anthropic_fake.py`:
+# taxonomia (as hashtags mais frequentes dos posts), classificação (o 1º tema da <taxonomia> cujo
+# nome aparece no post) e análise (2 hipóteses citando os primeiros <post>); "id inválido" na
+# <instrucao> devolve um id fora do conjunto (o servidor recusa).
+ID_INVALIDO = "00000000-0000-4000-8000-000000000000"
+_TAXONOMIA = re.compile(r"- id: ([0-9a-f-]{36}) \| ([^|\n]+)")
+_POST = re.compile(r'<post id="([0-9a-f-]{36})"[^>]*>\n(.*?)\n</post>', re.S)
+
+
+def _aprendizado(props: list[str], user: str) -> dict | None:
+    invalido = "id inválido" in user.split("<instrucao>")[-1]
+    if "temas" in props:
+        palavras = re.findall(r"#(\w+)", user) or ["geral", "dicas", "novidades"]
+        contagem: dict[str, int] = {}
+        for w in palavras:
+            contagem[w] = contagem.get(w, 0) + 1
+        nomes = [w.capitalize() for w, _ in sorted(contagem.items(), key=lambda kv: -kv[1])[:5]]
+        while len(nomes) < 3:
+            nomes.append(f"Tema {len(nomes) + 1}")
+        return {"temas": [{"nome": n, "descricao": f"Posts sobre {n.lower()}.",
+                           "palavras_chave": [n.lower()]} for n in nomes]}
+    if "tema_id" in props:
+        if invalido:
+            escolhido, sugestao = ID_INVALIDO, "Tema inventado"
+        else:
+            temas = _TAXONOMIA.findall(user)
+            post = (_POST.findall(user) or [("", user)])[0][1].lower()
+            post += " " + user.split("</post>")[-1].lower()
+            escolhido = next((tid for tid, nome in temas if nome.strip().lower() in post), None)
+            sugestao = None
+        return {"tema_id": escolhido, "secundarios": [], "estilo_gancho": "pergunta",
+                "justificativa": "O post fala do tema.", "sugestao_tema": sugestao}
+    if "hipoteses" in props:
+        ids = [i for i, _ in _POST.findall(user)]
+        hipoteses = ([("Hipótese com post de fora", [ID_INVALIDO]),
+                      ("Gancho com pergunta prende mais", ids[:1])] if invalido else
+                     [("Gancho com pergunta prende mais", ids[:2]),
+                      ("Cortes curtos rendem melhor", ids[:1])])
+        return {"hipoteses": [{"texto": t, "posts_ids": p, "contraste": "Os outros não.",
+                               "n": len(p)} for t, p in hipoteses]}
+    return None
+
+
 def claude(body: dict) -> tuple[int, dict]:
     system = "\n".join(_textos(body.get("system")))
     user = "\n".join(_textos(body.get("messages")))
@@ -406,7 +449,9 @@ def claude(body: dict) -> tuple[int, dict]:
     if instrucao:
         explicacao += f" Segui a instrução: {instrucao[:80]}."
     avisos = ["Mantive as regras do campo."] if "system prompt" in instrucao.lower() else []
-    if "titulo" in props:  # textos_postagem
+    if (aprendizado := _aprendizado(props, user)) is not None:  # spec 023
+        dados = aprendizado
+    elif "titulo" in props:  # textos_postagem
         dados = {"titulo": f"Título sugerido pela IA {n}{emoji}",
                  "descricao": f"Descrição sugerida pela IA, versão {n}.",
                  "hashtags": ["#achadinhos", "#promo", f"#dica{n}"]}

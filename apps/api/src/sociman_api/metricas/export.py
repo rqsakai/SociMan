@@ -1,6 +1,7 @@
 """Exportação do dataset de métricas (spec 016, research R16; FR-008, SC-005).
 
-Um ZIP com `fotos_videos`, `videos`, `fotos_conta`, `studio_dias` (spec 020; CSV ou JSON Lines),
+Um ZIP com `fotos_videos`, `videos`, `fotos_conta`, `studio_dias` (spec 020), o público do Studio
+(`studio_distribuicoes`, `studio_atividade`, `studio_espectadores`, spec 022; CSV ou JSON Lines),
 `dicionario.csv` e `LEIAME.txt`. Cabeçalhos e ordem vêm de `metricas/dicionario.py` (fonte única).
 
 - CSV em UTF-8 **com BOM**, vírgula, ponto decimal e datas ISO 8601 com o offset de São Paulo;
@@ -38,7 +39,14 @@ from sociman_api.errors import ApiError
 from sociman_api.metricas import anonimizar, consulta, dicionario
 from sociman_api.metricas.models import FotoConta, FotoVideo, Serie, VideoRede
 from sociman_api.metricas.studio import efetivo
-from sociman_api.metricas.studio.models import DiaStudio, Importacao, ImportacaoEstado
+from sociman_api.metricas.studio.models import (
+    AtividadeStudio,
+    DiaStudio,
+    EspectadoresStudio,
+    FotoDistribuicao,
+    Importacao,
+    ImportacaoEstado,
+)
 from sociman_api.perfis.models import Conta
 
 Formato = Literal["csv", "jsonl"]
@@ -300,6 +308,61 @@ def _studio_dias(db: Session, filtro: Filtro) -> Iterator[dict[str, Any]]:
                if d.tem_seguidores else None}
 
 
+def _publico(db: Session, filtro: Filtro, modelo: Any, data: Any
+             ) -> list[tuple[Any, datetime, Serie, str | None]]:
+    """As linhas de público (spec 022) das importações ativas, no período pela `data`."""
+    return list(db.execute(
+        select(modelo, Importacao.criada_em, Serie, Conta.handle)
+        .join(Importacao, Importacao.id == modelo.importacao_id)
+        .join(Serie, Serie.id == modelo.serie_id)
+        .outerjoin(Conta, Conta.id == Serie.conta_id)
+        .where(Importacao.estado == ImportacaoEstado.ativa, data >= filtro.de,
+               data <= filtro.ate, *_series(filtro))
+        .order_by(modelo.serie_id, data, Importacao.criada_em, Importacao.id, modelo.id)).all())
+
+
+def _ref(serie: Serie, handle: str | None) -> dict[str, Any]:
+    anonima = serie.anonimizada_em is not None
+    return {"serie_ref": serie.rotulo if anonima else str(serie.id),
+            "conta": serie.rotulo if anonima or not handle else f"@{handle}"}
+
+
+def _studio_distribuicoes(db: Session, filtro: Filtro) -> Iterator[dict[str, Any]]:
+    linhas = _publico(db, filtro, FotoDistribuicao, FotoDistribuicao.data_foto)
+    ids = {x.serie_id for x, *_ in linhas}
+    validas = {(sid, f.tipo, f.data_foto): f.importacao_id for tipo in ("genero", "territorio")
+               for sid, fs in efetivo.fotos(db, ids, tipo).items() for f in fs}
+    for x, importada_em, serie, handle in linhas:
+        yield {**_ref(serie, handle), "tipo": x.tipo, "data_foto": x.data_foto.isoformat(),
+               "rotulo": x.rotulo, "pct": x.pct, "importacao_id": x.importacao_id,
+               "importada_em": importada_em,
+               "efetivo": validas.get((x.serie_id, x.tipo, x.data_foto)) == x.importacao_id}
+
+
+def _studio_atividade(db: Session, filtro: Filtro) -> Iterator[dict[str, Any]]:
+    linhas = _publico(db, filtro, AtividadeStudio, AtividadeStudio.dia)
+    ids = {x.serie_id for x, *_ in linhas}
+    validos = efetivo.atividade(db, ids, filtro.de, filtro.ate)
+    for x, importada_em, serie, handle in linhas:
+        v = validos.get(x.serie_id, {}).get((x.dia, x.hora))
+        yield {**_ref(serie, handle), "dia": x.dia.isoformat(), "hora": x.hora,
+               "ativos": x.ativos, "importacao_id": x.importacao_id,
+               "importada_em": importada_em,
+               "efetivo": v is not None and v.importacao_id == x.importacao_id}
+
+
+def _studio_espectadores(db: Session, filtro: Filtro) -> Iterator[dict[str, Any]]:
+    linhas = _publico(db, filtro, EspectadoresStudio, EspectadoresStudio.dia)
+    ids = {x.serie_id for x, *_ in linhas}
+    validos = efetivo.espectadores(db, ids, filtro.de, filtro.ate)
+    for x, importada_em, serie, handle in linhas:
+        v = validos.get(x.serie_id, {}).get(x.dia)
+        yield {**_ref(serie, handle), "dia": x.dia.isoformat(), "total": x.total,
+               "novos": x.novos, "recorrentes": x.recorrentes,
+               "importacao_id": x.importacao_id, "importada_em": importada_em,
+               "efetivo": v is not None and v.importacao_id == x.importacao_id}
+
+
 # ---- montagem ----
 
 def estimativa(db: Session, filtro: Filtro) -> int:
@@ -341,6 +404,10 @@ def _leiame(filtro: Filtro, agora: datetime) -> str:
         f"- videos.{filtro.formato}: uma linha por vídeo (características e rótulos)",
         f"- fotos_conta.{filtro.formato}: uma linha por foto da conta",
         f"- studio_dias.{filtro.formato}: uma linha por dia importado do TikTok Studio",
+        (f"- studio_distribuicoes.{filtro.formato}: uma linha por rótulo das fotos de gênero e "
+         "territórios (spec 022)"),
+        f"- studio_atividade.{filtro.formato}: uma linha por dia e hora de seguidores ativos",
+        f"- studio_espectadores.{filtro.formato}: uma linha por dia de espectadores",
         "- dicionario.csv: o significado de cada coluna",
         "",
         "Avisos:",
@@ -358,7 +425,10 @@ def exportar(db: Session, filtro: Filtro, agora: datetime | None = None) -> IO[b
             for arquivo, linhas in (("fotos_videos", _fotos_videos(db, filtro)),
                                     ("videos", _videos(db, filtro, agora)),
                                     ("fotos_conta", _fotos_conta(db, filtro)),
-                                    ("studio_dias", _studio_dias(db, filtro))):
+                                    ("studio_dias", _studio_dias(db, filtro)),
+                                    ("studio_distribuicoes", _studio_distribuicoes(db, filtro)),
+                                    ("studio_atividade", _studio_atividade(db, filtro)),
+                                    ("studio_espectadores", _studio_espectadores(db, filtro))):
                 escritor = _Escritor(zf, arquivo, filtro.formato)
                 for linha in linhas:
                     escritor.linha(linha)

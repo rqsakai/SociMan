@@ -8,6 +8,7 @@ from sociman_api import datadir
 from sociman_api.agencia.router import router as agencia_router  # spec 013
 from sociman_api.analytics.router import router as analytics_router  # spec 019
 from sociman_api.anotacoes.router import router as anotacoes_router  # spec 009
+from sociman_api.aprendizado.router import router as aprendizado_router  # spec 023
 from sociman_api.assets.router import router as assets_router
 from sociman_api.assets.router_perfil import router as assets_perfil_router
 from sociman_api.auth.router_auth import router as auth_router
@@ -85,6 +86,7 @@ app.include_router(studio_router)  # spec 020: histórico do TikTok Studio
 app.include_router(cenas_perfil_router)  # spec 010: cenas do perfil e padrões
 app.include_router(cenas_router)  # spec 010: cena, tomadas e vínculo com o conteúdo
 app.include_router(agencia_router)  # spec 013: importação da agência (só dono humano grava)
+app.include_router(aprendizado_router)  # spec 023: aprender com o desempenho
 install_openapi_error_contract(app)
 
 

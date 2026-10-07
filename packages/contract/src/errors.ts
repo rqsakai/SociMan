@@ -142,6 +142,9 @@ export const errorCodes = [
   "confirmar_conta",
   "previa_indisponivel",
   "ja_desfeita",
+  // 022-publico
+  "studio_sem_dados",
+  "studio_planilha",
   // 010-cenas
   "nao_encontrada",
   "arquivada",
@@ -162,6 +165,20 @@ export const errorCodes = [
   "previa_expirada",
   "escolha_invalida",
   "importacao_nao_desfazivel",
+  // 023-aprendizado
+  "analise_em_andamento",
+  "confirmar_custo",
+  "conta_fora_do_perfil",
+  "evitar_no_maximo",
+  "fixas_no_maximo",
+  "item_invalido",
+  "padroes_no_maximo",
+  "recomendacao_mudou",
+  "sem_posts",
+  "sem_taxonomia",
+  "tema_invalido",
+  "tema_repetido",
+  "temas_no_maximo",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

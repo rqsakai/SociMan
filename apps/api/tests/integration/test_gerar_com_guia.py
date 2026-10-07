@@ -43,7 +43,7 @@ def test_postagem_leva_os_dois_guias_e_grava_as_versoes(client, db, cena, fake):
     blocos = fake.system_blocos[-1]
     assert "cache_control" in blocos[-1] and all("cache_control" not in b for b in blocos[:-1])
     row = db.get(IaChamada, uuid.UUID(ch["id"]))
-    assert row.prompt_version == "ia/2"
+    assert row.prompt_version == "ia/3"
 
 
 def test_bio_so_com_o_guia_do_perfil(client, cena, fake):  # noqa: F811

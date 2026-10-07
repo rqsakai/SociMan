@@ -3,7 +3,8 @@
 Um processo por stack (serviço `agendador` do compose, a mesma imagem da API):
 1. pega o advisory lock `0x50C1` do Postgres numa conexão dedicada. Sem o lock (outra instância
    ativa), espera sem trabalhar e tenta de novo;
-2. com o lock, sobe uma thread por trilha (`sync`, `openshorts`, `importacao`, `lembretes`).
+2. com o lock, sobe uma thread por trilha (`sync`, `openshorts`, `importacao`, `lembretes`,
+   `publicacao`, `metricas` e, na spec 023, `aprendizado`).
    Cada volta abre uma sessão própria, chama `rodar(db)` do módulo da trilha e faz o commit; uma
    exceção vai para o log (rollback) e a trilha segue na próxima volta, sem derrubar as outras;
 3. SIGTERM ou SIGINT param as trilhas no fim da volta atual e soltam o lock.
@@ -86,6 +87,7 @@ def _metricas_ociosa() -> str | None:
 def trilhas_padrao() -> list[Trilha]:
     """As trilhas de R1 e a `publicacao` da 015, com os intervalos da config (import tardio
     dos módulos)."""
+    from sociman_api.aprendizado import trilha as aprendizado
     from sociman_api.canais import sync
     from sociman_api.envios import acompanhamento, importacao
     from sociman_api.metricas import coleta as metricas
@@ -100,12 +102,17 @@ def trilhas_padrao() -> list[Trilha]:
         Trilha("lembretes", s.agendador_lembretes_s, lembretes.rodar),
         Trilha("publicacao", s.agendador_publicacao_s, publicacao.rodar, _publicacao_ociosa),
         Trilha("metricas", s.agendador_metricas_s, metricas.rodar, _metricas_ociosa),  # 016
+        # Spec 023: o casamento vídeo-fonte × tema (sem IA), a classificação (≤ 50/perfil/dia) e
+        # as análises da IA (estas só com a chave; a trilha decide por dentro).
+        Trilha("aprendizado", s.agendador_aprendizado_s, aprendizado.rodar),
     ]
 
 
 def _registrar_modelos() -> None:
     """Fora da API, nada mais registra as tabelas das FKs (como no worker da 004)."""
     from sociman_api import history  # noqa: F401
+    from sociman_api.aprendizado import fonte_temas as _fonte_temas  # noqa: F401 — spec 023
+    from sociman_api.aprendizado import models as _aprendizado  # noqa: F401 — spec 023
     from sociman_api.auth import models as _auth  # noqa: F401
     from sociman_api.canais import models as _canais  # noqa: F401
     from sociman_api.conteudos import models as _conteudos  # noqa: F401 — spec 014

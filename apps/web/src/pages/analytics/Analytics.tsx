@@ -3,7 +3,8 @@
  * o ECharts vem no chunk `graficos`, fora do precache do PWA).
  *
  * - Filtros globais (período, perfil, conta, rede, medida do post) e a aba moram na URL
- *   (`?aba=visao-geral|quando-postar|o-que-funciona|curvas|contas|funil|mercado|alertas`).
+ *   (`?aba=visao-geral|quando-postar|publico|o-que-funciona|curvas|contas|funil|mercado|alertas`).
+ *   A aba Público (spec 022) mostra os dados importados do TikTok Studio.
  * - Cabeçalho: o estado da coleta da conta filtrada e "Exportar" (só dono), herdados da 016.
  * - Visão geral leva o ranking da 016; Contas, a evolução da conta. O detalhe do vídeo
  *   (/app/metricas/videos/:id) não muda.
@@ -27,12 +28,14 @@ import { Curvas } from "./abas/Curvas";
 import { Funil } from "./abas/Funil";
 import { Mercado } from "./abas/Mercado";
 import { OQueFunciona } from "./abas/OQueFunciona";
+import { Publico } from "./abas/Publico";
 import { QuandoPostar } from "./abas/QuandoPostar";
 import { VisaoGeral } from "./abas/VisaoGeral";
 
 const CONTEUDO: Record<AbaAnalytics, typeof VisaoGeral> = {
   "visao-geral": VisaoGeral,
   "quando-postar": QuandoPostar,
+  publico: Publico,
   "o-que-funciona": OQueFunciona,
   curvas: Curvas,
   contas: Contas,

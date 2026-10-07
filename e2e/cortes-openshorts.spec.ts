@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { OWNER } from "./fixtures";
-import { apiToken, createPerfilViaApi, createVerifiedMember, login, logout } from "./helpers";
+import { apiToken, createPerfilViaApi, createVerifiedMember, login, logout, sqlE2e } from "./helpers";
 
 // T079 (spec 006): o fluxo inteiro na stack isolada, com o `openshorts-fake` (OpenShorts e
 // YouTube de mentira), o `agendador` (intervalos curtos) e o `worker` reais.
@@ -282,4 +282,56 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await expect(destino.getByText("Postado", { exact: true }).first()).toBeVisible();
 
   expect(social, "nenhuma requisição para rede social").toEqual([]);
+});
+
+// Spec 023 (T052): com o perfil escolhido, os vídeos-fonte de um tema "cortar" (preferência do dono)
+// saem do Descobrir, com "N ocultos por tema cortado"; "Mostrar temas cortados" os traz de volta com o
+// selo. O direito do canal não muda (o aviso continua no envio, coberto pelo pytest da 023).
+test("023 Descobrir: tema cortado oculto por padrão, com contador e filtro", async ({ page, request }) => {
+  test.setTimeout(180_000);
+  const sfx = randomUUID().slice(0, 8);
+  const token = await apiToken(request, OWNER.email, OWNER.password);
+  const auth = { Authorization: `Bearer ${token}` };
+  const perfilId = await createPerfilViaApi(request, token, { name: `Cortado ${sfx}`, slug: `cortado-${sfx}` });
+  // o canal B (vídeos "Entrevista com dev" e "Dicas de carreira") ligado a este perfil; se outro
+  // teste já o cadastrou, só a ligação
+  const canal = await request.post("/api/canais", { headers: auth, data: { youtubeChannelId: "UCe2eOutroCanalFake0000B", perfilIds: [perfilId] } });
+  if (canal.status() !== 201) {
+    sqlE2e(
+      `insert into canal_perfis (canal_id, perfil_id) select id, '${perfilId}' from canais_fonte where youtube_channel_id = 'UCe2eOutroCanalFake0000B'`,
+    );
+  }
+  const tema = await request.post(`/api/perfis/${perfilId}/aprendizado/temas`, {
+    headers: auth,
+    data: { nome: "Carreira", descricao: "Vida profissional", palavrasChave: ["carreira"] },
+  });
+  expect(tema.status(), `POST temas: ${await tema.text()}`).toBe(201);
+  const temaId = ((await tema.json()) as { id: string }).id;
+  // criar o tema já cria a linha das preferências do perfil (a versão da taxonomia): usa a versão atual
+  const atual = (await (await request.get(`/api/perfis/${perfilId}/aprendizado/preferencias`, { headers: auth })).json()) as { perfil: { version: number } };
+  const prefs = await request.patch(`/api/perfis/${perfilId}/aprendizado/preferencias`, {
+    headers: auth,
+    data: { version: atual.perfil.version, temas: { [temaId]: "cortar" } },
+  });
+  expect(prefs.status(), `PATCH preferências: ${await prefs.text()}`).toBe(200);
+
+  await login(page, OWNER.email, OWNER.password);
+  await expect(page).toHaveURL(/\/app$/);
+  const tabela = page.getByRole("table", { name: "Vídeos recomendados" });
+  // a busca do canal e o casamento vídeo-fonte × tema (`aprendizado_fonte_temas`) são do agendador:
+  // recarrega até os vídeos chegarem e o tema cortado sair da lista
+  await expect(async () => {
+    await page.goto(`/app/descobrir?perfil=${perfilId}&todos=1`);
+    await expect(tabela.getByText("Entrevista com dev")).toBeVisible({ timeout: 3_000 });
+    await expect(page.getByText(/1 ocultos por tema cortado/)).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 90_000 });
+  await expect(tabela.getByText("Dicas de carreira")).toHaveCount(0);
+
+  await page.getByLabel("Mostrar temas cortados").check();
+  await expect(page).toHaveURL(/[?&]cortados=1\b/);
+  const linha = tabela.getByRole("row").filter({ hasText: "Dicas de carreira" });
+  await expect(linha).toBeVisible();
+  await expect(linha.locator("[data-tema-cortado]")).toHaveText("tema cortado: Carreira");
+  await expect(tabela.getByRole("row").filter({ hasText: "Entrevista com dev" }).locator("[data-tema-cortado]")).toHaveCount(0);
+  await expect(page.getByText(/ocultos por tema cortado/)).toHaveCount(0);
 });

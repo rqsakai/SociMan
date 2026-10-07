@@ -330,6 +330,21 @@ def _efetivo(tipo: TipoCampo, guias: guia_mod.GuiasEmVigor) -> guia_mod.GuiaEfet
     return guia_mod.fundir(guias.perfil, guias.conta)
 
 
+def _desempenho(db: Session, tipo: TipoCampo, perfil: Perfil, alvo: AlvoResolvido,
+                efetivo: guia_mod.GuiaEfetivo) -> tuple[Any, guia_mod.GuiaEfetivo]:
+    """Spec 023 (R8): o bloco `<desempenho>` (só `postagem.*` e `guia.testar`, com o uso ligado)
+    e as hashtags "evitar" aceitas, que o servidor tira da proposta."""
+    from sociman_api.aprendizado import desempenho as desempenho_mod  # import tardio (ciclo)
+    from sociman_api.aprendizado import preferencias as prefs_mod
+
+    if tipo.id not in desempenho_mod.TIPOS or alvo.conta is None:
+        return None, efetivo
+    ef = prefs_mod.efetivas(db, perfil.id, alvo.conta.id)
+    if ef.hashtags_evitar:
+        efetivo = replace(efetivo, hashtags_evitar=tuple(ef.hashtags_evitar))
+    return desempenho_mod.bloco(db, perfil.id, alvo.conta.id, efetivo.proibidas), efetivo
+
+
 def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: AlvoResolvido,
              valor_atual: dict[str, Any], instrucao: str, client: IaClient | None, *,
              sessao_id: uuid.UUID | None = None, anteriores: Sequence[IaChamada] = (),
@@ -345,6 +360,7 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: A
         guias = guia_mod.em_vigor(db, perfil.id, alvo.conta.id if alvo.conta is not None
                                   else None)
     efetivo = _efetivo(tipo, guias)
+    desempenho, efetivo = _desempenho(db, tipo, perfil, alvo, efetivo)
     enviado_perfil, enviado_conta = prompt.guias_enviados(tipo, guias)
     contexto = ctx_mod.montar(db, tipo, perfil, asset=alvo.asset, corte=alvo.corte,
                               conta=alvo.conta, postagem=alvo.postagem, conteudo=alvo.conteudo,
@@ -368,6 +384,9 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: A
         guia_perfil_version=enviado_perfil.version if enviado_perfil is not None else None,
         guia_conta_version=enviado_conta.version if enviado_conta is not None else None,
         guia_rascunho=guia_rascunho, created_by=actor.user_id,
+        desempenho_perfil_version=desempenho.perfil_version if desempenho else None,
+        desempenho_conta_version=desempenho.conta_version if desempenho else None,
+        desempenho_exemplos=[e.video_id for e in desempenho.exemplos] if desempenho else [],
     )
     if client is None:
         row.model, row.duration_ms = get_settings().textos_model, 0
@@ -377,8 +396,10 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: A
         raise ApiError(503, "claude_unconfigured",
                        "O Claude não está configurado (ANTHROPIC_API_KEY); escreva à mão")
 
-    system = prompt.montar_system(tipo, regras.texto, contexto, guias,
-                                  fixas=len(efetivo.hashtags_fixas))
+    system = prompt.montar_system(
+        tipo, regras.texto, contexto, guias, fixas=len(efetivo.hashtags_fixas),
+        desempenho=(desempenho.render(), desempenho.perfil_version, desempenho.conta_version)
+        if desempenho else None)
     propostas = [a.proposta for a in anteriores if a.proposta]
     excluir = saida.Excluir(atuais=tuple(valor_atual.get("itens") or ()),
                             aceitos=tuple(aceitos), rejeitados=tuple(rejeitados))
@@ -423,6 +444,8 @@ def gerar(db: Session, actor: Actor, body: schemas.GerarIn,
     tipo = tipo_or_404(body.tipo_campo)
     if tipo.entidade == "guia" or tipo.formato == "variacoes":
         raise invalid("Use as rotas do guia de comunicação (montar e testar)")
+    if tipo.entidade == "aprendizado":  # spec 023: pedidos montados pelo aprendizado
+        raise invalid("Use as rotas do aprendizado")
     perfil = get_perfil_or_404(db, body.perfil_id)
     if perfil.archived:
         raise _arquivado("Este perfil")
@@ -570,6 +593,9 @@ def chamadas_out(db: Session, rows: Sequence[IaChamada]) -> list[schemas.IaChama
             created_by=users.get(r.created_by) if r.created_by else None,
             guia_perfil_version=r.guia_perfil_version, guia_conta_version=r.guia_conta_version,
             guia_rascunho=r.guia_rascunho, proibidas=list(r.proibidas or []),
+            desempenho_perfil_version=r.desempenho_perfil_version,
+            desempenho_conta_version=r.desempenho_conta_version,
+            desempenho_exemplos=list(r.desempenho_exemplos or []),
         ))
     return out
 

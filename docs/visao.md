@@ -131,3 +131,14 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    o dono importa os ZIPs da Visão geral e de Seguidores exportados do TikTok Studio, com pré-visualização e
    confirmação (só dono humano), como uma fonte separada e desfazível; o analytics da 019 usa esses dias
    antes da 1ª coleta e no dia dela, sempre dizendo a fonte. Os arquivos nunca são guardados.
+22. `022-publico` (`specs/022-publico/`, 2026-10-06; API pronta, SPA e e2e em andamento): a importação
+   do Studio passa a ler o público (gênero, territórios e atividade do ZIP de Seguidores, e o
+   `Viewers.xlsx` do ZIP de Espectadores, lido pela biblioteca padrão), na mesma importação da 020; a
+   aba **Público** do analytics e o 3º mapa ("Seguidores on-line") em Quando postar.
+23. `023-aprendizado` (`specs/023-aprendizado/`, 2026-10-06; API pronta, SPA e e2e em andamento): aprender
+   com o desempenho. A taxonomia de temas do perfil (proposta pela IA, salva pelo dono) e a classificação
+   automática dos posts (trilha `aprendizado`, até 50 por perfil por dia); a análise estatística na
+   leitura (entrega e rendimento, encolhimento, intervalo, "não separável", conta travada); as
+   recomendações por regra, decididas pelo dono, que viram preferências (e "fixar" no guia da 017); a
+   análise da IA dos melhores, sob demanda, com quadros opcionais; a afinidade no Descobrir e no Mercado;
+   e o bloco `<desempenho>` do assistente (`ia/3`).

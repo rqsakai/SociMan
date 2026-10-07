@@ -33,3 +33,8 @@ Viewers_*.zip
 Overview.csv
 FollowerHistory.csv
 Content.csv
+# spec 022: público do Studio (o Viewers_*.zip e o Followers_*.zip já estão acima)
+Viewers.xlsx
+FollowerGender.csv
+FollowerTopTerritories.csv
+FollowerActivity.csv

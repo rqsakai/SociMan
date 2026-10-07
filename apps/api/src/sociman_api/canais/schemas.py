@@ -177,6 +177,16 @@ class Selecionado(CamelModel):
     envio_id: UUID
 
 
+class AprendizadoAfinidade(CamelModel):
+    """Spec 023 (R9): a afinidade do vídeo-fonte com o perfil escolhido (só com `perfilId`)."""
+
+    pontos: float  # −20..20, já somados ao `score`
+    tema_id: UUID | None
+    tema_nome: str | None
+    cortado: bool
+    motivo: str | None  # null se a afinidade não for o componente principal
+
+
 class VideoFonte(CamelModel):
     id: UUID
     canal: CanalRef
@@ -198,12 +208,14 @@ class VideoFonte(CamelModel):
     recomendavel: bool
     ja_cortado: list[JaCortado]
     selecionado: list[Selecionado]
+    afinidade: AprendizadoAfinidade | None = None  # spec 023
 
 
 class VideosList(CamelModel):
     items: list[VideoFonte]
     next_cursor: str | None
     total: int
+    ocultos_por_tema: int = 0  # spec 023: escondidos por tema cortado (sem `mostrarCortados`)
 
 
 class Metrica(CamelModel):

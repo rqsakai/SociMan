@@ -95,6 +95,8 @@ class Settings(BaseSettings):
     # desconectar (desconectar anonimiza, Q4 = A).
     metricas_coleta_habilitada: bool = True
     agendador_metricas_s: int = Field(60, gt=0)
+    # Spec 023: a trilha `aprendizado` (classificação com limite diário e análises da IA).
+    agendador_aprendizado_s: float = Field(300, gt=0)
 
     # Servidor MCP (spec 009, R10/R11): nível do servidor do interruptor (o outro é a tela) e as
     # origens de navegador aceitas no `/mcp` (vazio = nenhuma; agentes não mandam `Origin`).

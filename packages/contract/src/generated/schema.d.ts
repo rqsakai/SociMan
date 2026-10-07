@@ -304,6 +304,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/analytics/publico": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Publico
+         * @description Spec 022: gênero, territórios, atividade e espectadores importados do TikTok Studio, por
+         *     conta (só leitura).
+         */
+        get: operations["analytics_publico"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/analytics/quando-postar": {
         parameters: {
             query?: never;
@@ -472,6 +493,244 @@ export interface paths {
         };
         /** Anotacoes Versions */
         get: operations["anotacoes_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/analises/{analise_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analises Get */
+        get: operations["aprendizado_analises_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/analises/{analise_id}/hipoteses/{indice}/recomendar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Hipotese Recomendar */
+        post: operations["aprendizado_hipotese_recomendar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/classificacoes/{video_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Classificacoes Put */
+        put: operations["aprendizado_classificacoes_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/classificacoes/{video_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Classificacoes Revert */
+        post: operations["aprendizado_classificacoes_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/classificacoes/{video_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Classificacoes Versions */
+        get: operations["aprendizado_classificacoes_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/decisoes/{decisao_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decisoes Revert */
+        post: operations["aprendizado_decisoes_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/posts/{video_id}/conferencias/{item}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Conferencias Put */
+        put: operations["aprendizado_conferencias_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/posts/{video_id}/diagnostico": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Post Diagnostico */
+        get: operations["aprendizado_post_diagnostico"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/temas/{tema_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Temas Update */
+        patch: operations["aprendizado_temas_update"];
+        trace?: never;
+    };
+    "/api/aprendizado/temas/{tema_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Temas Archive */
+        post: operations["aprendizado_temas_archive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/temas/{tema_id}/juntar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Temas Juntar */
+        post: operations["aprendizado_temas_juntar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/temas/{tema_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Temas Restore */
+        post: operations["aprendizado_temas_restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/temas/{tema_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Temas Revert */
+        post: operations["aprendizado_temas_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/aprendizado/temas/{tema_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Temas Versions */
+        get: operations["aprendizado_temas_versions"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3137,6 +3396,247 @@ export interface paths {
         patch: operations["perfis_update"];
         trace?: never;
     };
+    "/api/perfis/{perfil_id}/aprendizado/analise": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analise */
+        get: operations["aprendizado_analise"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/analises": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Analises List */
+        get: operations["aprendizado_analises_list"];
+        put?: never;
+        /** Analises Create */
+        post: operations["aprendizado_analises_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/analises/estimativa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Analises Estimativa */
+        post: operations["aprendizado_analises_estimativa"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/classificacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Classificacoes List */
+        get: operations["aprendizado_classificacoes_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/classificar-pendentes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Classificar Pendentes */
+        post: operations["aprendizado_classificar_pendentes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/diagnostico": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Diagnostico Get */
+        get: operations["aprendizado_diagnostico"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/preferencias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preferencias Get */
+        get: operations["aprendizado_preferencias_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Preferencias Patch */
+        patch: operations["aprendizado_preferencias_patch"];
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/preferencias/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preferencias Revert */
+        post: operations["aprendizado_preferencias_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/preferencias/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preferencias Versions */
+        get: operations["aprendizado_preferencias_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/recomendacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recomendacoes List */
+        get: operations["aprendizado_recomendacoes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/recomendacoes/decidir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Recomendacoes Decidir */
+        post: operations["aprendizado_recomendacoes_decidir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/taxonomia/propor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Taxonomia Propor */
+        post: operations["aprendizado_taxonomia_propor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/temas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Temas List */
+        get: operations["aprendizado_temas_list"];
+        put?: never;
+        /** Temas Create */
+        post: operations["aprendizado_temas_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/aprendizado/temas/lote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Temas Lote */
+        post: operations["aprendizado_temas_lote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/perfis/{perfil_id}/archive": {
         parameters: {
             query?: never;
@@ -4368,7 +4868,7 @@ export interface components {
              * Entitytype
              * @enum {string}
              */
-            entityType: "asset" | "perfil" | "kit" | "postagem" | "corte" | "conteudo" | "guia" | "cena";
+            entityType: "asset" | "perfil" | "kit" | "postagem" | "corte" | "conteudo" | "guia" | "cena" | "aprendizado_classificacao" | "aprendizado_analise";
         };
         /** AlvoAlerta */
         AlvoAlerta: {
@@ -4509,6 +5009,870 @@ export interface components {
             /** Passwordminlength */
             passwordMinLength: number;
         };
+        /**
+         * AprendizadoAfinidade
+         * @description Spec 023 (R9): a afinidade do vídeo-fonte com o perfil escolhido (só com `perfilId`).
+         */
+        AprendizadoAfinidade: {
+            /** Cortado */
+            cortado: boolean;
+            /** Motivo */
+            motivo: string | null;
+            /** Pontos */
+            pontos: number;
+            /** Temaid */
+            temaId: string | null;
+            /** Temanome */
+            temaNome: string | null;
+        };
+        /** AprendizadoAlvo */
+        AprendizadoAlvo: {
+            /** Hashtag */
+            hashtag?: string | null;
+            /** Padrao */
+            padrao?: string | null;
+            /** Temaid */
+            temaId?: string | null;
+            /** Temanome */
+            temaNome?: string | null;
+        };
+        /** AprendizadoAnalise */
+        AprendizadoAnalise: {
+            /** Blocos */
+            blocos: components["schemas"]["AprendizadoBloco"][];
+            contexto: components["schemas"]["AprendizadoAnaliseContexto"];
+            /** Efeitos */
+            efeitos: components["schemas"]["AprendizadoEfeito"][];
+            /** Matriz */
+            matriz: components["schemas"]["AprendizadoCelulaMatriz"][];
+            /** Pendentesclassificacao */
+            pendentesClassificacao: number;
+            /** Semtema */
+            semTema: number;
+        };
+        /** AprendizadoAnaliseContexto */
+        AprendizadoAnaliseContexto: {
+            /** Aguardando */
+            aguardando: number;
+            /**
+             * Ate
+             * Format: date
+             */
+            ate: string;
+            /** Comparacoes */
+            comparacoes: number;
+            constantes: components["schemas"]["AprendizadoConstantes"];
+            /** Contas */
+            contas: components["schemas"]["AprendizadoContaContexto"][];
+            /**
+             * De
+             * Format: date
+             */
+            de: string;
+            /** Falsosesperados */
+            falsosEsperados: number;
+            /** Fuso */
+            fuso: string;
+            /**
+             * Medida
+             * @enum {string}
+             */
+            medida: "h1" | "h24" | "d7";
+            /** Postsnoperiodo */
+            postsNoPeriodo: number;
+            /** Travadas */
+            travadas: string[];
+        };
+        /** AprendizadoAnaliseIa */
+        AprendizadoAnaliseIa: {
+            /** Chamadaid */
+            chamadaId: string | null;
+            /** Comquadros */
+            comQuadros: boolean;
+            /** Comparaveis */
+            comparaveis: string[];
+            /** Concluidaem */
+            concluidaEm: string | null;
+            /** Contaid */
+            contaId: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Custoestimadousd */
+            custoEstimadoUsd: number | null;
+            /** Custousd */
+            custoUsd: number | null;
+            /** Errocode */
+            erroCode: string | null;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "pendente" | "processando" | "pronta" | "erro";
+            /** Hipoteses */
+            hipoteses: components["schemas"]["AprendizadoHipotese"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Medida
+             * @enum {string}
+             */
+            medida: "h1" | "h24" | "d7";
+            /** Melhores */
+            melhores: string[];
+            /** N */
+            n: number;
+            pedidoPor: components["schemas"]["UserRef"] | null;
+            /** Posts */
+            posts?: components["schemas"]["PostResumo"][];
+            /** Taxonomiaversao */
+            taxonomiaVersao: number;
+            /** Videossemarquivo */
+            videosSemArquivo: number;
+        };
+        /** AprendizadoAnaliseIaIn */
+        AprendizadoAnaliseIaIn: {
+            /**
+             * Comquadros
+             * @default false
+             */
+            comQuadros: boolean;
+            /**
+             * Confirmocusto
+             * @default false
+             */
+            confirmoCusto: boolean;
+            /** Contaid */
+            contaId?: string | null;
+            /**
+             * Medida
+             * @default h24
+             * @enum {string}
+             */
+            medida: "h1" | "h24" | "d7";
+            /**
+             * N
+             * @default 8
+             */
+            n: number;
+        };
+        /** AprendizadoAnalisesList */
+        AprendizadoAnalisesList: {
+            /** Items */
+            items: components["schemas"]["AprendizadoAnaliseIa"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+        };
+        /** AprendizadoAviso */
+        AprendizadoAviso: {
+            /** Fator */
+            fator?: string | null;
+            /** Rotulo */
+            rotulo?: string | null;
+            /** Semmaior */
+            semMaior?: number | null;
+            /** Temaid */
+            temaId?: string | null;
+            /** Temanome */
+            temaNome?: string | null;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "puxado_por_1" | "nao_separavel" | "quase_so_com" | "travada" | "em_alta" | "em_queda";
+            /** Valor */
+            valor?: string | null;
+        };
+        /** AprendizadoBloco */
+        AprendizadoBloco: {
+            /** Hashtags */
+            hashtags: string[];
+            /** Nposts */
+            nPosts: number;
+            /** Quasesemprecom */
+            quaseSempreCom: string[];
+            /** Valor */
+            valor: string;
+        };
+        /** AprendizadoBloqueio */
+        AprendizadoBloqueio: {
+            /**
+             * Code
+             * @constant
+             */
+            code: "fixas_no_maximo";
+            /** Fixas */
+            fixas: string[];
+            /** Maximo */
+            maximo: number;
+        };
+        /** AprendizadoCelulaMatriz */
+        AprendizadoCelulaMatriz: {
+            /** Bloco */
+            bloco: string;
+            /** N */
+            n: number;
+            /**
+             * Temaid
+             * Format: uuid
+             */
+            temaId: string;
+            /** Temanome */
+            temaNome: string;
+        };
+        /** AprendizadoClassificacao */
+        AprendizadoClassificacao: {
+            /** Chamadaid */
+            chamadaId: string | null;
+            /** Estilogancho */
+            estiloGancho: ("pergunta" | "revelacao" | "numero_lista" | "polemica" | "humor" | "voce_sabia" | "ordem_direta" | "outro") | null;
+            /** Evidenciaparcial */
+            evidenciaParcial: boolean;
+            /** Justificativa */
+            justificativa: string | null;
+            /** Origem */
+            origem: ("ia" | "dono") | null;
+            post: components["schemas"]["PostResumo"] | null;
+            /** Reclassificar */
+            reclassificar: boolean;
+            /** Secundarios */
+            secundarios: string[];
+            /** Sugestaotema */
+            sugestaoTema: string | null;
+            /** Taxonomiaversao */
+            taxonomiaVersao: number | null;
+            /** Temaid */
+            temaId: string | null;
+            /** Temanome */
+            temaNome: string | null;
+            /** Version */
+            version: number;
+            /**
+             * Videoid
+             * Format: uuid
+             */
+            videoId: string;
+        };
+        /** AprendizadoClassificacaoPut */
+        AprendizadoClassificacaoPut: {
+            /** Estilogancho */
+            estiloGancho?: ("pergunta" | "revelacao" | "numero_lista" | "polemica" | "humor" | "voce_sabia" | "ordem_direta" | "outro") | null;
+            /** Secundarios */
+            secundarios?: string[];
+            /** Temaid */
+            temaId: string | null;
+            /** Version */
+            version: number;
+        };
+        /** AprendizadoClassificacoesList */
+        AprendizadoClassificacoesList: {
+            /** Items */
+            items: components["schemas"]["AprendizadoClassificacao"][];
+            limiteHoje: components["schemas"]["AprendizadoLimiteHoje"];
+            /** Nextcursor */
+            nextCursor: string | null;
+            /** Pendentes */
+            pendentes: number;
+        };
+        /** AprendizadoClassificarOut */
+        AprendizadoClassificarOut: {
+            /** Pendentes */
+            pendentes: number;
+            /** Restanteshoje */
+            restantesHoje: number;
+        };
+        /** AprendizadoConferencia */
+        AprendizadoConferencia: {
+            /** Id */
+            id: string | null;
+            /** Item */
+            item: string;
+            /** Nota */
+            nota: string | null;
+            /** Resultado */
+            resultado: ("ok" | "problema" | "nao_sei") | null;
+            /** Updatedat */
+            updatedAt: string | null;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Version */
+            version: number;
+            /**
+             * Videoid
+             * Format: uuid
+             */
+            videoId: string;
+        };
+        /** AprendizadoConferenciaPut */
+        AprendizadoConferenciaPut: {
+            /** Nota */
+            nota?: string | null;
+            /**
+             * Resultado
+             * @enum {string}
+             */
+            resultado: "ok" | "problema" | "nao_sei";
+            /** Version */
+            version: number;
+        };
+        /**
+         * AprendizadoConstantes
+         * @description As constantes que a nota de leitura mostra (FR-013, FR-014, FR-022, FR-035).
+         */
+        AprendizadoConstantes: {
+            /** Ampliarmin */
+            ampliarMin: number;
+            /** Concentracao */
+            concentracao: number;
+            /** Cortarmax */
+            cortarMax: number;
+            /** Cortarminn */
+            cortarMinN: number;
+            /** Evitarmax */
+            evitarMax: number;
+            /** Fixarmin */
+            fixarMin: number;
+            /** Janeladias */
+            janelaDias: number;
+            /** Kencolhimento */
+            kEncolhimento: number;
+            /** Limitediario */
+            limiteDiario: number;
+            /** Meiavidadias */
+            meiaVidaDias: number;
+            /** Minconta */
+            minConta: number;
+            /** Mindias */
+            minDias: number;
+            /** Mingrupo */
+            minGrupo: number;
+            /** Pesoafinidade */
+            pesoAfinidade: number;
+            /** Reamostras */
+            reamostras: number;
+            /** Travada */
+            travada: number;
+        };
+        /** AprendizadoContaContexto */
+        AprendizadoContaContexto: {
+            /**
+             * Contaid
+             * Format: uuid
+             */
+            contaId: string;
+            /** Estagnados */
+            estagnados: number;
+            /** Medidos */
+            medidos: number;
+            /** Rotulo */
+            rotulo: string;
+            /** Suficiente */
+            suficiente: boolean;
+            /** Travada */
+            travada: boolean;
+        };
+        /** AprendizadoContaRef */
+        AprendizadoContaRef: {
+            /** Handle */
+            handle: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Rotulo */
+            rotulo: string;
+        };
+        /** AprendizadoDecidirIn */
+        AprendizadoDecidirIn: {
+            /** Chave */
+            chave: string;
+            /** Contaid */
+            contaId?: string | null;
+            /**
+             * Decisao
+             * @enum {string}
+             */
+            decisao: "aceita" | "rejeitada";
+            /**
+             * Medida
+             * @default h24
+             * @enum {string}
+             */
+            medida: "h1" | "h24" | "d7";
+            /** Motivo */
+            motivo?: string | null;
+            /** Substituir */
+            substituir?: string | null;
+        };
+        /** AprendizadoDecidirOut */
+        AprendizadoDecidirOut: {
+            decisao: components["schemas"]["AprendizadoDecisao"];
+            guia?: components["schemas"]["AprendizadoGuiaRef"] | null;
+            preferencias?: components["schemas"]["AprendizadoPreferencias"] | null;
+        };
+        /** AprendizadoDecisao */
+        AprendizadoDecisao: {
+            /** Analiseid */
+            analiseId: string | null;
+            /** Chave */
+            chave: string;
+            /** Decididoem */
+            decididoEm: string | null;
+            decididoPor: components["schemas"]["UserRef"] | null;
+            escopo: components["schemas"]["AprendizadoEscopo"];
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "aberta" | "aceita" | "rejeitada";
+            /** Evidencia */
+            evidencia: {
+                [key: string]: unknown;
+            };
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Motivo */
+            motivo: string | null;
+            /**
+             * Origem
+             * @enum {string}
+             */
+            origem: "regra" | "hipotese";
+            /** Revertidaem */
+            revertidaEm: string | null;
+            /** Superada */
+            superada: boolean;
+            /** Texto */
+            texto: string | null;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "tema_ampliar" | "tema_cortar" | "hashtag_fixar" | "hashtag_evitar" | "padrao_gancho" | "padrao_duracao" | "padrao_horario";
+            /** Version */
+            version: number;
+        };
+        /** AprendizadoDiagnostico */
+        AprendizadoDiagnostico: {
+            /** Checklist */
+            checklist: components["schemas"]["AprendizadoItemChecklist"][];
+            /** Contas */
+            contas: components["schemas"]["AprendizadoDiagnosticoConta"][];
+        };
+        /** AprendizadoDiagnosticoConta */
+        AprendizadoDiagnosticoConta: {
+            conta: components["schemas"]["AprendizadoContaRef"];
+            /** Estagnados */
+            estagnados: number;
+            /** Medidos */
+            medidos: number;
+            /** Postscomsinais */
+            postsComSinais: number;
+            /** Sinais */
+            sinais: components["schemas"]["AprendizadoSinal"][];
+            /** Travada */
+            travada: boolean;
+        };
+        /** AprendizadoEfeito */
+        AprendizadoEfeito: {
+            /** Avisos */
+            avisos: components["schemas"]["AprendizadoAviso"][];
+            /**
+             * Confianca
+             * @enum {string}
+             */
+            confianca: "forte" | "moderada" | "fraca" | "indicio" | "amostra_pequena";
+            /** Efeito */
+            efeito: number | null;
+            /** Faltam */
+            faltam: number | null;
+            /** Fator */
+            fator: string;
+            /** Intervalo */
+            intervalo: number[] | null;
+            /** Medianabruta */
+            medianaBruta: number | null;
+            /** Ndias */
+            nDias: number;
+            /** Nposts */
+            nPosts: number;
+            /**
+             * Parte
+             * @enum {string}
+             */
+            parte: "entrega" | "rendimento";
+            /** Rotulo */
+            rotulo: string;
+            /** Valor */
+            valor: string;
+        };
+        /** AprendizadoEscopo */
+        AprendizadoEscopo: {
+            /** Contaid */
+            contaId?: string | null;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "perfil" | "conta";
+        };
+        /** AprendizadoEstimativa */
+        AprendizadoEstimativa: {
+            /** Comparaveis */
+            comparaveis: components["schemas"]["PostResumo"][];
+            /** Custocomquadrosusd */
+            custoComQuadrosUsd: number;
+            /** Custosemquadrosusd */
+            custoSemQuadrosUsd: number;
+            /** Melhores */
+            melhores: components["schemas"]["PostResumo"][];
+            /** Semarquivo */
+            semArquivo: number;
+        };
+        /** AprendizadoEstimativaIn */
+        AprendizadoEstimativaIn: {
+            /** Contaid */
+            contaId?: string | null;
+            /**
+             * Medida
+             * @default h24
+             * @enum {string}
+             */
+            medida: "h1" | "h24" | "d7";
+            /**
+             * N
+             * @default 8
+             */
+            n: number;
+        };
+        /** AprendizadoGuiaRef */
+        AprendizadoGuiaRef: {
+            /**
+             * Nivel
+             * @enum {string}
+             */
+            nivel: "perfil" | "conta";
+            /** Version */
+            version: number;
+        };
+        /** AprendizadoHipotese */
+        AprendizadoHipotese: {
+            /** Contraste */
+            contraste: string;
+            /**
+             * Grau
+             * @constant
+             */
+            grau: "a_conferir";
+            /** N */
+            n: number;
+            /** Postsids */
+            postsIds: string[];
+            /** Texto */
+            texto: string;
+        };
+        /** AprendizadoHipoteseRecomendarIn */
+        AprendizadoHipoteseRecomendarIn: {
+            /** Texto */
+            texto: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "padrao_gancho" | "padrao_duracao" | "padrao_horario";
+        };
+        /** AprendizadoItemChecklist */
+        AprendizadoItemChecklist: {
+            /** Item */
+            item: string;
+            /** Texto */
+            texto: string;
+            /** Titulo */
+            titulo: string;
+        };
+        /** AprendizadoJuntarIn */
+        AprendizadoJuntarIn: {
+            /**
+             * Destinoid
+             * Format: uuid
+             */
+            destinoId: string;
+            /** Version */
+            version: number;
+        };
+        /** AprendizadoJuntarOut */
+        AprendizadoJuntarOut: {
+            destino: components["schemas"]["AprendizadoTema"];
+            /** Movidas */
+            movidas: number;
+            origem: components["schemas"]["AprendizadoTema"];
+        };
+        /** AprendizadoLimiteHoje */
+        AprendizadoLimiteHoje: {
+            /** Limite */
+            limite: number;
+            /** Usadas */
+            usadas: number;
+        };
+        /** AprendizadoPadrao */
+        AprendizadoPadrao: {
+            /** Texto */
+            texto: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "gancho" | "duracao" | "horario";
+            /** Valor */
+            valor?: {
+                [key: string]: unknown;
+            } | string | null;
+        };
+        /** AprendizadoPostDiagnostico */
+        AprendizadoPostDiagnostico: {
+            /** Checklist */
+            checklist: components["schemas"]["AprendizadoItemChecklist"][];
+            /** Conferencias */
+            conferencias: components["schemas"]["AprendizadoConferencia"][];
+            /** Estagnado */
+            estagnado: boolean;
+            post: components["schemas"]["PostResumo"];
+            /** Sinais */
+            sinais: components["schemas"]["AprendizadoSinal"][];
+        };
+        /** AprendizadoPreferencias */
+        AprendizadoPreferencias: {
+            /** Classificacaoauto */
+            classificacaoAuto: boolean;
+            /** Contaid */
+            contaId: string | null;
+            /** Hashtagsevitar */
+            hashtagsEvitar: string[];
+            /** Id */
+            id: string | null;
+            /** Padroes */
+            padroes: components["schemas"]["AprendizadoPadrao"][];
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Taxonomiaversao */
+            taxonomiaVersao: number;
+            /** Temas */
+            temas: {
+                [key: string]: "ampliar" | "cortar";
+            };
+            /** Usardesempenho */
+            usarDesempenho: boolean;
+            /** Version */
+            version: number;
+        };
+        /** AprendizadoPreferenciasEfetivas */
+        AprendizadoPreferenciasEfetivas: {
+            /** Hashtagsevitar */
+            hashtagsEvitar: string[];
+            /** Janelapreferida */
+            janelaPreferida: string | null;
+            /** Padroes */
+            padroes: components["schemas"]["AprendizadoPadrao"][];
+            /** Temas */
+            temas: {
+                [key: string]: "ampliar" | "cortar";
+            };
+            /** Usardesempenho */
+            usarDesempenho: boolean;
+        };
+        /** AprendizadoPreferenciasOut */
+        AprendizadoPreferenciasOut: {
+            conta: components["schemas"]["AprendizadoPreferencias"] | null;
+            efetivas: components["schemas"]["AprendizadoPreferenciasEfetivas"];
+            perfil: components["schemas"]["AprendizadoPreferencias"];
+        };
+        /** AprendizadoPreferenciasPatch */
+        AprendizadoPreferenciasPatch: {
+            /** Classificacaoauto */
+            classificacaoAuto?: boolean | null;
+            /** Hashtagsevitar */
+            hashtagsEvitar?: string[] | null;
+            /** Padroes */
+            padroes?: components["schemas"]["AprendizadoPadrao"][] | null;
+            /** Temas */
+            temas?: {
+                [key: string]: "ampliar" | "cortar";
+            } | null;
+            /** Usardesempenho */
+            usarDesempenho?: boolean | null;
+            /** Version */
+            version: number;
+        };
+        /** AprendizadoProporIn */
+        AprendizadoProporIn: {
+            /**
+             * Instrucao
+             * @default
+             */
+            instrucao: string;
+        };
+        /** AprendizadoProporOut */
+        AprendizadoProporOut: {
+            /**
+             * Chamadaid
+             * Format: uuid
+             */
+            chamadaId: string;
+            /** Custousd */
+            custoUsd: number | null;
+            /** Temas */
+            temas: components["schemas"]["AprendizadoTemaIn"][];
+        };
+        /** AprendizadoRecomendacao */
+        AprendizadoRecomendacao: {
+            alvo: components["schemas"]["AprendizadoAlvo"];
+            bloqueio?: components["schemas"]["AprendizadoBloqueio"] | null;
+            /** Chave */
+            chave: string;
+            /** Decisaoid */
+            decisaoId?: string | null;
+            escopo: components["schemas"]["AprendizadoEscopo"];
+            evidencia: components["schemas"]["AprendizadoEfeito"] | null;
+            /** Jarejeitadaem */
+            jaRejeitadaEm?: string | null;
+            /** Motivo */
+            motivo: string;
+            /** Oquemuda */
+            oQueMuda: string;
+            /**
+             * Origem
+             * @enum {string}
+             */
+            origem: "regra" | "hipotese";
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "tema_ampliar" | "tema_cortar" | "hashtag_fixar" | "hashtag_evitar" | "padrao_gancho" | "padrao_duracao" | "padrao_horario";
+        };
+        /** AprendizadoRecomendacoesOut */
+        AprendizadoRecomendacoesOut: {
+            /** Abertas */
+            abertas: components["schemas"]["AprendizadoRecomendacao"][];
+            /** Decididas */
+            decididas: components["schemas"]["AprendizadoDecisao"][];
+        };
+        /** AprendizadoRevertOut */
+        AprendizadoRevertOut: {
+            /** Aviso */
+            aviso?: string | null;
+            decisao: components["schemas"]["AprendizadoDecisao"];
+            /** Linkguia */
+            linkGuia?: string | null;
+            preferencias?: components["schemas"]["AprendizadoPreferencias"] | null;
+        };
+        /** AprendizadoSinal */
+        AprendizadoSinal: {
+            /**
+             * Alvo
+             * @enum {string}
+             */
+            alvo: "conta" | "post";
+            /**
+             * Alvoid
+             * Format: uuid
+             */
+            alvoId: string;
+            /** Numero */
+            numero: number | null;
+            /** Texto */
+            texto: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "conta_nova" | "muitos_no_dia" | "intervalo_curto" | "fora_da_audiencia" | "repostagem" | "curto" | "legenda_vazia" | "hashtags_demais" | "travada";
+        };
+        /** AprendizadoTema */
+        AprendizadoTema: {
+            /** Archived */
+            archived: boolean;
+            /** Descricao */
+            descricao: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Juntadoemid */
+            juntadoEmId: string | null;
+            /** Nposts */
+            nPosts: number;
+            /** Nome */
+            nome: string;
+            /** Palavraschave */
+            palavrasChave: string[];
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Version */
+            version: number;
+        };
+        /** AprendizadoTemaIn */
+        AprendizadoTemaIn: {
+            /**
+             * Descricao
+             * @default
+             */
+            descricao: string;
+            /** Nome */
+            nome: string;
+            /** Palavraschave */
+            palavrasChave?: string[];
+        };
+        /** AprendizadoTemaPatch */
+        AprendizadoTemaPatch: {
+            /** Descricao */
+            descricao?: string | null;
+            /** Nome */
+            nome?: string | null;
+            /** Palavraschave */
+            palavrasChave?: string[] | null;
+            /** Version */
+            version: number;
+        };
+        /** AprendizadoTemasList */
+        AprendizadoTemasList: {
+            /** Items */
+            items: components["schemas"]["AprendizadoTema"][];
+            /** Taxonomiaversao */
+            taxonomiaVersao: number;
+        };
+        /** AprendizadoTemasLoteIn */
+        AprendizadoTemasLoteIn: {
+            /** Chamadaid */
+            chamadaId?: string | null;
+            /** Temas */
+            temas: components["schemas"]["AprendizadoTemaIn"][];
+        };
+        /** AprendizadoTemasLoteOut */
+        AprendizadoTemasLoteOut: {
+            /** Items */
+            items: components["schemas"]["AprendizadoTema"][];
+        };
+        /** AprendizadoVersionIn */
+        AprendizadoVersionIn: {
+            /** Version */
+            version: number;
+        };
         /** Aprovacao */
         Aprovacao: {
             /**
@@ -4551,12 +5915,12 @@ export interface components {
              * Secao
              * @enum {string}
              */
-            secao: "visao_geral" | "seguidores";
+            secao: "visao_geral" | "seguidores" | "genero" | "territorios" | "atividade" | "espectadores";
             /**
              * Tipo
              * @enum {string}
              */
-            tipo: "zip" | "csv";
+            tipo: "zip" | "csv" | "xlsx";
         };
         /** Asset */
         Asset: {
@@ -4898,7 +6262,7 @@ export interface components {
         Body_studio_previa: {
             /**
              * Arquivos
-             * @description De 1 a 2 arquivos (.zip ou .csv) do TikTok Studio, até 5 MB no total
+             * @description De 1 a 3 arquivos (.zip, .csv ou .xlsx) do TikTok Studio: os ZIPs da Visão geral, de Seguidores e/ou de Espectadores, até 5 MB no total
              * @default []
              */
             arquivos: string[];
@@ -5694,8 +7058,18 @@ export interface components {
             hoje: string;
             /** Importacoesativas */
             importacoesAtivas: number;
+            publico?: components["schemas"]["CoberturaPublico"];
             /** Secoes */
             secoes: components["schemas"]["SecaoCobertura"][];
+        };
+        /** CoberturaPublico */
+        CoberturaPublico: {
+            atividade?: components["schemas"]["PublicoDiasCobertura"];
+            espectadores?: components["schemas"]["PublicoDiasCobertura"];
+            /** Fotos */
+            fotos?: components["schemas"]["PublicoFotoCobertura"][];
+            /** Vazias */
+            vazias?: components["schemas"]["PublicoVaziaCobertura"][];
         };
         /** ColetaCobertura */
         ColetaCobertura: {
@@ -5934,18 +7308,32 @@ export interface components {
         };
         /** ContagensImportacao */
         ContagensImportacao: {
-            /** Coletados */
+            /**
+             * Coletados
+             * @default 0
+             */
             coletados: number;
             /** Divergentes */
             divergentes: number;
-            /** Faltando */
+            /**
+             * Faltando
+             * @default 0
+             */
             faltando: number;
             /** Gravados */
             gravados: number;
-            /** Ignorados */
+            /**
+             * Ignorados
+             * @default 0
+             */
             ignorados: number;
             /** Iguais */
             iguais: number;
+            /**
+             * Semdado
+             * @default 0
+             */
+            semDado: number;
         };
         /** ContagensPrevia */
         ContagensPrevia: {
@@ -7344,7 +8732,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise";
             valorAtual?: components["schemas"]["Valor"];
         };
         /** Guia */
@@ -7524,7 +8912,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise";
         };
         /** IaChamada */
         IaChamada: {
@@ -7549,6 +8937,12 @@ export interface components {
             createdBy: components["schemas"]["UserRef"] | null;
             /** Custousd */
             custoUsd: number | null;
+            /** Desempenhocontaversion */
+            desempenhoContaVersion?: number | null;
+            /** Desempenhoexemplos */
+            desempenhoExemplos?: string[];
+            /** Desempenhoperfilversion */
+            desempenhoPerfilVersion?: number | null;
             desfecho: components["schemas"]["IaDesfecho"];
             /** Desfechoem */
             desfechoEm: string | null;
@@ -7675,6 +9069,10 @@ export interface components {
              */
             criadaEm: string;
             criadaPor: components["schemas"]["UserRef"];
+            /** Datafoto */
+            dataFoto?: string | null;
+            /** Datafotoorigem */
+            dataFotoOrigem?: ("historico" | "importacao") | null;
             /** Desfeitaem */
             desfeitaEm: string | null;
             desfeitaPor: components["schemas"]["UserRef"] | null;
@@ -7703,7 +9101,9 @@ export interface components {
              */
             periodoDe: string;
             /** Secoes */
-            secoes: ("visao_geral" | "seguidores")[];
+            secoes: ("visao_geral" | "seguidores" | "genero" | "territorios" | "atividade" | "espectadores")[];
+            /** Secoesvazias */
+            secoesVazias?: ("genero" | "territorios" | "atividade" | "espectadores")[];
             /**
              * Serieid
              * Format: uuid
@@ -8300,6 +9700,11 @@ export interface components {
             /** Canais */
             canais: components["schemas"]["CanalMercado"][];
             contexto: components["schemas"]["Contexto"];
+            /**
+             * Ocultosportema
+             * @default 0
+             */
+            ocultosPorTema: number;
             /** Oportunidades */
             oportunidades: components["schemas"]["Oportunidade"][];
             publicacao: components["schemas"]["Mapa"];
@@ -8589,6 +9994,7 @@ export interface components {
         };
         /** Oportunidade */
         Oportunidade: {
+            afinidade?: components["schemas"]["AprendizadoAfinidade"] | null;
             canal: components["schemas"]["CanalOportunidade"];
             /** Idadeh */
             idadeH: number;
@@ -8949,6 +10355,8 @@ export interface components {
              * Format: uuid
              */
             previaId: string;
+            /** Publico */
+            publico?: components["schemas"]["SecaoPublicoPrevia"][];
             /** Secoes */
             secoes: components["schemas"]["SecaoPrevia"][];
         };
@@ -9030,6 +10438,265 @@ export interface components {
         PublicacaoConfigOut: {
             config: components["schemas"]["PublicacaoConfig"];
         };
+        /** PublicoAtividade */
+        PublicoAtividade: {
+            /** Celulas */
+            celulas: components["schemas"]["CelulaMapa"][];
+            /** Diascomdado */
+            diasComDado: number;
+            /** Ultimodiacomdado */
+            ultimoDiaComDado: string | null;
+        };
+        /** PublicoAtividadeConta */
+        PublicoAtividadeConta: {
+            atividade: components["schemas"]["PublicoAtividade"] | null;
+            conta: components["schemas"]["PublicoConta"];
+            /** Motivo */
+            motivo: ("sem_importacao" | "veio_vazia" | "sem_dado_no_periodo") | null;
+        };
+        /**
+         * PublicoAtividadeSeguidores
+         * @description O 3º mapa de Quando postar ("Seguidores on-line", spec 022): o mesmo cálculo da aba
+         *     Público, por conta (nunca somado entre contas).
+         */
+        PublicoAtividadeSeguidores: {
+            /** Contas */
+            contas?: components["schemas"]["PublicoAtividadeConta"][];
+        };
+        /**
+         * PublicoConta
+         * @description A conta de uma entrada do público, na ordem de `ordem-contas` (019). Numa série anônima,
+         *     `serieId` e `contaId` vêm nulos e o `rotulo` é "Conta anônima N".
+         */
+        PublicoConta: {
+            /** Contaid */
+            contaId: string | null;
+            /** Ordem */
+            ordem: number | null;
+            /** Rotulo */
+            rotulo: string;
+            /** Serieid */
+            serieId: string | null;
+        };
+        /** PublicoContaOut */
+        PublicoContaOut: {
+            atividade: components["schemas"]["PublicoAtividade"] | null;
+            conta: components["schemas"]["PublicoConta"];
+            espectadores: components["schemas"]["PublicoEspectadores"] | null;
+            genero: components["schemas"]["PublicoDistribuicao"] | null;
+            motivos: components["schemas"]["PublicoMotivos"];
+            territorios: components["schemas"]["PublicoDistribuicao"] | null;
+        };
+        /** PublicoContagensPrevia */
+        PublicoContagensPrevia: {
+            /** Divergentes */
+            divergentes: number;
+            /** Faltando */
+            faltando?: string[];
+            /** Gravados */
+            gravados: number;
+            /** Ignorados */
+            ignorados?: string[];
+            /** Iguais */
+            iguais: number;
+            /** Semdado */
+            semDado: number;
+        };
+        /** PublicoDiaEspectadores */
+        PublicoDiaEspectadores: {
+            /**
+             * Dia
+             * Format: date
+             */
+            dia: string;
+            /** Novos */
+            novos: number | null;
+            /** Recorrentes */
+            recorrentes: number | null;
+            /** Total */
+            total: number | null;
+        };
+        /** PublicoDiasCobertura */
+        PublicoDiasCobertura: {
+            /** Buracos */
+            buracos?: components["schemas"]["Faixa"][];
+            /** Faixas */
+            faixas?: components["schemas"]["Faixa"][];
+        };
+        /** PublicoDistribuicao */
+        PublicoDistribuicao: {
+            /** Anterioraoperiodo */
+            anteriorAoPeriodo: boolean;
+            /**
+             * Datafoto
+             * Format: date
+             */
+            dataFoto: string;
+            /** Datafotocomparacao */
+            dataFotoComparacao: string | null;
+            /**
+             * Importacaoid
+             * Format: uuid
+             */
+            importacaoId: string;
+            /** Itens */
+            itens: components["schemas"]["PublicoItem"][];
+            /** Outrospct */
+            outrosPct: number | null;
+            /** Seguidoresnadata */
+            seguidoresNaData: number | null;
+        };
+        /** PublicoEspectadores */
+        PublicoEspectadores: {
+            /** Diassemdado */
+            diasSemDado: number;
+            mediaRecorrentes: components["schemas"]["PublicoIndicador"];
+            mediaTotal: components["schemas"]["PublicoIndicador"];
+            novos: components["schemas"]["PublicoIndicador"];
+            /** Serie */
+            serie: components["schemas"]["PublicoDiaEspectadores"][];
+        };
+        /** PublicoFotoCobertura */
+        PublicoFotoCobertura: {
+            /**
+             * Datafoto
+             * Format: date
+             */
+            dataFoto: string;
+            /**
+             * Importacaoid
+             * Format: uuid
+             */
+            importacaoId: string;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "genero" | "territorio";
+        };
+        /** PublicoIndicador */
+        PublicoIndicador: {
+            /** Anterior */
+            anterior: number | null;
+            /** N */
+            n: number;
+            /** Valor */
+            valor: number | null;
+            /** Variacaopct */
+            variacaoPct: number | null;
+        };
+        /** PublicoItem */
+        PublicoItem: {
+            /** Difpp */
+            difPp: number | null;
+            /** Marca */
+            marca: ("novo" | "saiu") | null;
+            /** Pct */
+            pct: number | null;
+            /** Pctcomparacao */
+            pctComparacao: number | null;
+            /** Rotulo */
+            rotulo: string;
+            /** Rotuloexibicao */
+            rotuloExibicao: string;
+        };
+        /** PublicoItemPrevia */
+        PublicoItemPrevia: {
+            /** Pct */
+            pct: number | null;
+            /** Rotulo */
+            rotulo: string;
+            /** Rotuloexibicao */
+            rotuloExibicao: string;
+        };
+        /** PublicoLinhaEspectadores */
+        PublicoLinhaEspectadores: {
+            /**
+             * Dia
+             * Format: date
+             */
+            dia: string;
+            /** Novos */
+            novos: number | null;
+            /** Recorrentes */
+            recorrentes: number | null;
+            /**
+             * Situacao
+             * @enum {string}
+             */
+            situacao: "novo" | "igual" | "divergente" | "coletado" | "ignorado";
+            /** Total */
+            total: number | null;
+        };
+        /** PublicoMotivos */
+        PublicoMotivos: {
+            /** Atividade */
+            atividade: ("sem_importacao" | "veio_vazia" | "sem_dado_no_periodo") | null;
+            /** Espectadores */
+            espectadores: ("sem_importacao" | "veio_vazia" | "sem_dado_no_periodo") | null;
+            /** Genero */
+            genero: ("sem_importacao" | "veio_vazia" | "sem_dado_no_periodo") | null;
+            /** Territorios */
+            territorios: ("sem_importacao" | "veio_vazia" | "sem_dado_no_periodo") | null;
+        };
+        /** PublicoOut */
+        PublicoOut: {
+            /** Contas */
+            contas: components["schemas"]["PublicoContaOut"][];
+            contexto: components["schemas"]["Contexto"];
+        };
+        /** PublicoPeriodoSecao */
+        PublicoPeriodoSecao: {
+            /**
+             * Anoorigem
+             * @enum {string}
+             */
+            anoOrigem: "nome_zip" | "deduzido" | "misto";
+            /**
+             * Ate
+             * Format: date
+             */
+            ate: string;
+            /**
+             * De
+             * Format: date
+             */
+            de: string;
+        };
+        /** PublicoPico */
+        PublicoPico: {
+            /** Ativos */
+            ativos: number;
+            /**
+             * Dia
+             * Format: date
+             */
+            dia: string;
+            /** Hora */
+            hora: number;
+        };
+        /** PublicoTotaisEspectadores */
+        PublicoTotaisEspectadores: {
+            /** Mediarecorrentes */
+            mediaRecorrentes: number | null;
+            /** Mediatotal */
+            mediaTotal: number | null;
+            /** Novos */
+            novos: number | null;
+        };
+        /** PublicoVaziaCobertura */
+        PublicoVaziaCobertura: {
+            /**
+             * Em
+             * Format: date-time
+             */
+            em: string;
+            /**
+             * Secao
+             * @enum {string}
+             */
+            secao: "genero" | "territorios" | "atividade" | "espectadores";
+        };
         /** Pulado */
         Pulado: {
             /** Destinoid */
@@ -9047,6 +10714,7 @@ export interface components {
         };
         /** QuandoPostarOut */
         QuandoPostarOut: {
+            atividadeSeguidores?: components["schemas"]["PublicoAtividadeSeguidores"];
             audiencia: components["schemas"]["MapaAudiencia"];
             /** Calendario */
             calendario: components["schemas"]["DiaCalendario"][];
@@ -9246,7 +10914,7 @@ export interface components {
              * Secao
              * @enum {string}
              */
-            secao: "visao_geral" | "seguidores";
+            secao: "visao_geral" | "seguidores" | "genero" | "territorios" | "atividade" | "espectadores";
             /** Sobreposicao */
             sobreposicao: components["schemas"]["Faixa"][];
         };
@@ -9261,9 +10929,40 @@ export interface components {
              * Secao
              * @enum {string}
              */
-            secao: "visao_geral" | "seguidores";
+            secao: "visao_geral" | "seguidores" | "genero" | "territorios" | "atividade" | "espectadores";
             /** Totais */
             totais: components["schemas"]["TotaisVisaoGeral"] | components["schemas"]["TotaisSeguidores"];
+        };
+        /**
+         * SecaoPublicoPrevia
+         * @description Uma seção de público da prévia. Com `vazia`, vem só `secao`, `vazia` e `mensagem`.
+         */
+        SecaoPublicoPrevia: {
+            /** Amostra */
+            amostra?: components["schemas"]["PublicoLinhaEspectadores"][] | null;
+            colunas?: components["schemas"]["Colunas"] | null;
+            contagens?: components["schemas"]["PublicoContagensPrevia"] | null;
+            /** Datafoto */
+            dataFoto?: string | null;
+            /** Datafotoorigem */
+            dataFotoOrigem?: ("historico" | "importacao") | null;
+            /** Itens */
+            itens?: components["schemas"]["PublicoItemPrevia"][] | null;
+            jaImportada?: components["schemas"]["JaImportada"] | null;
+            /** Mensagem */
+            mensagem?: string | null;
+            periodo?: components["schemas"]["PublicoPeriodoSecao"] | null;
+            pico?: components["schemas"]["PublicoPico"] | null;
+            /**
+             * Secao
+             * @enum {string}
+             */
+            secao: "genero" | "territorios" | "atividade" | "espectadores";
+            /** Situacao */
+            situacao?: ("novo" | "igual" | "divergente") | null;
+            totais?: components["schemas"]["PublicoTotaisEspectadores"] | null;
+            /** Vazia */
+            vazia: boolean;
         };
         /** SecurityEvent */
         SecurityEvent: {
@@ -9615,17 +11314,17 @@ export interface components {
              * Entidade
              * @enum {string}
              */
-            entidade: "asset" | "perfil" | "kit" | "postagem" | "guia" | "cena";
+            entidade: "asset" | "perfil" | "kit" | "postagem" | "guia" | "cena" | "aprendizado";
             /**
              * Formato
              * @enum {string}
              */
-            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes" | "campos_cena";
+            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes" | "campos_cena" | "taxonomia" | "classificacao" | "analise";
             /**
              * Id
              * @enum {string}
              */
-            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar";
+            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise";
             /**
              * Idioma
              * @enum {string}
@@ -9964,6 +11663,10 @@ export interface components {
          *     entrada do "montar"; entrada do "testar") ou as `variacoes` (proposta do "testar").
          */
         Valor: {
+            /** Aprendizado */
+            aprendizado?: {
+                [key: string]: unknown;
+            } | null;
             cena?: components["schemas"]["ValorCena"] | null;
             /** Descricao */
             descricao?: string | null;
@@ -10117,6 +11820,7 @@ export interface components {
         };
         /** VideoFonte */
         VideoFonte: {
+            afinidade?: components["schemas"]["AprendizadoAfinidade"] | null;
             canal: components["schemas"]["CanalRef"];
             /** Comments */
             comments: number | null;
@@ -10328,6 +12032,11 @@ export interface components {
             items: components["schemas"]["VideoFonte"][];
             /** Nextcursor */
             nextCursor: string | null;
+            /**
+             * Ocultosportema
+             * @default 0
+             */
+            ocultosPorTema: number;
             /** Total */
             total: number;
         };
@@ -10369,7 +12078,7 @@ export interface components {
              * Codigo
              * @enum {string}
              */
-            codigo: "diverge_da_coleta" | "dia_incompleto" | "dias_faltando" | "periodo_longo" | "ano_deduzido" | "colunas_ausentes" | "cabecalho_provisorio";
+            codigo: "diverge_da_coleta" | "dia_incompleto" | "dias_faltando" | "periodo_longo" | "ano_deduzido" | "colunas_ausentes" | "cabecalho_provisorio" | "data_foto_importacao" | "espectadores_soma" | "sem_dado" | "secao_vazia";
             /** Detalhes */
             detalhes?: {
                 [key: string]: unknown;
@@ -11290,6 +12999,7 @@ export interface operations {
     analytics_mercado: {
         parameters: {
             query?: {
+                mostrarCortados?: boolean;
                 de?: string | null;
                 ate?: string | null;
                 perfilId?: string | null;
@@ -11442,6 +13152,69 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    analytics_publico: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                contaId?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -12114,6 +13887,950 @@ export interface operations {
                 };
             };
             /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_analises_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analise_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoAnaliseIa"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_hipotese_recomendar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                analise_id: string;
+                indice: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoHipoteseRecomendarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoDecisao"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_classificacoes_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                video_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoClassificacaoPut"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoClassificacao"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_classificacoes_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                video_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoClassificacao"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_classificacoes_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                video_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_decisoes_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                decisao_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoRevertOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_conferencias_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                video_id: string;
+                item: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoConferenciaPut"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoConferencia"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_post_diagnostico: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                video_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoPostDiagnostico"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_temas_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tema_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoTemaPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoTema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_temas_archive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tema_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoTema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_temas_juntar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tema_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoJuntarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoJuntarOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_temas_restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tema_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoTema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_temas_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tema_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoTema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_temas_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tema_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Bad Request */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -23080,6 +25797,1172 @@ export interface operations {
             };
         };
     };
+    aprendizado_analise: {
+        parameters: {
+            query?: {
+                contaId?: string | null;
+                medida?: "h1" | "h24" | "d7";
+                de?: string | null;
+                ate?: string | null;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoAnalise"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_analises_list: {
+        parameters: {
+            query?: {
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoAnalisesList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_analises_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoAnaliseIaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoAnaliseIa"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_analises_estimativa: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoEstimativaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoEstimativa"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_classificacoes_list: {
+        parameters: {
+            query?: {
+                contaId?: string | null;
+                temaId?: string | null;
+                origem?: ("ia" | "dono" | "sem_tema") | null;
+                pendentes?: boolean;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoClassificacoesList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_classificar_pendentes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoClassificarOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_diagnostico: {
+        parameters: {
+            query?: {
+                contaId?: string | null;
+                de?: string | null;
+                ate?: string | null;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoDiagnostico"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_preferencias_get: {
+        parameters: {
+            query?: {
+                contaId?: string | null;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoPreferenciasOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_preferencias_patch: {
+        parameters: {
+            query?: {
+                contaId?: string | null;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoPreferenciasPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoPreferencias"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_preferencias_revert: {
+        parameters: {
+            query?: {
+                contaId?: string | null;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoPreferencias"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_preferencias_versions: {
+        parameters: {
+            query?: {
+                contaId?: string | null;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_recomendacoes: {
+        parameters: {
+            query?: {
+                contaId?: string | null;
+                medida?: "h1" | "h24" | "d7";
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoRecomendacoesOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_recomendacoes_decidir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoDecidirIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoDecidirOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_taxonomia_propor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoProporIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoProporOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Gateway Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_temas_list: {
+        parameters: {
+            query?: {
+                arquivados?: boolean;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoTemasList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_temas_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoTemaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoTema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    aprendizado_temas_lote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprendizadoTemasLoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AprendizadoTemasLoteOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     perfis_archive: {
         parameters: {
             query?: never;
@@ -26688,6 +30571,7 @@ export interface operations {
                 ordem?: "score" | "views" | "vph" | "data";
                 limit?: number;
                 cursor?: string | null;
+                mostrarCortados?: boolean;
             };
             header?: never;
             path?: never;

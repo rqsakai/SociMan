@@ -6,6 +6,8 @@
  * - Audiência por hora: views ganhas em cada hora (fotos com intervalo de até 3 h); o que veio de
  *   intervalos maiores fica "sem hora atribuída", na frase de leitura.
  * - Calendário do período: views ganhas (cor) e posts publicados (número) por dia.
+ * - Seguidores on-line (spec 022, FR-023): o 3º mapa, a média de seguidores ativos do TikTok Studio,
+ *   o mesmo cálculo da aba Público (horas conforme a TikTok), uma conta por vez.
  */
 import { useMemo } from "react";
 import { CardAnalytics } from "@/components/analytics/CardAnalytics";
@@ -14,9 +16,20 @@ import { Grafico, type ItemTooltip } from "@/components/analytics/Grafico";
 import { MapaSemana, mapaTabela } from "@/components/analytics/MapaSemana";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
-import { diasEntre, formatCompacto, formatNumero, medidaLabel, useAnalytics, type AnalyticsQuandoPostar, type EstadoFiltroAnalytics, type Medida } from "@/lib/analytics";
+import {
+  atividadeSeguidoresDe,
+  diasEntre,
+  formatCompacto,
+  formatNumero,
+  medidaLabel,
+  useAnalytics,
+  type AnalyticsQuandoPostar,
+  type EstadoFiltroAnalytics,
+  type Medida,
+} from "@/lib/analytics";
 import { contasStudioDe, fonteDe, fonteLabel, NOTA_FUSO_STUDIO, notaSemVideo } from "@/components/studio/fonteAnalytics";
 import { parseDateKey } from "@/lib/tz";
+import { CardAtividade } from "./Publico";
 
 const compactoInteiro = (v: number) => formatCompacto(Math.round(v));
 const NOTA_FUSO = "Horário de Brasília (São Paulo).";
@@ -198,6 +211,9 @@ export function QuandoPostar({ estado }: { estado: EstadoFiltroAnalytics }) {
           descricao="Mapa de calor das views ganhas por dia da semana e hora do dia, horário de Brasília."
         />
       </CardAnalytics>
+      {d && "atividadeSeguidores" in d && (
+        <CardAtividade titulo="Seguidores on-line (TikTok Studio)" contas={atividadeSeguidoresDe(d)} carregando={carregando} erro={dados.error} estado={estado} />
+      )}
       <CardAnalytics
         titulo="Calendário"
         comoLer={

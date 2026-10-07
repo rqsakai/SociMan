@@ -1374,7 +1374,9 @@
               "corte",
               "conteudo",
               "guia",
-              "cena"
+              "cena",
+              "aprendizado_classificacao",
+              "aprendizado_analise"
             ],
             "title": "Entitytype",
             "type": "string"
@@ -1773,6 +1775,2744 @@
         "title": "AppConfig",
         "type": "object"
       },
+      "AprendizadoAfinidade": {
+        "description": "Spec 023 (R9): a afinidade do vídeo-fonte com o perfil escolhido (só com `perfilId`).",
+        "properties": {
+          "cortado": {
+            "title": "Cortado",
+            "type": "boolean"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "pontos": {
+            "title": "Pontos",
+            "type": "number"
+          },
+          "temaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temaid"
+          },
+          "temaNome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temanome"
+          }
+        },
+        "required": [
+          "pontos",
+          "temaId",
+          "temaNome",
+          "cortado",
+          "motivo"
+        ],
+        "title": "AprendizadoAfinidade",
+        "type": "object"
+      },
+      "AprendizadoAlvo": {
+        "properties": {
+          "hashtag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hashtag"
+          },
+          "padrao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Padrao"
+          },
+          "temaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temaid"
+          },
+          "temaNome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temanome"
+          }
+        },
+        "title": "AprendizadoAlvo",
+        "type": "object"
+      },
+      "AprendizadoAnalise": {
+        "properties": {
+          "blocos": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoBloco"
+            },
+            "title": "Blocos",
+            "type": "array"
+          },
+          "contexto": {
+            "$ref": "#/components/schemas/AprendizadoAnaliseContexto"
+          },
+          "efeitos": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoEfeito"
+            },
+            "title": "Efeitos",
+            "type": "array"
+          },
+          "matriz": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoCelulaMatriz"
+            },
+            "title": "Matriz",
+            "type": "array"
+          },
+          "pendentesClassificacao": {
+            "title": "Pendentesclassificacao",
+            "type": "integer"
+          },
+          "semTema": {
+            "title": "Semtema",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "contexto",
+          "efeitos",
+          "blocos",
+          "matriz",
+          "semTema",
+          "pendentesClassificacao"
+        ],
+        "title": "AprendizadoAnalise",
+        "type": "object"
+      },
+      "AprendizadoAnaliseContexto": {
+        "properties": {
+          "aguardando": {
+            "title": "Aguardando",
+            "type": "integer"
+          },
+          "ate": {
+            "format": "date",
+            "title": "Ate",
+            "type": "string"
+          },
+          "comparacoes": {
+            "title": "Comparacoes",
+            "type": "integer"
+          },
+          "constantes": {
+            "$ref": "#/components/schemas/AprendizadoConstantes"
+          },
+          "contas": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoContaContexto"
+            },
+            "title": "Contas",
+            "type": "array"
+          },
+          "de": {
+            "format": "date",
+            "title": "De",
+            "type": "string"
+          },
+          "falsosEsperados": {
+            "title": "Falsosesperados",
+            "type": "integer"
+          },
+          "fuso": {
+            "title": "Fuso",
+            "type": "string"
+          },
+          "medida": {
+            "enum": [
+              "h1",
+              "h24",
+              "d7"
+            ],
+            "title": "Medida",
+            "type": "string"
+          },
+          "postsNoPeriodo": {
+            "title": "Postsnoperiodo",
+            "type": "integer"
+          },
+          "travadas": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Travadas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "de",
+          "ate",
+          "medida",
+          "fuso",
+          "aguardando",
+          "postsNoPeriodo",
+          "comparacoes",
+          "falsosEsperados",
+          "contas",
+          "travadas",
+          "constantes"
+        ],
+        "title": "AprendizadoAnaliseContexto",
+        "type": "object"
+      },
+      "AprendizadoAnaliseIa": {
+        "properties": {
+          "chamadaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chamadaid"
+          },
+          "comQuadros": {
+            "title": "Comquadros",
+            "type": "boolean"
+          },
+          "comparaveis": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Comparaveis",
+            "type": "array"
+          },
+          "concluidaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concluidaem"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "custoEstimadoUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custoestimadousd"
+          },
+          "custoUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custousd"
+          },
+          "erroCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errocode"
+          },
+          "estado": {
+            "enum": [
+              "pendente",
+              "processando",
+              "pronta",
+              "erro"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "hipoteses": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoHipotese"
+            },
+            "title": "Hipoteses",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "medida": {
+            "enum": [
+              "h1",
+              "h24",
+              "d7"
+            ],
+            "title": "Medida",
+            "type": "string"
+          },
+          "melhores": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Melhores",
+            "type": "array"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "pedidoPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "posts": {
+            "items": {
+              "$ref": "#/components/schemas/PostResumo"
+            },
+            "title": "Posts",
+            "type": "array"
+          },
+          "taxonomiaVersao": {
+            "title": "Taxonomiaversao",
+            "type": "integer"
+          },
+          "videosSemArquivo": {
+            "title": "Videossemarquivo",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "estado",
+          "contaId",
+          "n",
+          "medida",
+          "comQuadros",
+          "videosSemArquivo",
+          "melhores",
+          "comparaveis",
+          "hipoteses",
+          "custoEstimadoUsd",
+          "custoUsd",
+          "chamadaId",
+          "erroCode",
+          "taxonomiaVersao",
+          "pedidoPor",
+          "createdAt",
+          "concluidaEm"
+        ],
+        "title": "AprendizadoAnaliseIa",
+        "type": "object"
+      },
+      "AprendizadoAnaliseIaIn": {
+        "properties": {
+          "comQuadros": {
+            "default": false,
+            "title": "Comquadros",
+            "type": "boolean"
+          },
+          "confirmoCusto": {
+            "default": false,
+            "title": "Confirmocusto",
+            "type": "boolean"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "medida": {
+            "default": "h24",
+            "enum": [
+              "h1",
+              "h24",
+              "d7"
+            ],
+            "title": "Medida",
+            "type": "string"
+          },
+          "n": {
+            "default": 8,
+            "maximum": 15.0,
+            "minimum": 1.0,
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "title": "AprendizadoAnaliseIaIn",
+        "type": "object"
+      },
+      "AprendizadoAnalisesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoAnaliseIa"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "AprendizadoAnalisesList",
+        "type": "object"
+      },
+      "AprendizadoAviso": {
+        "properties": {
+          "fator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fator"
+          },
+          "rotulo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rotulo"
+          },
+          "semMaior": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Semmaior"
+          },
+          "temaId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temaid"
+          },
+          "temaNome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temanome"
+          },
+          "tipo": {
+            "enum": [
+              "puxado_por_1",
+              "nao_separavel",
+              "quase_so_com",
+              "travada",
+              "em_alta",
+              "em_queda"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "tipo"
+        ],
+        "title": "AprendizadoAviso",
+        "type": "object"
+      },
+      "AprendizadoBloco": {
+        "properties": {
+          "hashtags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hashtags",
+            "type": "array"
+          },
+          "nPosts": {
+            "title": "Nposts",
+            "type": "integer"
+          },
+          "quaseSempreCom": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Quasesemprecom",
+            "type": "array"
+          },
+          "valor": {
+            "title": "Valor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "valor",
+          "hashtags",
+          "nPosts",
+          "quaseSempreCom"
+        ],
+        "title": "AprendizadoBloco",
+        "type": "object"
+      },
+      "AprendizadoBloqueio": {
+        "properties": {
+          "code": {
+            "const": "fixas_no_maximo",
+            "title": "Code",
+            "type": "string"
+          },
+          "fixas": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fixas",
+            "type": "array"
+          },
+          "maximo": {
+            "title": "Maximo",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "fixas",
+          "maximo"
+        ],
+        "title": "AprendizadoBloqueio",
+        "type": "object"
+      },
+      "AprendizadoCelulaMatriz": {
+        "properties": {
+          "bloco": {
+            "title": "Bloco",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "temaId": {
+            "format": "uuid",
+            "title": "Temaid",
+            "type": "string"
+          },
+          "temaNome": {
+            "title": "Temanome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bloco",
+          "temaId",
+          "temaNome",
+          "n"
+        ],
+        "title": "AprendizadoCelulaMatriz",
+        "type": "object"
+      },
+      "AprendizadoClassificacao": {
+        "properties": {
+          "chamadaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chamadaid"
+          },
+          "estiloGancho": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pergunta",
+                  "revelacao",
+                  "numero_lista",
+                  "polemica",
+                  "humor",
+                  "voce_sabia",
+                  "ordem_direta",
+                  "outro"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estilogancho"
+          },
+          "evidenciaParcial": {
+            "title": "Evidenciaparcial",
+            "type": "boolean"
+          },
+          "justificativa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Justificativa"
+          },
+          "origem": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ia",
+                  "dono"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origem"
+          },
+          "post": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostResumo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reclassificar": {
+            "title": "Reclassificar",
+            "type": "boolean"
+          },
+          "secundarios": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Secundarios",
+            "type": "array"
+          },
+          "sugestaoTema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sugestaotema"
+          },
+          "taxonomiaVersao": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taxonomiaversao"
+          },
+          "temaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temaid"
+          },
+          "temaNome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temanome"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "videoId": {
+            "format": "uuid",
+            "title": "Videoid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "videoId",
+          "post",
+          "temaId",
+          "temaNome",
+          "secundarios",
+          "estiloGancho",
+          "justificativa",
+          "sugestaoTema",
+          "origem",
+          "evidenciaParcial",
+          "reclassificar",
+          "taxonomiaVersao",
+          "chamadaId",
+          "version"
+        ],
+        "title": "AprendizadoClassificacao",
+        "type": "object"
+      },
+      "AprendizadoClassificacaoPut": {
+        "properties": {
+          "estiloGancho": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pergunta",
+                  "revelacao",
+                  "numero_lista",
+                  "polemica",
+                  "humor",
+                  "voce_sabia",
+                  "ordem_direta",
+                  "outro"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estilogancho"
+          },
+          "secundarios": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 2,
+            "title": "Secundarios",
+            "type": "array"
+          },
+          "temaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temaid"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "temaId"
+        ],
+        "title": "AprendizadoClassificacaoPut",
+        "type": "object"
+      },
+      "AprendizadoClassificacoesList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoClassificacao"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limiteHoje": {
+            "$ref": "#/components/schemas/AprendizadoLimiteHoje"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          },
+          "pendentes": {
+            "title": "Pendentes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor",
+          "pendentes",
+          "limiteHoje"
+        ],
+        "title": "AprendizadoClassificacoesList",
+        "type": "object"
+      },
+      "AprendizadoClassificarOut": {
+        "properties": {
+          "pendentes": {
+            "title": "Pendentes",
+            "type": "integer"
+          },
+          "restantesHoje": {
+            "title": "Restanteshoje",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "pendentes",
+          "restantesHoje"
+        ],
+        "title": "AprendizadoClassificarOut",
+        "type": "object"
+      },
+      "AprendizadoConferencia": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "item": {
+            "title": "Item",
+            "type": "string"
+          },
+          "nota": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "resultado": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ok",
+                  "problema",
+                  "nao_sei"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resultado"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "videoId": {
+            "format": "uuid",
+            "title": "Videoid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "videoId",
+          "item",
+          "resultado",
+          "nota",
+          "updatedAt",
+          "updatedBy",
+          "version"
+        ],
+        "title": "AprendizadoConferencia",
+        "type": "object"
+      },
+      "AprendizadoConferenciaPut": {
+        "properties": {
+          "nota": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota"
+          },
+          "resultado": {
+            "enum": [
+              "ok",
+              "problema",
+              "nao_sei"
+            ],
+            "title": "Resultado",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "resultado"
+        ],
+        "title": "AprendizadoConferenciaPut",
+        "type": "object"
+      },
+      "AprendizadoConstantes": {
+        "description": "As constantes que a nota de leitura mostra (FR-013, FR-014, FR-022, FR-035).",
+        "properties": {
+          "ampliarMin": {
+            "title": "Ampliarmin",
+            "type": "number"
+          },
+          "concentracao": {
+            "title": "Concentracao",
+            "type": "number"
+          },
+          "cortarMax": {
+            "title": "Cortarmax",
+            "type": "number"
+          },
+          "cortarMinN": {
+            "title": "Cortarminn",
+            "type": "integer"
+          },
+          "evitarMax": {
+            "title": "Evitarmax",
+            "type": "number"
+          },
+          "fixarMin": {
+            "title": "Fixarmin",
+            "type": "number"
+          },
+          "janelaDias": {
+            "title": "Janeladias",
+            "type": "integer"
+          },
+          "kEncolhimento": {
+            "title": "Kencolhimento",
+            "type": "integer"
+          },
+          "limiteDiario": {
+            "title": "Limitediario",
+            "type": "integer"
+          },
+          "meiaVidaDias": {
+            "title": "Meiavidadias",
+            "type": "integer"
+          },
+          "minConta": {
+            "title": "Minconta",
+            "type": "integer"
+          },
+          "minDias": {
+            "title": "Mindias",
+            "type": "integer"
+          },
+          "minGrupo": {
+            "title": "Mingrupo",
+            "type": "integer"
+          },
+          "pesoAfinidade": {
+            "title": "Pesoafinidade",
+            "type": "integer"
+          },
+          "reamostras": {
+            "title": "Reamostras",
+            "type": "integer"
+          },
+          "travada": {
+            "title": "Travada",
+            "type": "number"
+          }
+        },
+        "required": [
+          "minGrupo",
+          "minDias",
+          "minConta",
+          "kEncolhimento",
+          "meiaVidaDias",
+          "janelaDias",
+          "reamostras",
+          "concentracao",
+          "travada",
+          "ampliarMin",
+          "cortarMax",
+          "cortarMinN",
+          "fixarMin",
+          "evitarMax",
+          "limiteDiario",
+          "pesoAfinidade"
+        ],
+        "title": "AprendizadoConstantes",
+        "type": "object"
+      },
+      "AprendizadoContaContexto": {
+        "properties": {
+          "contaId": {
+            "format": "uuid",
+            "title": "Contaid",
+            "type": "string"
+          },
+          "estagnados": {
+            "title": "Estagnados",
+            "type": "integer"
+          },
+          "medidos": {
+            "title": "Medidos",
+            "type": "integer"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          },
+          "suficiente": {
+            "title": "Suficiente",
+            "type": "boolean"
+          },
+          "travada": {
+            "title": "Travada",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "contaId",
+          "rotulo",
+          "medidos",
+          "estagnados",
+          "travada",
+          "suficiente"
+        ],
+        "title": "AprendizadoContaContexto",
+        "type": "object"
+      },
+      "AprendizadoContaRef": {
+        "properties": {
+          "handle": {
+            "title": "Handle",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "handle",
+          "rotulo"
+        ],
+        "title": "AprendizadoContaRef",
+        "type": "object"
+      },
+      "AprendizadoDecidirIn": {
+        "properties": {
+          "chave": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Chave",
+            "type": "string"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "decisao": {
+            "enum": [
+              "aceita",
+              "rejeitada"
+            ],
+            "title": "Decisao",
+            "type": "string"
+          },
+          "medida": {
+            "default": "h24",
+            "enum": [
+              "h1",
+              "h24",
+              "d7"
+            ],
+            "title": "Medida",
+            "type": "string"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "substituir": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Substituir"
+          }
+        },
+        "required": [
+          "chave",
+          "decisao"
+        ],
+        "title": "AprendizadoDecidirIn",
+        "type": "object"
+      },
+      "AprendizadoDecidirOut": {
+        "properties": {
+          "decisao": {
+            "$ref": "#/components/schemas/AprendizadoDecisao"
+          },
+          "guia": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AprendizadoGuiaRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preferencias": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AprendizadoPreferencias"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "decisao"
+        ],
+        "title": "AprendizadoDecidirOut",
+        "type": "object"
+      },
+      "AprendizadoDecisao": {
+        "properties": {
+          "analiseId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analiseid"
+          },
+          "chave": {
+            "title": "Chave",
+            "type": "string"
+          },
+          "decididoEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decididoem"
+          },
+          "decididoPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "escopo": {
+            "$ref": "#/components/schemas/AprendizadoEscopo"
+          },
+          "estado": {
+            "enum": [
+              "aberta",
+              "aceita",
+              "rejeitada"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "evidencia": {
+            "additionalProperties": true,
+            "title": "Evidencia",
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "origem": {
+            "enum": [
+              "regra",
+              "hipotese"
+            ],
+            "title": "Origem",
+            "type": "string"
+          },
+          "revertidaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revertidaem"
+          },
+          "superada": {
+            "title": "Superada",
+            "type": "boolean"
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          },
+          "tipo": {
+            "enum": [
+              "tema_ampliar",
+              "tema_cortar",
+              "hashtag_fixar",
+              "hashtag_evitar",
+              "padrao_gancho",
+              "padrao_duracao",
+              "padrao_horario"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "chave",
+          "tipo",
+          "escopo",
+          "estado",
+          "origem",
+          "analiseId",
+          "evidencia",
+          "texto",
+          "motivo",
+          "decididoPor",
+          "decididoEm",
+          "revertidaEm",
+          "superada",
+          "version"
+        ],
+        "title": "AprendizadoDecisao",
+        "type": "object"
+      },
+      "AprendizadoDiagnostico": {
+        "properties": {
+          "checklist": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoItemChecklist"
+            },
+            "title": "Checklist",
+            "type": "array"
+          },
+          "contas": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoDiagnosticoConta"
+            },
+            "title": "Contas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "contas",
+          "checklist"
+        ],
+        "title": "AprendizadoDiagnostico",
+        "type": "object"
+      },
+      "AprendizadoDiagnosticoConta": {
+        "properties": {
+          "conta": {
+            "$ref": "#/components/schemas/AprendizadoContaRef"
+          },
+          "estagnados": {
+            "title": "Estagnados",
+            "type": "integer"
+          },
+          "medidos": {
+            "title": "Medidos",
+            "type": "integer"
+          },
+          "postsComSinais": {
+            "title": "Postscomsinais",
+            "type": "integer"
+          },
+          "sinais": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoSinal"
+            },
+            "title": "Sinais",
+            "type": "array"
+          },
+          "travada": {
+            "title": "Travada",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "conta",
+          "travada",
+          "estagnados",
+          "medidos",
+          "sinais",
+          "postsComSinais"
+        ],
+        "title": "AprendizadoDiagnosticoConta",
+        "type": "object"
+      },
+      "AprendizadoEfeito": {
+        "properties": {
+          "avisos": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoAviso"
+            },
+            "title": "Avisos",
+            "type": "array"
+          },
+          "confianca": {
+            "enum": [
+              "forte",
+              "moderada",
+              "fraca",
+              "indicio",
+              "amostra_pequena"
+            ],
+            "title": "Confianca",
+            "type": "string"
+          },
+          "efeito": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Efeito"
+          },
+          "faltam": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faltam"
+          },
+          "fator": {
+            "title": "Fator",
+            "type": "string"
+          },
+          "intervalo": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intervalo"
+          },
+          "medianaBruta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Medianabruta"
+          },
+          "nDias": {
+            "title": "Ndias",
+            "type": "integer"
+          },
+          "nPosts": {
+            "title": "Nposts",
+            "type": "integer"
+          },
+          "parte": {
+            "enum": [
+              "entrega",
+              "rendimento"
+            ],
+            "title": "Parte",
+            "type": "string"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          },
+          "valor": {
+            "title": "Valor",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fator",
+          "valor",
+          "rotulo",
+          "parte",
+          "efeito",
+          "intervalo",
+          "nPosts",
+          "nDias",
+          "confianca",
+          "faltam",
+          "medianaBruta",
+          "avisos"
+        ],
+        "title": "AprendizadoEfeito",
+        "type": "object"
+      },
+      "AprendizadoEscopo": {
+        "properties": {
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "tipo": {
+            "enum": [
+              "perfil",
+              "conta"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo"
+        ],
+        "title": "AprendizadoEscopo",
+        "type": "object"
+      },
+      "AprendizadoEstimativa": {
+        "properties": {
+          "comparaveis": {
+            "items": {
+              "$ref": "#/components/schemas/PostResumo"
+            },
+            "title": "Comparaveis",
+            "type": "array"
+          },
+          "custoComQuadrosUsd": {
+            "title": "Custocomquadrosusd",
+            "type": "number"
+          },
+          "custoSemQuadrosUsd": {
+            "title": "Custosemquadrosusd",
+            "type": "number"
+          },
+          "melhores": {
+            "items": {
+              "$ref": "#/components/schemas/PostResumo"
+            },
+            "title": "Melhores",
+            "type": "array"
+          },
+          "semArquivo": {
+            "title": "Semarquivo",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "melhores",
+          "comparaveis",
+          "semArquivo",
+          "custoSemQuadrosUsd",
+          "custoComQuadrosUsd"
+        ],
+        "title": "AprendizadoEstimativa",
+        "type": "object"
+      },
+      "AprendizadoEstimativaIn": {
+        "properties": {
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "medida": {
+            "default": "h24",
+            "enum": [
+              "h1",
+              "h24",
+              "d7"
+            ],
+            "title": "Medida",
+            "type": "string"
+          },
+          "n": {
+            "default": 8,
+            "maximum": 15.0,
+            "minimum": 1.0,
+            "title": "N",
+            "type": "integer"
+          }
+        },
+        "title": "AprendizadoEstimativaIn",
+        "type": "object"
+      },
+      "AprendizadoGuiaRef": {
+        "properties": {
+          "nivel": {
+            "enum": [
+              "perfil",
+              "conta"
+            ],
+            "title": "Nivel",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "nivel",
+          "version"
+        ],
+        "title": "AprendizadoGuiaRef",
+        "type": "object"
+      },
+      "AprendizadoHipotese": {
+        "properties": {
+          "contraste": {
+            "title": "Contraste",
+            "type": "string"
+          },
+          "grau": {
+            "const": "a_conferir",
+            "title": "Grau",
+            "type": "string"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "postsIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Postsids",
+            "type": "array"
+          },
+          "texto": {
+            "title": "Texto",
+            "type": "string"
+          }
+        },
+        "required": [
+          "texto",
+          "postsIds",
+          "contraste",
+          "n",
+          "grau"
+        ],
+        "title": "AprendizadoHipotese",
+        "type": "object"
+      },
+      "AprendizadoHipoteseRecomendarIn": {
+        "properties": {
+          "texto": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Texto",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "padrao_gancho",
+              "padrao_duracao",
+              "padrao_horario"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "texto"
+        ],
+        "title": "AprendizadoHipoteseRecomendarIn",
+        "type": "object"
+      },
+      "AprendizadoItemChecklist": {
+        "properties": {
+          "item": {
+            "title": "Item",
+            "type": "string"
+          },
+          "texto": {
+            "title": "Texto",
+            "type": "string"
+          },
+          "titulo": {
+            "title": "Titulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "item",
+          "titulo",
+          "texto"
+        ],
+        "title": "AprendizadoItemChecklist",
+        "type": "object"
+      },
+      "AprendizadoJuntarIn": {
+        "properties": {
+          "destinoId": {
+            "format": "uuid",
+            "title": "Destinoid",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "destinoId"
+        ],
+        "title": "AprendizadoJuntarIn",
+        "type": "object"
+      },
+      "AprendizadoJuntarOut": {
+        "properties": {
+          "destino": {
+            "$ref": "#/components/schemas/AprendizadoTema"
+          },
+          "movidas": {
+            "title": "Movidas",
+            "type": "integer"
+          },
+          "origem": {
+            "$ref": "#/components/schemas/AprendizadoTema"
+          }
+        },
+        "required": [
+          "origem",
+          "destino",
+          "movidas"
+        ],
+        "title": "AprendizadoJuntarOut",
+        "type": "object"
+      },
+      "AprendizadoLimiteHoje": {
+        "properties": {
+          "limite": {
+            "title": "Limite",
+            "type": "integer"
+          },
+          "usadas": {
+            "title": "Usadas",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "usadas",
+          "limite"
+        ],
+        "title": "AprendizadoLimiteHoje",
+        "type": "object"
+      },
+      "AprendizadoPadrao": {
+        "properties": {
+          "texto": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Texto",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "gancho",
+              "duracao",
+              "horario"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          }
+        },
+        "required": [
+          "tipo",
+          "texto"
+        ],
+        "title": "AprendizadoPadrao",
+        "type": "object"
+      },
+      "AprendizadoPostDiagnostico": {
+        "properties": {
+          "checklist": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoItemChecklist"
+            },
+            "title": "Checklist",
+            "type": "array"
+          },
+          "conferencias": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoConferencia"
+            },
+            "title": "Conferencias",
+            "type": "array"
+          },
+          "estagnado": {
+            "title": "Estagnado",
+            "type": "boolean"
+          },
+          "post": {
+            "$ref": "#/components/schemas/PostResumo"
+          },
+          "sinais": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoSinal"
+            },
+            "title": "Sinais",
+            "type": "array"
+          }
+        },
+        "required": [
+          "post",
+          "estagnado",
+          "sinais",
+          "conferencias",
+          "checklist"
+        ],
+        "title": "AprendizadoPostDiagnostico",
+        "type": "object"
+      },
+      "AprendizadoPreferencias": {
+        "properties": {
+          "classificacaoAuto": {
+            "title": "Classificacaoauto",
+            "type": "boolean"
+          },
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "hashtagsEvitar": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hashtagsevitar",
+            "type": "array"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "padroes": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoPadrao"
+            },
+            "title": "Padroes",
+            "type": "array"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "taxonomiaVersao": {
+            "title": "Taxonomiaversao",
+            "type": "integer"
+          },
+          "temas": {
+            "additionalProperties": {
+              "enum": [
+                "ampliar",
+                "cortar"
+              ],
+              "type": "string"
+            },
+            "title": "Temas",
+            "type": "object"
+          },
+          "usarDesempenho": {
+            "title": "Usardesempenho",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "contaId",
+          "temas",
+          "hashtagsEvitar",
+          "padroes",
+          "classificacaoAuto",
+          "usarDesempenho",
+          "taxonomiaVersao",
+          "version"
+        ],
+        "title": "AprendizadoPreferencias",
+        "type": "object"
+      },
+      "AprendizadoPreferenciasEfetivas": {
+        "properties": {
+          "hashtagsEvitar": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hashtagsevitar",
+            "type": "array"
+          },
+          "janelaPreferida": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Janelapreferida"
+          },
+          "padroes": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoPadrao"
+            },
+            "title": "Padroes",
+            "type": "array"
+          },
+          "temas": {
+            "additionalProperties": {
+              "enum": [
+                "ampliar",
+                "cortar"
+              ],
+              "type": "string"
+            },
+            "title": "Temas",
+            "type": "object"
+          },
+          "usarDesempenho": {
+            "title": "Usardesempenho",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "temas",
+          "hashtagsEvitar",
+          "padroes",
+          "usarDesempenho",
+          "janelaPreferida"
+        ],
+        "title": "AprendizadoPreferenciasEfetivas",
+        "type": "object"
+      },
+      "AprendizadoPreferenciasOut": {
+        "properties": {
+          "conta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AprendizadoPreferencias"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "efetivas": {
+            "$ref": "#/components/schemas/AprendizadoPreferenciasEfetivas"
+          },
+          "perfil": {
+            "$ref": "#/components/schemas/AprendizadoPreferencias"
+          }
+        },
+        "required": [
+          "perfil",
+          "conta",
+          "efetivas"
+        ],
+        "title": "AprendizadoPreferenciasOut",
+        "type": "object"
+      },
+      "AprendizadoPreferenciasPatch": {
+        "properties": {
+          "classificacaoAuto": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Classificacaoauto"
+          },
+          "hashtagsEvitar": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 30,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hashtagsevitar"
+          },
+          "padroes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AprendizadoPadrao"
+                },
+                "maxItems": 10,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Padroes"
+          },
+          "temas": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "enum": [
+                    "ampliar",
+                    "cortar"
+                  ],
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temas"
+          },
+          "usarDesempenho": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usardesempenho"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "AprendizadoPreferenciasPatch",
+        "type": "object"
+      },
+      "AprendizadoProporIn": {
+        "properties": {
+          "instrucao": {
+            "default": "",
+            "maxLength": 1000,
+            "title": "Instrucao",
+            "type": "string"
+          }
+        },
+        "title": "AprendizadoProporIn",
+        "type": "object"
+      },
+      "AprendizadoProporOut": {
+        "properties": {
+          "chamadaId": {
+            "format": "uuid",
+            "title": "Chamadaid",
+            "type": "string"
+          },
+          "custoUsd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custousd"
+          },
+          "temas": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoTemaIn"
+            },
+            "title": "Temas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "chamadaId",
+          "temas",
+          "custoUsd"
+        ],
+        "title": "AprendizadoProporOut",
+        "type": "object"
+      },
+      "AprendizadoRecomendacao": {
+        "properties": {
+          "alvo": {
+            "$ref": "#/components/schemas/AprendizadoAlvo"
+          },
+          "bloqueio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AprendizadoBloqueio"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "chave": {
+            "title": "Chave",
+            "type": "string"
+          },
+          "decisaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decisaoid"
+          },
+          "escopo": {
+            "$ref": "#/components/schemas/AprendizadoEscopo"
+          },
+          "evidencia": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AprendizadoEfeito"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "jaRejeitadaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jarejeitadaem"
+          },
+          "motivo": {
+            "title": "Motivo",
+            "type": "string"
+          },
+          "oQueMuda": {
+            "title": "Oquemuda",
+            "type": "string"
+          },
+          "origem": {
+            "enum": [
+              "regra",
+              "hipotese"
+            ],
+            "title": "Origem",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "tema_ampliar",
+              "tema_cortar",
+              "hashtag_fixar",
+              "hashtag_evitar",
+              "padrao_gancho",
+              "padrao_duracao",
+              "padrao_horario"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "chave",
+          "tipo",
+          "escopo",
+          "alvo",
+          "motivo",
+          "evidencia",
+          "oQueMuda",
+          "origem"
+        ],
+        "title": "AprendizadoRecomendacao",
+        "type": "object"
+      },
+      "AprendizadoRecomendacoesOut": {
+        "properties": {
+          "abertas": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoRecomendacao"
+            },
+            "title": "Abertas",
+            "type": "array"
+          },
+          "decididas": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoDecisao"
+            },
+            "title": "Decididas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "abertas",
+          "decididas"
+        ],
+        "title": "AprendizadoRecomendacoesOut",
+        "type": "object"
+      },
+      "AprendizadoRevertOut": {
+        "properties": {
+          "aviso": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aviso"
+          },
+          "decisao": {
+            "$ref": "#/components/schemas/AprendizadoDecisao"
+          },
+          "linkGuia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Linkguia"
+          },
+          "preferencias": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AprendizadoPreferencias"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "decisao"
+        ],
+        "title": "AprendizadoRevertOut",
+        "type": "object"
+      },
+      "AprendizadoSinal": {
+        "properties": {
+          "alvo": {
+            "enum": [
+              "conta",
+              "post"
+            ],
+            "title": "Alvo",
+            "type": "string"
+          },
+          "alvoId": {
+            "format": "uuid",
+            "title": "Alvoid",
+            "type": "string"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero"
+          },
+          "texto": {
+            "title": "Texto",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "conta_nova",
+              "muitos_no_dia",
+              "intervalo_curto",
+              "fora_da_audiencia",
+              "repostagem",
+              "curto",
+              "legenda_vazia",
+              "hashtags_demais",
+              "travada"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "alvo",
+          "alvoId",
+          "numero",
+          "texto"
+        ],
+        "title": "AprendizadoSinal",
+        "type": "object"
+      },
+      "AprendizadoTema": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "descricao": {
+            "title": "Descricao",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "juntadoEmId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Juntadoemid"
+          },
+          "nPosts": {
+            "title": "Nposts",
+            "type": "integer"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "palavrasChave": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Palavraschave",
+            "type": "array"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "nome",
+          "descricao",
+          "palavrasChave",
+          "archived",
+          "juntadoEmId",
+          "nPosts",
+          "version"
+        ],
+        "title": "AprendizadoTema",
+        "type": "object"
+      },
+      "AprendizadoTemaIn": {
+        "properties": {
+          "descricao": {
+            "default": "",
+            "maxLength": 200,
+            "title": "Descricao",
+            "type": "string"
+          },
+          "nome": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Nome",
+            "type": "string"
+          },
+          "palavrasChave": {
+            "items": {
+              "maxLength": 30,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Palavraschave",
+            "type": "array"
+          }
+        },
+        "required": [
+          "nome"
+        ],
+        "title": "AprendizadoTemaIn",
+        "type": "object"
+      },
+      "AprendizadoTemaPatch": {
+        "properties": {
+          "descricao": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "nome": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "palavrasChave": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 30,
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Palavraschave"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "AprendizadoTemaPatch",
+        "type": "object"
+      },
+      "AprendizadoTemasList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoTema"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "taxonomiaVersao": {
+            "title": "Taxonomiaversao",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "taxonomiaVersao"
+        ],
+        "title": "AprendizadoTemasList",
+        "type": "object"
+      },
+      "AprendizadoTemasLoteIn": {
+        "properties": {
+          "chamadaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chamadaid"
+          },
+          "temas": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoTemaIn"
+            },
+            "maxItems": 30,
+            "minItems": 1,
+            "title": "Temas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "temas"
+        ],
+        "title": "AprendizadoTemasLoteIn",
+        "type": "object"
+      },
+      "AprendizadoTemasLoteOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AprendizadoTema"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AprendizadoTemasLoteOut",
+        "type": "object"
+      },
+      "AprendizadoVersionIn": {
+        "properties": {
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "AprendizadoVersionIn",
+        "type": "object"
+      },
       "Aprovacao": {
         "properties": {
           "em": {
@@ -1876,7 +4616,11 @@
           "secao": {
             "enum": [
               "visao_geral",
-              "seguidores"
+              "seguidores",
+              "genero",
+              "territorios",
+              "atividade",
+              "espectadores"
             ],
             "title": "Secao",
             "type": "string"
@@ -1884,7 +4628,8 @@
           "tipo": {
             "enum": [
               "zip",
-              "csv"
+              "csv",
+              "xlsx"
             ],
             "title": "Tipo",
             "type": "string"
@@ -2931,7 +5676,7 @@
         "properties": {
           "arquivos": {
             "default": [],
-            "description": "De 1 a 2 arquivos (.zip ou .csv) do TikTok Studio, até 5 MB no total",
+            "description": "De 1 a 3 arquivos (.zip, .csv ou .xlsx) do TikTok Studio: os ZIPs da Visão geral, de Seguidores e/ou de Espectadores, até 5 MB no total",
             "items": {
               "contentMediaType": "application/octet-stream",
               "type": "string"
@@ -5852,6 +8597,9 @@
             "title": "Importacoesativas",
             "type": "integer"
           },
+          "publico": {
+            "$ref": "#/components/schemas/CoberturaPublico"
+          },
           "secoes": {
             "items": {
               "$ref": "#/components/schemas/SecaoCobertura"
@@ -5868,6 +8616,32 @@
           "importacoesAtivas"
         ],
         "title": "Cobertura",
+        "type": "object"
+      },
+      "CoberturaPublico": {
+        "properties": {
+          "atividade": {
+            "$ref": "#/components/schemas/PublicoDiasCobertura"
+          },
+          "espectadores": {
+            "$ref": "#/components/schemas/PublicoDiasCobertura"
+          },
+          "fotos": {
+            "items": {
+              "$ref": "#/components/schemas/PublicoFotoCobertura"
+            },
+            "title": "Fotos",
+            "type": "array"
+          },
+          "vazias": {
+            "items": {
+              "$ref": "#/components/schemas/PublicoVaziaCobertura"
+            },
+            "title": "Vazias",
+            "type": "array"
+          }
+        },
+        "title": "CoberturaPublico",
         "type": "object"
       },
       "ColetaCobertura": {
@@ -6494,6 +9268,7 @@
       "ContagensImportacao": {
         "properties": {
           "coletados": {
+            "default": 0,
             "title": "Coletados",
             "type": "integer"
           },
@@ -6502,6 +9277,7 @@
             "type": "integer"
           },
           "faltando": {
+            "default": 0,
             "title": "Faltando",
             "type": "integer"
           },
@@ -6510,21 +9286,24 @@
             "type": "integer"
           },
           "ignorados": {
+            "default": 0,
             "title": "Ignorados",
             "type": "integer"
           },
           "iguais": {
             "title": "Iguais",
             "type": "integer"
+          },
+          "semDado": {
+            "default": 0,
+            "title": "Semdado",
+            "type": "integer"
           }
         },
         "required": [
           "gravados",
           "iguais",
-          "divergentes",
-          "coletados",
-          "faltando",
-          "ignorados"
+          "divergentes"
         ],
         "title": "ContagensImportacao",
         "type": "object"
@@ -10841,7 +13620,10 @@
               "cena.camera",
               "cena.estilo",
               "cena.audio",
-              "cena.ajustar"
+              "cena.ajustar",
+              "aprendizado.taxonomia",
+              "aprendizado.classificacao",
+              "aprendizado.analise"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -11311,7 +14093,10 @@
               "cena.camera",
               "cena.estilo",
               "cena.audio",
-              "cena.ajustar"
+              "cena.ajustar",
+              "aprendizado.taxonomia",
+              "aprendizado.classificacao",
+              "aprendizado.analise"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -11408,6 +14193,36 @@
               }
             ],
             "title": "Custousd"
+          },
+          "desempenhoContaVersion": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desempenhocontaversion"
+          },
+          "desempenhoExemplos": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Desempenhoexemplos",
+            "type": "array"
+          },
+          "desempenhoPerfilVersion": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desempenhoperfilversion"
           },
           "desfecho": {
             "$ref": "#/components/schemas/IaDesfecho"
@@ -11815,7 +14630,11 @@
             "propertyNames": {
               "enum": [
                 "visao_geral",
-                "seguidores"
+                "seguidores",
+                "genero",
+                "territorios",
+                "atividade",
+                "espectadores"
               ]
             },
             "title": "Contagens",
@@ -11828,6 +14647,33 @@
           },
           "criadaPor": {
             "$ref": "#/components/schemas/UserRef"
+          },
+          "dataFoto": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datafoto"
+          },
+          "dataFotoOrigem": {
+            "anyOf": [
+              {
+                "enum": [
+                  "historico",
+                  "importacao"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datafotoorigem"
           },
           "desfeitaEm": {
             "anyOf": [
@@ -11896,11 +14742,28 @@
             "items": {
               "enum": [
                 "visao_geral",
-                "seguidores"
+                "seguidores",
+                "genero",
+                "territorios",
+                "atividade",
+                "espectadores"
               ],
               "type": "string"
             },
             "title": "Secoes",
+            "type": "array"
+          },
+          "secoesVazias": {
+            "items": {
+              "enum": [
+                "genero",
+                "territorios",
+                "atividade",
+                "espectadores"
+              ],
+              "type": "string"
+            },
+            "title": "Secoesvazias",
             "type": "array"
           },
           "serieId": {
@@ -13576,6 +16439,11 @@
           "contexto": {
             "$ref": "#/components/schemas/Contexto"
           },
+          "ocultosPorTema": {
+            "default": 0,
+            "title": "Ocultosportema",
+            "type": "integer"
+          },
           "oportunidades": {
             "items": {
               "$ref": "#/components/schemas/Oportunidade"
@@ -14318,6 +17186,16 @@
       },
       "Oportunidade": {
         "properties": {
+          "afinidade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AprendizadoAfinidade"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "canal": {
             "$ref": "#/components/schemas/CanalOportunidade"
           },
@@ -15342,6 +18220,13 @@
             "title": "Previaid",
             "type": "string"
           },
+          "publico": {
+            "items": {
+              "$ref": "#/components/schemas/SecaoPublicoPrevia"
+            },
+            "title": "Publico",
+            "type": "array"
+          },
           "secoes": {
             "items": {
               "$ref": "#/components/schemas/SecaoPrevia"
@@ -15596,6 +18481,882 @@
         "title": "PublicacaoConfigOut",
         "type": "object"
       },
+      "PublicoAtividade": {
+        "properties": {
+          "celulas": {
+            "items": {
+              "$ref": "#/components/schemas/CelulaMapa"
+            },
+            "title": "Celulas",
+            "type": "array"
+          },
+          "diasComDado": {
+            "title": "Diascomdado",
+            "type": "integer"
+          },
+          "ultimoDiaComDado": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultimodiacomdado"
+          }
+        },
+        "required": [
+          "celulas",
+          "diasComDado",
+          "ultimoDiaComDado"
+        ],
+        "title": "PublicoAtividade",
+        "type": "object"
+      },
+      "PublicoAtividadeConta": {
+        "properties": {
+          "atividade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicoAtividade"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "conta": {
+            "$ref": "#/components/schemas/PublicoConta"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sem_importacao",
+                  "veio_vazia",
+                  "sem_dado_no_periodo"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          }
+        },
+        "required": [
+          "conta",
+          "atividade",
+          "motivo"
+        ],
+        "title": "PublicoAtividadeConta",
+        "type": "object"
+      },
+      "PublicoAtividadeSeguidores": {
+        "description": "O 3º mapa de Quando postar (\"Seguidores on-line\", spec 022): o mesmo cálculo da aba\nPúblico, por conta (nunca somado entre contas).",
+        "properties": {
+          "contas": {
+            "items": {
+              "$ref": "#/components/schemas/PublicoAtividadeConta"
+            },
+            "title": "Contas",
+            "type": "array"
+          }
+        },
+        "title": "PublicoAtividadeSeguidores",
+        "type": "object"
+      },
+      "PublicoConta": {
+        "description": "A conta de uma entrada do público, na ordem de `ordem-contas` (019). Numa série anônima,\n`serieId` e `contaId` vêm nulos e o `rotulo` é \"Conta anônima N\".",
+        "properties": {
+          "contaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contaid"
+          },
+          "ordem": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ordem"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          },
+          "serieId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Serieid"
+          }
+        },
+        "required": [
+          "serieId",
+          "contaId",
+          "rotulo",
+          "ordem"
+        ],
+        "title": "PublicoConta",
+        "type": "object"
+      },
+      "PublicoContaOut": {
+        "properties": {
+          "atividade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicoAtividade"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "conta": {
+            "$ref": "#/components/schemas/PublicoConta"
+          },
+          "espectadores": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicoEspectadores"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "genero": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicoDistribuicao"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "motivos": {
+            "$ref": "#/components/schemas/PublicoMotivos"
+          },
+          "territorios": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicoDistribuicao"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "conta",
+          "genero",
+          "territorios",
+          "atividade",
+          "espectadores",
+          "motivos"
+        ],
+        "title": "PublicoContaOut",
+        "type": "object"
+      },
+      "PublicoContagensPrevia": {
+        "properties": {
+          "divergentes": {
+            "title": "Divergentes",
+            "type": "integer"
+          },
+          "faltando": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Faltando",
+            "type": "array"
+          },
+          "gravados": {
+            "title": "Gravados",
+            "type": "integer"
+          },
+          "ignorados": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Ignorados",
+            "type": "array"
+          },
+          "iguais": {
+            "title": "Iguais",
+            "type": "integer"
+          },
+          "semDado": {
+            "title": "Semdado",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "gravados",
+          "iguais",
+          "divergentes",
+          "semDado"
+        ],
+        "title": "PublicoContagensPrevia",
+        "type": "object"
+      },
+      "PublicoDiaEspectadores": {
+        "properties": {
+          "dia": {
+            "format": "date",
+            "title": "Dia",
+            "type": "string"
+          },
+          "novos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Novos"
+          },
+          "recorrentes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recorrentes"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "dia",
+          "total",
+          "novos",
+          "recorrentes"
+        ],
+        "title": "PublicoDiaEspectadores",
+        "type": "object"
+      },
+      "PublicoDiasCobertura": {
+        "properties": {
+          "buracos": {
+            "items": {
+              "$ref": "#/components/schemas/Faixa"
+            },
+            "title": "Buracos",
+            "type": "array"
+          },
+          "faixas": {
+            "items": {
+              "$ref": "#/components/schemas/Faixa"
+            },
+            "title": "Faixas",
+            "type": "array"
+          }
+        },
+        "title": "PublicoDiasCobertura",
+        "type": "object"
+      },
+      "PublicoDistribuicao": {
+        "properties": {
+          "anteriorAoPeriodo": {
+            "title": "Anterioraoperiodo",
+            "type": "boolean"
+          },
+          "dataFoto": {
+            "format": "date",
+            "title": "Datafoto",
+            "type": "string"
+          },
+          "dataFotoComparacao": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datafotocomparacao"
+          },
+          "importacaoId": {
+            "format": "uuid",
+            "title": "Importacaoid",
+            "type": "string"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/PublicoItem"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "outrosPct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outrospct"
+          },
+          "seguidoresNaData": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seguidoresnadata"
+          }
+        },
+        "required": [
+          "dataFoto",
+          "anteriorAoPeriodo",
+          "importacaoId",
+          "dataFotoComparacao",
+          "seguidoresNaData",
+          "itens",
+          "outrosPct"
+        ],
+        "title": "PublicoDistribuicao",
+        "type": "object"
+      },
+      "PublicoEspectadores": {
+        "properties": {
+          "diasSemDado": {
+            "title": "Diassemdado",
+            "type": "integer"
+          },
+          "mediaRecorrentes": {
+            "$ref": "#/components/schemas/PublicoIndicador"
+          },
+          "mediaTotal": {
+            "$ref": "#/components/schemas/PublicoIndicador"
+          },
+          "novos": {
+            "$ref": "#/components/schemas/PublicoIndicador"
+          },
+          "serie": {
+            "items": {
+              "$ref": "#/components/schemas/PublicoDiaEspectadores"
+            },
+            "title": "Serie",
+            "type": "array"
+          }
+        },
+        "required": [
+          "serie",
+          "novos",
+          "mediaTotal",
+          "mediaRecorrentes",
+          "diasSemDado"
+        ],
+        "title": "PublicoEspectadores",
+        "type": "object"
+      },
+      "PublicoFotoCobertura": {
+        "properties": {
+          "dataFoto": {
+            "format": "date",
+            "title": "Datafoto",
+            "type": "string"
+          },
+          "importacaoId": {
+            "format": "uuid",
+            "title": "Importacaoid",
+            "type": "string"
+          },
+          "tipo": {
+            "enum": [
+              "genero",
+              "territorio"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "dataFoto",
+          "importacaoId"
+        ],
+        "title": "PublicoFotoCobertura",
+        "type": "object"
+      },
+      "PublicoIndicador": {
+        "properties": {
+          "anterior": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anterior"
+          },
+          "n": {
+            "title": "N",
+            "type": "integer"
+          },
+          "valor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valor"
+          },
+          "variacaoPct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variacaopct"
+          }
+        },
+        "required": [
+          "valor",
+          "anterior",
+          "variacaoPct",
+          "n"
+        ],
+        "title": "PublicoIndicador",
+        "type": "object"
+      },
+      "PublicoItem": {
+        "properties": {
+          "difPp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Difpp"
+          },
+          "marca": {
+            "anyOf": [
+              {
+                "enum": [
+                  "novo",
+                  "saiu"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marca"
+          },
+          "pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          },
+          "pctComparacao": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pctcomparacao"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          },
+          "rotuloExibicao": {
+            "title": "Rotuloexibicao",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rotulo",
+          "rotuloExibicao",
+          "pct",
+          "pctComparacao",
+          "difPp",
+          "marca"
+        ],
+        "title": "PublicoItem",
+        "type": "object"
+      },
+      "PublicoItemPrevia": {
+        "properties": {
+          "pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pct"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          },
+          "rotuloExibicao": {
+            "title": "Rotuloexibicao",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rotulo",
+          "rotuloExibicao",
+          "pct"
+        ],
+        "title": "PublicoItemPrevia",
+        "type": "object"
+      },
+      "PublicoLinhaEspectadores": {
+        "properties": {
+          "dia": {
+            "format": "date",
+            "title": "Dia",
+            "type": "string"
+          },
+          "novos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Novos"
+          },
+          "recorrentes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recorrentes"
+          },
+          "situacao": {
+            "enum": [
+              "novo",
+              "igual",
+              "divergente",
+              "coletado",
+              "ignorado"
+            ],
+            "title": "Situacao",
+            "type": "string"
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total"
+          }
+        },
+        "required": [
+          "dia",
+          "total",
+          "novos",
+          "recorrentes",
+          "situacao"
+        ],
+        "title": "PublicoLinhaEspectadores",
+        "type": "object"
+      },
+      "PublicoMotivos": {
+        "properties": {
+          "atividade": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sem_importacao",
+                  "veio_vazia",
+                  "sem_dado_no_periodo"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atividade"
+          },
+          "espectadores": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sem_importacao",
+                  "veio_vazia",
+                  "sem_dado_no_periodo"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Espectadores"
+          },
+          "genero": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sem_importacao",
+                  "veio_vazia",
+                  "sem_dado_no_periodo"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Genero"
+          },
+          "territorios": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sem_importacao",
+                  "veio_vazia",
+                  "sem_dado_no_periodo"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Territorios"
+          }
+        },
+        "required": [
+          "genero",
+          "territorios",
+          "atividade",
+          "espectadores"
+        ],
+        "title": "PublicoMotivos",
+        "type": "object"
+      },
+      "PublicoOut": {
+        "properties": {
+          "contas": {
+            "items": {
+              "$ref": "#/components/schemas/PublicoContaOut"
+            },
+            "title": "Contas",
+            "type": "array"
+          },
+          "contexto": {
+            "$ref": "#/components/schemas/Contexto"
+          }
+        },
+        "required": [
+          "contexto",
+          "contas"
+        ],
+        "title": "PublicoOut",
+        "type": "object"
+      },
+      "PublicoPeriodoSecao": {
+        "properties": {
+          "anoOrigem": {
+            "enum": [
+              "nome_zip",
+              "deduzido",
+              "misto"
+            ],
+            "title": "Anoorigem",
+            "type": "string"
+          },
+          "ate": {
+            "format": "date",
+            "title": "Ate",
+            "type": "string"
+          },
+          "de": {
+            "format": "date",
+            "title": "De",
+            "type": "string"
+          }
+        },
+        "required": [
+          "de",
+          "ate",
+          "anoOrigem"
+        ],
+        "title": "PublicoPeriodoSecao",
+        "type": "object"
+      },
+      "PublicoPico": {
+        "properties": {
+          "ativos": {
+            "title": "Ativos",
+            "type": "integer"
+          },
+          "dia": {
+            "format": "date",
+            "title": "Dia",
+            "type": "string"
+          },
+          "hora": {
+            "title": "Hora",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dia",
+          "hora",
+          "ativos"
+        ],
+        "title": "PublicoPico",
+        "type": "object"
+      },
+      "PublicoTotaisEspectadores": {
+        "properties": {
+          "mediaRecorrentes": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mediarecorrentes"
+          },
+          "mediaTotal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mediatotal"
+          },
+          "novos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Novos"
+          }
+        },
+        "required": [
+          "novos",
+          "mediaTotal",
+          "mediaRecorrentes"
+        ],
+        "title": "PublicoTotaisEspectadores",
+        "type": "object"
+      },
+      "PublicoVaziaCobertura": {
+        "properties": {
+          "em": {
+            "format": "date-time",
+            "title": "Em",
+            "type": "string"
+          },
+          "secao": {
+            "enum": [
+              "genero",
+              "territorios",
+              "atividade",
+              "espectadores"
+            ],
+            "title": "Secao",
+            "type": "string"
+          }
+        },
+        "required": [
+          "secao",
+          "em"
+        ],
+        "title": "PublicoVaziaCobertura",
+        "type": "object"
+      },
       "Pulado": {
         "properties": {
           "destinoId": {
@@ -15634,6 +19395,9 @@
       },
       "QuandoPostarOut": {
         "properties": {
+          "atividadeSeguidores": {
+            "$ref": "#/components/schemas/PublicoAtividadeSeguidores"
+          },
           "audiencia": {
             "$ref": "#/components/schemas/MapaAudiencia"
           },
@@ -16182,7 +19946,11 @@
           "secao": {
             "enum": [
               "visao_geral",
-              "seguidores"
+              "seguidores",
+              "genero",
+              "territorios",
+              "atividade",
+              "espectadores"
             ],
             "title": "Secao",
             "type": "string"
@@ -16232,7 +20000,11 @@
           "secao": {
             "enum": [
               "visao_geral",
-              "seguidores"
+              "seguidores",
+              "genero",
+              "territorios",
+              "atividade",
+              "espectadores"
             ],
             "title": "Secao",
             "type": "string"
@@ -16258,6 +20030,173 @@
           "amostra"
         ],
         "title": "SecaoPrevia",
+        "type": "object"
+      },
+      "SecaoPublicoPrevia": {
+        "description": "Uma seção de público da prévia. Com `vazia`, vem só `secao`, `vazia` e `mensagem`.",
+        "properties": {
+          "amostra": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PublicoLinhaEspectadores"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amostra"
+          },
+          "colunas": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Colunas"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "contagens": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicoContagensPrevia"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dataFoto": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datafoto"
+          },
+          "dataFotoOrigem": {
+            "anyOf": [
+              {
+                "enum": [
+                  "historico",
+                  "importacao"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Datafotoorigem"
+          },
+          "itens": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PublicoItemPrevia"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Itens"
+          },
+          "jaImportada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JaImportada"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mensagem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mensagem"
+          },
+          "periodo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicoPeriodoSecao"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pico": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicoPico"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "secao": {
+            "enum": [
+              "genero",
+              "territorios",
+              "atividade",
+              "espectadores"
+            ],
+            "title": "Secao",
+            "type": "string"
+          },
+          "situacao": {
+            "anyOf": [
+              {
+                "enum": [
+                  "novo",
+                  "igual",
+                  "divergente"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Situacao"
+          },
+          "totais": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicoTotaisEspectadores"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vazia": {
+            "title": "Vazia",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "secao",
+          "vazia"
+        ],
+        "title": "SecaoPublicoPrevia",
         "type": "object"
       },
       "SecurityEvent": {
@@ -17219,7 +21158,8 @@
               "kit",
               "postagem",
               "guia",
-              "cena"
+              "cena",
+              "aprendizado"
             ],
             "title": "Entidade",
             "type": "string"
@@ -17232,7 +21172,10 @@
               "textos_postagem",
               "guia",
               "variacoes",
-              "campos_cena"
+              "campos_cena",
+              "taxonomia",
+              "classificacao",
+              "analise"
             ],
             "title": "Formato",
             "type": "string"
@@ -17258,7 +21201,10 @@
               "cena.camera",
               "cena.estilo",
               "cena.audio",
-              "cena.ajustar"
+              "cena.ajustar",
+              "aprendizado.taxonomia",
+              "aprendizado.classificacao",
+              "aprendizado.analise"
             ],
             "title": "Id",
             "type": "string"
@@ -18359,6 +22305,18 @@
       "Valor": {
         "description": "Um formato por tipo: `texto`, `itens`, os três da postagem, o `guia` (proposta e\nentrada do \"montar\"; entrada do \"testar\") ou as `variacoes` (proposta do \"testar\").",
         "properties": {
+          "aprendizado": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprendizado"
+          },
           "cena": {
             "anyOf": [
               {
@@ -18966,6 +22924,16 @@
       },
       "VideoFonte": {
         "properties": {
+          "afinidade": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AprendizadoAfinidade"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "canal": {
             "$ref": "#/components/schemas/CanalRef"
           },
@@ -19777,6 +23745,11 @@
             ],
             "title": "Nextcursor"
           },
+          "ocultosPorTema": {
+            "default": 0,
+            "title": "Ocultosportema",
+            "type": "integer"
+          },
           "total": {
             "title": "Total",
             "type": "integer"
@@ -19905,7 +23878,11 @@
               "periodo_longo",
               "ano_deduzido",
               "colunas_ausentes",
-              "cabecalho_provisorio"
+              "cabecalho_provisorio",
+              "data_foto_importacao",
+              "espectadores_soma",
+              "sem_dado",
+              "secao_vazia"
             ],
             "title": "Codigo",
             "type": "string"
@@ -21402,6 +25379,16 @@
         "parameters": [
           {
             "in": "query",
+            "name": "mostrarCortados",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Mostrarcortados",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
             "name": "de",
             "required": false,
             "schema": {
@@ -21751,6 +25738,166 @@
           }
         },
         "summary": "Ordem Contas"
+      }
+    },
+    "/api/analytics/publico": {
+      "get": {
+        "description": "Spec 022: gênero, territórios, atividade e espectadores importados do TikTok Studio, por\nconta (só leitura).",
+        "operationId": "analytics_publico",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Perfilid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rede",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Platform"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rede"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicoOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Publico"
       }
     },
     "/api/analytics/quando-postar": {
@@ -22894,6 +27041,1204 @@
           }
         },
         "summary": "Anotacoes Versions"
+      }
+    },
+    "/api/aprendizado/analises/{analise_id}": {
+      "get": {
+        "operationId": "aprendizado_analises_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analise_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analise Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoAnaliseIa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Analises Get"
+      }
+    },
+    "/api/aprendizado/analises/{analise_id}/hipoteses/{indice}/recomendar": {
+      "post": {
+        "operationId": "aprendizado_hipotese_recomendar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "analise_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Analise Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "indice",
+            "required": true,
+            "schema": {
+              "title": "Indice",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoHipoteseRecomendarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoDecisao"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Hipotese Recomendar"
+      }
+    },
+    "/api/aprendizado/classificacoes/{video_id}": {
+      "put": {
+        "operationId": "aprendizado_classificacoes_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoClassificacaoPut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoClassificacao"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Classificacoes Put"
+      }
+    },
+    "/api/aprendizado/classificacoes/{video_id}/revert": {
+      "post": {
+        "operationId": "aprendizado_classificacoes_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoClassificacao"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Classificacoes Revert"
+      }
+    },
+    "/api/aprendizado/classificacoes/{video_id}/versions": {
+      "get": {
+        "operationId": "aprendizado_classificacoes_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Classificacoes Versions"
+      }
+    },
+    "/api/aprendizado/decisoes/{decisao_id}/revert": {
+      "post": {
+        "operationId": "aprendizado_decisoes_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "decisao_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Decisao Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoRevertOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Decisoes Revert"
+      }
+    },
+    "/api/aprendizado/posts/{video_id}/conferencias/{item}": {
+      "put": {
+        "operationId": "aprendizado_conferencias_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Video Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "item",
+            "required": true,
+            "schema": {
+              "title": "Item",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoConferenciaPut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoConferencia"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Conferencias Put"
+      }
+    },
+    "/api/aprendizado/posts/{video_id}/diagnostico": {
+      "get": {
+        "operationId": "aprendizado_post_diagnostico",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "video_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Video Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoPostDiagnostico"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Post Diagnostico"
+      }
+    },
+    "/api/aprendizado/temas/{tema_id}": {
+      "patch": {
+        "operationId": "aprendizado_temas_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tema_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tema Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoTemaPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoTema"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Temas Update"
+      }
+    },
+    "/api/aprendizado/temas/{tema_id}/archive": {
+      "post": {
+        "operationId": "aprendizado_temas_archive",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tema_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tema Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoTema"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Temas Archive"
+      }
+    },
+    "/api/aprendizado/temas/{tema_id}/juntar": {
+      "post": {
+        "operationId": "aprendizado_temas_juntar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tema_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tema Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoJuntarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoJuntarOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Temas Juntar"
+      }
+    },
+    "/api/aprendizado/temas/{tema_id}/restore": {
+      "post": {
+        "operationId": "aprendizado_temas_restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tema_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tema Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoTema"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Temas Restore"
+      }
+    },
+    "/api/aprendizado/temas/{tema_id}/revert": {
+      "post": {
+        "operationId": "aprendizado_temas_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tema_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tema Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoTema"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Temas Revert"
+      }
+    },
+    "/api/aprendizado/temas/{tema_id}/versions": {
+      "get": {
+        "operationId": "aprendizado_temas_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tema_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tema Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Temas Versions"
       }
     },
     "/api/armazenamento": {
@@ -37141,6 +42486,1736 @@
         "summary": "Update Perfil"
       }
     },
+    "/api/perfis/{perfil_id}/aprendizado/analise": {
+      "get": {
+        "operationId": "aprendizado_analise",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoAnalise"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Analise"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/analises": {
+      "get": {
+        "operationId": "aprendizado_analises_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoAnalisesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Analises List"
+      },
+      "post": {
+        "operationId": "aprendizado_analises_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoAnaliseIaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoAnaliseIa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Analises Create"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/analises/estimativa": {
+      "post": {
+        "operationId": "aprendizado_analises_estimativa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoEstimativaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoEstimativa"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Analises Estimativa"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/classificacoes": {
+      "get": {
+        "operationId": "aprendizado_classificacoes_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "temaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Temaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "origem",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "ia",
+                    "dono",
+                    "sem_tema"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Origem"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pendentes",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Pendentes",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoClassificacoesList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Classificacoes List"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/classificar-pendentes": {
+      "post": {
+        "operationId": "aprendizado_classificar_pendentes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoClassificarOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Classificar Pendentes"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/diagnostico": {
+      "get": {
+        "operationId": "aprendizado_diagnostico",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "de",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            }
+          },
+          {
+            "in": "query",
+            "name": "ate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoDiagnostico"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Diagnostico Get"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/preferencias": {
+      "get": {
+        "operationId": "aprendizado_preferencias_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoPreferenciasOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Preferencias Get"
+      },
+      "patch": {
+        "operationId": "aprendizado_preferencias_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoPreferenciasPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoPreferencias"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Preferencias Patch"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/preferencias/revert": {
+      "post": {
+        "operationId": "aprendizado_preferencias_revert",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoPreferencias"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Preferencias Revert"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/preferencias/versions": {
+      "get": {
+        "operationId": "aprendizado_preferencias_versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Preferencias Versions"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/recomendacoes": {
+      "get": {
+        "operationId": "aprendizado_recomendacoes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contaId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Contaid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "medida",
+            "required": false,
+            "schema": {
+              "default": "h24",
+              "enum": [
+                "h1",
+                "h24",
+                "d7"
+              ],
+              "title": "Medida",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoRecomendacoesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Recomendacoes List"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/recomendacoes/decidir": {
+      "post": {
+        "operationId": "aprendizado_recomendacoes_decidir",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoDecidirIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoDecidirOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Recomendacoes Decidir"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/taxonomia/propor": {
+      "post": {
+        "operationId": "aprendizado_taxonomia_propor",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoProporIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoProporOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "504": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        },
+        "summary": "Taxonomia Propor"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/temas": {
+      "get": {
+        "operationId": "aprendizado_temas_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "arquivados",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Arquivados",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoTemasList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Temas List"
+      },
+      "post": {
+        "operationId": "aprendizado_temas_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoTemaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoTema"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Temas Create"
+      }
+    },
+    "/api/perfis/{perfil_id}/aprendizado/temas/lote": {
+      "post": {
+        "operationId": "aprendizado_temas_lote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprendizadoTemasLoteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AprendizadoTemasLoteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Temas Lote"
+      }
+    },
     "/api/perfis/{perfil_id}/archive": {
       "post": {
         "operationId": "perfis_archive",
@@ -42194,6 +49269,16 @@
                 }
               ],
               "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mostrarCortados",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Mostrarcortados",
+              "type": "boolean"
             }
           }
         ],

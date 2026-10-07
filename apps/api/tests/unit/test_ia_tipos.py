@@ -38,10 +38,10 @@ def _aceita(adapter: TypeAdapter, valor) -> bool:
     return True
 
 
-def test_os_20_ids_e_o_literal():
-    # 13 da 008 + guia.montar e guia.testar (spec 017) + 5 da cena (spec 010); o testar usa as
-    # regras de outro tipo.
-    assert len(TIPOS) == 20
+def test_os_23_ids_e_o_literal():
+    # 13 da 008 + guia.montar e guia.testar (spec 017) + 5 da cena (spec 010) + 3 do aprendizado
+    # (spec 023); o testar usa as regras de outro tipo.
+    assert len(TIPOS) == 23
     assert set(get_args(TipoCampoId)) == set(TIPOS)
     assert set(PADROES) == set(TIPOS) - {"guia.testar"}
     for tid, tipo in TIPOS.items():
@@ -110,6 +110,8 @@ def test_campos_existem_no_modelo_e_no_schema():
     for tipo in TIPOS.values():
         if tipo.id.startswith("guia."):
             continue  # sem entidade salva com esses campos (spec 017; o montar é cruzado abaixo)
+        if tipo.entidade == "aprendizado":
+            continue  # spec 023: não aplica em formulário (o serviço do aprendizado grava)
         for campo in tipo.campos:
             assert campo in modelos[tipo.entidade].__versioned_fields__, (tipo.id, campo)
             assert campo in SCHEMAS[tipo.entidade].model_fields, (tipo.id, campo)
@@ -176,3 +178,17 @@ def test_tipos_da_cena():
         assert _aceita(adapter, "a" * limite) and not _aceita(adapter, "a" * (limite + 1))
         if campo != "acao":
             assert TIPOS[f"cena.{campo}"].limites.max_chars == limite
+
+
+def test_os_3_tipos_do_aprendizado_tem_regra_editavel():
+    """Spec 023 (T010, R5): taxonomia, classificação e análise, com regra padrão listada em
+    "Assistente de IA › Regras" e fora do `gerar` (entidade `aprendizado`)."""
+    ids = {"aprendizado.taxonomia", "aprendizado.classificacao", "aprendizado.analise"}
+    assert ids <= set(TIPOS) and ids <= set(PADROES)
+    for tid in ids:
+        tipo = TIPOS[tid]
+        assert tipo.entidade == "aprendizado" and tipo.listar_regras and tipo.regras_de is None
+        assert tipo.padrao.strip() and tipo.padrao_versao == 1
+    assert {TIPOS[t].formato for t in ids} == {"taxonomia", "classificacao", "analise"}
+    assert TIPOS["aprendizado.taxonomia"].limites.max_itens == 15
+    assert TIPOS["aprendizado.analise"].limites.max_itens == 6

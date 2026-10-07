@@ -182,6 +182,8 @@ services:
       # Spec 016: métricas (só leitura). false pausa a coleta sem desconectar.
       METRICAS_COLETA_HABILITADA: ${METRICAS_COLETA_HABILITADA:-true}
       AGENDADOR_METRICAS_S: ${AGENDADOR_METRICAS_S:-60}
+      # Spec 023: classificação dos posts (≤ 50 por perfil por dia) e análises pedidas pelo dono.
+      AGENDADOR_APRENDIZADO_S: ${AGENDADOR_APRENDIZADO_S:-300}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

@@ -201,6 +201,16 @@ export type AnalyticsContas = components["schemas"]["ContasOut"];
 export type AnalyticsFunil = components["schemas"]["FunilOut"];
 export type AnalyticsMercado = components["schemas"]["MercadoOut"];
 export type AnalyticsAlertas = components["schemas"]["AlertasOut"];
+// 022-publico
+export type AnalyticsPublico = components["schemas"]["PublicoOut"];
+export type AnalyticsPublicoConta = components["schemas"]["PublicoContaOut"];
+export type AnalyticsPublicoContaRef = components["schemas"]["PublicoConta"];
+export type AnalyticsPublicoDistribuicao = components["schemas"]["PublicoDistribuicao"];
+export type AnalyticsPublicoAtividade = components["schemas"]["PublicoAtividade"];
+export type AnalyticsPublicoAtividadeConta = components["schemas"]["PublicoAtividadeConta"];
+export type AnalyticsPublicoEspectadores = components["schemas"]["PublicoEspectadores"];
+export type StudioSecaoPublicoPrevia = components["schemas"]["SecaoPublicoPrevia"];
+export type StudioCoberturaPublico = components["schemas"]["CoberturaPublico"];
 // 020-historico-tiktok-studio (pelas rotas: o nome da classe Previa colide com outra no OpenAPI)
 type StudioJson<T> = T extends { content: { "application/json": infer B } } ? B : never;
 export type StudioPrevia = StudioJson<paths["/api/contas/{conta_id}/studio/previa"]["post"]["responses"]["201"]>;
@@ -245,6 +255,45 @@ export type CenaPatchRequest = components["schemas"]["CenaPatch"];
 export type AnotacaoCamposTexto = components["schemas"]["CamposProposta"];
 export type AnotacaoCamposCena = components["schemas"]["CamposCena"];
 export type CenaFilters = NonNullable<paths["/api/perfis/{perfil_id}/cenas"]["get"]["parameters"]["query"]>;
+// 023-aprendizado
+type S = components["schemas"];
+export type AprendizadoTema = S["AprendizadoTema"];
+export type AprendizadoTemaIn = S["AprendizadoTemaIn"];
+export type AprendizadoTemaPatch = S["AprendizadoTemaPatch"];
+export type AprendizadoClassificacao = S["AprendizadoClassificacao"];
+export type AprendizadoClassificacaoPut = S["AprendizadoClassificacaoPut"];
+export type AprendizadoClassificacoesFiltros = NonNullable<paths["/api/perfis/{perfil_id}/aprendizado/classificacoes"]["get"]["parameters"]["query"]>;
+export type AprendizadoAnaliseFiltros = NonNullable<paths["/api/perfis/{perfil_id}/aprendizado/analise"]["get"]["parameters"]["query"]>;
+export type AprendizadoDiagnosticoFiltros = NonNullable<paths["/api/perfis/{perfil_id}/aprendizado/diagnostico"]["get"]["parameters"]["query"]>;
+export type AprendizadoAnalise = S["AprendizadoAnalise"];
+export type AprendizadoAnaliseContexto = S["AprendizadoAnaliseContexto"];
+export type AprendizadoEfeito = S["AprendizadoEfeito"];
+export type AprendizadoAviso = S["AprendizadoAviso"];
+export type AprendizadoBloco = S["AprendizadoBloco"];
+export type AprendizadoCelulaMatriz = S["AprendizadoCelulaMatriz"];
+export type AprendizadoConstantes = S["AprendizadoConstantes"];
+export type AprendizadoRecomendacao = S["AprendizadoRecomendacao"];
+export type AprendizadoDecisao = S["AprendizadoDecisao"];
+export type AprendizadoDecidirIn = S["AprendizadoDecidirIn"];
+export type AprendizadoPreferencias = S["AprendizadoPreferencias"];
+export type AprendizadoPreferenciasOut = S["AprendizadoPreferenciasOut"];
+export type AprendizadoPreferenciasEfetivas = S["AprendizadoPreferenciasEfetivas"];
+export type AprendizadoPreferenciasPatch = S["AprendizadoPreferenciasPatch"];
+export type AprendizadoPadrao = S["AprendizadoPadrao"];
+export type AprendizadoAnaliseIa = S["AprendizadoAnaliseIa"];
+export type AprendizadoAnaliseIaIn = S["AprendizadoAnaliseIaIn"];
+export type AprendizadoEstimativa = S["AprendizadoEstimativa"];
+export type AprendizadoEstimativaIn = S["AprendizadoEstimativaIn"];
+export type AprendizadoHipotese = S["AprendizadoHipotese"];
+export type AprendizadoHipoteseRecomendarIn = S["AprendizadoHipoteseRecomendarIn"];
+export type AprendizadoSinal = S["AprendizadoSinal"];
+export type AprendizadoItemChecklist = S["AprendizadoItemChecklist"];
+export type AprendizadoConferencia = S["AprendizadoConferencia"];
+export type AprendizadoConferenciaPut = S["AprendizadoConferenciaPut"];
+export type AprendizadoDiagnostico = S["AprendizadoDiagnostico"];
+export type AprendizadoPostDiagnostico = S["AprendizadoPostDiagnostico"];
+export type AprendizadoAfinidade = S["AprendizadoAfinidade"];
+export type AnalyticsMercadoFiltros = NonNullable<paths["/api/analytics/mercado"]["get"]["parameters"]["query"]>;
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -631,8 +680,10 @@ export function createApiClient(options: ApiClientOptions = {}) {
       curvas: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/curvas", { params: { query } })),
       contas: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/contas", { params: { query } })),
       funil: (query: AnalyticsFunilFiltros = {}) => unwrap(client.GET("/api/analytics/funil", { params: { query } })),
-      mercado: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/mercado", { params: { query } })),
+      mercado: (query: AnalyticsMercadoFiltros = {}) => unwrap(client.GET("/api/analytics/mercado", { params: { query } })),
       alertas: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/alertas", { params: { query } })),
+      // spec 022: a aba Público (dados importados do TikTok Studio)
+      publico: (query: AnalyticsFiltros = {}) => unwrap(client.GET("/api/analytics/publico", { params: { query } })),
       // ordem estável de todas as contas (cor fixa por conta, FR-006)
       ordemContas: () => unwrap(client.GET("/api/analytics/ordem-contas")),
     },
@@ -1029,6 +1080,95 @@ export function createApiClient(options: ApiClientOptions = {}) {
           client.POST("/api/anotacoes/{anotacao_id}/revert", { params: { path: { anotacao_id: anotacaoId } }, body: { version, toVersion } }),
         ),
       resumo: (query: AnotacaoResumoFilters = {}) => unwrap(client.GET("/api/anotacoes/resumo", { params: { query } })),
+    },
+    // Aprender com o desempenho (spec 023). Leituras calculadas na API; escritas só do dono humano.
+    aprendizado: {
+      temas: {
+        list: (perfilId: string, query: { arquivados?: boolean } = {}) =>
+          unwrap(client.GET("/api/perfis/{perfil_id}/aprendizado/temas", { params: { path: { perfil_id: perfilId }, query } })),
+        create: (perfilId: string, body: AprendizadoTemaIn) =>
+          unwrap(client.POST("/api/perfis/{perfil_id}/aprendizado/temas", { params: { path: { perfil_id: perfilId } }, body })),
+        lote: (perfilId: string, body: { temas: AprendizadoTemaIn[]; chamadaId?: string | null }) =>
+          unwrap(client.POST("/api/perfis/{perfil_id}/aprendizado/temas/lote", { params: { path: { perfil_id: perfilId } }, body })),
+        update: (temaId: string, body: AprendizadoTemaPatch) =>
+          unwrap(client.PATCH("/api/aprendizado/temas/{tema_id}", { params: { path: { tema_id: temaId } }, body })),
+        archive: (temaId: string, version: number) =>
+          unwrap(client.POST("/api/aprendizado/temas/{tema_id}/archive", { params: { path: { tema_id: temaId } }, body: { version } })),
+        restore: (temaId: string, version: number) =>
+          unwrap(client.POST("/api/aprendizado/temas/{tema_id}/restore", { params: { path: { tema_id: temaId } }, body: { version } })),
+        juntar: (temaId: string, body: { version: number; destinoId: string }) =>
+          unwrap(client.POST("/api/aprendizado/temas/{tema_id}/juntar", { params: { path: { tema_id: temaId } }, body })),
+        versions: (temaId: string) =>
+          unwrap(client.GET("/api/aprendizado/temas/{tema_id}/versions", { params: { path: { tema_id: temaId } } })),
+        revert: (temaId: string, version: number, toVersion: number) =>
+          unwrap(client.POST("/api/aprendizado/temas/{tema_id}/revert", { params: { path: { tema_id: temaId } }, body: { version, toVersion } })),
+      },
+      taxonomiaPropor: (perfilId: string, body: { instrucao: string }) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/aprendizado/taxonomia/propor", { params: { path: { perfil_id: perfilId } }, body })),
+      classificacoes: {
+        list: (perfilId: string, query: AprendizadoClassificacoesFiltros = {}) =>
+          unwrap(client.GET("/api/perfis/{perfil_id}/aprendizado/classificacoes", { params: { path: { perfil_id: perfilId }, query } })),
+        put: (videoId: string, body: AprendizadoClassificacaoPut) =>
+          unwrap(client.PUT("/api/aprendizado/classificacoes/{video_id}", { params: { path: { video_id: videoId } }, body })),
+        versions: (videoId: string) =>
+          unwrap(client.GET("/api/aprendizado/classificacoes/{video_id}/versions", { params: { path: { video_id: videoId } } })),
+        revert: (videoId: string, version: number, toVersion: number) =>
+          unwrap(
+            client.POST("/api/aprendizado/classificacoes/{video_id}/revert", { params: { path: { video_id: videoId } }, body: { version, toVersion } }),
+          ),
+      },
+      classificarPendentes: (perfilId: string) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/aprendizado/classificar-pendentes", { params: { path: { perfil_id: perfilId } } })),
+      analise: (perfilId: string, query: AprendizadoAnaliseFiltros = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/aprendizado/analise", { params: { path: { perfil_id: perfilId }, query } })),
+      recomendacoes: (perfilId: string, query: { contaId?: string; medida?: "h1" | "h24" | "d7" } = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/aprendizado/recomendacoes", { params: { path: { perfil_id: perfilId }, query } })),
+      decidir: (perfilId: string, body: AprendizadoDecidirIn) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/aprendizado/recomendacoes/decidir", { params: { path: { perfil_id: perfilId } }, body })),
+      reverterDecisao: (decisaoId: string, version: number) =>
+        unwrap(client.POST("/api/aprendizado/decisoes/{decisao_id}/revert", { params: { path: { decisao_id: decisaoId } }, body: { version } })),
+      preferencias: {
+        get: (perfilId: string, contaId?: string) =>
+          unwrap(client.GET("/api/perfis/{perfil_id}/aprendizado/preferencias", { params: { path: { perfil_id: perfilId }, query: contaId ? { contaId } : {} } })),
+        patch: (perfilId: string, body: AprendizadoPreferenciasPatch, contaId?: string) =>
+          unwrap(
+            client.PATCH("/api/perfis/{perfil_id}/aprendizado/preferencias", { params: { path: { perfil_id: perfilId }, query: contaId ? { contaId } : {} }, body }),
+          ),
+        versions: (perfilId: string, contaId?: string) =>
+          unwrap(
+            client.GET("/api/perfis/{perfil_id}/aprendizado/preferencias/versions", { params: { path: { perfil_id: perfilId }, query: contaId ? { contaId } : {} } }),
+          ),
+        revert: (perfilId: string, version: number, toVersion: number, contaId?: string) =>
+          unwrap(
+            client.POST("/api/perfis/{perfil_id}/aprendizado/preferencias/revert", {
+              params: { path: { perfil_id: perfilId }, query: contaId ? { contaId } : {} },
+              body: { version, toVersion },
+            }),
+          ),
+      },
+      analises: {
+        estimativa: (perfilId: string, body: AprendizadoEstimativaIn) =>
+          unwrap(client.POST("/api/perfis/{perfil_id}/aprendizado/analises/estimativa", { params: { path: { perfil_id: perfilId } }, body })),
+        create: (perfilId: string, body: AprendizadoAnaliseIaIn) =>
+          unwrap(client.POST("/api/perfis/{perfil_id}/aprendizado/analises", { params: { path: { perfil_id: perfilId } }, body })),
+        list: (perfilId: string, query: { cursor?: string } = {}) =>
+          unwrap(client.GET("/api/perfis/{perfil_id}/aprendizado/analises", { params: { path: { perfil_id: perfilId }, query } })),
+        get: (analiseId: string) =>
+          unwrap(client.GET("/api/aprendizado/analises/{analise_id}", { params: { path: { analise_id: analiseId } } })),
+        recomendarHipotese: (analiseId: string, indice: number, body: AprendizadoHipoteseRecomendarIn) =>
+          unwrap(
+            client.POST("/api/aprendizado/analises/{analise_id}/hipoteses/{indice}/recomendar", {
+              params: { path: { analise_id: analiseId, indice } },
+              body,
+            }),
+          ),
+      },
+      diagnostico: (perfilId: string, query: AprendizadoDiagnosticoFiltros = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/aprendizado/diagnostico", { params: { path: { perfil_id: perfilId }, query } })),
+      postDiagnostico: (videoId: string) =>
+        unwrap(client.GET("/api/aprendizado/posts/{video_id}/diagnostico", { params: { path: { video_id: videoId } } })),
+      conferencia: (videoId: string, item: string, body: AprendizadoConferenciaPut) =>
+        unwrap(client.PUT("/api/aprendizado/posts/{video_id}/conferencias/{item}", { params: { path: { video_id: videoId, item } }, body })),
     },
     config: () => unwrap(client.GET("/api/config")),
     health: () => unwrap(client.GET("/api/health")),

@@ -95,10 +95,50 @@ class PropostaCamposCena(BaseModel):
     avisos: list[str]
 
 
+# ---- spec 023 (R5): as saídas do aprendizado (os ids são conferidos no serviço) ----
+
+class TemaProposto(BaseModel):
+    nome: str
+    descricao: str
+    palavras_chave: list[str]
+
+
+class PropostaTaxonomia(BaseModel):
+    temas: list[TemaProposto]
+    explicacao: str
+    avisos: list[str]
+
+
+class PropostaClassificacao(BaseModel):
+    tema_id: str | None
+    secundarios: list[str]
+    estilo_gancho: Literal["pergunta", "revelacao", "numero_lista", "polemica", "humor",
+                           "voce_sabia", "ordem_direta", "outro"] | None
+    justificativa: str
+    sugestao_tema: str | None
+    explicacao: str
+    avisos: list[str]
+
+
+class HipoteseProposta(BaseModel):
+    texto: str
+    posts_ids: list[str]
+    contraste: str
+    n: int
+
+
+class PropostaAnalise(BaseModel):
+    hipoteses: list[HipoteseProposta]
+    explicacao: str
+    avisos: list[str]
+
+
 SCHEMAS: dict[str, type[BaseModel]] = {
     "texto": PropostaTexto, "lista": PropostaLista, "sugestoes": PropostaSugestoes,
     "textos_postagem": PropostaTextosPostagem, "guia": PropostaGuia,
     "variacoes": PropostaVariacoes, "campos_cena": PropostaCamposCena,
+    "taxonomia": PropostaTaxonomia, "classificacao": PropostaClassificacao,
+    "analise": PropostaAnalise,
 }
 VARIACOES = 3
 
@@ -207,6 +247,14 @@ def problemas(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
             erros.extend(f"variação {n}: {e}" for e in _problemas_postagem(v, fixas))
     elif isinstance(parsed, PropostaGuia):
         erros.extend(_problemas_guia(parsed))
+    elif isinstance(parsed, PropostaTaxonomia):
+        nomes = {guia_mod.normalizar(t.nome) for t in parsed.temas if t.nome.strip()}
+        if not (lim.min_itens or 1) <= len(nomes) <= (lim.max_itens or len(nomes)):
+            erros.append(f"vieram {len(nomes)} temas; o pedido é de {lim.min_itens} a "
+                         f"{lim.max_itens}")
+    elif isinstance(parsed, PropostaAnalise):
+        if not any(h.texto.strip() for h in parsed.hipoteses):
+            erros.append("nenhuma hipótese veio preenchida")
     elif isinstance(parsed, PropostaCamposCena):
         if not parsed.acao.strip():
             erros.append("a ação veio vazia")
@@ -214,7 +262,21 @@ def problemas(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
                      for c, v in _campos_cena(parsed).items() if len(v) > LIMITES_CENA[c])
     erros.extend(f"usou a palavra proibida {p}"
                  for p in guia_mod.achar_proibidas(_textos(parsed), efetivo.proibidas))
+    if efetivo.hashtags_evitar:  # spec 023: a hashtag "evitar" pede a 2ª tentativa
+        usadas = {h for h in textos.normalizar_hashtags(_hashtags_de(parsed))}
+        erros.extend(f"usou a hashtag {h}, marcada para evitar"
+                     for h in efetivo.hashtags_evitar if h in usadas)
     return erros
+
+
+def _hashtags_de(parsed: BaseModel) -> list[str]:
+    if isinstance(parsed, PropostaLista):
+        return list(parsed.itens)
+    if isinstance(parsed, PropostaTextosPostagem):
+        return list(parsed.hashtags)
+    if isinstance(parsed, PropostaVariacoes):
+        return [h for v in parsed.variacoes for h in v.hashtags]
+    return []
 
 
 def _textos(parsed: BaseModel) -> list[str]:
@@ -242,6 +304,16 @@ def _campos_cena(parsed: "PropostaCamposCena") -> dict[str, str]:
 
 def _fixas(efetivo: guia_mod.GuiaEfetivo) -> list[str]:
     return textos.normalizar_hashtags(list(efetivo.hashtags_fixas))
+
+
+def _sem_evitadas(hashtags: Sequence[str], evitar: Sequence[str]) -> tuple[list[str], list[str]]:
+    """Spec 023 (R8): tira as hashtags "evitar" aceitas pelo dono (depois das fixas)."""
+    fora = [h for h in hashtags if h in evitar]
+    return [h for h in hashtags if h not in evitar], fora
+
+
+def _ajuste_evitadas(fora: Sequence[str]) -> list[str]:
+    return [f"removida {h}: marcada para evitar" for h in fora]
 
 
 def _com_fixas(modelo: Sequence[str], fixas: Sequence[str]) -> tuple[list[str], bool]:
@@ -319,8 +391,8 @@ def _cortar_na_palavra(texto: str, limite: int) -> str:
     return (corte[:espaco] if espaco > limite // 2 else corte).rstrip(" ,;:-")
 
 
-def _ajustar_postagem(p: PropostaTextosPostagem | VariacaoPostagem, fixas: Sequence[str] = ()
-                      ) -> tuple[dict[str, Any], list[str]]:
+def _ajustar_postagem(p: PropostaTextosPostagem | VariacaoPostagem, fixas: Sequence[str] = (),
+                      evitar: Sequence[str] = ()) -> tuple[dict[str, Any], list[str]]:
     """Corta e completa (como a 006), com as fixas do guia primeiro (017). `Invalida` se não há
     como salvar."""
     ajustes: list[str] = []
@@ -340,6 +412,9 @@ def _ajustar_postagem(p: PropostaTextosPostagem | VariacaoPostagem, fixas: Seque
         hashtags, incluiu = _com_fixas(hashtags, fixas)
         if incluiu:
             ajustes.append("hashtags_fixas_incluidas")
+    if evitar:
+        hashtags, fora = _sem_evitadas(hashtags, evitar)
+        ajustes.extend(_ajuste_evitadas(fora))
     if len(hashtags) > textos.HASHTAGS_MAX:
         hashtags = hashtags[:textos.HASHTAGS_MAX]
         ajustes.append("hashtags_truncadas")
@@ -420,6 +495,9 @@ def finalizar(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
             hashtags, incluiu = _com_fixas(hashtags, fixas)
             if incluiu:
                 out.ajustes.append("hashtags_fixas_incluidas")
+        if efetivo.hashtags_evitar:
+            hashtags, fora = _sem_evitadas(hashtags, efetivo.hashtags_evitar)
+            out.ajustes.extend(_ajuste_evitadas(fora))
         if lim.max_itens is not None and len(hashtags) > lim.max_itens:
             hashtags = hashtags[:lim.max_itens]
             out.ajustes.append("hashtags_truncadas")
@@ -428,11 +506,12 @@ def finalizar(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
             raise Invalida(f"só {len(hashtags)} hashtags válidas")
         out.proposta = {"itens": hashtags}
     elif isinstance(parsed, PropostaTextosPostagem):
-        out.proposta, out.ajustes = _ajustar_postagem(parsed, fixas)
+        out.proposta, out.ajustes = _ajustar_postagem(parsed, fixas, efetivo.hashtags_evitar)
         if "titulo_cortado" in out.ajustes:
             out.avisos.append(f"Cortei o título para caber em {textos.TITULO_MAX} caracteres.")
     elif isinstance(parsed, PropostaVariacoes):
-        out.proposta, out.ajustes, avisos = _ajustar_variacoes(parsed, fixas)
+        out.proposta, out.ajustes, avisos = _ajustar_variacoes(parsed, fixas,
+                                                               efetivo.hashtags_evitar)
         out.avisos.extend(avisos)
     elif isinstance(parsed, PropostaGuia):
         out.proposta, avisos = _ajustar_guia(parsed)
@@ -447,20 +526,79 @@ def finalizar(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
             out.avisos.append(f"{', '.join(maiores)} passa(m) do limite; edite antes de "
                               "aplicar.")
         out.proposta = {"cena": campos}
+    elif isinstance(parsed, PropostaTaxonomia | PropostaClassificacao | PropostaAnalise):
+        out.proposta, avisos = _ajustar_aprendizado(tipo, parsed)  # spec 023
+        out.avisos.extend(avisos)
     else:  # pragma: no cover
         raise TypeError(type(parsed).__name__)
     _avisos_do_guia(tipo, parsed, out, efetivo)
+    removidas = [a.split(" ", 2)[1] for a in out.ajustes if a.startswith("removida #")]
+    if removidas:  # spec 023 (FR-046): o aviso na tela
+        out.avisos.append(f"Tirei {', '.join(dict.fromkeys(removidas))}: marcada(s) para "
+                          "evitar pelo dono.")
     return out
 
 
-def _ajustar_variacoes(p: PropostaVariacoes, fixas: Sequence[str]
+def _curto(texto: str | None, limite: int) -> str:
+    return _cortar_na_frase(" ".join((texto or "").split()), limite)
+
+
+def _ajustar_aprendizado(tipo: TipoCampo, p: BaseModel) -> tuple[dict[str, Any], list[str]]:
+    """Spec 023: corta nos limites de R5; a proposta vai em `{"aprendizado": …}`. Os ids
+    (tema, posts) ficam como vieram: quem recusa os de fora é o serviço do aprendizado."""
+    avisos: list[str] = []
+    lim = tipo.limites
+    if isinstance(p, PropostaTaxonomia):
+        temas: list[dict[str, Any]] = []
+        vistos: set[str] = set()
+        for t in p.temas:
+            nome = " ".join(t.nome.split())[:lim.max_chars or 40].strip()
+            chave = guia_mod.normalizar(nome)
+            if not nome or chave in vistos:
+                continue
+            vistos.add(chave)
+            palavras: list[str] = []
+            for raw in t.palavras_chave:
+                w = guia_mod.normalizar(raw)
+                if 2 <= len(w) <= (lim.max_chars_item or 30) and w not in palavras:
+                    palavras.append(w)
+            temas.append({"nome": nome, "descricao": _curto(t.descricao, 200),
+                          "palavrasChave": palavras[:20]})
+        if not temas:
+            raise Invalida("nenhum tema aproveitável")
+        if len(temas) > (lim.max_itens or len(temas)):
+            temas = temas[:lim.max_itens]
+            avisos.append(f"Fiquei só com os {lim.max_itens} primeiros temas.")
+        return {"aprendizado": {"temas": temas}}, avisos
+    if isinstance(p, PropostaClassificacao):
+        sugestao = " ".join((p.sugestao_tema or "").split())[:40] or None
+        return {"aprendizado": {
+            "temaId": (p.tema_id or "").strip() or None,
+            "secundarios": [s.strip() for s in p.secundarios if s.strip()][:lim.max_itens or 2],
+            "estiloGancho": p.estilo_gancho,
+            "justificativa": _curto(p.justificativa, lim.max_chars or 160) or None,
+            "sugestaoTema": sugestao}}, avisos
+    assert isinstance(p, PropostaAnalise)
+    hipoteses = [{"texto": _curto(h.texto, lim.max_chars or 240),
+                  "postsIds": [i.strip() for i in h.posts_ids if i.strip()],
+                  "contraste": _curto(h.contraste, 160), "n": max(0, h.n)}
+                 for h in p.hipoteses if h.texto.strip()]
+    if not hipoteses:
+        raise Invalida("nenhuma hipótese aproveitável")
+    if len(hipoteses) > (lim.max_itens or len(hipoteses)):
+        hipoteses = hipoteses[:lim.max_itens]
+        avisos.append(f"Fiquei só com as {lim.max_itens} primeiras hipóteses.")
+    return {"aprendizado": {"hipoteses": hipoteses}}, avisos
+
+
+def _ajustar_variacoes(p: PropostaVariacoes, fixas: Sequence[str], evitar: Sequence[str] = ()
                        ) -> tuple[dict[str, Any], list[str], list[str]]:
     """Cada variação pelo ajuste da 006 e pelas fixas do guia em teste (R10)."""
     variacoes: list[dict[str, Any]] = []
     ajustes: list[str] = []
     for v in p.variacoes[:VARIACOES]:
         try:
-            valor, extra = _ajustar_postagem(v, fixas)
+            valor, extra = _ajustar_postagem(v, fixas, evitar)
         except Invalida:
             continue
         variacoes.append(valor)

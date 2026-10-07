@@ -790,11 +790,14 @@ test("US5: exportar o ZIP em CSV com o cabeçalho do dicionário; membro não ex
   expect(res.headers()["content-type"]).toContain("application/zip");
   expect(res.headers()["content-disposition"]).toContain(`sociman-metricas-${de.replaceAll("-", "")}-${ate.replaceAll("-", "")}.zip`);
   const zip = lerZip(await res.body());
-  // spec 020 (FR-023): o dataset ganhou a série diária importada do Studio (vazia sem importação)
-  expect([...zip.keys()].sort()).toEqual(["LEIAME.txt", "dicionario.csv", "fotos_conta.csv", "fotos_videos.csv", "studio_dias.csv", "videos.csv"]);
+  // spec 020 (FR-023): série diária importada do Studio; spec 022: público do Studio (vazios sem importação)
+  expect([...zip.keys()].sort()).toEqual([
+    "LEIAME.txt", "dicionario.csv", "fotos_conta.csv", "fotos_videos.csv", "studio_atividade.csv",
+    "studio_dias.csv", "studio_distribuicoes.csv", "studio_espectadores.csv", "videos.csv",
+  ]);
   const dic = lerCsv(zip.get("dicionario.csv")!.toString("utf8"));
   expect(dic[0]).toEqual(["arquivo", "coluna", "tipo", "unidade", "significado", "origem"]);
-  for (const arquivo of ["fotos_videos", "videos", "fotos_conta", "studio_dias"]) {
+  for (const arquivo of ["fotos_videos", "videos", "fotos_conta", "studio_dias", "studio_distribuicoes", "studio_atividade", "studio_espectadores"]) {
     const bruto = zip.get(`${arquivo}.csv`)!;
     expect(bruto.subarray(0, 3).equals(Buffer.from([0xef, 0xbb, 0xbf])), `${arquivo}.csv em UTF-8 com BOM`).toBe(true);
     const cabecalho = lerCsv(bruto.toString("utf8"))[0];

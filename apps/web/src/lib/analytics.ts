@@ -1,4 +1,13 @@
-import type { AnalyticsFiltros } from "@sociman/contract";
+import type {
+  AnalyticsFiltros,
+  AnalyticsPublico as ContractPublico,
+  AnalyticsPublicoAtividade,
+  AnalyticsPublicoAtividadeConta,
+  AnalyticsPublicoConta,
+  AnalyticsPublicoContaRef,
+  AnalyticsPublicoDistribuicao,
+  AnalyticsQuandoPostar,
+} from "@sociman/contract";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useFiltroUrl } from "@/components/conteudos/FiltrosConteudos";
@@ -50,12 +59,13 @@ export {
 // ---------------------------------------------------------------------------------------------
 // Abas, medidas e períodos
 
-export const ABAS_ANALYTICS = ["visao-geral", "quando-postar", "o-que-funciona", "curvas", "contas", "funil", "mercado", "alertas"] as const;
+export const ABAS_ANALYTICS = ["visao-geral", "quando-postar", "publico", "o-que-funciona", "curvas", "contas", "funil", "mercado", "alertas"] as const;
 export type AbaAnalytics = (typeof ABAS_ANALYTICS)[number];
 
 export const abaLabel: Record<AbaAnalytics, string> = {
   "visao-geral": "Visão geral",
   "quando-postar": "Quando postar",
+  publico: "Público",
   "o-que-funciona": "O que funciona",
   curvas: "Curvas",
   contas: "Contas",
@@ -193,6 +203,7 @@ export function paraQuery(f: FiltroAnalytics): AnalyticsFiltros {
 const BUSCAR = {
   "visao-geral": api.analytics.visaoGeral,
   "quando-postar": api.analytics.quandoPostar,
+  publico: api.analytics.publico,
   "o-que-funciona": api.analytics.oQueFunciona,
   curvas: api.analytics.curvas,
   contas: api.analytics.contas,
@@ -203,11 +214,46 @@ const BUSCAR = {
 
 type Resposta = { [A in AbaAnalytics]: Awaited<ReturnType<(typeof BUSCAR)[A]>> };
 
-export function useAnalytics<A extends AbaAnalytics>(aba: A, filtro: FiltroAnalytics, extra: { patamar?: number } = {}) {
-  const query = { ...paraQuery(filtro), ...(aba === "funil" && extra.patamar ? { patamar: extra.patamar } : {}) };
+export function useAnalytics<A extends AbaAnalytics>(aba: A, filtro: FiltroAnalytics, extra: { patamar?: number; mostrarCortados?: boolean } = {}) {
+  const query = {
+    ...paraQuery(filtro),
+    ...(aba === "funil" && extra.patamar ? { patamar: extra.patamar } : {}),
+    // spec 023: no Mercado, os vídeos de tema cortado só voltam com o filtro ligado
+    ...(aba === "mercado" && extra.mostrarCortados ? { mostrarCortados: true } : {}),
+  };
   return useQuery({
     queryKey: analyticsKey(aba, query),
     queryFn: () => (BUSCAR[aba] as (q: AnalyticsFiltros) => Promise<Resposta[A]>)(query),
     placeholderData: keepPreviousData,
   });
 }
+
+// ---------------------------------------------------------------------------------------------
+// Público (spec 022): a aba "publico" e o 3º mapa de "Quando postar", com dados importados do
+// TikTok Studio. A forma segue contracts/http-api.md da 022 (PublicoOut).
+
+export type AnalyticsPublico = ContractPublico;
+export type PublicoConta = AnalyticsPublicoConta;
+export type PublicoContaRef = AnalyticsPublicoContaRef;
+export type PublicoDistribuicao = AnalyticsPublicoDistribuicao;
+export type PublicoAtividade = AnalyticsPublicoAtividade;
+export type AtividadeSeguidoresConta = AnalyticsPublicoAtividadeConta;
+export type MotivoPublico = NonNullable<PublicoConta["motivos"]["genero"]>;
+
+// chave estável de uma conta da resposta (a série; a anônima pode vir sem ela)
+export const chaveConta = (c: PublicoContaRef) => c.serieId ?? c.rotulo;
+
+// `QuandoPostarOut.atividadeSeguidores` (aditivo na 022)
+export const atividadeSeguidoresDe = (d: AnalyticsQuandoPostar | undefined): AtividadeSeguidoresConta[] => d?.atividadeSeguidores?.contas ?? [];
+
+export const MIN_DIAS_CELULA = 2;
+export const FONTE_STUDIO = "importado do TikTok Studio";
+export const NOTA_HORAS_TIKTOK = "Horas conforme a TikTok (o arquivo não diz o fuso) · fonte: TikTok Studio.";
+
+export const motivoPublicoLabel: Record<MotivoPublico, string> = {
+  sem_importacao: "Nenhuma importação de público ainda.",
+  veio_vazia: "Ainda sem dados de público: a TikTok libera esses dados quando a conta tem mais seguidores (cerca de 100). Reimporte quando a conta crescer.",
+  sem_dado_no_periodo: "Sem dado no período.",
+};
+
+export const usePublico = (filtro: FiltroAnalytics) => useAnalytics("publico", filtro);

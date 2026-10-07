@@ -343,12 +343,13 @@ def executor(p, db):
 
 
 def test_agendador_sem_trilha_nova():
-    """Guarda 6 (R16.6): as trilhas novas são a `publicacao` da 015 e a `metricas` da 016 (a
-    lista só cresce por spec; guarda 5 da 016)."""
+    """Guarda 6 (R16.6): as trilhas novas são a `publicacao` da 015, a `metricas` da 016 e a
+    `aprendizado` da 023 (plan da 023, Complexity Tracking; a lista só cresce por spec)."""
     from sociman_api.agendador import trilhas_padrao
 
     assert {t.nome for t in trilhas_padrao()} == {"sync", "openshorts", "importacao",
-                                                  "lembretes", "publicacao", "metricas"}
+                                                  "lembretes", "publicacao", "metricas",
+                                                  "aprendizado"}
 
 
 # ---- spec 015 (publicação no TikTok), parte 1: R16.1, R16.2, R16.3 e R16.8 ----
@@ -1109,3 +1110,198 @@ def test_escritas_da_agencia_so_para_dono_humano():
             assert require_human_owner in deps, r.path
         else:
             assert require_user in deps, r.path
+
+
+# ---- spec 022 (público do Studio): XLSX pela stdlib, sem rede nem disco ----
+
+IMPORTS_PROIBIDOS_022 = ("sociman_api.publicacao", "httpx", "minio", "openpyxl", "defusedxml",
+                         "sociman_api.storage")
+ARQUIVOS_REAIS_022 = ("Viewers*.xlsx", "FollowerGender.csv", "FollowerTopTerritories.csv",
+                      "FollowerActivity.csv")
+
+
+def test_planilha_e_publico_nao_importam_rede_nem_leitor_de_xlsx():
+    achados = []
+    for nome in ("planilha.py", "publico.py"):
+        tree = ast.parse((STUDIO / nome).read_text())
+        achados += [f"{nome}: {m}" for m in IMPORTS_PROIBIDOS_022 if _importa(tree, m)]
+        achados += [f"{nome}:{linha}: {o}" for linha, o in _disco_020(tree)]
+    assert not achados, f"spec 022: o XLSX é lido em memória pela stdlib (R2): {achados}"
+    tree = ast.parse((SRC / "analytics" / "publico.py").read_text())
+    assert not [m for m in IMPORTS_PROIBIDOS_022 if _importa(tree, m)]
+
+
+def test_planilha_recusa_doctype_antes_do_parser(monkeypatch):
+    import io
+    import zipfile
+
+    import pytest
+
+    from sociman_api.errors import ApiError
+    from sociman_api.metricas.studio import planilha
+
+    vistos: list[bytes] = []
+    original = planilha.ET.fromstring
+
+    def espiao(dados):
+        vistos.append(dados)
+        return original(dados)
+
+    monkeypatch.setattr(planilha.ET, "fromstring", espiao)
+    bomba = (b'<?xml version="1.0"?><!DOCTYPE lol [<!ENTITY a "lol"><!ENTITY b "&a;&a;&a;">]>'
+             b"<Types>&b;</Types>")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("[Content_Types].xml", bomba)
+        zf.writestr("xl/workbook.xml", b"<workbook/>")
+    with pytest.raises(ApiError) as e:
+        planilha.ler("x.xlsx", buf.getvalue())
+    assert e.value.code == "studio_planilha"
+    assert not any(b"<!DOCTYPE" in v for v in vistos)
+
+
+def test_rota_de_publico_so_le_e_sem_tiktok():
+    rotas = _rotas_019()
+    assert "analytics_publico" in rotas
+    metodo, path = rotas["analytics_publico"]
+    assert metodo == "GET"
+    assert not [t for t in PUBLISH_TERMS if t in f"{_norm(path)} {_norm('analytics_publico')}"]
+    assert "tiktok" not in path.lower()
+
+
+def test_nenhum_arquivo_real_de_publico_na_api():
+    achados = [str(p.relative_to(API_DIR)) for padrao in ARQUIVOS_REAIS_022
+               for p in API_DIR.rglob(padrao) if ".venv" not in p.parts]
+    assert not achados, f"arquivo de público do TikTok Studio no repositório: {achados}"
+
+
+# ---- spec 023 (aprendizado): R13 ----
+
+APRENDIZADO = SRC / "aprendizado"
+IMPORTS_PROIBIDOS_023 = ("sociman_api.publicacao", "httpx", "sociman_api.postagem.service",
+                         "sociman_api.conteudos.agendamento", "sociman_api.envios.service_envios")
+# Os módulos só de leitura (o cálculo na leitura) e as funções das rotas GET nos outros.
+SO_LEITURA_023 = ("estatistica.py", "fatores.py", "analise.py", "recomendacoes.py",
+                  "afinidade.py", "desempenho.py", "diagnostico.py", "constantes.py",
+                  "schemas.py")
+LEITURAS_023 = {"temas.py": ("listar", "outs", "out", "contagens", "versions"),
+                "classificacao.py": ("listar", "out", "versions", "n_pendentes", "usadas_hoje",
+                                     "pendentes_stmt", "_resumos"),
+                "preferencias.py": ("obter", "efetivas", "out", "versions", "decisao_out",
+                                    "linha", "taxonomia_versao"),
+                "analise_ia.py": ("listar", "obter", "out", "estimativa", "escolher",
+                                  "estimar_escolha")}
+
+
+def _rotas_023() -> dict[str, tuple[str, str]]:
+    return {op["operationId"]: (m.upper(), path)
+            for path, ops in app.openapi()["paths"].items() for m, op in ops.items()
+            if op.get("operationId", "").startswith("aprendizado_")}
+
+
+def test_aprendizado_nao_importa_publicacao_nem_rede():
+    """Guarda 1: `aprendizado/` não importa publicação, HTTP nem os serviços que mudam destino,
+    agenda ou envio (princípio I)."""
+    fontes = sorted(APRENDIZADO.rglob("*.py"))
+    assert fontes and (APRENDIZADO / "router.py") in fontes  # o guarda está vivo
+    achados = [f"{p.relative_to(SRC)}: {m}" for p in fontes for m in IMPORTS_PROIBIDOS_023
+               if _importa(ast.parse(p.read_text()), m)]
+    assert not achados, f"aprendizado/ importa o que publica ou agenda: {achados}"
+
+
+def test_rotas_do_aprendizado_sem_delete_e_sem_rede():
+    """Guarda 2: nenhuma rota `aprendizado_*` é DELETE nem cita a rede."""
+    rotas = _rotas_023()
+    assert len(rotas) >= 30  # o guarda está vivo
+    assert not [r for r in rotas.values() if r[0] == "DELETE"]
+    for op, (_, path) in rotas.items():
+        texto = f"{_norm(path)} {_norm(op)}"
+        assert not [t for t in PUBLISH_TERMS if t in texto], (op, path)
+
+
+def test_escritas_do_aprendizado_exigem_dono_humano():
+    """Guarda 3: toda rota que não é GET depende de `require_human_owner`; os GETs, não."""
+    from sociman_api.auth.deps import require_human_owner
+
+    por_op = {r.operation_id: r for r in _rotas_resolvidas(app.routes)
+              if (getattr(r, "operation_id", None) or "").startswith("aprendizado_")}
+    rotas = _rotas_023()
+    assert set(por_op) == set(rotas)
+    sem = [op for op, (m, _) in rotas.items()
+           if m != "GET" and require_human_owner not in _chamadas(por_op[op].dependant)]
+    assert not sem, f"escritas do aprendizado sem RequireHumanOwner: {sem}"
+    com = [op for op, (m, _) in rotas.items()
+           if m == "GET" and require_human_owner in _chamadas(por_op[op].dependant)]
+    assert not com, f"leituras do aprendizado só para dono humano: {com}"
+
+
+def _atribui_direito(tree: ast.AST) -> list[int]:
+    """`x.direito = …` e `.values(direito=…)` (gravar); montar a resposta não conta."""
+    achados = []
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Assign, ast.AugAssign, ast.AnnAssign)):
+            alvos = node.targets if isinstance(node, ast.Assign) else [node.target]
+            if any(isinstance(t, ast.Attribute) and t.attr == "direito" for t in alvos):
+                achados.append(node.lineno)
+        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                and node.func.attr == "values" and any(k.arg == "direito" for k in node.keywords):
+            achados.append(node.lineno)
+    return achados
+
+
+def test_afinidade_nao_toca_no_direito():
+    """Guarda 4 (princípio II): nada em `aprendizado/` nem no Descobrir grava o direito."""
+    fontes = [*sorted(APRENDIZADO.rglob("*.py")), SRC / "canais" / "service_videos.py",
+              SRC / "analytics" / "mercado.py"]
+    achados = [f"{p.relative_to(SRC)}:{linha}" for p in fontes
+               for linha in _atribui_direito(ast.parse(p.read_text()))]
+    assert not achados, f"o aprendizado grava o direito (princípio II): {achados}"
+    vivo = ast.parse("def f(c):\n    c.direito = 'sem_acordo'\n    q.values(direito=1)\n")
+    assert len(_atribui_direito(vivo)) == 2  # o guarda está vivo
+
+
+def _funcoes(tree: ast.AST, nomes: tuple[str, ...]) -> list[ast.FunctionDef]:
+    return [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name in nomes]
+
+
+def _grava_historico(tree: ast.AST) -> bool:
+    return any(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+               and n.func.attr == "record" for n in ast.walk(tree))
+
+
+def test_gets_do_aprendizado_nao_gravam():
+    """Guarda 6: o cálculo na leitura (análise, recomendações, afinidade, desempenho,
+    diagnóstico) e as funções das rotas GET não chamam `db.add`, `flush`, `commit`, SQL de
+    escrita nem `history.record`."""
+    achados = []
+    for nome in SO_LEITURA_023:
+        tree = ast.parse((APRENDIZADO / nome).read_text())
+        achados += [f"{nome}:{linha}: {o}" for linha, o in _escritas(tree)]
+        if _grava_historico(tree):
+            achados.append(f"{nome}: history.record")
+    for nome, funcoes in LEITURAS_023.items():
+        tree = ast.parse((APRENDIZADO / nome).read_text())
+        achadas = _funcoes(tree, funcoes)
+        assert {f.name for f in achadas} == set(funcoes), (nome, funcoes)  # o guarda está vivo
+        for f in achadas:
+            achados += [f"{nome}:{linha}: {o} ({f.name})" for linha, o in _escritas(f)]
+            if _grava_historico(f):
+                achados.append(f"{nome}: history.record ({f.name})")
+    assert not achados, f"leituras do aprendizado gravam: {achados}"
+
+
+def test_analytics_e_canais_so_importam_a_afinidade_do_aprendizado():
+    """Guarda 7: `analytics/` e `canais/` leem só `aprendizado.afinidade` (só leitura)."""
+    achados = []
+    for path in [*sorted((SRC / "analytics").rglob("*.py")), *sorted((SRC / "canais").rglob(
+            "*.py"))]:
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.ImportFrom) and node.module and \
+                    node.module.startswith("sociman_api.aprendizado"):
+                nomes = {a.name for a in node.names}
+                if node.module == "sociman_api.aprendizado" and nomes <= {"afinidade"}:
+                    continue
+                if node.module == "sociman_api.aprendizado.afinidade":
+                    continue
+                achados.append(f"{path.relative_to(SRC)}: {node.module} {sorted(nomes)}")
+    assert not achados, f"leitura do aprendizado fora da afinidade: {achados}"

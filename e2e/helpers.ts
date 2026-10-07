@@ -578,6 +578,119 @@ export function zipsStudio(handle: string, dias: (DiaOverview & { seguidores: nu
   };
 }
 
+// --- público do TikTok Studio (spec 022, T026) ---
+// Tudo SINTÉTICO: os CSVs de público preenchidos no formato da 020 e um `Viewers.xlsx` de verdade
+// (um ZIP "stored" com os XML mínimos, todas as células `t="str"`, como o real). Nunca o arquivo do dono.
+
+export interface ItemDistribuicao {
+  rotulo: string; // "Female", "BR"…
+  pct: string; // como no arquivo: "61%", "37.5%"…
+}
+export interface LinhaAtividade {
+  dia: string; // AAAA-MM-DD
+  hora: number;
+  ativos: number | "undefined";
+}
+export interface LinhaEspectadores {
+  dia: string;
+  total: number | "undefined";
+  novos: number | "undefined";
+  recorrentes: number | "undefined";
+}
+
+export const csvGenero = (itens: ItemDistribuicao[]) => csvStudio(["Gender", "Distribution"], itens.map((i) => [i.rotulo, i.pct]));
+export const csvTerritorios = (itens: ItemDistribuicao[]) => csvStudio(["Top territories", "Distribution"], itens.map((i) => [i.rotulo, i.pct]));
+export const csvAtividade = (linhas: LinhaAtividade[]) => csvStudio(["Date", "Hour", "Active followers"], linhas.map((l) => [diaStudio(l.dia), l.hora, l.ativos]));
+
+const xmlEsc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const colunaXlsx = (i: number) => String.fromCharCode(65 + i); // até 4 colunas: A–D
+
+// `Viewers.xlsx` mínimo. `defeito`: "formula" põe uma fórmula em B3; "macro" acrescenta um vbaProject.bin.
+export function xlsxViewers(linhas: LinhaEspectadores[], defeito?: "formula" | "macro"): Buffer {
+  const tabela: string[][] = [
+    ["Date", "Total Viewers", "New Viewers", "Returning Viewers"],
+    ...linhas.map((l) => [diaStudio(l.dia), String(l.total), String(l.novos), String(l.recorrentes)]),
+  ];
+  const rows = tabela
+    .map((campos, r) => {
+      const celulas = campos
+        .map((v, c) => {
+          const ref = `${colunaXlsx(c)}${r + 1}`;
+          if (defeito === "formula" && ref === "B3") return `<c r="${ref}"><f>1+1</f><v>2</v></c>`;
+          return `<c r="${ref}" t="str"><v>${xmlEsc(v)}</v></c>`;
+        })
+        .join("");
+      return `<row r="${r + 1}">${celulas}</row>`;
+    })
+    .join("");
+  const xml = (s: string) => Buffer.from(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n${s}`, "utf8");
+  const ns = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const entradas = [
+    {
+      nome: "[Content_Types].xml",
+      dados: xml(
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+          '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+          '<Default Extension="xml" ContentType="application/xml"/>' +
+          '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+          '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+          "</Types>",
+      ),
+    },
+    {
+      nome: "_rels/.rels",
+      dados: xml(
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+          '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+          "</Relationships>",
+      ),
+    },
+    { nome: "xl/workbook.xml", dados: xml(`<workbook ${ns}><sheets><sheet name="Viewers" sheetId="1" r:id="rId1"/></sheets></workbook>`) },
+    {
+      nome: "xl/_rels/workbook.xml.rels",
+      dados: xml(
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+          '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+          "</Relationships>",
+      ),
+    },
+    { nome: "xl/worksheets/sheet1.xml", dados: xml(`<worksheet ${ns}><sheetData>${rows}</sheetData></worksheet>`) },
+    ...(defeito === "macro" ? [{ nome: "xl/vbaProject.bin", dados: Buffer.from("macro sintetica") }] : []),
+  ];
+  return zipStudio(entradas);
+}
+
+export interface PublicoSintetico {
+  genero?: ItemDistribuicao[];
+  territorios?: ItemDistribuicao[];
+  atividade?: LinhaAtividade[];
+  espectadores?: LinhaEspectadores[];
+  /** "formula"/"macro" no Viewers.xlsx */
+  defeitoXlsx?: "formula" | "macro";
+}
+
+// Os ZIPs de público como o Studio entrega: `Followers_<handle>.zip` (o histórico + os 3 CSVs, cada um
+// preenchido ou só com o cabeçalho) e `Viewers_<handle>.zip` (o `Viewers.xlsx` dentro).
+export function zipsPublico(handle: string, seguidores: { dia: string; seguidores: number }[], p: PublicoSintetico) {
+  return {
+    seguidores: {
+      name: `Followers_${handle}.zip`,
+      mimeType: "application/zip",
+      buffer: zipStudio([
+        { nome: "FollowerHistory.csv", dados: csvSeguidores(seguidores) },
+        { nome: "FollowerActivity.csv", dados: csvAtividade(p.atividade ?? []) },
+        { nome: "FollowerGender.csv", dados: csvGenero(p.genero ?? []) },
+        { nome: "FollowerTopTerritories.csv", dados: csvTerritorios(p.territorios ?? []) },
+      ]),
+    },
+    espectadores: {
+      name: `Viewers_${handle}.zip`,
+      mimeType: "application/zip",
+      buffer: zipStudio([{ nome: "Viewers.xlsx", dados: xlsxViewers(p.espectadores ?? [], p.defeitoXlsx) }]),
+    },
+  };
+}
+
 // --- MCP (spec 009, T030) ---
 
 // Versão de protocolo do cliente do OpenClaw (@modelcontextprotocol/sdk 1.30.0).

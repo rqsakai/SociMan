@@ -61,6 +61,8 @@ import CenaHistorico from "./pages/cenas/CenaHistorico";
 
 // 019-analytics: /app/metricas carrega sob demanda (traz o ECharts, chunk `graficos`).
 const Analytics = lazy(() => import("./pages/analytics/Analytics"));
+// 023-aprendizado: /app/perfis/:id/aprendizado também usa o ECharts (rota lazy).
+const Aprendizado = lazy(() => import("./pages/aprendizado/Aprendizado"));
 
 // Vitrine dos componentes da spec 005 (só em dev; o build de produção descarta o import).
 const Showcase = import.meta.env.DEV ? lazy(() => import("./pages/_Showcase")) : null;
@@ -129,6 +131,14 @@ export default function App() {
                 <Route path="/app/perfis/novo" element={<PerfilNovo />} />
                 <Route path="/app/perfis/:id" element={<PerfilDetalhe />} />
                 <Route path="/app/perfis/:id/kit/historico" element={<KitHistorico />} />
+                <Route
+                  path="/app/perfis/:id/aprendizado"
+                  element={
+                    <Suspense fallback={<p className="text-sm text-muted-foreground" aria-live="polite">Carregando…</p>}>
+                      <Aprendizado />
+                    </Suspense>
+                  }
+                />
                 <Route path="/app/contas/:id/historico" element={<ContaHistorico />} />
                 <Route path="/app/contas/:id/guia" element={<ContaGuia />} />
                 <Route path="/app/contas/:id/studio" element={<ContaStudio />} />

@@ -116,4 +116,28 @@ iluminação e estilo e o áudio ambiente, coerentes entre si.
 - Ação simples e contínua em até 8 segundos, gestos claros, produto "exactly as in the \
 reference image", nada de texto legível, mãos longe do rosto nas cenas com fala.
 - Não descreva a aparência do avatar nem o cenário: eles vêm dos assets e não mudam."""),
+    # Spec 023 (R5): aprender com o desempenho.
+    "aprendizado.taxonomia": (1, """\
+Proponha a taxonomia de temas do perfil a partir dos posts publicados.
+- De 3 a 15 temas, que cubram a maior parte dos posts e não se sobreponham.
+- Nome curto (até 40 caracteres), no idioma do perfil; descrição de uma frase (até 200).
+- Palavras-chave (até 20 por tema) que apareçam em títulos de vídeos sobre o tema: nomes, \
+franquias, termos do assunto; sem palavras genéricas ("vídeo", "melhor").
+- Não crie um tema "outros": o sistema já tem "Sem tema"."""),
+    "aprendizado.classificacao": (1, """\
+Classifique o post num tema da taxonomia e num estilo de gancho.
+- temaId: o id de um tema da lista <taxonomia>, ou null se nenhum servir; nunca invente um id. \
+Se faltar um tema, diga o nome em sugestaoTema.
+- secundarios: até 2 outros ids da lista, só se o post também for claramente sobre eles.
+- estiloGancho: o estilo da abertura (o gancho, ou a primeira frase da fala ou da legenda); \
+null se não houver texto nenhum.
+- justificativa: uma linha curta (até 160 caracteres) dizendo por quê."""),
+    "aprendizado.analise": (1, """\
+Compare os melhores posts com os comparáveis e proponha hipóteses do que fez diferença.
+- Até 6 hipóteses, cada uma uma frase concreta (até 240 caracteres) que dê para testar no \
+próximo post: gancho, edição, ritmo, assunto, legenda, horário.
+- postsIds: os ids dos posts (só dos enviados) que sustentam a hipótese; contraste: o que os \
+comparáveis fazem diferente (até 160 caracteres); n: quantos posts sustentam.
+- Use o resumo estatístico como contexto, sem repetir o que ele já diz; nada é comprovado: \
+são hipóteses a conferir."""),
 }

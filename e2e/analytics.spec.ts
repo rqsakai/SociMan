@@ -7,7 +7,8 @@ import { apiToken, createPerfilViaApi, login, sqlE2e } from "./helpers";
 // URL (?aba=, com o padrão fora dela) e o voltar do navegador troca de aba; os atalhos de período
 // gravam `de`/`ate` e o padrão (7 d) some da URL. As histórias acrescentam os cards.
 
-const ABAS = ["Visão geral", "Quando postar", "O que funciona", "Curvas", "Contas", "Funil", "Mercado", "Alertas"];
+// spec 022: "Público" entra logo depois de "Quando postar"
+const ABAS = ["Visão geral", "Quando postar", "Público", "O que funciona", "Curvas", "Contas", "Funil", "Mercado", "Alertas"];
 
 test("019 base: 8 abas, aba e período na URL", async ({ page }) => {
   await login(page, OWNER.email, OWNER.password);
@@ -87,7 +88,7 @@ function vigiarCsp(page: Page): string[] {
   return erros;
 }
 
-const SLUGS = ["visao-geral", "quando-postar", "o-que-funciona", "curvas", "contas", "funil", "mercado", "alertas"];
+const SLUGS = ["visao-geral", "quando-postar", "publico", "o-que-funciona", "curvas", "contas", "funil", "mercado", "alertas"];
 
 test("019 transversal: só GET em /api/analytics nas 8 abas, sem erro de CSP", async ({ page, request }) => {
   const { perfilId, contaId } = await semearConta(request);

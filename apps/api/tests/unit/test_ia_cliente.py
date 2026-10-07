@@ -128,3 +128,21 @@ def test_base_url_da_config(monkeypatch):
         assert cliente_mod.get_ia_client() is None
     finally:
         get_settings.cache_clear()
+
+
+def test_user_com_blocos_de_imagem_sem_tools(anthropic_fake):  # noqa: F811
+    """Spec 023 (T012): o `user` pode ser a lista de blocos (texto e quadros JPEG base64)."""
+    tipo = TIPOS["aprendizado.analise"]
+    blocos = [{"type": "text", "text": '<post id="00000000-0000-4000-8000-000000000001">\nx\n'
+                                       "</post>"},
+              {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg",
+                                           "data": "AAAA"}}]
+    res = anthropic_fake.ia_client().gerar(tipo, montar_system(tipo, tipo.padrao, CTX),
+                                           lambda erro: blocos)
+    assert res.erro_code is None, res
+    body = anthropic_fake.bodies[0]
+    assert "tools" not in body and body["messages"][0]["content"] == blocos
+    assert anthropic_fake.imagens == [1]
+    assert set(body["output_config"]["format"]["schema"]["properties"]) == {
+        "hipoteses", "explicacao", "avisos"}
+    assert res.validada.proposta["aprendizado"]["hipoteses"][0]["postsIds"]

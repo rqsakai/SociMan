@@ -225,6 +225,12 @@ class IaChamada(Base):
     proibidas: Mapped[list[str]] = mapped_column(
         ARRAY(Text), nullable=False, default=list, server_default=text("'{}'")
     )
+    # Spec 023 (R8): o bloco `<desempenho>` enviado (NULL = não enviado) e os exemplos usados.
+    desempenho_perfil_version: Mapped[int | None] = mapped_column(Integer)
+    desempenho_conta_version: Mapped[int | None] = mapped_column(Integer)
+    desempenho_exemplos: Mapped[list[uuid.UUID]] = mapped_column(
+        ARRAY(Uuid), nullable=False, default=list, server_default=text("'{}'")
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

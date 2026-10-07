@@ -399,6 +399,11 @@ test("regras do título e textos da postagem pelo mesmo painel", async ({ page, 
   await add.getByRole("button", { name: "Adicionar" }).click();
   const postagem = page.getByRole("tabpanel");
   await expect(postagem.getByLabel("Título", { exact: true })).toBeVisible();
+  // spec 023 (T052): uma preferência do perfil (v1) faz o bloco <desempenho> ir no pedido; a
+  // hashtag evitada não é das que o Claude falso propõe (os textos continuam os mesmos)
+  const pref = await request.patch(`/api/perfis/${perfilId}/aprendizado/preferencias`, { headers: auth, data: { version: 0, hashtagsEvitar: ["#nuncausada"] } });
+  expect(pref.status(), "PATCH preferências (023)").toBe(200);
+  const versaoPref = ((await pref.json()) as { version: number }).version;
   const textos = await abrirPainel(page, "postagem.textos");
   await gerar(textos);
   await textos.getByRole("button", { name: "Aplicar", exact: true }).click();
@@ -415,6 +420,12 @@ test("regras do título e textos da postagem pelo mesmo painel", async ({ page, 
   expect(post.hashtags.length).toBeGreaterThanOrEqual(3);
   let hv = await versions(request, auth, `/api/destinos/${post.id}/versions`);
   expect(hv[0].details.ia?.[0]).toMatchObject({ tipoCampo: "postagem.textos", desfecho: "aplicada" });
+  // spec 023: o registro mostra a versão do desempenho usada (a do perfil; a conta sem preferências)
+  const chamadaTextos = (await chamadas(request, auth, { perfilId, tipoCampo: "postagem.textos" }))[0];
+  await page.goto(`/app/assistente-ia?aba=registro&chamada=${chamadaTextos.id}`);
+  await expect(page.getByRole("dialog").locator("[data-desempenho]")).toHaveText(new RegExp(`Desempenho: perfil v${versaoPref}, conta v0, \\d+ exemplos?`));
+  await page.goto(`/app/conteudos/${corteId}`);
+  await expect(postagem.getByLabel("Título", { exact: true })).toBeVisible();
 
   // título "mais polêmico" em 1 clique
   const titulo = await abrirPainel(page, "postagem.titulo", "mais polêmico");

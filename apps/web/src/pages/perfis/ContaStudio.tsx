@@ -99,7 +99,7 @@ export default function ContaStudio() {
                     onConfirmar={async (confirmoConta) => {
                       try {
                         const imp = await mut.confirmar.mutateAsync({ previaId: previa.previaId, confirmoConta });
-                        toast.success(imp.gravados > 0 ? `Importação confirmada: ${imp.gravados} dias gravados.` : "Nada novo: estes dias já estavam importados.");
+                        toast.success(imp.gravados > 0 ? `Importação confirmada: ${imp.gravados} ${imp.gravados === 1 ? "registro gravado" : "registros gravados"}.` : "Nada novo: estes dados já estavam importados.");
                         fecharPrevia();
                       } catch {
                         // a prévia expirada, já usada ou desatualizada aparece no erro; "Cancelar" volta ao envio

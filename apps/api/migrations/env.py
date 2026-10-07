@@ -4,6 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from sociman_api import history as _history  # noqa: F401 — registra no metadata
+from sociman_api.aprendizado import models as _aprendizado_models  # noqa: F401 — spec 023
 from sociman_api.assets import models as _assets_models  # noqa: F401
 from sociman_api.auth import models as _auth_models  # noqa: F401
 from sociman_api.canais import models as _canais_models  # noqa: F401

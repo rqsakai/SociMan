@@ -6,7 +6,7 @@ saves fica em `ia/aplicacao.py`.
 """
 
 from datetime import date, datetime
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import Field, StringConstraints
@@ -28,7 +28,9 @@ ITEM_MAX = 400
 # Spec 014: "conteudo" (+ conta) antes de o destino existir; "corte" continua (mesmo id).
 # Spec 017: "guia" nas chamadas do "montar guia" (entity_id = a linha do guia, ou null).
 # Spec 010: "cena" (entity_id null numa cena ainda não salva, com `cenaContexto`).
-AlvoTipo = Literal["asset", "perfil", "kit", "postagem", "corte", "conteudo", "guia", "cena"]
+# Spec 023: as chamadas do aprendizado (só no registro; o `gerar` recusa).
+AlvoTipo = Literal["asset", "perfil", "kit", "postagem", "corte", "conteudo", "guia", "cena",
+                   "aprendizado_classificacao", "aprendizado_analise"]
 Item = Annotated[str, StringConstraints(max_length=ITEM_MAX)]
 
 
@@ -132,6 +134,7 @@ class Valor(CamelModel):
     guia: GuiaCampos | None = None
     variacoes: list[Variacao] | None = None
     cena: ValorCena | None = None  # spec 010: `cena.ajustar`
+    aprendizado: dict[str, Any] | None = None  # spec 023: temas, classificação ou hipóteses
 
 
 class Selecao(CamelModel):
@@ -192,6 +195,10 @@ class IaChamada(CamelModel):
     guia_conta_version: int | None
     guia_rascunho: Literal["perfil", "conta"] | None
     proibidas: list[str]
+    # Spec 023 (R8): o bloco `<desempenho>` (NULL = "sem bloco de desempenho") e os exemplos.
+    desempenho_perfil_version: int | None = None
+    desempenho_conta_version: int | None = None
+    desempenho_exemplos: list[UUID] = Field(default_factory=list)
 
 
 class ChamadaOut(CamelModel):

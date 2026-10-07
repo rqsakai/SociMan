@@ -14,6 +14,7 @@
  *   erro         erro da query (ApiErrorAlert)
  *   acoes        filtros locais do card (à direita, antes dos botões)
  *   largo        ocupa as 2 colunas da grade em telas grandes
+ *   acoesVazio   atalhos extras no estado vazio (ex.: "Histórico do Studio", spec 022)
  *   children     o gráfico (normalmente um <Grafico/>)
  *
  * Cabeçalho: título (e chip) e botões na mesma linha a partir de sm; no celular os botões descem para
@@ -40,6 +41,7 @@ export interface CardAnalyticsProps {
   erro?: unknown;
   acoes?: ReactNode;
   onAmpliarPeriodo?: () => void;
+  acoesVazio?: ReactNode;
   largo?: boolean;
   className?: string;
   children?: ReactNode;
@@ -55,6 +57,7 @@ export function CardAnalytics({
   erro,
   acoes,
   onAmpliarPeriodo,
+  acoesVazio,
   largo,
   className,
   children,
@@ -124,6 +127,7 @@ export function CardAnalytics({
               Ampliar período
             </Button>
           )}
+          {acoesVazio}
         </div>
       ) : vista === "tabela" && temTabela ? (
         <TabelaAlternativa titulo={titulo} dados={tabela!} />

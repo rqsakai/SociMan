@@ -3,6 +3,11 @@
 Os filtros e a ordem ficam no SQL; a paginação é por cursor opaco (keyset estável por
 `(ordem, id)`, ambos decrescentes). Com `perfilId`, o score exibido já tem o fator "já
 cortado" (× 0,3) e a ordem `score` usa esse valor. Canal arquivado sai da descoberta.
+
+Spec 023 (R9): com `perfilId`, o score exibido soma a afinidade (`aprendizado.afinidade`, até
+±20, calculada no SQL), e os vídeos de tema cortado ficam ocultos salvo com `mostrarCortados`
+(a resposta conta os ocultos). Afinidade neutra = a ordem e o score da 006, sem mudança. O
+direito do canal só é mostrado, nunca alterado (princípio II).
 """
 
 import base64
@@ -92,8 +97,30 @@ def _decodificar(cursor: str, ordem: str) -> tuple[Any, uuid.UUID]:
 
 # ---- saída ----
 
+def _maior_006(detail: dict[str, Any] | None) -> float:
+    """A maior contribuição da 006, em pontos (para o motivo da afinidade, R9)."""
+    from sociman_api.canais.score import PESOS
+
+    d = detail or {}
+    return max((100 * peso * float(d.get(k) or 0) for k, peso in PESOS.items()), default=0.0)
+
+
+def _com_afinidade(db: Session, perfil_id: uuid.UUID | None):
+    """Spec 023: os pesos do perfil e as expressões SQL (None = neutro, a 006 fica igual)."""
+    if perfil_id is None:
+        return None, None
+    from sociman_api.aprendizado import afinidade  # import tardio (o aprendizado lê `canais`)
+
+    valores = afinidade.valores(db, perfil_id)
+    if valores is None:
+        return None, None
+    return valores, afinidade.expressoes(valores, VideoFonte.id, VideoFonte.canal_id)
+
+
 def videos_out(db: Session, videos: Sequence[VideoFonte],
-               perfil_id: uuid.UUID | None = None) -> list[schemas.VideoFonte]:
+               perfil_id: uuid.UUID | None = None,
+               afinidades: dict[uuid.UUID, tuple[float, str | None, bool]] | None = None,
+               valores: Any = None) -> list[schemas.VideoFonte]:
     if not videos:
         return []
     canais = {c.id: c for c in db.scalars(
@@ -118,6 +145,21 @@ def videos_out(db: Session, videos: Sequence[VideoFonte],
         canal = canais[v.canal_id]
         ja = cortados.get(v.id, [])
         cortado_no_perfil = perfil_id is not None and any(j.perfil_id == perfil_id for j in ja)
+        score = float(score_exibido(v.score, cortado_no_perfil))
+        reason = v.score_reason
+        afinidade_out = None
+        if afinidades is not None and v.id in afinidades:
+            from sociman_api.aprendizado import afinidade as af
+
+            pontos, tema_id, cortado = afinidades[v.id]
+            pontos = round(float(pontos), 1)
+            score = round(max(0.0, min(100.0, score + pontos)), 1)
+            tema = af.tema(valores, tema_id)
+            motivo = af.motivo(valores, tema_id, pontos, _maior_006(v.score_detail))
+            reason = motivo or reason  # o `score_reason` gravado não muda
+            afinidade_out = schemas.AprendizadoAfinidade(
+                pontos=pontos, tema_id=tema.id if tema else None,
+                tema_nome=tema.nome if tema else None, cortado=bool(cortado), motivo=motivo)
         out.append(schemas.VideoFonte(
             id=v.id,
             canal=schemas.CanalRef(id=canal.id, title=canal.title, direito=canal.direito),
@@ -126,10 +168,11 @@ def videos_out(db: Session, videos: Sequence[VideoFonte],
             published_at=v.published_at, duration_s=v.duration_s, live=v.live,
             disponivel=v.disponivel, views=v.views, likes=v.likes, comments=v.comments,
             vph_recente=float(v.vph_recente) if v.vph_recente is not None else None,
-            score=float(score_exibido(v.score, cortado_no_perfil)),
-            score_reason=v.score_reason,
+            score=score,
+            score_reason=reason,
             score_detail=schemas.ScoreDetail.model_validate(v.score_detail or {}),
             recomendavel=v.recomendavel, ja_cortado=ja, selecionado=selecionados.get(v.id, []),
+            afinidade=afinidade_out,
         ))
     return out
 
@@ -142,7 +185,7 @@ def list_videos(
     publicado_desde: datetime | None = None, publicado_ate: datetime | None = None,
     duracao_min: int | None = None, duracao_max: int | None = None,
     nao_cortados: bool = False, recomendaveis: bool = True, ordem: str = "score",
-    limit: int = LIMIT_PADRAO, cursor: str | None = None,
+    limit: int = LIMIT_PADRAO, cursor: str | None = None, mostrar_cortados: bool = False,
 ) -> schemas.VideosList:
     if nao_cortados and perfil_id is None:
         raise _invalido("O filtro \"não cortados\" precisa de um perfil")
@@ -175,25 +218,47 @@ def list_videos(
     if recomendaveis:
         filtros.append(VideoFonte.recomendavel.is_(True))
 
+    valores, exprs = _com_afinidade(db, perfil_id)  # spec 023
+    ocultos = 0
+    if exprs is not None and valores.cortados:
+        ocultos = db.scalar(select(func.count()).select_from(VideoFonte).join(
+            CanalFonte, CanalFonte.id == VideoFonte.canal_id).where(*filtros, exprs.cortado)) or 0
+        if not mostrar_cortados:
+            filtros.append(~exprs.cortado)
+
     base = select(VideoFonte).join(CanalFonte, CanalFonte.id == VideoFonte.canal_id).where(
         *filtros)
     total = db.scalar(select(func.count()).select_from(base.subquery())) or 0
 
-    chave = _chave(ordem, perfil_id).label("k")
+    def _k() -> ColumnElement[Any]:
+        key = _chave(ordem, perfil_id)
+        if exprs is not None and ordem == "score":
+            from sociman_api.aprendizado.afinidade import score_com
+
+            return score_com(key, exprs.pontos)
+        return key
+
+    chave = _k().label("k")
     stmt = base.add_columns(chave)
+    if exprs is not None:
+        stmt = stmt.add_columns(exprs.pontos.label("af_pontos"), exprs.tema_id.label("af_tema"),
+                                exprs.cortado.label("af_cortado"))
     if cursor:
         valor, ultimo_id = _decodificar(cursor, ordem)
-        key = _chave(ordem, perfil_id)
+        key = _k()
         stmt = stmt.where(or_(key < valor, and_(key == valor, VideoFonte.id < ultimo_id)))
     limit = min(max(limit, 1), LIMIT_MAX)
     rows = db.execute(stmt.order_by(chave.desc(), VideoFonte.id.desc()).limit(limit + 1)).all()
     pagina = rows[:limit]
     proximo = None
     if len(rows) > limit:
-        ultimo, k = pagina[-1]
+        ultimo, k = pagina[-1][0], pagina[-1][1]
         proximo = _codificar(ordem, k.isoformat() if isinstance(k, datetime) else k, ultimo.id)
-    return schemas.VideosList(items=videos_out(db, [r[0] for r in pagina], perfil_id),
-                              next_cursor=proximo, total=total)
+    afinidades = ({r[0].id: (r.af_pontos, r.af_tema, r.af_cortado) for r in pagina}
+                  if exprs is not None else None)
+    return schemas.VideosList(
+        items=videos_out(db, [r[0] for r in pagina], perfil_id, afinidades, valores),
+        next_cursor=proximo, total=total, ocultos_por_tema=ocultos)
 
 
 def get_video(db: Session, video_id: uuid.UUID) -> schemas.VideoDetalheOut:

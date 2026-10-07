@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Perfil, UpdatePerfilRequest } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, ArrowLeft, Loader2, Save } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowLeft, Lightbulb, Loader2, Save } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useParams, useSearchParams } from "react-router-dom";
@@ -151,20 +151,28 @@ export default function PerfilDetalhe() {
             </TabsList>
           }
           actions={
-            <ConfirmButton
-              label={perfil.archived ? "Restaurar" : "Arquivar"}
-              icon={perfil.archived ? ArchiveRestore : Archive}
-              busy={archiving}
-              title={perfil.archived ? `Restaurar ${perfil.name}?` : `Arquivar ${perfil.name}?`}
-              description={
-                perfil.archived
-                  ? "O perfil volta para a lista padrão."
-                  : activeContas > 0
-                    ? "O perfil sai da lista padrão. As contas ativas continuam ativas nas plataformas: o SociMan não publica nem encerra nada fora dele."
-                    : "O perfil sai da lista padrão e pode ser restaurado depois."
-              }
-              onConfirm={toggleArchive}
-            />
+            <>
+              <Button variant="outline" asChild>
+                <Link to={`/app/perfis/${perfil.id}/aprendizado`}>
+                  <Lightbulb aria-hidden="true" />
+                  Aprendizado
+                </Link>
+              </Button>
+              <ConfirmButton
+                label={perfil.archived ? "Restaurar" : "Arquivar"}
+                icon={perfil.archived ? ArchiveRestore : Archive}
+                busy={archiving}
+                title={perfil.archived ? `Restaurar ${perfil.name}?` : `Arquivar ${perfil.name}?`}
+                description={
+                  perfil.archived
+                    ? "O perfil volta para a lista padrão."
+                    : activeContas > 0
+                      ? "O perfil sai da lista padrão. As contas ativas continuam ativas nas plataformas: o SociMan não publica nem encerra nada fora dele."
+                      : "O perfil sai da lista padrão e pode ser restaurado depois."
+                }
+                onConfirm={toggleArchive}
+              />
+            </>
           }
         />
 

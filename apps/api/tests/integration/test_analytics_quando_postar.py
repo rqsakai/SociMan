@@ -107,3 +107,24 @@ def test_calendario(cena):  # noqa: F811
     assert cal[str(local(2).date())] == (0, 1200 - 310)
     assert cal[str(local(1).date())] == (0, 0)
     assert corpo["contexto"]["postsNoPeriodo"] == 1
+
+
+# ---- spec 022 (T038): o 3º mapa, "Seguidores on-line" ----
+
+def test_atividade_dos_seguidores_igual_a_da_aba_publico(cena):  # noqa: F811
+    from integration.studio_helpers import Studio, csv_atividade
+
+    st = Studio(cena)
+    st.serie()
+    filtro = {"de": str(local(7).date()), "ate": str(local(0).date())}
+    vazio = cena.ok("quando-postar", **filtro)["atividadeSeguidores"]
+    assert [c["motivo"] for c in vazio["contas"]] == ["sem_importacao"]
+    dias_ = [local(k).date() for k in (3, 2, 1)]
+    st.importar(("FollowerActivity.csv", csv_atividade(dias_, (8, 20))), confirmo=True)
+    qp = cena.ok("quando-postar", **filtro)
+    pub = cena.ok("publico", **filtro)
+    assert [c["atividade"] for c in qp["atividadeSeguidores"]["contas"]] == [
+        c["atividade"] for c in pub["contas"]]
+    assert qp["atividadeSeguidores"]["contas"][0]["motivo"] is None
+    longe = cena.ok("quando-postar", de=str(local(40).date()), ate=str(local(30).date()))
+    assert longe["atividadeSeguidores"]["contas"][0]["motivo"] == "sem_dado_no_periodo"

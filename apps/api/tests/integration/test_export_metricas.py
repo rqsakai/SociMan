@@ -111,8 +111,11 @@ def test_csv_com_cabecalho_do_dicionario_bom_e_datas_de_sp(client, db, base):
     assert r.headers["content-disposition"] == \
         f'attachment; filename="sociman-metricas-{de}-{ate}.zip"'
     zf = _zip(r)
+    # spec 022: + os 3 arquivos de público do Studio
     assert set(zf.namelist()) == {"fotos_videos.csv", "videos.csv", "fotos_conta.csv",
-                                  "studio_dias.csv", "dicionario.csv", "LEIAME.txt"}
+                                  "studio_dias.csv", "studio_distribuicoes.csv",
+                                  "studio_atividade.csv", "studio_espectadores.csv",
+                                  "dicionario.csv", "LEIAME.txt"}
     for arquivo in ARQUIVOS:
         assert _cabecalho(zf, f"{arquivo}.csv") == dicionario.colunas(arquivo)
     leiame = zf.read("LEIAME.txt").decode("utf-8-sig")

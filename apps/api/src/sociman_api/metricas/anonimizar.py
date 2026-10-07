@@ -178,6 +178,10 @@ def serie(db: Session, alvo: Serie, actor: ActorLike, agora: datetime | None = N
     # importados ficam (só números e dia; o trigger só de inserção não dispara)
     db.execute(update(Importacao).where(Importacao.serie_id == alvo.id)
                .values(nomes_arquivos=None).execution_options(synchronize_session=False))
+    # 6. spec 023 (R11): os textos do aprendizado que derivam da legenda e da transcrição
+    from sociman_api.aprendizado import anonimizar as aprendizado  # import tardio (ciclo)
+
+    aprendizado.limpar(db, [v.id for v in videos])
     db.flush()
     db.expire_all()
     return contagem(db, alvo)

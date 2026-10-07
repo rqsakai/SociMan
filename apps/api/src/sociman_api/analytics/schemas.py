@@ -12,11 +12,11 @@ from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import PlainSerializer
+from pydantic import Field, PlainSerializer
 
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.canais.models import CanalDireito
-from sociman_api.canais.schemas import PerfilRef
+from sociman_api.canais.schemas import AprendizadoAfinidade, PerfilRef
 from sociman_api.metricas.schemas import VideosList
 from sociman_api.perfis.models import Platform
 
@@ -189,6 +189,9 @@ class QuandoPostarOut(CamelModel):
     por_publicacao: Mapa
     audiencia: MapaAudiencia
     calendario: list[DiaCalendario]
+    # spec 022: o 3º mapa (aditivo; definido no fim do arquivo)
+    atividade_seguidores: "PublicoAtividadeSeguidores" = Field(
+        default_factory=lambda: PublicoAtividadeSeguidores())
 
 
 # ---- O que funciona (US3) ----
@@ -350,6 +353,7 @@ class Oportunidade(CamelModel):
     views: int | None
     velocidade: float | None  # views/h
     link_gerar_cortes: str
+    afinidade: AprendizadoAfinidade | None = None  # spec 023: só com perfil no filtro
 
 
 class CanalMercado(CamelModel):
@@ -366,6 +370,7 @@ class MercadoOut(CamelModel):
     velocidade_por_horario: Mapa
     oportunidades: list[Oportunidade]
     canais: list[CanalMercado]
+    ocultos_por_tema: int = 0  # spec 023: oportunidades de tema cortado escondidas
 
 
 # ---- Alertas (US8) ----
@@ -395,3 +400,103 @@ class AlertasOut(CamelModel):
     contexto: Contexto
     alertas: list[Alerta]
     contagem: ContagemAlertas
+
+
+# ---- Público (spec 022, contracts/http-api.md): dados importados do TikTok Studio ----
+
+MotivoPublico = Literal["sem_importacao", "veio_vazia", "sem_dado_no_periodo"]
+MarcaPublico = Literal["novo", "saiu"]
+
+
+class PublicoConta(CamelModel):
+    """A conta de uma entrada do público, na ordem de `ordem-contas` (019). Numa série anônima,
+    `serieId` e `contaId` vêm nulos e o `rotulo` é "Conta anônima N"."""
+
+    serie_id: UUID | None
+    conta_id: UUID | None
+    rotulo: str
+    ordem: int | None  # a posição em `ordem-contas` (a cor fixa); null se anônima
+
+
+class PublicoItem(CamelModel):
+    rotulo: str
+    rotulo_exibicao: str
+    pct: float | None  # 0–100 (é a % da TikTok, não fração); null = sem dado ou "saiu"
+    pct_comparacao: float | None
+    dif_pp: float | None  # pontos percentuais; null sem os dois valores
+    marca: MarcaPublico | None
+
+
+class PublicoDistribuicao(CamelModel):
+    data_foto: date
+    anterior_ao_periodo: bool  # a foto é de antes do início do período (FR-016, resposta A)
+    importacao_id: UUID
+    data_foto_comparacao: date | None
+    seguidores_na_data: int | None  # o total de seguidores da 020 no dia anterior à foto
+    itens: list[PublicoItem]
+    outros_pct: float | None  # só nos territórios: 100 − Σ
+
+
+class PublicoAtividade(CamelModel):
+    celulas: list[CelulaMapa]  # sempre 7 × 24; `valor` = média dos dias com dado, `n` = dias
+    dias_com_dado: int
+    ultimo_dia_com_dado: date | None  # em qualquer período (o atalho "ver os últimos dias")
+
+
+class PublicoDiaEspectadores(CamelModel):
+    dia: date
+    total: int | None
+    novos: int | None
+    recorrentes: int | None
+
+
+class PublicoIndicador(CamelModel):
+    valor: float | None
+    anterior: float | None
+    variacao_pct: float | None  # fração; null = sem base de comparação
+    n: int  # dias com valor
+
+
+class PublicoEspectadores(CamelModel):
+    serie: list[PublicoDiaEspectadores]
+    novos: PublicoIndicador  # soma
+    media_total: PublicoIndicador
+    media_recorrentes: PublicoIndicador
+    dias_sem_dado: int
+
+
+class PublicoMotivos(CamelModel):
+    genero: MotivoPublico | None
+    territorios: MotivoPublico | None
+    atividade: MotivoPublico | None
+    espectadores: MotivoPublico | None
+
+
+class PublicoContaOut(CamelModel):
+    conta: PublicoConta
+    genero: PublicoDistribuicao | None
+    territorios: PublicoDistribuicao | None
+    atividade: PublicoAtividade | None
+    espectadores: PublicoEspectadores | None
+    motivos: PublicoMotivos
+
+
+class PublicoOut(CamelModel):
+    contexto: Contexto
+    contas: list[PublicoContaOut]
+
+
+class PublicoAtividadeConta(CamelModel):
+    conta: PublicoConta
+    atividade: PublicoAtividade | None
+    motivo: MotivoPublico | None
+
+
+class PublicoAtividadeSeguidores(CamelModel):
+    """O 3º mapa de Quando postar ("Seguidores on-line", spec 022): o mesmo cálculo da aba
+    Público, por conta (nunca somado entre contas)."""
+
+    contas: list[PublicoAtividadeConta] = Field(default_factory=list)
+
+
+QuandoPostarOut.model_rebuild()

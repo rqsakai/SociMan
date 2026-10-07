@@ -82,6 +82,9 @@ _TABLES += ("ia_guias",)
 # Spec 020: o histórico do Studio (os dias primeiro; o trigger só de inserção não dispara no
 # TRUNCATE).
 _TABLES += ("metricas_studio_dias", "metricas_studio_importacoes")
+# Spec 022: o público do Studio (só inserção; o TRUNCATE passa).
+_TABLES += ("metricas_studio_distribuicoes", "metricas_studio_atividade",
+            "metricas_studio_espectadores")
 # Spec 009: clientes MCP, registro (só inserção: o trigger de linha não dispara no TRUNCATE) e
 # anotações. A linha única de `mcp_config` volta desligada em `_clean_state`.
 _TABLES += ("mcp_chamadas", "anotacoes", "mcp_clientes")
@@ -90,6 +93,9 @@ _TABLES += ("agencia_importacao_itens", "agencia_importacoes")
 # Spec 010: cenas, tomadas, usos e padrões (a FK deferível da tomada escolhida e o CASCADE
 # cobrem a ordem).
 _TABLES += ("cena_usos", "cena_tomadas", "cenas", "cena_padroes")
+# Spec 023: o aprendizado (o CASCADE cobre a ordem das FKs).
+_TABLES += ("aprendizado_fonte_temas", "aprendizado_conferencias", "aprendizado_decisoes", "aprendizado_classificacoes",
+            "aprendizado_analises", "aprendizado_preferencias", "aprendizado_temas")
 
 
 @pytest.fixture(autouse=True)

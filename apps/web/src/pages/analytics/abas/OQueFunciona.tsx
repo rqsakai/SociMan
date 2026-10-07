@@ -268,6 +268,18 @@ export function OQueFunciona({ estado }: { estado: EstadoFiltroAnalytics }) {
 
   return (
     <div className="flex flex-col gap-4">
+      {/* spec 023: o "por que deu certo" do perfil (efeito encolhido, n e confiança) */}
+      {estado.filtro.perfilId && (
+        <p className="rounded-lg bg-muted/50 p-3 text-sm">
+          Quer saber por que um post rendeu e que assunto ampliar ou cortar?{" "}
+          <Link
+            to={`/app/perfis/${estado.filtro.perfilId}/aprendizado${estado.filtro.contaId ? `?conta=${estado.filtro.contaId}` : ""}`}
+            className="font-medium underline"
+          >
+            Abrir o Aprendizado do perfil
+          </Link>
+        </p>
+      )}
       {notaSemVideo(d?.contexto) && (
         <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground" data-nota-studio>
           {notaSemVideo(d?.contexto)}

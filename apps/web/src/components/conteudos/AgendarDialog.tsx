@@ -25,6 +25,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarClock, CirclePause, Hand, Info, Loader2, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { JanelaPreferida } from "@/components/aprendizado/JanelaPreferida";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { IaAssist } from "@/components/ia/IaAssist";
 import { ConfirmoNaoChegou } from "@/components/publicacao/ConfirmoNaoChegou";
@@ -381,6 +382,7 @@ export function AgendarDialog({
                 )}
               </Field>
               )}
+              {!agora && <JanelaPreferida perfilId={conteudo.perfilId} contaId={contaId || undefined} />}
               <ModoSelect contaId={contaId || null} value={modo} onChange={setModo} dono={dono} bloqueados={agora ? LEMBRETE_SO_AGENDAR : {}} />
               {agora && !dono && <p className="text-sm text-muted-foreground">Só um dono publica ou envia agora. Use "Agendar" para um lembrete.</p>}
               {/* spec 015 (US3): a tela obrigatória da TikTok, consultada ao escolher "Publicar" */}

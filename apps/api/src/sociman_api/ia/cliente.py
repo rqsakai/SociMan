@@ -65,7 +65,9 @@ class IaClient:
     def __repr__(self) -> str:  # nunca mostra a chave
         return f"IaClient(model={self.model!r})"
 
-    def _chamar(self, schema: type[BaseModel], system: list[dict[str, Any]], user: str) -> Any:
+    def _chamar(self, schema: type[BaseModel], system: list[dict[str, Any]],
+                user: str | list[dict[str, Any]]) -> Any:
+        """`user` é o texto ou, na spec 023, os blocos (`text` e `image` base64 JPEG)."""
         return self._client.beta.messages.parse(
             model=self.model,
             max_tokens=MAX_TOKENS,
@@ -78,10 +80,11 @@ class IaClient:
         )
 
     def gerar(self, tipo: TipoCampo, system: list[dict[str, Any]],
-              user: Callable[[str | None], str],
+              user: Callable[[str | None], str | list[dict[str, Any]]],
               excluir: saida.Excluir = saida.NADA,
               efetivo: GuiaEfetivo = saida.SEM_GUIA) -> Resultado:
-        """`user(erro_anterior)` monta a mensagem do usuário (com o erro na 2ª tentativa).
+        """`user(erro_anterior)` monta a mensagem do usuário (com o erro na 2ª tentativa); pode
+        devolver blocos de conteúdo (texto e imagens dos quadros, spec 023).
         `efetivo`: o guia que vale nas garantias (fixas e proibidas, spec 017)."""
         res = Resultado(model=self.model)
         schema = saida.SCHEMAS[tipo.formato]

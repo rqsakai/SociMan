@@ -15,7 +15,7 @@ CTX_POSTAGEM = Contexto(perfil=PERFIL, entidade=(("Plataforma alvo", "TikTok"),)
 def test_system_base_regras_e_perfil_com_cache():
     tipo = TIPOS["perfil.bio"]
     system = montar_system(tipo, "REGRA DO DONO", Contexto(perfil=PERFIL))
-    assert PROMPT_VERSION == "ia/2"
+    assert PROMPT_VERSION == "ia/3"  # spec 023: o bloco <desempenho>
     assert system[0]["text"].startswith(BASE) and "no máximo 2000 caracteres" in system[0]["text"]
     assert "nunca publica" in system[0]["text"].lower()
     assert "Tipo de campo: perfil.bio" in system[0]["text"]

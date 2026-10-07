@@ -11,13 +11,14 @@
  */
 import { Scissors } from "lucide-react";
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { CardAnalytics } from "@/components/analytics/CardAnalytics";
 import type { OpcoesGrafico } from "@/components/analytics/echarts";
 import { Grafico } from "@/components/analytics/Grafico";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
 import { DireitoBadge } from "@/components/canais/DireitoBadge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   formatCompacto,
@@ -152,7 +153,11 @@ function montar(dados: AnalyticsMercado | undefined, tema: TemaGraficos) {
 }
 
 export function Mercado({ estado }: { estado: EstadoFiltroAnalytics }) {
-  const dados = useAnalytics("mercado", estado.filtro);
+  // spec 023: com perfil, os vídeos de tema cortado ficam ocultos; `?cortados=1` os mostra (com o selo)
+  const [params] = useSearchParams();
+  const mostrarCortados = params.get("cortados") === "1";
+  const dados = useAnalytics("mercado", estado.filtro, { mostrarCortados });
+  const ocultos = dados.data?.ocultosPorTema ?? 0;
   const tema = useTemaGraficos();
   const v = useMemo(() => montar(dados.data, tema), [dados.data, tema]);
   const comum = { carregando: dados.isPending, erro: dados.error, onAmpliarPeriodo: estado.ampliarPeriodo };
@@ -184,11 +189,29 @@ export function Mercado({ estado }: { estado: EstadoFiltroAnalytics }) {
       <CardAnalytics
         titulo="Oportunidades"
         comoLer={'os vídeos-fonte recentes mais rápidos (views por hora) que ainda não foram enviados para corte; o selo mostra o direito do canal. "Gerar cortes" abre a seleção de sempre, com os mesmos avisos.'}
-        vazio={v.oportunidades.length === 0 ? "Nenhum vídeo-fonte recente sem envio." : null}
+        vazio={v.oportunidades.length === 0 ? `Nenhum vídeo-fonte recente sem envio.${ocultos > 0 ? ` ${formatNumero(ocultos)} ocultos por tema cortado.` : ""}` : null}
         tabela={v.tabelaOport}
         largo
         {...comum}
+        acoes={
+          estado.filtro.perfilId ? (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={mostrarCortados}
+                onChange={(e) => estado.set({ cortados: e.target.checked ? "1" : null }, { replace: true })}
+              />
+              Mostrar temas cortados
+            </label>
+          ) : undefined
+        }
       >
+        {!mostrarCortados && ocultos > 0 && (
+          <p className="mb-2 text-xs text-muted-foreground" data-ocultos-por-tema={ocultos}>
+            {formatNumero(ocultos)} {ocultos === 1 ? "oculto" : "ocultos"} por tema cortado
+          </p>
+        )}
         <ul className="divide-y" aria-label="Oportunidades">
           {v.oportunidades.map((o) => (
             <li key={o.videoFonteId} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-2.5" data-oportunidade={o.videoFonteId}>
@@ -201,7 +224,9 @@ export function Mercado({ estado }: { estado: EstadoFiltroAnalytics }) {
                   <DireitoBadge direito={o.canal.direito} />
                   <span aria-hidden="true">·</span>
                   <span>há {formatIdadeHoras(o.idadeH)}</span>
+                  {o.afinidade?.cortado && <Badge variant="outline">tema cortado</Badge>}
                 </div>
+                {o.afinidade?.motivo && <p className="text-xs text-muted-foreground">{o.afinidade.motivo}</p>}
               </div>
               <dl className="flex gap-4 text-sm">
                 <div>

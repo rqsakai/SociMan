@@ -217,6 +217,7 @@ function ChamadaSheet({
             </Item>
             {c.explicacao && <Item titulo="Explicação">{c.explicacao}</Item>}
             <GuiaDaChamada c={c} onNavigate={onClose} />
+            <DesempenhoDaChamada c={c} onNavigate={onClose} />
             {c.proibidas.length > 0 && <Item titulo="Palavras proibidas na proposta">{c.proibidas.join(" · ")}</Item>}
             {c.avisos.length > 0 && <Item titulo="Avisos">{c.avisos.join(" · ")}</Item>}
             {c.contextoFaltante.length > 0 && <Item titulo="Contexto que faltou">{c.contextoFaltante.join(", ")}</Item>}
@@ -273,6 +274,39 @@ function GuiaDaChamada({ c, onNavigate }: { c: IaChamada; onNavigate: () => void
       {c.guiaRascunho && (
         <span className="block text-muted-foreground">
           Testado com o rascunho {c.guiaRascunho === "perfil" ? "do perfil" : "da conta"} (não salvo)
+        </span>
+      )}
+    </Item>
+  );
+}
+
+// spec 023: "Desempenho: perfil vN, conta vM, K exemplos" (SC-007) ou "sem bloco de desempenho",
+// só nos tipos que recebem o bloco <desempenho> (postagem.* e guia.testar).
+function DesempenhoDaChamada({ c, onNavigate }: { c: IaChamada; onNavigate: () => void }) {
+  if (!c.tipoCampo.startsWith("postagem.") && c.tipoCampo !== "guia.testar") return null;
+  const vp = c.desempenhoPerfilVersion;
+  const vc = c.desempenhoContaVersion;
+  if (vp == null && vc == null) {
+    return (
+      <Item titulo="Desempenho">
+        <span className="text-muted-foreground">sem bloco de desempenho</span>
+      </Item>
+    );
+  }
+  const exemplos = c.desempenhoExemplos ?? [];
+  const n = exemplos.length;
+  return (
+    <Item titulo="Desempenho">
+      <span data-desempenho>
+        Desempenho: perfil v{vp ?? 0}, conta v{vc ?? 0}, {n} {n === 1 ? "exemplo" : "exemplos"}
+      </span>
+      {n > 0 && (
+        <span className="block">
+          {exemplos.map((id, i) => (
+            <Link key={id} to={`/app/metricas/videos/${id}`} className="mr-2 text-primary underline-offset-4 hover:underline" onClick={onNavigate}>
+              exemplo {i + 1}
+            </Link>
+          ))}
         </span>
       )}
     </Item>

@@ -176,6 +176,7 @@ services:
       AGENDADOR_LEMBRETES_S: "2"
       AGENDADOR_PUBLICACAO_S: "2"
       AGENDADOR_METRICAS_S: "2"   # spec 016 (T079)
+      AGENDADOR_APRENDIZADO_S: "2"   # spec 023: a trilha roda no e2e
     extra_hosts: *tiktok-hosts
     volumes:
       - sociman-data:/srv/sociman-data

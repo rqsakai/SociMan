@@ -11,17 +11,18 @@ from typing import Literal
 
 from sociman_api.ia.regras_padrao import PADROES
 
-Entidade = Literal["asset", "perfil", "kit", "postagem", "guia", "cena"]
+Entidade = Literal["asset", "perfil", "kit", "postagem", "guia", "cena", "aprendizado"]
 Idioma = Literal["en", "perfil"]
 UsaGuia = Literal["completo", "so_proibidas"]
 Formato = Literal["texto", "lista", "sugestoes", "textos_postagem", "guia", "variacoes",
-                  "campos_cena"]
+                  "campos_cena", "taxonomia", "classificacao", "analise"]
 TipoCampoId = Literal[
     "avatar.descricao_prompt", "avatar.tom_de_voz", "avatar.regras_imagem",
     "cenario.prompt_ambiente", "asset.nome", "asset.descricao", "perfil.bio", "kit.bordoes",
     "kit.series", "postagem.titulo", "postagem.descricao", "postagem.hashtags",
     "postagem.textos", "guia.montar", "guia.testar",
     "cena.acao", "cena.camera", "cena.estilo", "cena.audio", "cena.ajustar",  # spec 010
+    "aprendizado.taxonomia", "aprendizado.classificacao", "aprendizado.analise",  # spec 023
 ]
 
 MAX_SUGESTOES = 10
@@ -140,6 +141,18 @@ _LISTA: tuple[TipoCampo, ...] = (
     TipoCampo("cena.ajustar", "Ajustar cena (ação, câmera, estilo e áudio)", "cena",
               CAMPOS_CENA_IA, "Cenas › Cena › Ajustar cena com IA", "en", "campos_cena",
               Limites(max_chars=1000), usa_guia="so_proibidas"),
+    # Spec 023 (R5): as finalidades do aprendizado, com o registro e o custo da 008. Não passam
+    # pelo `gerar`: as rotas e a trilha do aprendizado montam o pedido.
+    TipoCampo("aprendizado.taxonomia", "Temas do perfil (propor com IA)", "aprendizado",
+              ("temas",), "Aprendizado › Temas › Propor com IA", "perfil", "taxonomia",
+              Limites(min_itens=3, max_itens=15, max_chars=40, max_chars_item=30)),
+    TipoCampo("aprendizado.classificacao", "Classificação do post (tema e gancho)",
+              "aprendizado", ("tema_id", "secundarios", "estilo_gancho"),
+              "Aprendizado › Classificações (automática)", "perfil", "classificacao",
+              Limites(max_itens=2, max_chars=160)),
+    TipoCampo("aprendizado.analise", "Análise dos melhores posts (hipóteses)", "aprendizado",
+              ("hipoteses",), "Aprendizado › Análises da IA", "perfil", "analise",
+              Limites(max_itens=6, max_chars=240)),
 )
 
 TIPOS: dict[str, TipoCampo] = {t.id: t for t in _LISTA}

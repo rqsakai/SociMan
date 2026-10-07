@@ -32,6 +32,8 @@ export interface MapaSemanaProps {
   minimo: number;
   descricao: string;
   formatar?: (v: number) => string;
+  /** nota do tooltip fora da amostra pequena (padrão "horário de Brasília"; a 022 diz "horas conforme a TikTok") */
+  notaHora?: string;
 }
 
 export function mapaTabela(celulas: AnalyticsCelulaMapa[], rotuloValor: string, rotuloN: string): DadosTabela {
@@ -43,7 +45,7 @@ export function mapaTabela(celulas: AnalyticsCelulaMapa[], rotuloValor: string, 
   };
 }
 
-export function MapaSemana({ celulas, rotuloValor, rotuloN, minimo, descricao, formatar = (v) => numero.format(v) }: MapaSemanaProps) {
+export function MapaSemana({ celulas, rotuloValor, rotuloN, minimo, descricao, formatar = (v) => numero.format(v), notaHora = "horário de Brasília" }: MapaSemanaProps) {
   const tema = useTemaGraficos();
   const opcoes = useMemo<OpcoesGrafico>(() => {
     const comValor = celulas.filter((c) => c.valor !== null);
@@ -103,7 +105,7 @@ export function MapaSemana({ celulas, rotuloValor, rotuloN, minimo, descricao, f
         { rotulo: rotuloValor, valor: formatar(valor) },
         { rotulo: rotuloN, valor: numero.format(d.n) },
       ],
-      nota: d.pequena ? `amostra pequena (n = ${d.n} de ${minimo})` : "horário de Brasília",
+      nota: d.pequena ? `amostra pequena (n = ${d.n} de ${minimo})` : notaHora,
     };
   };
 

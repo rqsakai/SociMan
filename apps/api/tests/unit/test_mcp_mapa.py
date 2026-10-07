@@ -115,7 +115,30 @@ def test_escopos():
     propostas = {d["name"] for d in ferramentas.definicoes(app, "propostas")}
     # spec 010: +8 leituras de cena (lista, detalhe, histórico, tomadas, padrões, conteúdo)
     # spec 013: +2 leituras do registro de importações da agência (lista e detalhe)
-    assert len(leitura) == 72 and len(propostas) == 77 and leitura < propostas
+    # spec 022: +1 leitura (analytics_publico)
+    # spec 023: +7 leituras do aprendizado (temas, classificações, análise, recomendações,
+    # preferências e os dois diagnósticos)
+    assert len(leitura) == 80 and len(propostas) == 85 and leitura < propostas
     exportado = ferramentas.exportar_json(app)
     assert {d["name"] for d in exportado["leitura"]} == leitura
     assert {d["name"] for d in exportado["propostas"]} == propostas - leitura
+
+
+def test_aprendizado_leituras_tools_analises_fora_e_escritas_proibidas():
+    """Spec 023 (T061, R13): as leituras viram tools `leitura`; as análises da IA e os
+    históricos ficam em `FORA`; toda escrita em `PROIBIDAS`."""
+    ops = {op["operationId"]: (metodo, rota) for rota, item in app.openapi()["paths"].items()
+           for metodo, op in item.items() if op["operationId"].startswith("aprendizado_")}
+    leituras = {"aprendizado_temas_list", "aprendizado_classificacoes_list",
+                "aprendizado_analise", "aprendizado_recomendacoes",
+                "aprendizado_preferencias_get", "aprendizado_diagnostico",
+                "aprendizado_post_diagnostico"}
+    fora = {"aprendizado_analises_list", "aprendizado_analises_get",
+            "aprendizado_temas_versions", "aprendizado_classificacoes_versions",
+            "aprendizado_preferencias_versions"}
+    assert {o for o in ops if mapa.classificar(o) == "tool"} == leituras
+    assert all(mapa.TOOLS[o].escopo == "leitura" and not mapa.TOOLS[o].escrita for o in leituras)
+    assert {o for o in ops if mapa.classificar(o) == "fora"} == fora
+    escritas = {o for o, (metodo, _) in ops.items() if metodo != "get"}
+    assert escritas and all(mapa.classificar(o) == "proibida" for o in escritas)
+    assert all(metodo != "delete" for metodo, _ in ops.values())

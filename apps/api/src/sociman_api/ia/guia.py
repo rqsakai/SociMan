@@ -134,6 +134,7 @@ class GuiaEfetivo:
     emojis: Emojis | None = None
     emojis_preferidos: tuple[str, ...] = ()
     avisos: tuple[str, ...] = ()  # estado inválido herdado das fixas
+    hashtags_evitar: tuple[str, ...] = ()  # spec 023: as "evitar" aceitas (`#…`), tiradas da saída
 
     @property
     def proibidas_normalizadas(self) -> tuple[str, ...]:

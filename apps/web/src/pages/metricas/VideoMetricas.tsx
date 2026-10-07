@@ -5,6 +5,7 @@
  */
 import { ExternalLink } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { DiagnosticoDoPost } from "@/components/aprendizado/SinaisDistribuicao";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { CurvaVideo } from "@/components/metricas/CurvaVideo";
 import { PageHeading } from "@/components/PageHeading";
@@ -77,12 +78,20 @@ export default function VideoMetricas() {
           </Link>
         )}
         {!v.disponivel && v.indisponivelDesde && <span className="text-destructive">Indisponível desde {formatDateTime(v.indisponivelDesde)} (deixou de ser público ou foi apagado).</span>}
+        {v.perfil && v.origem !== "anonima" && (
+          <Link to={`/app/perfis/${v.perfil.id}/aprendizado?aba=temas`} className="underline">
+            tema e aprendizado do perfil
+          </Link>
+        )}
         {v.coletaParadaEm && <span className="text-muted-foreground">Coleta encerrada em {formatDateTime(v.coletaParadaEm)} (mais de 1 ano).</span>}
       </div>
 
       <HeaderCard title="Desempenho" description="Desde a publicação, pela idade do vídeo." tone="dark">
         <CurvaVideo video={v} />
       </HeaderCard>
+
+      {/* spec 023: sinais de distribuição e o checklist do app, só para post estagnado ou com sinal */}
+      <DiagnosticoDoPost videoId={v.id} perfilId={v.perfil?.id} />
     </div>
   );
 }

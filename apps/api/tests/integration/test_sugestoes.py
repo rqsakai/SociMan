@@ -53,7 +53,7 @@ def test_sugere_para_a_plataforma_da_conta_e_registra(client, db, cenario, anthr
     # base → regras → perfil (spec 008, R5): o perfil fica no último bloco, o do cache
     assert "A Taverna Nerd" in anthropic_fake.bodies[0]["system"][-1]["text"]
     [row] = db.query(IaChamada).all()
-    assert row.prompt_version == "ia/2" and row.erro_code is None
+    assert row.prompt_version == "ia/3" and row.erro_code is None
     assert row.tipo_campo == "postagem.textos" and row.entity_type == "corte"
     assert row.conta_id is not None and row.sessao_id is None
     assert row.proposta["titulo"] == s["titulo"]

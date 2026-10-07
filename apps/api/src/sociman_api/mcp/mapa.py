@@ -156,6 +156,30 @@ TOOLS: dict[str, Tool] = {
                             "paradas). " + _FILTROS_ANALYTICS),
     "analytics_ordem_contas": _l("Analytics: ordem das contas", "Todas as contas na ordem "
                                  "estável usada pelas cores dos gráficos."),
+    "analytics_publico": _l("Analytics: público", "Público de cada conta importado do TikTok "
+                            "Studio: gênero e territórios dos seguidores (foto datada), "
+                            "atividade por dia e hora e espectadores por dia. "
+                            + _FILTROS_ANALYTICS),  # spec 022
+    # ---- aprendizado (spec 023): só leitura ----
+    "aprendizado_temas_list": _l("Aprendizado: temas do perfil", "A taxonomia de temas do "
+                                 "perfil (nome, descrição, palavras-chave, posts por tema)."),
+    "aprendizado_classificacoes_list": _l(
+        "Aprendizado: classificações", "Tema, estilo do gancho e origem (IA ou dono) de cada "
+        "post do perfil; filtre por conta, tema, origem ou pendentes.", limite_padrao=50),
+    "aprendizado_analise": _l("Aprendizado: análise", "Efeitos por fator (tema, gancho, "
+                              "duração, horário, hashtag) na entrega e no rendimento, com n, "
+                              "intervalo, confiança e avisos. Exploratório."),
+    "aprendizado_recomendacoes": _l("Aprendizado: recomendações", "Recomendações abertas por "
+                                    "regra e as decisões do dono. Só informa: decidir é do "
+                                    "dono."),
+    "aprendizado_preferencias_get": _l("Aprendizado: preferências", "Preferências aceitas pelo "
+                                       "dono (temas a ampliar ou cortar, hashtags a evitar, "
+                                       "padrões) do perfil e da conta."),
+    "aprendizado_diagnostico": _l("Aprendizado: diagnóstico", "Sinais de distribuição por conta "
+                                  "e por post (conta nova, muitos no dia, repostagem…) e o "
+                                  "checklist do que conferir no app."),
+    "aprendizado_post_diagnostico": _l("Aprendizado: diagnóstico do post", "Sinais de um post, "
+                                       "se está estagnado e as conferências do dono."),
     # ---- apoio ----
     "ia_tipos_list": _l("Tipos de campo do assistente", "Tipos de campo que o assistente de IA "
                         "sabe preencher e as regras de cada um (útil para propor textos)."),
@@ -271,6 +295,18 @@ _PROIBIDAS_MCP = {op: "gestão do próprio MCP (só o dono humano)" for op in (
     "mcp_clientes_revogar", "mcp_clientes_versions", "mcp_config_get", "mcp_config_update",
     "mcp_config_versions", "mcp_chamadas_list")}
 
+# Spec 023: toda escrita do aprendizado (temas, classificação, decidir, preferências, análises
+# da IA e conferências) é do dono humano.
+_PROIBIDAS_DONO |= {op: "aprendizado: decisão do dono (spec 023)" for op in (
+    "aprendizado_temas_create", "aprendizado_temas_lote", "aprendizado_temas_update",
+    "aprendizado_temas_archive", "aprendizado_temas_restore", "aprendizado_temas_juntar",
+    "aprendizado_temas_revert", "aprendizado_taxonomia_propor", "aprendizado_classificacoes_put",
+    "aprendizado_classificacoes_revert", "aprendizado_classificar_pendentes",
+    "aprendizado_recomendacoes_decidir", "aprendizado_decisoes_revert",
+    "aprendizado_preferencias_patch", "aprendizado_preferencias_revert",
+    "aprendizado_analises_estimativa", "aprendizado_analises_create",
+    "aprendizado_hipotese_recomendar", "aprendizado_conferencias_put")}
+
 PROIBIDAS: dict[str, str] = {**_PROIBIDAS_I, **_PROIBIDAS_II, **_PROIBIDAS_VII,
                              **_PROIBIDAS_DONO, **_PROIBIDAS_PESSOAS, **_PROIBIDAS_MCP}
 
@@ -308,6 +344,11 @@ _FORA_DONO = {op: "IA paga ou dado de dono" for op in (
     "conexoes_versions",
     # Spec 020: a leitura das importações do Studio fica fora do primeiro corte do MCP.
     "studio_importacoes", "studio_cobertura")}
+
+# Spec 023: as análises da IA (pagas, com custo) e os históricos ficam fora do primeiro corte.
+_FORA_DONO |= {op: "IA paga ou dado de dono" for op in (
+    "aprendizado_analises_list", "aprendizado_analises_get", "aprendizado_temas_versions",
+    "aprendizado_classificacoes_versions", "aprendizado_preferencias_versions")}
 
 FORA: dict[str, str] = {**_FORA_UPLOAD, **_FORA_DEPRECATED, **_FORA_INFRA, **_FORA_ESCRITAS,
                         **_FORA_DONO}

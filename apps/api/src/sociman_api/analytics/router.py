@@ -22,6 +22,7 @@ from sociman_api.analytics import funil as funil_mod  # US6
 from sociman_api.analytics import mercado as mercado_mod  # US7
 from sociman_api.analytics import o_que_funciona as o_que_funciona_mod  # US3
 from sociman_api.analytics import ordem_contas as ordem_contas_mod  # cor fixa por conta
+from sociman_api.analytics import publico as publico_mod  # spec 022
 from sociman_api.analytics import quando_postar as quando_postar_mod  # US2
 from sociman_api.analytics import visao_geral as visao_geral_mod  # US1
 from sociman_api.analytics.filtros import Filtro, Medida
@@ -116,11 +117,21 @@ def funil(actor: RequireUser, db: DbSession, f: FiltroDep,
 
 @router.get("/mercado", operation_id="analytics_mercado",
             response_model=schemas.MercadoOut, responses=ERROS)
-def mercado(actor: RequireUser, db: DbSession, f: FiltroDep) -> schemas.MercadoOut:
-    return _studio(db, f, mercado_mod.calcular(db, f))
+def mercado(actor: RequireUser, db: DbSession, f: FiltroDep,
+            mostrar_cortados: Annotated[bool, Query(alias="mostrarCortados")] = False
+            ) -> schemas.MercadoOut:
+    return _studio(db, f, mercado_mod.calcular(db, f, mostrar_cortados=mostrar_cortados))
 
 
 @router.get("/alertas", operation_id="analytics_alertas",
             response_model=schemas.AlertasOut, responses=ERROS)
 def alertas(actor: RequireUser, db: DbSession, f: FiltroDep) -> schemas.AlertasOut:
     return _studio(db, f, alertas_mod.calcular(db, f))
+
+
+@router.get("/publico", operation_id="analytics_publico",
+            response_model=schemas.PublicoOut, responses=ERROS)
+def publico(actor: RequireUser, db: DbSession, f: FiltroDep) -> schemas.PublicoOut:
+    """Spec 022: gênero, territórios, atividade e espectadores importados do TikTok Studio, por
+    conta (só leitura)."""
+    return _studio(db, f, publico_mod.calcular(db, f))

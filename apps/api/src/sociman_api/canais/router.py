@@ -140,12 +140,13 @@ def list_videos(
     ordem: Ordem = "score",
     limit: Annotated[int, Query(ge=1, le=service_videos.LIMIT_MAX)] = service_videos.LIMIT_PADRAO,
     cursor: Annotated[str | None, Query(max_length=500)] = None,
+    mostrar_cortados: Annotated[bool, Query(alias="mostrarCortados")] = False,  # spec 023
 ) -> VideosList:
     return service_videos.list_videos(
         db, perfil_id=perfil_id, canal_ids=canal_id or [], q=q, publicado_desde=publicado_desde,
         publicado_ate=publicado_ate, duracao_min=duracao_min, duracao_max=duracao_max,
         nao_cortados=nao_cortados, recomendaveis=recomendaveis, ordem=ordem, limit=limit,
-        cursor=cursor,
+        cursor=cursor, mostrar_cortados=mostrar_cortados,
     )
 
 

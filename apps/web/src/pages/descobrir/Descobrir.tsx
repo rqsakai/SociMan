@@ -12,6 +12,10 @@
  * - `?video=<id>` (spec 019, "Gerar cortes" das oportunidades do analytics): o vídeo aparece em
  *   destaque acima da lista, com o selo de direito e o mesmo "Selecionar"; a geração e o aviso de
  *   direito seguem o fluxo de sempre (princípio II).
+ * - spec 023: com perfil, a pontuação soma a afinidade com o que funciona (o motivo cita o tema
+ *   quando ele é o principal); vídeos de tema "cortar" ficam ocultos, com "N ocultos por tema
+ *   cortado" e o filtro "Mostrar temas cortados" (`?cortados=1`), que os traz com o selo. O aviso de
+ *   direito não muda.
  */
 import { ApiError } from "@sociman/contract";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -34,6 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -103,6 +108,8 @@ export default function Descobrir() {
   const duracao = get("duracao");
   const naoCortados = get("naoCortados") === "1";
   const todos = get("todos") === "1";
+  // spec 023: com perfil, os vídeos de tema "cortar" ficam ocultos; o filtro os traz com o selo
+  const mostrarCortados = get("cortados") === "1";
   const ordem = get("ordem") || "score";
   const [texto, setTexto] = useState(get("q"));
   const q = useDebounced(texto.trim(), 300);
@@ -133,10 +140,11 @@ export default function Descobrir() {
       ...(dur.max ? { duracaoMax: dur.max } : {}),
       ...(naoCortados && perfilId ? { naoCortados: true } : {}),
       recomendaveis: !todos,
+      ...(mostrarCortados && perfilId ? { mostrarCortados: true } : {}),
       ordem: ordem as "score" | "views" | "vph" | "data",
       limit: PAGE,
     };
-  }, [perfilId, canalId, q, periodo, duracao, naoCortados, todos, ordem]);
+  }, [perfilId, canalId, q, periodo, duracao, naoCortados, todos, ordem, mostrarCortados]);
 
   const videos = useInfiniteQuery({
     queryKey: videosKey(filters),
@@ -147,6 +155,7 @@ export default function Descobrir() {
   });
   const rows = useMemo(() => videos.data?.pages.flatMap((p) => p.items) ?? [], [videos.data]);
   const total = videos.data?.pages[0]?.total;
+  const ocultosPorTema = videos.data?.pages[0]?.ocultosPorTema ?? 0;
 
   // Selecionados do perfil (envios em "selecionado"): alimentam a barra fixa e o diálogo de geração.
   const selecionados = useQuery({
@@ -268,6 +277,11 @@ export default function Descobrir() {
         const corte = v.jaCortado.find((j) => j.perfilId === perfilId);
         return (
           <div className="min-w-64 space-y-1.5">
+            {v.afinidade?.cortado && (
+              <Badge variant="outline" data-tema-cortado>
+                tema cortado{v.afinidade.temaNome ? `: ${v.afinidade.temaNome}` : ""}
+              </Badge>
+            )}
             <VideoCard
               video={v}
               jaCortado={corte ? `Já cortado para ${perfil?.name ?? "o perfil"} (${envioStatusLabel[corte.status as keyof typeof envioStatusLabel] ?? corte.status})` : null}
@@ -443,7 +457,11 @@ export default function Descobrir() {
 
       <HeaderCard
         title="Vídeos recomendados"
-        description={total !== undefined ? `${total.toLocaleString("pt-BR")} vídeos com estes filtros` : "Carregando…"}
+        description={
+          total !== undefined
+            ? `${total.toLocaleString("pt-BR")} vídeos com estes filtros${!mostrarCortados && ocultosPorTema > 0 ? ` · ${ocultosPorTema.toLocaleString("pt-BR")} ocultos por tema cortado` : ""}`
+            : "Carregando…"
+        }
       >
         <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-4">
           <Input type="search" aria-label="Buscar no título" placeholder="Buscar no título" value={texto} onChange={(e) => setTexto(e.target.value)} />
@@ -489,6 +507,16 @@ export default function Descobrir() {
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" className="size-4 accent-primary" checked={todos} onChange={(e) => setParam("todos", e.target.checked ? "1" : "")} />
             Mostrar não recomendados
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={mostrarCortados}
+              disabled={!perfilId}
+              onChange={(e) => setParam("cortados", e.target.checked ? "1" : "")}
+            />
+            Mostrar temas cortados
           </label>
           {marcados.length > 0 && (
             <Button type="button" variant="secondary" disabled={busy !== null} aria-busy={busy === "lote"} onClick={() => void selecionarMarcados()}>

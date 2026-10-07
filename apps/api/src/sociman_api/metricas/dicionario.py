@@ -9,7 +9,7 @@ coluna muda de nome nem de posição.
 from dataclasses import dataclass
 from typing import Literal
 
-DICIONARIO_VERSAO = 2  # 2: studio_dias (spec 020)
+DICIONARIO_VERSAO = 3  # 2: studio_dias (spec 020); 3: público do Studio (spec 022)
 
 Origem = Literal["TikTok", "SociMan", "calculado"]
 
@@ -33,6 +33,9 @@ _FV = "fotos_videos"
 _V = "videos"
 _FC = "fotos_conta"
 _SD = "studio_dias"
+_DI = "studio_distribuicoes"  # spec 022
+_AT = "studio_atividade"
+_ES = "studio_espectadores"
 
 COLUNAS: tuple[Coluna, ...] = (
     # ---- fotos_videos: uma linha por foto de vídeo ----
@@ -154,9 +157,54 @@ COLUNAS: tuple[Coluna, ...] = (
     _c(_SD, "efetivo_seguidores", "booleano", "",
        "Este valor de Seguidores vale no analytics (mesma regra); vazio sem a seção",
        "calculado"),
+    # ---- spec 022: público do TikTok Studio (só importações ativas) ----
+    # studio_distribuicoes: uma linha por rótulo de uma foto de gênero ou territórios
+    _c(_DI, "serie_ref", "texto", "", "Série da conta: o uuid da série viva ou \"Conta anônima "
+       "N\"", "SociMan"),
+    _c(_DI, "conta", "texto", "", "@ da conta (ou \"Conta anônima N\")", "SociMan"),
+    _c(_DI, "tipo", "texto", "", "genero ou territorio", "TikTok"),
+    _c(_DI, "data_foto", "data", "AAAA-MM-DD", "Data da foto (o dia da exportação no Studio; "
+       "não é uma série diária)", "calculado"),
+    _c(_DI, "rotulo", "texto", "", "Gênero (masculino, feminino, outro) ou território como veio",
+       "TikTok"),
+    _c(_DI, "pct", "decimal", "% (0 a 100)", "Parte dos seguidores; vazio = sem dado", "TikTok"),
+    _c(_DI, "importacao_id", "uuid", "", "Importação do SociMan que trouxe a foto", "SociMan"),
+    _c(_DI, "importada_em", "data_hora", "ISO 8601 (America/Sao_Paulo)",
+       "Quando o dono confirmou a importação", "SociMan"),
+    _c(_DI, "efetivo", "booleano", "", "Esta foto vale no analytics (a importação ativa mais "
+       "antiga daquela data)", "calculado"),
+    # studio_atividade: uma linha por dia e hora
+    _c(_AT, "serie_ref", "texto", "", "Série da conta: o uuid da série viva ou \"Conta anônima "
+       "N\"", "SociMan"),
+    _c(_AT, "conta", "texto", "", "@ da conta (ou \"Conta anônima N\")", "SociMan"),
+    _c(_AT, "dia", "data", "AAAA-MM-DD", "Dia de calendário do arquivo do Studio", "TikTok"),
+    _c(_AT, "hora", "inteiro", "0 a 23", "Hora como veio no arquivo (o fuso da TikTok não é "
+       "informado)", "TikTok"),
+    _c(_AT, "ativos", "inteiro", "contagem", "Seguidores ativos na hora (Active followers); "
+       "vazio = sem dado", "TikTok"),
+    _c(_AT, "importacao_id", "uuid", "", "Importação do SociMan que trouxe a linha", "SociMan"),
+    _c(_AT, "importada_em", "data_hora", "ISO 8601 (America/Sao_Paulo)",
+       "Quando o dono confirmou a importação", "SociMan"),
+    _c(_AT, "efetivo", "booleano", "", "Este valor vale no analytics (a importação ativa mais "
+       "antiga daquele dia e hora)", "calculado"),
+    # studio_espectadores: uma linha por dia
+    _c(_ES, "serie_ref", "texto", "", "Série da conta: o uuid da série viva ou \"Conta anônima "
+       "N\"", "SociMan"),
+    _c(_ES, "conta", "texto", "", "@ da conta (ou \"Conta anônima N\")", "SociMan"),
+    _c(_ES, "dia", "data", "AAAA-MM-DD", "Dia de calendário do arquivo do Studio", "TikTok"),
+    _c(_ES, "total", "inteiro", "contagem do dia", "Espectadores (Total Viewers); vazio = sem "
+       "dado", "TikTok"),
+    _c(_ES, "novos", "inteiro", "contagem do dia", "Espectadores novos (New Viewers)", "TikTok"),
+    _c(_ES, "recorrentes", "inteiro", "contagem do dia",
+       "Espectadores recorrentes (Returning Viewers)", "TikTok"),
+    _c(_ES, "importacao_id", "uuid", "", "Importação do SociMan que trouxe o dia", "SociMan"),
+    _c(_ES, "importada_em", "data_hora", "ISO 8601 (America/Sao_Paulo)",
+       "Quando o dono confirmou a importação", "SociMan"),
+    _c(_ES, "efetivo", "booleano", "", "Este valor vale no analytics (a importação ativa mais "
+       "antiga daquele dia)", "calculado"),
 )
 
-ARQUIVOS: tuple[str, ...] = (_FV, _V, _FC, _SD)
+ARQUIVOS: tuple[str, ...] = (_FV, _V, _FC, _SD, _DI, _AT, _ES)
 
 AVISOS = (
     "Só vídeos públicos: a rede não devolve privados nem rascunhos.",
@@ -167,6 +215,9 @@ AVISOS = (
     "video_ref é o identificador do SociMan: o mesmo antes e depois da anonimização.",
     ("studio_dias traz os dias importados do TikTok Studio (valores do dia, não acumulados); "
      "as importações desfeitas ficam de fora."),
+    ("studio_distribuicoes, studio_atividade e studio_espectadores trazem o público importado "
+     "do TikTok Studio; as fotos de gênero e territórios são datadas, não diárias, e o "
+     "\"sem dado\" fica vazio (nunca zero)."),
 )
 
 

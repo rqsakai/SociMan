@@ -16,6 +16,11 @@ resposta enfileirada, devolve uma resposta válida **para o schema pedido** (spe
 Spec 008: `anthropic_fake.ia_client()` devolve o `IaClient` com o fake; `mensagem(dados,
 usage=..., model=...)` monta respostas com cache e `iterations` de fallback.
 
+Spec 023 (R15): a resposta padrão cobre `taxonomia` (os nomes mais frequentes dos posts),
+`classificacao` (o 1º tema da `<taxonomia>` cujo nome aparece no post) e `analise` (2 hipóteses
+com os 2 primeiros posts enviados). "id inválido" na `<instrucao>` devolve um id fora do conjunto;
+`anthropic_fake.imagens` conta os blocos `image` de cada chamada.
+
 Spec 017: a resposta padrão cobre os formatos `guia` (`guia(...)`) e `variacoes`
 (`variacoes(...)`, 3 textos de postagem **sem** hashtags fixas: quem inclui é o servidor);
 `anthropic_fake.systems` devolve o `system` enviado em cada chamada (texto dos blocos) e
@@ -23,7 +28,8 @@ Spec 017: a resposta padrão cobre os formatos `guia` (`guia(...)`) e `variacoes
 """
 
 import json
-from collections import deque
+import re
+from collections import Counter, deque
 from pathlib import Path
 from typing import Any
 
@@ -94,10 +100,73 @@ def campos_cena(explicacao: str = "Ajustei a cena.", avisos: list[str] | None = 
     return mensagem(dados | {"explicacao": explicacao, "avisos": avisos or []})
 
 
+def _texto_user(body: dict[str, Any]) -> str:
+    conteudo = body["messages"][0]["content"]
+    if isinstance(conteudo, str):
+        return conteudo
+    return "\n".join(b.get("text", "") for b in conteudo if b.get("type") == "text")
+
+
+ID_INVALIDO = "00000000-0000-4000-8000-000000000000"
+_TAXONOMIA = re.compile(r"- id: ([0-9a-f-]{36}) \| ([^|\n]+)")
+_POST = re.compile(r'<post id="([0-9a-f-]{36})"[^>]*>\n(.*?)\n</post>', re.DOTALL)
+
+
+def taxonomia(*nomes: str, **kw: Any) -> dict[str, Any]:
+    nomes = nomes or ("Marvel", "Games", "Tecnologia")
+    return mensagem({"temas": [{"nome": n, "descricao": f"Posts sobre {n.lower()}.",
+                                "palavras_chave": [n.lower()]} for n in nomes],
+                     "explicacao": "Temas a partir dos posts.", "avisos": []}, **kw)
+
+
+def classificacao(tema_id: str | None, estilo: str | None = "pergunta",
+                  secundarios: list[str] | None = None, sugestao: str | None = None,
+                  **kw: Any) -> dict[str, Any]:
+    return mensagem({"tema_id": tema_id, "secundarios": secundarios or [],
+                     "estilo_gancho": estilo, "justificativa": "O post fala do tema.",
+                     "sugestao_tema": sugestao, "explicacao": "Classifiquei.", "avisos": []},
+                    **kw)
+
+
+def analise(*hipoteses: tuple[str, list[str]], **kw: Any) -> dict[str, Any]:
+    return mensagem({"hipoteses": [{"texto": t, "posts_ids": ids, "contraste": "Os outros não.",
+                                    "n": len(ids)} for t, ids in hipoteses],
+                     "explicacao": "Comparei os grupos.", "avisos": []}, **kw)
+
+
+def _aprendizado(props: dict[str, Any], body: dict[str, Any]) -> dict[str, Any] | None:
+    texto = _texto_user(body)
+    invalido = "id inválido" in texto.split("<instrucao>")[-1]
+    if "temas" in props:
+        palavras = re.findall(r"#(\w+)", texto) or ["geral", "dicas", "novidades"]
+        nomes = [w.capitalize() for w, _ in Counter(palavras).most_common(5)]
+        while len(nomes) < 3:
+            nomes.append(f"Tema {len(nomes) + 1}")
+        return taxonomia(*nomes)
+    if "tema_id" in props:
+        if invalido:
+            return classificacao(ID_INVALIDO, sugestao="Tema inventado")
+        temas = _TAXONOMIA.findall(texto)
+        post = (_POST.findall(texto) or [("", texto)])[0][1].lower()
+        post += " " + texto.split("</post>")[-1].lower()
+        escolhido = next((tid for tid, nome in temas if nome.strip().lower() in post), None)
+        return classificacao(escolhido)
+    if "hipoteses" in props:
+        ids = [i for i, _ in _POST.findall(texto)]
+        if invalido:
+            return analise(("Hipótese com post de fora", [ID_INVALIDO]),
+                           ("Gancho com pergunta prende mais", ids[:1]))
+        return analise(("Gancho com pergunta prende mais", ids[:2]),
+                       ("Cortes curtos rendem melhor", ids[:1]))
+    return None
+
+
 def _padrao(body: dict[str, Any]) -> dict[str, Any]:
     """Uma resposta válida para o schema pedido (sem fila)."""
     props = (body.get("output_config", {}).get("format", {}).get("schema", {})
              .get("properties", {}))
+    if (resposta := _aprendizado(props, body)) is not None:  # spec 023
+        return resposta
     if "proposta" in props:
         return texto("Texto proposto pela IA.")
     if "variacoes" in props:
@@ -135,6 +204,16 @@ class AnthropicFake:
     @property
     def bodies(self) -> list[dict[str, Any]]:
         return [json.loads(r.content) for r in self.requests]
+
+    @property
+    def imagens(self) -> list[int]:
+        """Spec 023: quantos blocos `image` cada chamada levou."""
+        out = []
+        for b in self.bodies:
+            conteudo = b["messages"][0]["content"]
+            out.append(0 if isinstance(conteudo, str)
+                       else sum(x.get("type") == "image" for x in conteudo))
+        return out
 
     @property
     def system_blocos(self) -> list[list[dict[str, Any]]]:

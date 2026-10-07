@@ -9,6 +9,8 @@
   período (para `semHora`, o intervalo que termina nele). `n` = intervalos que somaram na célula.
 - **Calendário:** por dia do período, os posts publicados e as views ganhas (os totais diários da
   visão geral, com o Studio nos dias que a coleta não cobre; spec 020).
+- **Seguidores on-line** (spec 022, aditivo): o mapa de atividade do Studio por conta, o mesmo da
+  aba Público (`publico.atividades`).
 
 Tudo calculado em Python sobre as fotos do escopo (um SELECT), sem escrita.
 """
@@ -19,7 +21,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
 
-from sociman_api.analytics import base, schemas
+from sociman_api.analytics import base, publico, schemas
 from sociman_api.analytics.base import PostAnalisado
 from sociman_api.analytics.estatistica import MIN_GRUPO, mediana
 from sociman_api.analytics.filtros import Filtro, Periodo, fuso
@@ -124,4 +126,6 @@ def calcular(db: Session, filtro: Filtro, agora: datetime | None = None
     return schemas.QuandoPostarOut(
         contexto=base.contexto(filtro, posts), por_publicacao=por_publicacao(posts),
         audiencia=audiencia(videos, fotos, filtro.atual),
-        calendario=calendario(posts, base.totais_diarios(db, filtro), filtro.atual))
+        calendario=calendario(posts, base.totais_diarios(db, filtro), filtro.atual),
+        atividade_seguidores=schemas.PublicoAtividadeSeguidores(
+            contas=publico.atividades(db, filtro)))
