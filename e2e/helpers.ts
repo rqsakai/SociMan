@@ -2,7 +2,7 @@ import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { crc32, deflateSync } from "node:zlib";
-import { expect, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, type APIRequestContext, type Locator, type Page } from "@playwright/test";
 import { BASE_URL, COMPOSE_ARGS, MAILPIT_URL, OWNER, PG_DB, PG_USER } from "./fixtures";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
@@ -154,6 +154,39 @@ export async function logout(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/login$/);
 }
 
+// Link do menu principal (só os visíveis: o de um grupo fechado não conta).
+export function navLink(page: Page, label: string): Locator {
+  return page.getByRole("navigation", { name: "Menu principal" }).getByRole("link", { name: label, exact: true });
+}
+
+// Navega pelo menu principal (spec 024): se o item está num grupo fechado, abre o grupo antes.
+// O Sidebar mantém os links de grupo fechado no DOM (hidden), e o botão do grupo aponta para eles
+// por aria-controls.
+export async function nav(page: Page, label: string): Promise<void> {
+  const menu = page.getByRole("navigation", { name: "Menu principal" });
+  const link = menu.getByRole("link", { name: label, exact: true, includeHidden: true });
+  await expect(link).toHaveCount(1);
+  if (!(await link.isVisible())) {
+    const fechados = menu.locator('button[aria-expanded="false"][aria-controls]');
+    for (const botao of await fechados.all()) {
+      const regiao = page.locator(`[id="${await botao.getAttribute("aria-controls")}"]`);
+      if (await regiao.getByRole("link", { name: label, exact: true, includeHidden: true }).count()) {
+        await botao.click();
+        break;
+      }
+    }
+  }
+  await navLink(page, label).click();
+}
+
+// Digita a data no DateField (spec 024, R12) como o dono digitaria: dd/mm/aaaa (e hh:mm, se vier).
+export async function preencherData(campo: Locator, iso: string): Promise<void> {
+  const [, ano, mes, dia, hora] = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}:\d{2}))?/.exec(iso) ?? [];
+  if (!ano) throw new Error(`preencherData: data ISO inválida: ${iso}`);
+  await campo.fill("");
+  await campo.pressSequentially(`${dia}/${mes}/${ano}${hora ? ` ${hora}` : ""}`);
+}
+
 export interface Member {
   email: string;
   name: string;
@@ -175,7 +208,7 @@ export function newMember(): Member {
 
 // Com o dono logado em /app: cria o membro em /app/usuarios.
 export async function createMember(page: Page, member: Member): Promise<void> {
-  await page.getByRole("link", { name: "Usuários" }).click();
+  await nav(page, "Usuários");
   await expect(page).toHaveURL(/\/app\/usuarios$/);
   await page.getByLabel("Nome").fill(member.name);
   await page.getByLabel("E-mail").fill(member.email);

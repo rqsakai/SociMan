@@ -14,6 +14,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
@@ -485,7 +486,7 @@ function Exemplos({
           )}
         </div>
       ))}
-      {f.exemplos.length === 0 && <p className="text-sm text-muted-foreground">Nenhum exemplo.</p>}
+      {f.exemplos.length === 0 && <EmptyState titulo="Nenhum exemplo." className="py-4" />}
       {geral && (
         <p role="alert" className="text-sm text-destructive">
           {geral}

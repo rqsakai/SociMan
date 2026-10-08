@@ -116,6 +116,17 @@ export const formatDateTime = (iso: string) => dateTimeFormat.format(new Date(is
 export const formatTime = (iso: string) => timeFormat.format(new Date(iso));
 export const formatLongDate = (iso: string) => longDateFormat.format(new Date(iso));
 
+// Só a data (spec 024, FR-036): dd/mm/aaaa no fuso da agência.
+const dateFormat = new Intl.DateTimeFormat("pt-BR", { timeZone: APP_TZ, day: "2-digit", month: "2-digit", year: "numeric" });
+const dayMonthFormat = new Intl.DateTimeFormat("pt-BR", { timeZone: APP_TZ, day: "2-digit", month: "2-digit" });
+const monthYearFormat = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC", month: "long", year: "numeric" });
+export const formatDate = (iso: string | number | Date) => dateFormat.format(new Date(iso));
+export const formatDayMonth = (iso: string | number | Date) => dayMonthFormat.format(new Date(iso));
+// Chaves de dia (YYYY-MM-DD, sem fuso): "07/10/2026", "07/10" e "outubro de 2026".
+export const formatDateKey = (key: string) => key.split("-").reverse().join("/");
+export const formatDayMonthKey = (key: string) => key.slice(5).split("-").reverse().join("/");
+export const formatMonthYearKey = (key: string) => monthYearFormat.format(new Date(`${key.slice(0, 7)}-01T12:00:00Z`));
+
 // "há 5 min", "há 2 h", "há 3 dias" (sino e listas).
 export function formatAgo(iso: string, now = Date.now()): string {
   const s = Math.max(0, Math.round((now - new Date(iso).getTime()) / 1000));

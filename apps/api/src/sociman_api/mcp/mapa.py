@@ -112,7 +112,7 @@ TOOLS: dict[str, Tool] = {
     # ---- conteúdos, destinos e calendário ----
     "conteudos_list": _l("Listar conteúdos", "Central de conteúdos com o estado efetivo de cada "
                          "destino (a_postar, atrasado, em_revisao…), igual à tela Conteúdos. "
-                         "Paginação por `cursor`.", limite_padrao=50),
+                         "Paginação por `cursor` ou por `offset` (não os dois).", limite_padrao=50),
     "conteudos_resumo": _l("Resumo dos conteúdos", "Contagem de conteúdos por estado efetivo, "
                            "com filtro opcional por perfil e conta."),
     "conteudos_get": _l("Ver conteúdo", "Detalhe de um conteúdo com todos os destinos (conta, "

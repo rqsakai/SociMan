@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { OWNER } from "../e2e/fixtures";
-import { login, logout } from "../e2e/helpers";
+import { login, logout, nav } from "../e2e/helpers";
 import { waitForActiveSW } from "./helpers";
 
 // US2: o SW não guarda nada de /api nem /img, nenhum token fica no navegador,
@@ -68,9 +68,9 @@ test("cache e armazenamento sem dados da API nem token, antes e depois de Sair",
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
 
-  await page.getByRole("link", { name: "Usuários" }).click();
+  await nav(page, "Usuários");
   await expect(page).toHaveURL(/\/app\/usuarios$/);
-  await page.getByRole("link", { name: "Segurança" }).click();
+  await nav(page, "Segurança");
   await expect(page).toHaveURL(/\/app\/seguranca$/);
 
   expectNothingSensitive(await snapshotStorage(page));

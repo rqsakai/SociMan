@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, History, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -58,9 +59,9 @@ export function ListaGeracoes({
   return (
     <div className="space-y-3">
       {itens.length === 0 ? (
-        <p className="text-sm text-muted-foreground" data-testid="lista-geracoes">
-          {vazio}
-        </p>
+        <div data-testid="lista-geracoes">
+          <EmptyState titulo={vazio} className="py-6" />
+        </div>
       ) : (
         <ul aria-label="Gerações" data-testid="lista-geracoes" className="space-y-3">
           {itens.map((g) => (

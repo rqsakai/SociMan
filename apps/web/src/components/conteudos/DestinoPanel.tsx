@@ -49,6 +49,7 @@ import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { PlatformIcon } from "@/components/PlatformIcon";
+import { EmptyState } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -218,10 +219,14 @@ export function DestinosSection({
           </DialogContent>
         </Dialog>
         {perfil.isSuccess && contasAtivas.length === 0 && ativos.length === 0 && (
-          <p className="text-sm text-muted-foreground">Este perfil não tem contas ativas. Cadastre uma na aba Contas do perfil.</p>
+          <EmptyState
+            titulo="Este perfil não tem contas ativas."
+            descricao="Cadastre uma na aba Contas do perfil."
+            className="py-6"
+          />
         )}
         {ativos.length === 0 && contasAtivas.length > 0 && !obrigatorio && (
-          <p className="text-sm text-muted-foreground">Sem conta de destino ainda. Adicione uma conta ou use "Agendar".</p>
+          <EmptyState titulo="Sem conta de destino ainda." descricao={'Adicione uma conta ou use "Agendar".'} className="py-6" />
         )}
         {ativos.length > 0 && (
           <Tabs value={current} onValueChange={setTab} className="gap-4">

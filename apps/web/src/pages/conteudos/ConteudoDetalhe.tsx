@@ -24,7 +24,7 @@ import { AgendarDialog } from "@/components/conteudos/AgendarDialog";
 import { DestinosSection } from "@/components/conteudos/DestinoPanel";
 import { DesempenhoDestino, temDesempenho } from "@/components/metricas/DesempenhoDestino";
 import { HistoryHeading, VersionHistory } from "@/components/VersionHistory";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -81,16 +81,16 @@ export default function ConteudoDetalhe() {
 
   if (q.isPending) {
     return (
-      <div className="space-y-4" aria-live="polite">
+      <Page aria-live="polite">
         <span className="sr-only">Carregando…</span>
         <Skeleton className="h-96 w-full rounded-xl" />
-      </div>
+      </Page>
     );
   }
   if (q.isError || !c) return <ApiErrorAlert error={q.error} />;
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
         <Link to="/app/conteudos">
           <ArrowLeft aria-hidden="true" />
@@ -152,7 +152,7 @@ export default function ConteudoDetalhe() {
         destinos={c.destinos}
         onDone={refresh}
       />
-    </div>
+    </Page>
   );
 }
 

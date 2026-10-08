@@ -1,8 +1,9 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { OWNER } from "./fixtures";
-import { apiToken, createPerfilViaApi, createVerifiedMember, login, logout, sqlE2e } from "./helpers";
+import { apiToken, createPerfilViaApi, createVerifiedMember, login, logout, nav, sqlE2e } from "./helpers";
 
-// Spec 023 (T025, T035, T043): a área Aprendizado do perfil (/app/perfis/:id/aprendizado).
+// Spec 023 (T025, T035, T043): a área Aprendizado do perfil, página /app/aprendizado?perfil= desde a
+// spec 024 (T029; o link antigo /app/perfis/:id/aprendizado redireciona).
 // Os posts são semeados por SQL (série, vídeos e fotos de 1 h a 36 h, como no e2e da 019); os temas
 // pela API do dono; as classificações "da IA" por SQL (a trilha e o Claude falso entram nos testes
 // que dependem deles). A estatística é a da API: aqui só se confere o que a tela mostra.
@@ -101,7 +102,7 @@ async function semear(request: APIRequestContext): Promise<Semeado> {
 }
 
 async function abrir(page: Page, perfilId: string, query = "") {
-  await page.goto(`/app/perfis/${perfilId}/aprendizado${query}`);
+  await page.goto(`/app/aprendizado?perfil=${perfilId}${query.replace(/^\?/, "&")}`);
   // a rota é lazy (chunk do ECharts): no Vite de dev do e2e, a 1ª compilação pode demorar
   await expect(page.getByRole("heading", { name: /^Aprendizado:/ })).toBeVisible({ timeout: 20_000 });
 }
@@ -118,10 +119,18 @@ test("023 US2: travada, bloco de hashtags e não separável do tema, só com GET
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
 
-  // o atalho do perfil leva à área
+  // spec 024: o link antigo do perfil redireciona para a página, preservando aba, conta e medida
+  await page.goto(`/app/perfis/${s.perfilId}/aprendizado?aba=recomendacoes&conta=${s.contaId}&medida=d7`);
+  await expect(page).toHaveURL(new RegExp(`/app/aprendizado\\?perfil=${s.perfilId}&aba=recomendacoes&conta=${s.contaId}&medida=d7$`));
+  await expect(page.getByRole("tab", { name: "Recomendações" })).toHaveAttribute("aria-selected", "true");
+  const filtros = page.getByRole("region", { name: "Filtros do aprendizado" });
+  await expect(filtros.getByLabel("Conta", { exact: true })).toHaveValue(s.contaId);
+  await expect(filtros.getByLabel("Medida do post")).toHaveValue("d7");
+  // o perfil não tem mais o botão "Aprendizado"; a área abre pela página
   await page.goto(`/app/perfis/${s.perfilId}`);
-  await page.getByRole("link", { name: "Aprendizado", exact: true }).click();
-  await expect(page).toHaveURL(new RegExp(`/app/perfis/${s.perfilId}/aprendizado$`));
+  await expect(page.getByRole("tab", { name: "Dados", exact: true })).toBeVisible();
+  await expect(page.locator("main").getByRole("link", { name: "Aprendizado", exact: true })).toHaveCount(0);
+  await abrir(page, s.perfilId);
   await expect(page.getByRole("tab", { name: "Por que deu certo" })).toHaveAttribute("aria-selected", "true");
 
   // a conta com 5 de 8 estagnados: distribuição travada, com o link para o diagnóstico
@@ -151,6 +160,21 @@ test("023 US2: travada, bloco de hashtags e não separável do tema, só com GET
   expect(escritas, "a análise e o diagnóstico não escrevem nada").toEqual([]);
 });
 
+
+// Spec 024 (T029): o item Analytics › Aprendizado do menu abre no último perfil visto neste aparelho.
+test("024: o item do menu abre o Aprendizado no último perfil", async ({ page, request }) => {
+  const token = await apiToken(request, OWNER.email, OWNER.password);
+  const sfx = Math.random().toString(36).slice(2, 8);
+  const outro = await createPerfilViaApi(request, token, { name: `Ultimo ${sfx}`, slug: `ultimo-${sfx}` });
+  await login(page, OWNER.email, OWNER.password);
+  await expect(page).toHaveURL(/\/app$/);
+  await abrir(page, outro);
+  await page.goto("/app");
+  await nav(page, "Aprendizado");
+  await expect(page).toHaveURL(new RegExp(`/app/aprendizado\\?perfil=${outro}$`));
+  await expect(page.getByRole("heading", { name: `Aprendizado: Ultimo ${sfx}` })).toBeVisible();
+  await expect(page.getByLabel("Perfil", { exact: true })).toHaveValue(outro);
+});
 test("023 US1: criar, corrigir, juntar e reverter; o membro só vê", async ({ page, request }) => {
   test.setTimeout(150_000);
   const s = await semear(request);

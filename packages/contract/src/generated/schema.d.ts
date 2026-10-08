@@ -368,7 +368,8 @@ export interface paths {
         };
         /**
          * Anotacoes List
-         * @description Anotações e propostas, das mais novas para as mais antigas, com filtros.
+         * @description Anotações e propostas, das mais novas para as mais antigas, com filtros. `q` busca um
+         *     trecho do texto, sem acento e sem caixa (spec 024).
          */
         get: operations["anotacoes_list"];
         put?: never;
@@ -4556,6 +4557,16 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AfinidadeEstado
+         * @description Spec 024 (R9): por que a afinidade está neutra (`motivo` null quando ativa).
+         */
+        AfinidadeEstado: {
+            /** Ativa */
+            ativa: boolean;
+            /** Motivo */
+            motivo: ("sem_perfil" | "sem_temas" | "desatualizada" | "neutra") | null;
+        };
         /** AgenciaConfirmar */
         AgenciaConfirmar: {
             /** Escolhas */
@@ -5189,6 +5200,8 @@ export interface components {
             temaId: string | null;
             /** Temanome */
             temaNome: string | null;
+            /** Temas */
+            temas?: components["schemas"]["TemaCasado"][];
         };
         /** AprendizadoAlvo */
         AprendizadoAlvo: {
@@ -7878,6 +7891,20 @@ export interface components {
             /** Items */
             items: components["schemas"]["Corte"][];
         };
+        /**
+         * CortesResumo
+         * @description Clipes da geração por situação (spec 024, FR-018). A soma é o total, inclusive arquivados.
+         */
+        CortesResumo: {
+            /** Aceitos */
+            aceitos: number;
+            /** Arquivados */
+            arquivados: number;
+            /** Falhou */
+            falhou: number;
+            /** Pendentes */
+            pendentes: number;
+        };
         /** CotaYoutube */
         CotaYoutube: {
             /** Limite */
@@ -8408,6 +8435,7 @@ export interface components {
             /** Clipstotal */
             clipsTotal: number | null;
             config: components["schemas"]["EnvioConfig"] | null;
+            cortesResumo?: components["schemas"]["CortesResumo"] | null;
             /**
              * Createdat
              * Format: date-time
@@ -11790,6 +11818,25 @@ export interface components {
             /** Tag */
             tag: string;
         };
+        /**
+         * TemaCasado
+         * @description Spec 024 (R9): um tema da taxonomia do perfil que casou com o vídeo-fonte.
+         */
+        TemaCasado: {
+            /** Acao */
+            acao: ("ampliar" | "cortar") | null;
+            /** Decisivo */
+            decisivo: boolean;
+            /** Nome */
+            nome: string;
+            /** Pontos */
+            pontos: number;
+            /**
+             * Temaid
+             * Format: uuid
+             */
+            temaId: string;
+        };
         /** TentarDeNovoIn */
         TentarDeNovoIn: {
             /**
@@ -12603,6 +12650,7 @@ export interface components {
         };
         /** VideosList */
         sociman_api__canais__schemas__VideosList: {
+            afinidadeEstado?: components["schemas"]["AfinidadeEstado"] | null;
             /** Items */
             items: components["schemas"]["VideoFonte"][];
             /** Nextcursor */
@@ -13934,6 +13982,7 @@ export interface operations {
                 situacao?: components["schemas"]["AnotacaoSituacao"] | null;
                 tipo?: components["schemas"]["AnotacaoTipo"] | null;
                 autorClienteId?: string | null;
+                q?: string | null;
                 cursor?: string | null;
                 limit?: number;
             };
@@ -20255,6 +20304,8 @@ export interface operations {
                 archived?: boolean;
                 cursor?: string | null;
                 limit?: number;
+                /** @description Página numerada; não use com `cursor` */
+                offset?: number | null;
             };
             header?: never;
             path?: never;

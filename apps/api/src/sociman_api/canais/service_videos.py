@@ -123,6 +123,11 @@ def videos_out(db: Session, videos: Sequence[VideoFonte],
                valores: Any = None) -> list[schemas.VideoFonte]:
     if not videos:
         return []
+    casados = {}
+    if afinidades is not None:
+        from sociman_api.aprendizado import afinidade as af
+
+        casados = af.temas_por_video(db, valores, [v.id for v in videos])  # spec 024
     canais = {c.id: c for c in db.scalars(
         select(CanalFonte).where(CanalFonte.id.in_({v.canal_id for v in videos})))}
     envios = db.execute(
@@ -159,7 +164,10 @@ def videos_out(db: Session, videos: Sequence[VideoFonte],
             reason = motivo or reason  # o `score_reason` gravado não muda
             afinidade_out = schemas.AprendizadoAfinidade(
                 pontos=pontos, tema_id=tema.id if tema else None,
-                tema_nome=tema.nome if tema else None, cortado=bool(cortado), motivo=motivo)
+                tema_nome=tema.nome if tema else None, cortado=bool(cortado), motivo=motivo,
+                temas=[schemas.TemaCasado(tema_id=t.tema_id, nome=t.nome, pontos=t.pontos,
+                                          acao=t.acao, decisivo=t.decisivo)
+                       for t in casados.get(v.id, [])])
         out.append(schemas.VideoFonte(
             id=v.id,
             canal=schemas.CanalRef(id=canal.id, title=canal.title, direito=canal.direito),
@@ -256,9 +264,13 @@ def list_videos(
         proximo = _codificar(ordem, k.isoformat() if isinstance(k, datetime) else k, ultimo.id)
     afinidades = ({r[0].id: (r.af_pontos, r.af_tema, r.af_cortado) for r in pagina}
                   if exprs is not None else None)
+    from sociman_api.aprendizado.afinidade import estado
+
+    ativa, motivo = estado(db, perfil_id, valores)
     return schemas.VideosList(
         items=videos_out(db, [r[0] for r in pagina], perfil_id, afinidades, valores),
-        next_cursor=proximo, total=total, ocultos_por_tema=ocultos)
+        next_cursor=proximo, total=total, ocultos_por_tema=ocultos,
+        afinidade_estado=schemas.AfinidadeEstado(ativa=ativa, motivo=motivo))
 
 
 def get_video(db: Session, video_id: uuid.UUID) -> schemas.VideoDetalheOut:

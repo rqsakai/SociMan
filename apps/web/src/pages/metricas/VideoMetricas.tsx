@@ -10,9 +10,10 @@ import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { CurvaVideo } from "@/components/metricas/CurvaVideo";
 import { PageHeading } from "@/components/PageHeading";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { aprendizadoPath } from "@/lib/aprendizado";
 import { formatDuracaoS, formatEngajamento, formatNumero, formatVelocidade, nomeDaConta, origemMetricasLabel, useMetricasVideo, vinculoMetodoLabel } from "@/lib/metricas";
 import { formatDateTime } from "@/lib/tz";
 
@@ -27,7 +28,7 @@ export default function VideoMetricas() {
   if (!v) return null;
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <div className="flex flex-wrap items-start gap-3">
         <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-muted">
           <PlatformIcon platform="tiktok" className="size-6" />
@@ -79,19 +80,19 @@ export default function VideoMetricas() {
         )}
         {!v.disponivel && v.indisponivelDesde && <span className="text-destructive">Indisponível desde {formatDateTime(v.indisponivelDesde)} (deixou de ser público ou foi apagado).</span>}
         {v.perfil && v.origem !== "anonima" && (
-          <Link to={`/app/perfis/${v.perfil.id}/aprendizado?aba=temas`} className="underline">
+          <Link to={aprendizadoPath(v.perfil.id, "temas")} className="underline">
             tema e aprendizado do perfil
           </Link>
         )}
         {v.coletaParadaEm && <span className="text-muted-foreground">Coleta encerrada em {formatDateTime(v.coletaParadaEm)} (mais de 1 ano).</span>}
       </div>
 
-      <HeaderCard title="Desempenho" description="Desde a publicação, pela idade do vídeo." tone="dark">
+      <HeaderCard title="Desempenho" description="Desde a publicação, pela idade do vídeo.">
         <CurvaVideo video={v} />
       </HeaderCard>
 
       {/* spec 023: sinais de distribuição e o checklist do app, só para post estagnado ou com sinal */}
       <DiagnosticoDoPost videoId={v.id} perfilId={v.perfil?.id} />
-    </div>
+    </Page>
   );
 }

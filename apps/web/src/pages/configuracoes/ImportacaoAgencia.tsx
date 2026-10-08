@@ -7,7 +7,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { Andamento } from "@/components/importacao/Andamento";
 import { ListaImportacoes } from "@/components/importacao/ListaImportacoes";
 import { PreviaTabela } from "@/components/importacao/PreviaTabela";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -96,7 +96,7 @@ export default function ImportacaoAgencia() {
   const sharedDisponivel = estado.data?.raizes.shared.disponivel ?? false;
 
   return (
-    <div className="space-y-6">
+    <Page>
       <div className="space-y-1">
         <h1 className="text-lg font-semibold">Importar da agência</h1>
         <p className="text-sm text-muted-foreground">
@@ -189,7 +189,7 @@ export default function ImportacaoAgencia() {
           {lista.isError ? <ApiErrorAlert error={lista.error} /> : lista.isPending ? <Skeleton className="h-24 w-full" /> : <ListaImportacoes importacoes={lista.data.items} />}
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }
 

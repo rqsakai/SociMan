@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { OWNER } from "./fixtures";
-import { apiToken, createPerfilViaApi, createVerifiedMember, login, logout, sqlE2e } from "./helpers";
+import { apiToken, createPerfilViaApi, createVerifiedMember, login, logout, nav, preencherData, sqlE2e } from "./helpers";
 
 // T079 (spec 006): o fluxo inteiro na stack isolada, com o `openshorts-fake` (OpenShorts e
 // YouTube de mentira), o `agendador` (intervalos curtos) e o `worker` reais.
@@ -39,8 +39,15 @@ function spLocalInput(date: Date): string {
   return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
-function nav(page: Page, name: string): Locator {
-  return page.getByRole("navigation", { name: "Menu principal" }).getByRole("link", { name, exact: true });
+// Spec 024 (FilterBar): os checkboxes do Descobrir ficam em "Mais filtros" (um Sheet).
+async function maisFiltro(page: Page, rotulo: string): Promise<void> {
+  await page.getByRole("button", { name: /^Mais filtros/ }).click();
+  // o estado vem da URL (navegação num transition): o check() acharia o valor antigo logo após o clique
+  const caixa = page.getByRole("dialog", { name: "Mais filtros" }).getByLabel(rotulo);
+  await caixa.click();
+  await expect(caixa).toBeChecked();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Mais filtros" })).toBeHidden();
 }
 
 function sino(page: Page): Locator {
@@ -71,7 +78,7 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   // ---- US1: o dono cadastra o canal pelo link e muda o direito ----
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  await nav(page, "Canais-fonte").click();
+  await nav(page, "Canais-fonte");
   await expect(page.getByRole("heading", { name: "Canais-fonte", level: 1 })).toBeVisible();
   await page.getByRole("button", { name: "Adicionar canal" }).click();
   const addDialog = page.getByRole("dialog", { name: "Adicionar canal" });
@@ -104,7 +111,7 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   });
   expect(canalB.status(), "POST /api/canais (B)").toBe(201);
 
-  await nav(page, "Canais-fonte").click();
+  await nav(page, "Canais-fonte");
   await expect(page.getByRole("table", { name: "Canais-fonte" }).getByText("Outro Canal Fake")).toBeVisible();
   // escopo na linha do canal B: outros specs (ex.: Mercado da 019) também criam canais "Sem acordo"
   await expect(
@@ -128,9 +135,9 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   expect(forbidden.status(), "membro muda o direito").toBe(403);
 
   // ---- US2: Descobrir, com o motivo; o membro seleciona dois vídeos ----
-  await nav(page, "Descobrir").click();
+  await nav(page, "Descobrir");
   await page.getByLabel("Cortar para o perfil").selectOption({ label: perfilName });
-  await page.getByLabel("Mostrar não recomendados").check();
+  await maisFiltro(page, "Mostrar não recomendados");
   const tabela = page.getByRole("table", { name: "Vídeos recomendados" });
   await expect(tabela.getByText("Review do notebook gamer")).toBeVisible({ timeout: 60_000 });
   await expect(tabela.getByText("Entrevista com dev")).toBeVisible({ timeout: 60_000 });
@@ -162,7 +169,7 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await expect(page.getByText("Geração de cortes iniciada: 2 vídeos.")).toBeVisible();
 
   // status ao vivo até "Pronto" (3 clipes importados cada)
-  await nav(page, "Gerar cortes").click();
+  await nav(page, "Gerar cortes");
   await page.getByRole("tab", { name: "Gerações" }).click();
   const envios = page.getByRole("table", { name: "Gerações" });
   // FR-010a: "Processando N% · <etapa real>" (o fake revela logs de um job real em ~12 s), com
@@ -176,6 +183,8 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await page.screenshot({ path: `${SHOTS}/006-envios-etapa.png`, fullPage: true });
   await expect(envios.getByText("Pronto: 3 clipes")).toHaveCount(2, { timeout: 180_000 });
   await expect(envios.locator("[data-etapa]")).toHaveCount(0);
+  // spec 024 (FR-018): os clipes importados aparecem como pendentes (esperando a marca)
+  await expect(envios.getByTestId("resumo-cortes").filter({ hasText: "3 pendentes" })).toHaveCount(2);
   await page.screenshot({ path: `${SHOTS}/006-envios.png`, fullPage: true });
 
   // a notificação chega no sino (polling de 20 s)
@@ -196,7 +205,7 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await expect(page.getByRole("list").filter({ has: page.getByRole("listitem", { name: /Versão/ }) })).toContainText(member.name);
 
   // ---- US4: revisão do outro envio: arquivar um clipe e aplicar a marca nos outros ----
-  await nav(page, "Gerar cortes").click();
+  await nav(page, "Gerar cortes");
   await page.getByRole("tab", { name: "Gerações" }).click();
   await page.getByRole("table", { name: "Gerações" }).getByRole("link", { name: /Review do notebook gamer/ }).click();
   await expect(page.getByRole("heading", { name: "Review do notebook gamer", level: 1 })).toBeVisible();
@@ -212,6 +221,14 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await expect(page.getByText("Marca na fila para 2 clipes.")).toBeVisible();
   await expect(clipes.getByText("Pronto", { exact: true })).toHaveCount(2, { timeout: 180_000 });
   await page.screenshot({ path: `${SHOTS}/006-revisao-marca.png`, fullPage: true });
+  // spec 024 (FR-018/019): o resumo do detalhe e o da lista refletem a marca e o arquivamento
+  await expect(page.getByTestId("resumo-cortes")).toHaveText("2 aceitos · 1 arquivado");
+  await nav(page, "Gerar cortes");
+  await page.getByRole("tab", { name: "Gerações" }).click();
+  const linhaReview = page.getByRole("table", { name: "Gerações" }).getByRole("row").filter({ hasText: "Review do notebook gamer" });
+  await expect(linhaReview.getByTestId("resumo-cortes")).toHaveText("2 aceitos · 1 arquivado");
+  await linhaReview.getByRole("link", { name: /Review do notebook gamer/ }).click();
+  await expect(clipes).toHaveCount(2);
 
   // ---- US5: agendar direto no clipe pronto (spec 014: AgendarDialog), textos à mão, ~1 min ----
   await clipes.first().getByRole("link", { name: "Abrir" }).click();
@@ -236,7 +253,7 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   }
   await expect(agendar.getByRole("list", { name: "Hashtags escolhidas" }).getByRole("listitem")).toHaveCount(3);
   const quando = new Date(Date.now() + 70_000);
-  await agendar.getByLabel("Data e hora (horário de Brasília)").fill(spLocalInput(quando));
+  await preencherData(agendar.getByLabel("Data e hora (horário de Brasília)"), spLocalInput(quando));
   await expect(agendar.getByLabel("Modo", { exact: true })).toHaveValue("lembrete");
   await agendar.getByRole("button", { name: "Aprovar e agendar" }).click();
   await expect(agendar).toBeHidden();
@@ -251,7 +268,7 @@ test("cortes com o OpenShorts: canal → descobrir → enviar → revisar → ag
   await page.screenshot({ path: `${SHOTS}/006-postagem.png`, fullPage: true });
 
   // calendário: a postagem aparece na semana
-  await nav(page, "Calendário").click();
+  await nav(page, "Calendário");
   await expect(page.getByRole("button", { name: new RegExp(tituloPost) }).first()).toBeVisible();
   await expect(page.getByRole("list", { name: "Cores dos perfis" })).toContainText(perfilName);
   await page.screenshot({ path: `${SHOTS}/006-calendario.png` });
@@ -307,11 +324,18 @@ test("023 Descobrir: tema cortado oculto por padrão, com contador e filtro", as
   });
   expect(tema.status(), `POST temas: ${await tema.text()}`).toBe(201);
   const temaId = ((await tema.json()) as { id: string }).id;
+  // spec 024 (T037): um tema "ampliar" para o selo neutro do tema na linha
+  const temaB = await request.post(`/api/perfis/${perfilId}/aprendizado/temas`, {
+    headers: auth,
+    data: { nome: "Entrevistas", descricao: "Conversas", palavrasChave: ["entrevista"] },
+  });
+  expect(temaB.status(), `POST temas: ${await temaB.text()}`).toBe(201);
+  const temaBId = ((await temaB.json()) as { id: string }).id;
   // criar o tema já cria a linha das preferências do perfil (a versão da taxonomia): usa a versão atual
   const atual = (await (await request.get(`/api/perfis/${perfilId}/aprendizado/preferencias`, { headers: auth })).json()) as { perfil: { version: number } };
   const prefs = await request.patch(`/api/perfis/${perfilId}/aprendizado/preferencias`, {
     headers: auth,
-    data: { version: atual.perfil.version, temas: { [temaId]: "cortar" } },
+    data: { version: atual.perfil.version, temas: { [temaId]: "cortar", [temaBId]: "ampliar" } },
   });
   expect(prefs.status(), `PATCH preferências: ${await prefs.text()}`).toBe(200);
 
@@ -327,11 +351,25 @@ test("023 Descobrir: tema cortado oculto por padrão, com contador e filtro", as
   }).toPass({ timeout: 90_000 });
   await expect(tabela.getByText("Dicas de carreira")).toHaveCount(0);
 
-  await page.getByLabel("Mostrar temas cortados").check();
+  await maisFiltro(page, "Mostrar temas cortados");
   await expect(page).toHaveURL(/[?&]cortados=1\b/);
   const linha = tabela.getByRole("row").filter({ hasText: "Dicas de carreira" });
   await expect(linha).toBeVisible();
   await expect(linha.locator("[data-tema-cortado]")).toHaveText("tema cortado: Carreira");
   await expect(tabela.getByRole("row").filter({ hasText: "Entrevista com dev" }).locator("[data-tema-cortado]")).toHaveCount(0);
   await expect(page.getByText(/ocultos por tema cortado/)).toHaveCount(0);
+
+  // spec 024 (US4, T037): o tema decisivo e o motivo na linha; o "Por quê?" com a afinidade e os temas
+  const entrevista = tabela.getByRole("row").filter({ hasText: "Entrevista com dev" });
+  await expect(entrevista.locator("[data-tema]")).toHaveText("Entrevistas");
+  await expect(entrevista.locator("[data-motivo]")).not.toBeEmpty();
+  await linha.getByRole("button", { name: "Por quê? (Dicas de carreira)" }).click();
+  const dialogo = page.getByRole("dialog", { name: /Por que \d+ pontos\?/ });
+  await expect(dialogo.getByRole("columnheader", { name: "Nota (0 a 1)" })).toBeVisible();
+  await expect(dialogo.getByRole("row", { name: /Afinidade \(tema e canal\)/ })).toContainText("-14");
+  const temas = dialogo.getByRole("region", { name: "Temas casados" });
+  await expect(temas.getByRole("listitem").first()).toContainText("Carreira");
+  await expect(temas.getByRole("listitem").first()).toContainText("Decidiu a afinidade");
+  await expect(temas.getByRole("listitem").first()).toContainText("Cortado");
+  await page.keyboard.press("Escape");
 });

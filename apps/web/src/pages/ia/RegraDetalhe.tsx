@@ -10,7 +10,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +54,7 @@ export default function RegraDetalhe() {
   }
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
         <Link to="/app/assistente-ia">
           <ArrowLeft aria-hidden="true" />
@@ -69,7 +69,7 @@ export default function RegraDetalhe() {
           <Historico info={info} onChanged={refresh} />
         </>
       )}
-    </div>
+    </Page>
   );
 }
 

@@ -5,7 +5,7 @@ import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { Andamento } from "@/components/importacao/Andamento";
 import { ItensImportacao } from "@/components/importacao/ItensImportacao";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/authStore";
@@ -35,7 +35,7 @@ export default function ImportacaoDetalhe() {
   }
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Link to={LISTA} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" aria-hidden="true" />
         Importar da agência
@@ -73,7 +73,7 @@ export default function ImportacaoDetalhe() {
           </Card>
         </>
       )}
-    </div>
+    </Page>
   );
 }
 

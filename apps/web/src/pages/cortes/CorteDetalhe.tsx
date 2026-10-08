@@ -5,7 +5,7 @@ import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +21,8 @@ import { api } from "../../lib/api";
 import { corteKey, cortesKey, corteStatusLabel, formatBytes, formatDuration, type Corte } from "../../lib/marca";
 import { invalidarConteudos, propostaDe, useConteudo } from "../../lib/conteudos";
 import { perfilKey } from "../../lib/perfis";
+import { formatDateTime } from "../../lib/tz";
 
-const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "medium" });
 const busy = (c: Corte | undefined) => c?.status === "na_fila" || c?.status === "processando";
 
 const corteFieldLabel: Record<string, string> = { hook_text: "Gancho", kit_version: "Versão do kit", status: "Status", archived: "Arquivado" };
@@ -88,7 +88,7 @@ export default function CorteDetalhe() {
     title: c ? `Corte: ${(c.hookText || c.openshortsTitle || "clipe").slice(0, 40)}` : "Corte",
     breadcrumbs: [
       { label: "Perfis", to: "/app/perfis" },
-      ...(perfilName && c ? [{ label: perfilName, to: `/app/perfis/${c.perfilId}?aba=cortes` }] : []),
+      ...(perfilName && c ? [{ label: perfilName, to: `/app/perfis/${c.perfilId}` }] : []),
     ],
   });
 
@@ -137,10 +137,10 @@ export default function CorteDetalhe() {
 
   if (corte.isPending) {
     return (
-      <div className="space-y-4" aria-live="polite">
+      <Page aria-live="polite">
         <span className="sr-only">Carregando…</span>
         <Skeleton className="h-96 w-full rounded-xl" />
-      </div>
+      </Page>
     );
   }
   if (corte.isError || !c) return <ApiErrorAlert error={corte.error} />;
@@ -151,11 +151,11 @@ export default function CorteDetalhe() {
   const withDownload = (url: string) => `${url}${url.includes("?") ? "&" : "?"}download=1`;
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
-        <Link to={`/app/perfis/${c.perfilId}?aba=cortes`}>
+        <Link to={`/app/conteudos?perfil=${c.perfilId}`}>
           <ArrowLeft aria-hidden="true" />
-          Cortes do perfil
+          Conteúdos do perfil
         </Link>
       </Button>
 
@@ -326,7 +326,7 @@ export default function CorteDetalhe() {
               </div>
               <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                 <Detail label="Enviado por">{c.createdBy?.name ?? "—"}</Detail>
-                <Detail label="Enviado em">{dateFormat.format(new Date(c.createdAt))}</Detail>
+                <Detail label="Enviado em">{formatDateTime(c.createdAt)}</Detail>
                 <Detail label="Arquivo original">{c.originalFilename}</Detail>
                 <Detail label="Tamanho do original">{formatBytes(c.bytes)}</Detail>
                 <Detail label="Duração">{formatDuration(c.durationMs)}</Detail>
@@ -337,7 +337,7 @@ export default function CorteDetalhe() {
                 <Detail label="Tentativas">{c.attempts}</Detail>
                 <Detail label="Tamanho do resultado">{formatBytes(c.resultBytes)}</Detail>
                 <Detail label="Tempo de processamento">{c.processingMs === null ? "—" : `${(c.processingMs / 1000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} s`}</Detail>
-                <Detail label="Concluído em">{c.finishedAt ? dateFormat.format(new Date(c.finishedAt)) : "—"}</Detail>
+                <Detail label="Concluído em">{c.finishedAt ? formatDateTime(c.finishedAt) : "—"}</Detail>
               </dl>
             </CardContent>
           </Card>
@@ -370,7 +370,7 @@ export default function CorteDetalhe() {
           </Card>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
 

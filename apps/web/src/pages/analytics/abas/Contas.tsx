@@ -19,6 +19,7 @@ import { Grafico } from "@/components/analytics/Grafico";
 import { TabelaAlternativa, type DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
 import { ContaMetricas } from "@/components/metricas/ContaMetricas";
+import { EmptyState, Page } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
 import {
@@ -171,7 +172,7 @@ export function Contas({ estado }: { estado: EstadoFiltroAnalytics }) {
   const abrirPerfil = (perfilId: string) => estado.set({ perfil: perfilId, conta: null });
 
   return (
-    <div className="flex flex-col gap-4">
+    <Page>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <CardAnalytics
           titulo="Comparação entre contas"
@@ -246,9 +247,10 @@ export function Contas({ estado }: { estado: EstadoFiltroAnalytics }) {
             />
           ) : (
             <div className="flex flex-col gap-3">
-              <p role="status" className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-                {dados.data?.radarMotivo ?? "O radar precisa de pelo menos duas contas com post no período."}
-              </p>
+              <EmptyState
+                className="rounded-lg border border-dashed py-6"
+                titulo={dados.data?.radarMotivo ?? "O radar precisa de pelo menos duas contas com post no período."}
+              />
               <TabelaAlternativa titulo="Valores da conta" dados={v.tabelaContas} />
             </div>
           )}
@@ -285,6 +287,6 @@ export function Contas({ estado }: { estado: EstadoFiltroAnalytics }) {
       ) : (
         <p className="text-sm text-muted-foreground">Escolha uma conta (acima ou nos filtros) para ver a evolução dela.</p>
       )}
-    </div>
+    </Page>
   );
 }

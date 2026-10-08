@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { EmptyState, Page } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -143,7 +144,7 @@ export function ContasTab({ perfil, contas, onChanged, onError, onActionStart }:
   }
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Card className="shadow-card">
         <CardHeader>
           <CardTitle>
@@ -153,7 +154,7 @@ export function ContasTab({ perfil, contas, onChanged, onError, onActionStart }:
         </CardHeader>
         <CardContent>
           {contas.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma conta cadastrada.</p>
+            <EmptyState titulo="Nenhuma conta cadastrada." className="py-6" />
           ) : (
             <Table>
               <TableHeader>
@@ -256,7 +257,7 @@ export function ContasTab({ perfil, contas, onChanged, onError, onActionStart }:
         onError={onError}
         onSubmitStart={onActionStart}
       />
-    </div>
+    </Page>
   );
 }
 
@@ -382,7 +383,7 @@ function AddContaCard({
   }
 
   return (
-    <Card className="max-w-xl shadow-card">
+    <Card className="shadow-card">
       <CardHeader>
         <CardTitle>
           <h2>Nova conta</h2>
@@ -465,7 +466,7 @@ function EditContaCard({
   }
 
   return (
-    <Card className="max-w-xl shadow-card">
+    <Card className="shadow-card">
       <CardHeader>
         <CardTitle>
           <h2>

@@ -13,8 +13,8 @@ import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DateField } from "@/components/ui/date-field";
 import { Field, NativeSelect } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { addDays, localDateKey, parseDateKey } from "@/lib/tz";
 import { FiltroContas } from "./FiltroContas";
@@ -95,9 +95,9 @@ export function ExportarDialog({
           <fieldset className="space-y-1.5">
             <legend className="text-sm font-medium">Período das fotos</legend>
             <div className="flex flex-wrap items-center gap-1.5">
-              <Input type="date" aria-label="Exportar de" value={de} max={hoje} aria-invalid={Boolean(periodoErro)} onChange={(e) => setDe(e.target.value)} className="w-auto" />
+              <DateField aria-label="Exportar de" value={de} max={hoje} aria-invalid={Boolean(periodoErro)} onChange={setDe} className="w-40" />
               <span className="text-sm text-muted-foreground">a</span>
-              <Input type="date" aria-label="Exportar até" value={ate} max={hoje} aria-invalid={Boolean(periodoErro)} onChange={(e) => setAte(e.target.value)} className="w-auto" />
+              <DateField aria-label="Exportar até" value={ate} max={hoje} aria-invalid={Boolean(periodoErro)} onChange={setAte} className="w-40" />
             </div>
             {periodoErro ? (
               <p role="alert" className="text-xs text-destructive">

@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, History } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { VersionHistory } from "../../components/VersionHistory";
@@ -40,7 +40,7 @@ export default function AssetHistorico() {
   }
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
         <Link to={`/app/assets/${id}`}>
           <ArrowLeft aria-hidden="true" />
@@ -80,6 +80,6 @@ export default function AssetHistorico() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }

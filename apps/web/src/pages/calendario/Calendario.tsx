@@ -23,13 +23,14 @@ import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { FilterBar, type FiltroAtivo } from "@/components/data-table";
 import { PageHeading } from "@/components/PageHeading";
 import { PlatformIcon } from "@/components/PlatformIcon";
-import { usePageMeta } from "@/components/shell";
+import { EmptyState, Page, usePageMeta } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DateTimeField } from "@/components/ui/date-field";
 import { Field, NativeSelect } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { AgendarDialog } from "@/components/conteudos/AgendarDialog";
 import { EstadoBadge } from "@/components/conteudos/EstadoBadge";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,8 @@ import { calendarioKey, modoLabel, type CalendarioItem, type CalendarioSemData }
 import {
   addDays,
   formatDateTime,
+  formatDayMonthKey,
+  formatMonthYearKey,
   formatTime,
   fromLocal,
   fromLocalInput,
@@ -57,8 +60,6 @@ import { cn } from "@/lib/utils";
 const HOUR_PX = 48;
 const SLOT_MIN = 15;
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-const monthFormat = new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
-const dayFormat = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
 
 type View = "semana" | "mes";
 type DragPayload = { kind: "postagem"; id: string } | { kind: "semData"; key: string };
@@ -67,10 +68,6 @@ type DragPayload = { kind: "postagem"; id: string } | { kind: "semData"; key: st
 const semDataKey = (s: CalendarioSemData) => `${s.conteudoId}:${s.contaId ?? ""}`;
 
 const weekStart = (key: string) => addDays(key, -((weekdayOf(key) + 6) % 7));
-const utcDate = (key: string) => {
-  const { year, month, day } = parseDateKey(key);
-  return new Date(Date.UTC(year, month - 1, day));
-};
 
 function range(view: View, anchor: string): { de: string; ate: string; days: string[] } {
   if (view === "semana") {
@@ -115,6 +112,14 @@ export default function Calendario() {
       },
       { replace: true },
     );
+
+  const contasPerfil = perfilSel.data?.contas.filter((c) => !c.archived) ?? [];
+  const contaSel = contasPerfil.find((c) => c.id === contaId);
+  const ativos: FiltroAtivo[] = [
+    ...(perfilId ? [{ chave: "perfil", rotulo: "Perfil", valor: perfis.data?.find((p) => p.id === perfilId)?.name ?? "…", limpar: () => set({ perfil: "", conta: "" }) }] : []),
+    ...(contaId ? [{ chave: "conta", rotulo: "Conta", valor: contaSel ? `@${contaSel.handle}` : "…", limpar: () => set({ conta: "" }) }] : []),
+    ...(plataforma ? [{ chave: "plataforma", rotulo: "Plataforma", valor: platformLabel[plataforma as Platform] ?? plataforma, limpar: () => set({ plataforma: "" }) }] : []),
+  ];
 
   const { de, ate, days } = useMemo(() => range(view, anchor), [view, anchor]);
   const filters = useMemo(
@@ -227,8 +232,8 @@ export default function Calendario() {
 
   const label =
     view === "semana"
-      ? `${dayFormat.format(utcDate(de))} a ${dayFormat.format(utcDate(ate))}`
-      : monthFormat.format(utcDate(`${anchor.slice(0, 7)}-01`));
+      ? `${formatDayMonthKey(de)} a ${formatDayMonthKey(ate)}`
+      : formatMonthYearKey(anchor);
   const step = (dir: 1 | -1) => {
     if (view === "semana") return set({ data: addDays(anchor, 7 * dir) });
     const { year, month } = parseDateKey(anchor);
@@ -237,48 +242,57 @@ export default function Calendario() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <PageHeading title="Calendário" description="Conteúdos agendados por dia, perfil, conta e plataforma. Arraste para remarcar (no celular, toque)." />
 
-      <div className="flex flex-wrap items-end gap-3">
-        <Field label="Perfil" className="w-full sm:w-56">
-          {({ id }) => (
-            <NativeSelect id={id} value={perfilId} onChange={(e) => set({ perfil: e.target.value, conta: "" })}>
-              <option value="">Todos os perfis</option>
-              {perfis.data?.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
-        <Field label="Conta" className="w-full sm:w-52">
-          {({ id }) => (
-            <NativeSelect id={id} value={contaId} disabled={!perfilId} onChange={(e) => set({ conta: e.target.value })}>
-              <option value="">{perfilId ? "Todas as contas" : "Escolha um perfil"}</option>
-              {perfilSel.data?.contas
-                .filter((c) => !c.archived)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {contaPlatformText(c)} @{c.handle}
-                  </option>
-                ))}
-            </NativeSelect>
-          )}
-        </Field>
-        <Field label="Plataforma" className="w-full sm:w-44">
-          {({ id }) => (
-            <NativeSelect id={id} value={plataforma} onChange={(e) => set({ plataforma: e.target.value })}>
-              <option value="">Todas</option>
-              {(Object.keys(platformLabel) as Platform[]).map((p) => (
-                <option key={p} value={p}>
-                  {platformLabel[p]}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
+      <div className="rounded-xl bg-card p-4 text-card-foreground shadow-card">
+        <FilterBar
+          principais={
+            <>
+              <Field label="Perfil" className="w-full sm:w-56">
+                {({ id }) => (
+                  <NativeSelect id={id} value={perfilId} onChange={(e) => set({ perfil: e.target.value, conta: "" })}>
+                    <option value="">Todos os perfis</option>
+                    {perfis.data?.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+              <Field label="Conta" className="w-full sm:w-52">
+                {({ id }) => (
+                  <NativeSelect id={id} value={contaId} disabled={!perfilId} onChange={(e) => set({ conta: e.target.value })}>
+                    <option value="">{perfilId ? "Todas as contas" : "Escolha um perfil"}</option>
+                    {contasPerfil.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {contaPlatformText(c)} @{c.handle}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+              <Field label="Plataforma" className="w-full sm:w-44">
+                {({ id }) => (
+                  <NativeSelect id={id} value={plataforma} onChange={(e) => set({ plataforma: e.target.value })}>
+                    <option value="">Todas</option>
+                    {(Object.keys(platformLabel) as Platform[]).map((p) => (
+                      <option key={p} value={p}>
+                        {platformLabel[p]}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+            </>
+          }
+          ativos={ativos}
+          onLimpar={() => set({ perfil: "", conta: "", plataforma: "" })}
+        />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-1 rounded-lg bg-muted p-1" role="group" aria-label="Visão">
           {(["semana", "mes"] as const).map((v) => (
             <Button key={v} type="button" size="sm" variant={view === v ? "default" : "ghost"} aria-pressed={view === v} onClick={() => set({ visao: v === "semana" ? "" : v })}>
@@ -319,7 +333,7 @@ export default function Calendario() {
           <h2 className="mb-1 text-sm font-bold">Sem data</h2>
           <p className="mb-3 text-xs text-muted-foreground">Aprovados primeiro. Arraste para um horário ou toque para agendar.</p>
           {cal.isPending && <Loader2 className="size-4 animate-spin text-muted-foreground" aria-label="Carregando" />}
-          {cal.isSuccess && semData.length === 0 && <p className="text-xs text-muted-foreground">Nenhum conteúdo pronto sem data.</p>}
+          {cal.isSuccess && semData.length === 0 && <EmptyState className="py-2 [&_p]:text-xs" titulo="Nenhum conteúdo pronto sem data." />}
           <ul className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
             {semData.map((s) => (
               <li key={semDataKey(s)} className="shrink-0 lg:shrink">
@@ -384,7 +398,7 @@ export default function Calendario() {
           await mover(p, iso);
         }} />
       {agendar && <AgendarDoCalendario state={agendar} onClose={() => setAgendar(null)} onDone={invalidate} />}
-    </div>
+    </Page>
   );
 }
 
@@ -455,7 +469,7 @@ function WeekGrid({ days, today, byDay, dropHint, setDropHint, onDrop, onDragSta
           <span />
           {days.map((d, i) => (
             <div key={d} className={cn("px-1 py-2 text-center text-xs font-semibold", d === today && "text-primary")}>
-              {WEEKDAYS[i]} {dayFormat.format(utcDate(d))}
+              {WEEKDAYS[i]} {formatDayMonthKey(d)}
             </div>
           ))}
         </div>
@@ -472,7 +486,7 @@ function WeekGrid({ days, today, byDay, dropHint, setDropHint, onDrop, onDragSta
               <div
                 key={d}
                 role="group"
-                aria-label={`Dia ${dayFormat.format(utcDate(d))}`}
+                aria-label={`Dia ${formatDayMonthKey(d)}`}
                 data-day={d}
                 className={cn(
                   "relative border-l bg-[repeating-linear-gradient(to_bottom,transparent_0,transparent_47px,var(--color-border)_47px,var(--color-border)_48px)]",
@@ -530,7 +544,7 @@ function MonthGrid({ days, month, today, byDay, dropHint, setDropHint, onDrop, o
             <div
               key={d}
               role="group"
-              aria-label={`Dia ${dayFormat.format(utcDate(d))}`}
+              aria-label={`Dia ${formatDayMonthKey(d)}`}
               className={cn(
                 "min-h-28 space-y-1 border-b border-l p-1",
                 !d.startsWith(month) && "bg-muted/40 text-muted-foreground",
@@ -607,7 +621,7 @@ function RemarcarDialog({ item, onClose, onSave }: { item: CalendarioItem | null
         {!postado && (
           <Field label="Data e hora (horário de Brasília)" error={err ?? undefined}>
             {({ id, describedBy, invalid }) => (
-              <Input id={id} type="datetime-local" step={900} value={value} aria-invalid={invalid} aria-describedby={describedBy} onChange={(e) => setValue(e.target.value)} />
+              <DateTimeField id={id} value={value} aria-invalid={invalid} aria-describedby={describedBy} onChange={setValue} />
             )}
           </Field>
         )}

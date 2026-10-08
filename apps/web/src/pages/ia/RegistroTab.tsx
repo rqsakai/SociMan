@@ -5,20 +5,22 @@
  * avisos, aceitos/rejeitados/aplicados nas sugestões, erro, modelo e tokens. Inclui as da 006.
  * Spec 017: as versões dos guias usadas (com link para cada guia), o rascunho do "Testar guia" e as
  * palavras proibidas que ficaram na proposta.
+ * Spec 024: os filtros ficam na URL com o prefixo `reg_` (a tela tem abas) e valem ao mudar.
  */
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Eye } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { DataTable, dataTableColumns } from "@/components/data-table";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
 import { HeaderCard } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { Field, NativeSelect } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { api } from "../../lib/api";
+import { useFiltroUrl } from "../../lib/filtros";
 import { emojisLabel, exemploTipoLabel, guiaContaPath, guiaPerfilPath } from "../../lib/guia";
 import {
   custoText,
@@ -37,14 +39,18 @@ import { usePerfisAtivos } from "../../lib/usePerfis";
 
 const col = dataTableColumns<IaChamada>();
 
+// "2026-10-07" → "07/10/2026" (etiqueta do filtro)
+const diaText = (dia: string) => dia.split("-").reverse().join("/");
+
 export function RegistroTab({ chamadaInicial }: { chamadaInicial: string | null }) {
   const perfis = usePerfisAtivos();
   const tipos = useQuery(iaTiposQuery);
-  const [perfilId, setPerfilId] = useState("");
-  const [tipoCampo, setTipoCampo] = useState("");
-  const [desfecho, setDesfecho] = useState("");
-  const [de, setDe] = useState("");
-  const [ate, setAte] = useState("");
+  const [params, set] = useFiltroUrl("reg_");
+  const perfilId = params.get("perfil") ?? "";
+  const tipoCampo = params.get("campo") ?? "";
+  const desfecho = (params.get("desfecho") ?? "") as IaDesfecho | "";
+  const de = params.get("de") ?? "";
+  const ate = params.get("ate") ?? "";
   const [aberta, setAberta] = useState<string | null>(chamadaInicial);
 
   const filters: IaChamadaFilters = {
@@ -101,53 +107,18 @@ export function RegistroTab({ chamadaInicial }: { chamadaInicial: string | null 
   );
 
   const doCache = items?.find((c) => c.id === aberta);
+  const ativos: FiltroAtivo[] = [
+    ...(perfilId
+      ? [{ chave: "perfil", rotulo: "Perfil", valor: perfis.data?.find((p) => p.id === perfilId)?.name ?? "…", limpar: () => set({ perfil: null }) }]
+      : []),
+    ...(tipoCampo ? [{ chave: "campo", rotulo: "Tipo de campo", valor: rotulo(tipoCampo), limpar: () => set({ campo: null }) }] : []),
+    ...(desfecho ? [{ chave: "desfecho", rotulo: "Desfecho", valor: desfechoLabel[desfecho] ?? desfecho, limpar: () => set({ desfecho: null }) }] : []),
+    ...(de ? [{ chave: "de", rotulo: "De", valor: diaText(de), limpar: () => set({ de: null }), mais: true }] : []),
+    ...(ate ? [{ chave: "ate", rotulo: "Até", valor: diaText(ate), limpar: () => set({ ate: null }), mais: true }] : []),
+  ];
 
   return (
     <HeaderCard title="Registro das chamadas" description="Cada geração, com o desfecho e o custo aproximado.">
-      <div className="flex flex-wrap items-end gap-3 pb-4">
-        <Field label="Perfil" className="w-full sm:w-52">
-          {({ id }) => (
-            <NativeSelect id={id} value={perfilId} onChange={(e) => setPerfilId(e.target.value)}>
-              <option value="">Todos</option>
-              {perfis.data?.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
-        <Field label="Tipo de campo" className="w-full sm:w-56">
-          {({ id }) => (
-            <NativeSelect id={id} value={tipoCampo} onChange={(e) => setTipoCampo(e.target.value)}>
-              <option value="">Todos</option>
-              {tipos.data?.items.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.rotulo}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
-        <Field label="Desfecho" className="w-full sm:w-40">
-          {({ id }) => (
-            <NativeSelect id={id} value={desfecho} onChange={(e) => setDesfecho(e.target.value)}>
-              <option value="">Todos</option>
-              {(Object.keys(desfechoLabel) as IaDesfecho[]).map((d) => (
-                <option key={d} value={d}>
-                  {desfechoLabel[d]}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
-        <Field label="De" className="w-full sm:w-40">
-          {({ id }) => <Input id={id} type="date" value={de} onChange={(e) => setDe(e.target.value)} />}
-        </Field>
-        <Field label="Até" className="w-full sm:w-40">
-          {({ id }) => <Input id={id} type="date" value={ate} onChange={(e) => setAte(e.target.value)} />}
-        </Field>
-      </div>
       {chamadas.isError ? (
         <ApiErrorAlert error={chamadas.error} />
       ) : (
@@ -158,6 +129,62 @@ export function RegistroTab({ chamadaInicial }: { chamadaInicial: string | null 
           loading={chamadas.isPending}
           getRowId={(c) => c.id}
           emptyMessage="Nenhuma chamada com esses filtros."
+          toolbar={
+            <FilterBar
+              principais={
+                <>
+                  <Field label="Perfil" className="w-full sm:w-52">
+                    {({ id }) => (
+                      <NativeSelect id={id} value={perfilId} onChange={(e) => set({ perfil: e.target.value })}>
+                        <option value="">Todos</option>
+                        {perfis.data?.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                  <Field label="Tipo de campo" className="w-full sm:w-56">
+                    {({ id }) => (
+                      <NativeSelect id={id} value={tipoCampo} onChange={(e) => set({ campo: e.target.value })}>
+                        <option value="">Todos</option>
+                        {tipos.data?.items.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.rotulo}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                  <Field label="Desfecho" className="w-full sm:w-40">
+                    {({ id }) => (
+                      <NativeSelect id={id} value={desfecho} onChange={(e) => set({ desfecho: e.target.value })}>
+                        <option value="">Todos</option>
+                        {(Object.keys(desfechoLabel) as IaDesfecho[]).map((d) => (
+                          <option key={d} value={d}>
+                            {desfechoLabel[d]}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                </>
+              }
+              mais={
+                <>
+                  <Field label="De">
+                    {({ id }) => <DateField id={id} value={de} onChange={(iso) => set({ de: iso || null })} />}
+                  </Field>
+                  <Field label="Até">
+                    {({ id }) => <DateField id={id} value={ate} onChange={(iso) => set({ ate: iso || null })} />}
+                  </Field>
+                </>
+              }
+              ativos={ativos}
+              onLimpar={() => set({ perfil: null, campo: null, desfecho: null, de: null, ate: null })}
+            />
+          }
           pagination={{
             hasMore: Boolean(chamadas.hasNextPage),
             onLoadMore: () => void chamadas.fetchNextPage(),

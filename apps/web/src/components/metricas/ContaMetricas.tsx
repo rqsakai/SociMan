@@ -8,14 +8,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { useFiltroUrl } from "@/components/conteudos/FiltrosConteudos";
-import { HeaderCard } from "@/components/shell";
+import { FilterBar } from "@/components/data-table";
+import { EmptyState, HeaderCard } from "@/components/shell";
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { Field, NativeSelect } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFiltroUrl } from "@/lib/filtros";
 import { formatCompacto, formatNumero, useMetricasConta, type FotoConta, type Resolucao } from "@/lib/metricas";
-import { addDays, formatDateTime, localDateKey } from "@/lib/tz";
+import { addDays, formatDateKey, formatDateTime, formatDayMonth, localDateKey } from "@/lib/tz";
 import { ColetaStatus } from "./ColetaStatus";
 import { FiltroContas, useContasTikTok } from "./FiltroContas";
 import { LinhaChart, type SerieCor } from "./LinhaChart";
@@ -28,7 +29,8 @@ const VISTAS: Record<Vista, { botao: string; titulo: string; cor: SerieCor }> = 
   curtidas: { botao: "Curtidas", titulo: "Curtidas totais ao longo do tempo", cor: "success" },
 };
 
-const formatData = (ms: number) => new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" }).format(new Date(ms));
+const RESOLUCOES: Record<Resolucao, string> = { auto: "Automática", hora: "Por hora", dia: "Por dia" };
+
 
 // `semFiltroContas`: no analytics (spec 019) o perfil e a conta vêm dos filtros globais da página.
 export function ContaMetricas({ semFiltroContas = false }: { semFiltroContas?: boolean } = {}) {
@@ -52,36 +54,49 @@ export function ContaMetricas({ semFiltroContas = false }: { semFiltroContas?: b
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3">
-        {!semFiltroContas && <FiltroContas perfilId={perfilId} contaId={contaId} set={set} todasAsContas={false} />}
-        <fieldset className="space-y-1.5">
-          <legend className="text-sm font-medium">Período</legend>
-          <div className="flex items-center gap-1.5">
-            <Input type="date" aria-label="Período de" value={de} onChange={(e) => set({ cde: e.target.value })} className="w-auto" />
-            <span className="text-sm text-muted-foreground">a</span>
-            <Input type="date" aria-label="Período até" value={ate} aria-invalid={invertido} onChange={(e) => set({ cate: e.target.value })} className="w-auto" />
-          </div>
-          {invertido && (
-            <p role="alert" className="text-xs text-destructive">
-              O início é depois do fim; o período foi ignorado.
-            </p>
-          )}
-        </fieldset>
-        <Field label="Resolução" className="w-full sm:w-40">
-          {({ id }) => (
-            <NativeSelect id={id} value={resolucao} onChange={(e) => set({ resolucao: e.target.value === "auto" ? null : e.target.value })}>
-              <option value="auto">Automática</option>
-              <option value="hora">Por hora</option>
-              <option value="dia">Por dia</option>
-            </NativeSelect>
-          )}
-        </Field>
-      </div>
+      <FilterBar
+        principais={
+          <>
+            {!semFiltroContas && <FiltroContas perfilId={perfilId} contaId={contaId} set={set} todasAsContas={false} />}
+            <fieldset className="space-y-1.5">
+              <legend className="text-sm font-medium">Período</legend>
+              <div className="flex items-center gap-1.5">
+                <DateField aria-label="Período de" value={de} onChange={(iso) => iso && set({ cde: iso })} className="w-40" />
+                <span className="text-sm text-muted-foreground">a</span>
+                <DateField aria-label="Período até" value={ate} aria-invalid={invertido} onChange={(iso) => iso && set({ cate: iso })} className="w-40" />
+              </div>
+              {invertido && (
+                <p role="alert" className="text-xs text-destructive">
+                  O início é depois do fim; o período foi ignorado.
+                </p>
+              )}
+            </fieldset>
+            <Field label="Resolução" className="w-full sm:w-40">
+              {({ id }) => (
+                <NativeSelect id={id} value={resolucao} onChange={(e) => set({ resolucao: e.target.value === "auto" ? null : e.target.value })}>
+                  {(Object.keys(RESOLUCOES) as Resolucao[]).map((r) => (
+                    <option key={r} value={r}>
+                      {RESOLUCOES[r]}
+                    </option>
+                  ))}
+                </NativeSelect>
+              )}
+            </Field>
+          </>
+        }
+        ativos={[
+          ...(params.has("cde") || params.has("cate")
+            ? [{ chave: "periodo", rotulo: "Período", valor: `${formatDateKey(de)} a ${formatDateKey(ate)}`, limpar: () => set({ cde: null, cate: null }) }]
+            : []),
+          ...(resolucao !== "auto" ? [{ chave: "resolucao", rotulo: "Resolução", valor: RESOLUCOES[resolucao] ?? resolucao, limpar: () => set({ resolucao: null }) }] : []),
+        ]}
+        onLimpar={() => set({ cde: null, cate: null, resolucao: null })}
+      />
 
       {!contaId ? (
-        <p className="text-sm text-muted-foreground">Escolha o perfil e a conta TikTok para ver a evolução.</p>
+        <EmptyState titulo="Escolha o perfil e a conta TikTok para ver a evolução." />
       ) : (
-        <HeaderCard title={conta ? `@${conta.handle}` : "Conta"} description="Views, seguidores e curtidas ao longo do tempo; as marcas são os vídeos publicados." tone="dark">
+        <HeaderCard title={conta ? `@${conta.handle}` : "Conta"} description="Views, seguidores e curtidas ao longo do tempo; as marcas são os vídeos publicados.">
           <div className="space-y-4">
             {dados.isError ? (
               <ApiErrorAlert error={dados.error} />
@@ -118,7 +133,7 @@ export function ContaMetricas({ semFiltroContas = false }: { semFiltroContas?: b
                   </dl>
                 )}
                 {fotos.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nenhuma foto da conta neste período.</p>
+                  <EmptyState className="py-6" titulo="Nenhuma foto da conta neste período." />
                 ) : (
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-1" role="group" aria-label="O que mostrar no gráfico">
@@ -133,7 +148,7 @@ export function ContaMetricas({ semFiltroContas = false }: { semFiltroContas?: b
                       series={[{ label: VISTAS[vista].botao, cor: VISTAS[vista].cor }]}
                       pontos={pontos}
                       marcadores={marcadores}
-                      formatX={(x) => (pontos.length > 1 && pontos[pontos.length - 1]!.x - pontos[0]!.x < 2 * 86_400_000 ? formatDateTime(new Date(x).toISOString()) : formatData(x))}
+                      formatX={(x) => (pontos.length > 1 && pontos[pontos.length - 1]!.x - pontos[0]!.x < 2 * 86_400_000 ? formatDateTime(new Date(x).toISOString()) : formatDayMonth(x))}
                       formatY={formatCompacto}
                     />
                     <p className="text-xs text-muted-foreground">

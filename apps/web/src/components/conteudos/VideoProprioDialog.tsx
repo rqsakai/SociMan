@@ -15,6 +15,7 @@ import { ProgressBar } from "@/components/marca/CorteStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, NativeSelect } from "@/components/ui/field";
+import { FileField } from "@/components/ui/file-field";
 import { Input } from "@/components/ui/input";
 import { invalidarConteudos } from "@/lib/conteudos";
 import { formatBytes } from "@/lib/marca";
@@ -116,9 +117,8 @@ export function VideoProprioDialog({
           )}
           <Field label="Vídeo" error={fileError ?? undefined}>
             {({ id, describedBy, invalid }) => (
-              <Input
+              <FileField
                 id={id}
-                type="file"
                 accept={ACCEPTED.join(",")}
                 disabled={enviando}
                 aria-invalid={invalid}

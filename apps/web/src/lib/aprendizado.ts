@@ -6,8 +6,8 @@ import type {
 } from "@sociman/contract";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useFiltroUrl } from "@/components/conteudos/FiltrosConteudos";
 import { api } from "./api";
+import { useFiltroUrl } from "./filtros";
 
 export type {
   AprendizadoAnalise,
@@ -27,7 +27,7 @@ export type {
   AprendizadoTemaIn,
 } from "@sociman/contract";
 
-// Aprendizado (spec 023): a área /app/perfis/:id/aprendizado, com 5 abas. Abas, conta, medida e
+// Aprendizado (spec 023; página /app/aprendizado desde a 024), com 5 abas. Perfil, abas, conta, medida e
 // período moram na URL (os padrões somem dela). A estatística é calculada na leitura pela API; a
 // SPA só formata, nunca recalcula efeito nem confiança (princípio IV). Toda escrita é do dono
 // humano; para membro o servidor manda os custos `null`.
@@ -47,10 +47,28 @@ export const MEDIDAS_APRENDIZADO = ["h1", "h24", "d7"] as const;
 export type MedidaAprendizado = (typeof MEDIDAS_APRENDIZADO)[number];
 export const medidaAprendizadoLabel: Record<MedidaAprendizado, string> = { h1: "Views em 1 h", h24: "Views em 24 h", d7: "Views em 7 dias" };
 
+// Spec 024 (R10): o Aprendizado é a página /app/aprendizado, com o perfil em `?perfil=`.
 export const aprendizadoPath = (perfilId: string, aba?: AbaAprendizado, extra: Record<string, string> = {}) => {
-  const q = new URLSearchParams({ ...(aba && aba !== "analise" ? { aba } : {}), ...extra }).toString();
-  return `/app/perfis/${perfilId}/aprendizado${q ? `?${q}` : ""}`;
+  const q = new URLSearchParams({ perfil: perfilId, ...(aba && aba !== "analise" ? { aba } : {}), ...extra }).toString();
+  return `/app/aprendizado?${q}`;
 };
+
+// Último perfil aberto no Aprendizado (por aparelho): o item do menu abre nele.
+const PERFIL_LEMBRADO = "sociman:aprendizado:perfil";
+export function perfilLembrado(): string | null {
+  try {
+    return localStorage.getItem(PERFIL_LEMBRADO);
+  } catch {
+    return null;
+  }
+}
+export function lembrarPerfil(perfilId: string): void {
+  try {
+    localStorage.setItem(PERFIL_LEMBRADO, perfilId);
+  } catch {
+    // sem armazenamento (janela privada): só não lembra
+  }
+}
 
 export interface FiltroAprendizado {
   contaId?: string;

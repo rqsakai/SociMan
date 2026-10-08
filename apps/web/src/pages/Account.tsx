@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CircleAlert } from "lucide-react";
 import { toast } from "sonner";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { PageHeading } from "@/components/PageHeading";
@@ -19,7 +19,7 @@ export default function Account() {
   const user = data?.user ?? storeUser;
 
   return (
-    <div className="space-y-6">
+    <Page>
       <PageHeading title="Minha conta" description="Seus dados de acesso e a troca de senha." />
       {isError && (
         <Alert variant="destructive">
@@ -53,11 +53,11 @@ export default function Account() {
           </div>
         </div>
       )}
-      <div className="max-w-md pt-2">
-        <HeaderCard title="Trocar senha" description="As outras sessões são encerradas depois da troca." tone="dark">
+      <HeaderCard title="Trocar senha" description="As outras sessões são encerradas depois da troca.">
+        <div className="max-w-md">
           <ChangePasswordForm onSuccess={() => toast.success("Senha trocada. As outras sessões foram encerradas.")} />
-        </HeaderCard>
-      </div>
-    </div>
+        </div>
+      </HeaderCard>
+    </Page>
   );
 }

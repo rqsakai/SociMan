@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { usePageMeta } from "@/components/shell";
+import { EmptyState, Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,11 +81,11 @@ export default function CanalDetalhe() {
 
   if (detail.isPending) {
     return (
-      <div className="space-y-4" aria-live="polite">
+      <Page aria-live="polite">
         <span className="sr-only">Carregando…</span>
         <Skeleton className="h-32 w-full rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
+      </Page>
     );
   }
   if (detail.isError || !canal) return <ApiErrorAlert error={detail.error} />;
@@ -93,7 +93,7 @@ export default function CanalDetalhe() {
   const syncing = canal.sync.status === "pendente" || canal.sync.status === "sincronizando";
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
         <Link to="/app/fontes">
           <ArrowLeft aria-hidden="true" />
@@ -213,7 +213,7 @@ export default function CanalDetalhe() {
           <CanalHistorico canal={canal} onReverted={refresh} />
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }
 
@@ -391,7 +391,7 @@ function VideosRecentes({ canalId }: { canalId: string }) {
       </CardHeader>
       <CardContent>
         {videos.isError && <ApiErrorAlert error={videos.error} />}
-        {videos.data?.items.length === 0 && <p className="text-sm text-muted-foreground">Nenhum vídeo ainda: a busca pode levar alguns minutos.</p>}
+        {videos.data?.items.length === 0 && <EmptyState titulo="Nenhum vídeo ainda: a busca pode levar alguns minutos." className="py-6" />}
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {videos.data?.items.map((v) => (
             <li key={v.id} className="min-w-0 space-y-1.5">

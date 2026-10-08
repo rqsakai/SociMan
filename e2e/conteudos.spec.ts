@@ -2,11 +2,11 @@ import { randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { expect, test, type APIRequestContext, type Locator, type Page } from "@playwright/test";
 import { OWNER, PG_DB, PG_USER } from "./fixtures";
-import { apiToken, compose, createPerfilViaApi, createVerifiedMember, login, logout, syntheticMp4 } from "./helpers";
+import { apiToken, compose, createPerfilViaApi, createVerifiedMember, login, logout, nav, preencherData, syntheticMp4 } from "./helpers";
 
 // Spec 014 (T025, T033, T052, T059, T065): a central de conteúdos na stack isolada, com o
 // `worker` (cortes), o `agendador` (lembretes a cada 2 s) e o Claude falso do `openshorts-fake`.
-// US1 lista, filtros na URL e "Carregar mais"; US2 pedido de aprovação pelo membro e resposta do
+// US1 lista, filtros na URL e páginas numeradas (spec 024); US2 pedido de aprovação pelo membro e resposta do
 // dono; US3 agendar direto no corte (modos indisponíveis com o motivo, intervalo mínimo com
 // "Manter mesmo assim", lembrete → "A postar" → "Postado"); US4 sequência com prévia; US5 vídeo
 // próprio. Em todos: nenhuma requisição sai para rede social, e os modos automáticos são recusados.
@@ -196,10 +196,6 @@ async function agendarViaApi(
 // UI
 // ---------------------------------------------------------------------------------------------
 
-function nav(page: Page, name: string): Locator {
-  return page.getByRole("navigation", { name: "Menu principal" }).getByRole("link", { name, exact: true });
-}
-
 function sino(page: Page): Locator {
   return page.getByRole("button", { name: /^Notificações/ });
 }
@@ -246,7 +242,7 @@ function vigiarRedesSociais(page: Page): string[] {
 }
 
 // ---------------------------------------------------------------------------------------------
-// US1 (T025): lista, filtros na URL, busca, "Carregar mais" e detalhe
+// US1 (T025): lista, filtros na URL, busca, páginas numeradas (spec 024, T047) e detalhe
 // ---------------------------------------------------------------------------------------------
 test("US1: a central lista os conteúdos, filtra pela URL e pagina", async ({ page, request }, testInfo) => {
   test.setTimeout(420_000);
@@ -272,7 +268,7 @@ test("US1: a central lista os conteúdos, filtra pela URL e pagina", async ({ pa
 
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  await nav(page, "Conteúdos").click();
+  await nav(page, "Conteúdos");
   await expect(page).toHaveURL(/\/app\/conteudos/);
   await expect(page.getByRole("heading", { name: "Conteúdos", level: 1 })).toBeVisible();
   await expect(linha(page, `Gancho alfa ${sfx}`)).toBeVisible();
@@ -322,7 +318,7 @@ test("US1: a central lista os conteúdos, filtra pela URL e pagina", async ({ pa
   await expect(page.getByRole("tab", { name: new RegExp(taverna.handle) })).toBeVisible();
   await page.screenshot({ path: `${SHOTS}/014-conteudo-detalhe.png`, fullPage: true });
 
-  // "Carregar mais" traz a próxima página sem repetir linhas: 55 vídeos próprios num perfil novo
+  // Páginas numeradas (spec 024, US6): 55 vídeos próprios num perfil novo, 25 por página
   const muitos = await perfilComConta(request, token, "Muitos", sfx);
   const curto = testInfo.outputPath("curto.mp4");
   syntheticMp4(curto, 1);
@@ -333,16 +329,50 @@ test("US1: a central lista os conteúdos, filtra pela URL e pagina", async ({ pa
   }
   await page.goto(`/app/conteudos?perfil=${muitos.perfilId}`);
   const linhas = tabela(page).getByRole("row").filter({ hasText: sfx });
-  const primeiraPagina = await (async () => {
-    await expect(linhas.first()).toBeVisible();
-    return linhas.count();
-  })();
-  expect(primeiraPagina).toBeLessThan(55);
-  await page.getByRole("button", { name: "Carregar mais" }).click();
-  await expect(linhas).toHaveCount(55);
+  const rodape = (texto: string) => page.getByText(texto, { exact: true });
+  await expect(linhas).toHaveCount(25);
+  await expect(rodape("Página 1 de 3")).toBeVisible();
+  await expect(rodape("55 itens")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Página anterior" })).toBeDisabled();
   const titulos = await linhas.allInnerTexts();
-  expect(new Set(titulos).size, "sem linhas repetidas").toBe(55);
-  await expect(page.getByRole("button", { name: "Carregar mais" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Próxima página" }).click();
+  await expect(page).toHaveURL(/pagina=2/);
+  await expect(rodape("Página 2 de 3")).toBeVisible();
+  await expect(linhas).toHaveCount(25);
+  titulos.push(...(await linhas.allInnerTexts()));
+  await page.getByRole("button", { name: "Próxima página" }).click();
+  await expect(page).toHaveURL(/pagina=3/);
+  await expect(linhas).toHaveCount(5);
+  await expect(page.getByRole("button", { name: "Próxima página" })).toBeDisabled();
+  titulos.push(...(await linhas.allInnerTexts()));
+  expect(new Set(titulos).size, "sem linhas repetidas nem puladas").toBe(55);
+
+  // voltar do detalhe mantém a página e os filtros
+  await linhas.first().getByRole("link").first().click();
+  await expect(page).toHaveURL(/\/app\/conteudos\/[0-9a-f-]{36}/);
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(`perfil=${muitos.perfilId}`));
+  await expect(page).toHaveURL(/pagina=3/);
+  await expect(rodape("Página 3 de 3")).toBeVisible();
+  await expect(linhas).toHaveCount(5);
+
+  // mudar um filtro volta à página 1
+  await page.getByLabel("Buscar").fill("Item 0");
+  await expect(page).toHaveURL(/q=Item/);
+  await expect(page).not.toHaveURL(/pagina=/);
+  await expect(rodape("Página 1 de 1")).toBeVisible();
+  await expect(linhas).toHaveCount(10);
+
+  // página além da última cai na última; o tamanho fica na URL
+  await page.goto(`/app/conteudos?perfil=${muitos.perfilId}&pagina=9`);
+  await expect(page).toHaveURL(/pagina=3/);
+  await expect(rodape("Página 3 de 3")).toBeVisible();
+  await expect(linhas).toHaveCount(5);
+  await page.getByLabel("Itens por página").selectOption("50");
+  await expect(page).toHaveURL(/tamanho=50/);
+  await expect(page).not.toHaveURL(/pagina=/);
+  await expect(rodape("Página 1 de 2")).toBeVisible();
+  await expect(linhas).toHaveCount(50);
 
   expect(social, "nenhuma requisição para rede social").toEqual([]);
 });
@@ -505,7 +535,7 @@ test("US3: agendar direto no corte pronto, com o modo certo e o intervalo mínim
   await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
   const dlg = page.getByRole("dialog", { name: "Agendar ou publicar" });
   await escolherConta(dlg.getByLabel("Conta"), p.handle);
-  await dlg.getByLabel(/Data e hora/).fill(`${amanha}T19:00`);
+  await preencherData(dlg.getByLabel(/Data e hora/), `${amanha}T19:00`);
   const modo = dlg.getByLabel("Modo", { exact: true });
   await expect(modo.locator("option[value=lembrete]")).toBeEnabled();
   for (const m of ["criar_rascunho", "publicar", "rascunho_e_publicar"]) {
@@ -547,7 +577,7 @@ test("US3: agendar direto no corte pronto, com o modo certo e o intervalo mínim
   await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
   const dlg2 = page.getByRole("dialog", { name: "Agendar ou publicar" });
   await escolherConta(dlg2.getByLabel("Conta"), p.handle);
-  await dlg2.getByLabel(/Data e hora/).fill(`${amanha}T19:10`);
+  await preencherData(dlg2.getByLabel(/Data e hora/), `${amanha}T19:10`);
   await dlg2.getByRole("textbox", { name: /^Legenda/ }).fill(`Vizinho agendado ${sfx}`);
   await dlg2.getByRole("button", { name: "Aprovar e agendar" }).click();
   await expect(dlg2).toContainText("Há outro post perto deste horário; o intervalo mínimo é 30 min.");
@@ -704,7 +734,7 @@ test("US4: agendar em sequência com prévia e trocar horários", async ({ page,
   await page.getByRole("region", { name: "Selecionados" }).getByRole("button", { name: "Agendar em sequência" }).click();
   const seq = page.getByRole("dialog", { name: "Agendar em sequência" });
   await escolherConta(seq.getByLabel("Conta"), p.handle);
-  await seq.getByLabel("Primeira data").fill(spDay(1));
+  await preencherData(seq.getByLabel("Primeira data"), spDay(1));
   await seq.getByRole("textbox", { name: "Horários" }).fill("19:00");
   await seq.getByRole("textbox", { name: "Horários" }).press("Enter");
   await expect(seq.getByRole("list", { name: "Horários escolhidos" })).toContainText("19:00");
@@ -806,7 +836,9 @@ test("US5: vídeo próprio entra pronto, filtra por origem e agenda em lembrete"
   // filtro por origem: só ele
   await page.goto(`/app/conteudos?perfil=${p.perfilId}`);
   await expect(linha(page, `Corte ${sfx}`)).toBeVisible();
-  await page.getByLabel("Origem").selectOption({ label: "Vídeo próprio" });
+  await page.getByRole("button", { name: /Mais filtros/ }).click();
+  await page.getByRole("dialog", { name: "Mais filtros" }).getByLabel("Origem").selectOption({ label: "Vídeo próprio" });
+  await page.keyboard.press("Escape");
   await expect(page).toHaveURL(/origem=video_proprio/);
   await expect(linha(page, `Próprio ${sfx}`)).toBeVisible();
   await expect(linha(page, `Próprio ${sfx}`)).toContainText("Vídeo próprio");
@@ -817,7 +849,7 @@ test("US5: vídeo próprio entra pronto, filtra por origem e agenda em lembrete"
   await page.getByRole("button", { name: "Agendar / Publicar" }).first().click();
   const ag = page.getByRole("dialog", { name: "Agendar ou publicar" });
   await escolherConta(ag.getByLabel("Conta"), p.handle);
-  await ag.getByLabel(/Data e hora/).fill(`${spDay(2)}T12:00`);
+  await preencherData(ag.getByLabel(/Data e hora/), `${spDay(2)}T12:00`);
   await ag.getByRole("textbox", { name: /^Legenda/ }).fill(`Próprio agendado ${sfx}`);
   await ag.getByRole("button", { name: "Aprovar e agendar" }).click();
   await expect(ag).toBeHidden();

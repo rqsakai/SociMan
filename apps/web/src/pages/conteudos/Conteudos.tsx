@@ -2,22 +2,26 @@
  * /app/conteudos (spec 014, US1–US5): todos os vídeos publicáveis de todos os perfis, num lugar só.
  *
  * - Atalhos com contagem no topo e filtros na URL (voltar, recarregar e compartilhar mantêm).
- * - Tabela paginada no servidor ("Carregar mais"): miniatura, título, perfil, origem, duração e um
- *   chip por conta de destino (estado efetivo e data). "Agendar" em cada linha.
- * - Seleção em lote: escolha a conta e use "Aprovar" (só dono), "Pedir aprovação", "Agendar em
- *   sequência", "Trocar horários" (dois agendados) e "Cancelar agendamento". O resultado mostra o
- *   que deu certo e o motivo de cada falha (uma falha não desfaz as outras).
- * - "Enviar vídeo próprio" no topo.
+ * - Tabela paginada no servidor com páginas numeradas (spec 024, US6): `pagina` e `tamanho` na URL,
+ *   mudar filtro ou ordem volta à página 1 e página além da última cai na última. Miniatura, título,
+ *   perfil, origem, duração e um chip por conta de destino (estado efetivo e data). "Agendar" em
+ *   cada linha. Os filtros ficam na FilterBar, dentro do cartão da tabela.
+ * - Seleção em lote (só da página visível; trocar de página limpa): escolha a conta e use "Aprovar"
+ *   (só dono), "Pedir aprovação", "Agendar em sequência", "Trocar horários" (dois agendados) e
+ *   "Cancelar agendamento". O resultado mostra o que deu certo e o motivo de cada falha (uma falha
+ *   não desfaz as outras).
+ * - "Enviar vídeo próprio" e "Aplicar marca num corte" (spec 024, US3) no topo.
  */
 import type { ConteudoItem, LoteResultado } from "@sociman/contract";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeftRight, CalendarClock, CalendarRange, CalendarX, Film, Hand, Loader2, ThumbsUp, Upload, X } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { ArrowLeftRight, CalendarClock, CalendarRange, CalendarX, Film, Hand, Loader2, Stamp, ThumbsUp, Upload, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { AgendarDialog } from "@/components/conteudos/AgendarDialog";
+import { AplicarMarcaDialog } from "@/components/conteudos/AplicarMarcaDialog";
 import { AtalhosConteudos } from "@/components/conteudos/AtalhosConteudos";
 import { DestinoChips } from "@/components/conteudos/DestinoChips";
 import { FiltrosConteudos } from "@/components/conteudos/FiltrosConteudos";
@@ -25,14 +29,26 @@ import { SequenciaDialog } from "@/components/conteudos/SequenciaDialog";
 import { VideoProprioDialog } from "@/components/conteudos/VideoProprioDialog";
 import { DataTable, dataTableColumns } from "@/components/data-table";
 import { PageHeading } from "@/components/PageHeading";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { EmptyState, HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/field";
 import { useAbrirDestinoDaUrl } from "@/lib/abrirDestino";
 import { api } from "@/lib/api";
-import { filtersFromParams, formatDuracao, invalidarConteudos, origemLabel, situacaoLabel, useConteudos, useEhDono } from "@/lib/conteudos";
+import {
+  filtroParams,
+  filtersFromParams,
+  formatDuracao,
+  invalidarConteudos,
+  origemLabel,
+  paginaDaUrl,
+  situacaoLabel,
+  TAMANHO_PADRAO,
+  useConteudosPagina,
+  useEhDono,
+} from "@/lib/conteudos";
+import { useFiltroUrl } from "@/lib/filtros";
 import { contaPlatformText, perfilKey } from "@/lib/perfis";
 
 const col = dataTableColumns<ConteudoItem>();
@@ -49,15 +65,31 @@ export default function Conteudos() {
   useAbrirDestinoDaUrl();
   const queryClient = useQueryClient();
   const dono = useEhDono();
-  const [params] = useSearchParams();
+  const [params, set] = useFiltroUrl();
   const filters = useMemo(() => filtersFromParams(params), [params]);
-  const lista = useConteudos(filters);
-  const rows = useMemo(() => lista.data?.pages.flatMap((p) => p.items) ?? [], [lista.data]);
-  const total = lista.data?.pages[0]?.total;
+  const { pagina, tamanho } = paginaDaUrl(params);
+  const lista = useConteudosPagina({ filtros: filters, pagina, tamanho });
+  const rows = useMemo(() => lista.data?.items ?? [], [lista.data]);
+  const total = lista.data?.total;
 
+  // Página além da última (ex.: depois de arquivar): troca o endereço pela última que existe.
+  const ultima = total === undefined ? undefined : Math.max(Math.ceil(total / tamanho), 1);
+  const foraDoFim = !lista.isPlaceholderData && ultima !== undefined && pagina > ultima;
+  useEffect(() => {
+    if (foraDoFim) set({ pagina: ultima === 1 ? null : String(ultima) }, { replace: true });
+  }, [foraDoFim, ultima]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // A seleção vale só para a página visível: trocar de página (ou de tamanho) a limpa.
   const [selecionados, setSelecionados] = useState<Map<string, ConteudoItem>>(new Map());
+  const paginaAtual = `${pagina}:${tamanho}`;
+  const [paginaDaSelecao, setPaginaDaSelecao] = useState(paginaAtual);
+  if (paginaDaSelecao !== paginaAtual) {
+    setPaginaDaSelecao(paginaAtual);
+    setSelecionados(new Map());
+  }
   const [agendar, setAgendar] = useState<ConteudoItem | null>(null);
   const [videoOpen, setVideoOpen] = useState(false);
+  const [marcaOpen, setMarcaOpen] = useState(false);
 
   function toggle(item: ConteudoItem) {
     setSelecionados((cur) => {
@@ -77,7 +109,7 @@ export default function Conteudos() {
           header: () => (
             <input
               type="checkbox"
-              aria-label="Selecionar todos os carregados"
+              aria-label="Selecionar todos desta página"
               className="size-4 accent-primary"
               checked={todosMarcados}
               onChange={(e) =>
@@ -163,17 +195,22 @@ export default function Conteudos() {
   );
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeading title="Conteúdos" description="Tudo o que pode ser publicado, com o estado em cada conta. Aprove, agende e acompanhe daqui." />
-        <Button type="button" onClick={() => setVideoOpen(true)}>
-          <Upload aria-hidden="true" />
-          Enviar vídeo próprio
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={() => setMarcaOpen(true)}>
+            <Stamp aria-hidden="true" />
+            Aplicar marca num corte
+          </Button>
+          <Button type="button" onClick={() => setVideoOpen(true)}>
+            <Upload aria-hidden="true" />
+            Enviar vídeo próprio
+          </Button>
+        </div>
       </div>
 
       <AtalhosConteudos />
-      <FiltrosConteudos />
 
       {selecionados.size > 0 && (
         <BarraLote
@@ -192,16 +229,35 @@ export default function Conteudos() {
             manual
             label="Conteúdos"
             columns={columns}
-            data={rows}
-            loading={lista.isPending}
+            data={foraDoFim ? undefined : rows}
+            loading={lista.isPending || foraDoFim}
             getRowId={(r) => r.id}
             isRowSelected={(r) => selecionados.has(r.id)}
-            emptyMessage="Nenhum conteúdo neste filtro."
+            toolbar={<FiltrosConteudos />}
+            empty={
+              <EmptyState
+                titulo="Nenhum conteúdo neste filtro."
+                acao={
+                  filtroParams.some((k) => params.has(k)) && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => set({ ...Object.fromEntries(filtroParams.map((k) => [k, null])), pagina: null })}
+                    >
+                      Limpar filtros
+                    </Button>
+                  )
+                }
+              />
+            }
             pagination={{
-              total,
-              hasMore: Boolean(lista.hasNextPage),
-              onLoadMore: () => void lista.fetchNextPage(),
-              loadingMore: lista.isFetchingNextPage,
+              modo: "servidor",
+              total: total ?? 0,
+              pagina,
+              tamanho,
+              onPagina: (p) => set({ pagina: p === 1 ? null : String(p) }),
+              onTamanho: (n) => set({ tamanho: n === TAMANHO_PADRAO ? null : String(n), pagina: null }),
             }}
           />
         )}
@@ -217,7 +273,8 @@ export default function Conteudos() {
         />
       )}
       <VideoProprioDialog open={videoOpen} onOpenChange={setVideoOpen} perfilId={params.get("perfil") ?? undefined} />
-    </div>
+      <AplicarMarcaDialog open={marcaOpen} onOpenChange={setMarcaOpen} perfilId={params.get("perfil")} />
+    </Page>
   );
 }
 
@@ -288,7 +345,7 @@ function BarraLote({
   return (
     <section aria-label="Selecionados" className="sticky top-2 z-10 space-y-3 rounded-xl border border-primary/40 bg-card p-3 shadow-card">
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm font-semibold">{itens.length} selecionado(s)</p>
+        <p className="text-sm font-semibold">{itens.length} selecionado(s) nesta página</p>
         <NativeSelect aria-label="Conta" value={contaId} onChange={(e) => setContaId(e.target.value)} className="h-8 w-60 text-sm">
           {contas.length === 0 && <option value="">Sem contas ativas</option>}
           {contas.map((c) => (

@@ -5,8 +5,8 @@ import { KeyRound, Loader2, MailCheck, MoreHorizontal, Pencil, Power, Save, User
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { DataTable, dataTableColumns } from "@/components/data-table";
-import { HeaderCard } from "@/components/shell";
+import { DataTable, dataTableColumns, FilterBar } from "@/components/data-table";
+import { HeaderCard, Page } from "@/components/shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PageHeading } from "../components/PageHeading";
 import { api } from "../lib/api";
+import { useFiltroUrl } from "../lib/filtros";
+import { formatDate } from "../lib/tz";
 import {
   createUserForm,
   editUserForm,
@@ -57,7 +59,7 @@ function notify({ tone, text }: Feedback) {
   else toast.info(text, { duration: 10_000 });
 }
 
-const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+const normalizar = (t: string) => t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
 
 interface RowActions {
   busy: boolean;
@@ -111,7 +113,7 @@ function userColumns(actions: RowActions) {
     col.accessor("createdAt", {
       header: "Criado em",
       enableGlobalFilter: false,
-      cell: (c) => dateFormat.format(new Date(c.getValue())),
+      cell: (c) => formatDate(c.getValue()),
       meta: { className: "hidden md:table-cell" },
     }),
     col.display({
@@ -199,6 +201,14 @@ export default function Users() {
     onError: (err) => setError(errorText(err)),
   });
 
+  // busca local (a lista vem inteira) com o texto na URL (spec 024): nome ou e-mail, sem acento
+  const [filtro, setFiltro] = useFiltroUrl();
+  const q = filtro.get("q") ?? "";
+  const linhas = useMemo(() => {
+    const termo = normalizar(q.trim());
+    return termo ? data?.items.filter((u) => normalizar(`${u.name} ${u.email}`).includes(termo)) : data?.items;
+  }, [data, q]);
+
   const busy = toggleActive.isPending || resendVerification.isPending;
   const columns = useMemo(
     () =>
@@ -222,7 +232,7 @@ export default function Users() {
   }
 
   return (
-    <div className="space-y-6">
+    <Page>
       <PageHeading title="Usuários" description="Quem tem acesso ao SociMan e com qual papel." />
       {error && (
         <Alert variant="destructive">
@@ -240,10 +250,16 @@ export default function Users() {
           <DataTable
             label="Usuários"
             columns={columns}
-            data={data?.items}
+            data={linhas}
             loading={isPending}
             getRowId={(u) => u.id}
-            search={{ placeholder: "Nome ou e-mail", label: "Buscar" }}
+            emptyMessage={q ? "Nenhum usuário com esta busca." : undefined}
+            toolbar={
+              <FilterBar
+                busca={{ valor: q, onChange: (v) => setFiltro({ q: v || null }, { replace: true }), placeholder: "Nome ou e-mail" }}
+                ativos={q ? [{ chave: "q", rotulo: "Busca", valor: q, limpar: () => setFiltro({ q: null }) }] : []}
+              />
+            }
             // o mais novo primeiro: quem acabou de ser criado aparece na primeira página
             initialSorting={[{ id: "createdAt", desc: true }]}
           />
@@ -272,7 +288,7 @@ export default function Users() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Page>
   );
 }
 
@@ -318,7 +334,8 @@ function CreateUserCard({
   }
 
   return (
-    <Card className="mt-6 shadow-card">
+    // xl:mt-6: ao lado do HeaderCard, o topo do cartão alinha com o do cartão vizinho (abaixo da faixa)
+    <Card className="shadow-card xl:mt-6">
       <CardHeader>
         <CardTitle>
           <h2 className="text-lg font-bold">Novo usuário</h2>

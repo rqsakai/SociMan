@@ -85,11 +85,11 @@ const columns = col.columns([
   col.display({ id: "acoes", header: "", cell: (c) => <ClienteAcoes cliente={c.row.original} /> }),
 ]);
 
-// Clientes MCP (spec 009, FR-029): escopo, situação, último uso, uso em 24 h, "no limite" e validade.
+// Agentes conectados (MCP) (spec 009, FR-029; rótulo da spec 024): escopo, situação, último uso, uso em 24 h, "no limite" e validade.
 export function ClientesTable({ clientes, loading }: { clientes: McpCliente[] | undefined; loading: boolean }) {
   return (
     <DataTable
-      label="Clientes MCP"
+      label="Agentes conectados (MCP)"
       columns={columns}
       data={clientes}
       loading={loading}

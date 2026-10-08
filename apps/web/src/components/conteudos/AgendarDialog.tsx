@@ -32,6 +32,7 @@ import { ConfirmoNaoChegou } from "@/components/publicacao/ConfirmoNaoChegou";
 import { EnviarAgora } from "@/components/publicacao/EnviarAgora";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DateTimeField } from "@/components/ui/date-field";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -112,7 +113,8 @@ export function AgendarDialog({
   const [opcoes, setOpcoes] = useState<OpcoesTikTok | null>(null);
   const [quando, setQuando] = useState<"agendar" | "agora">("agendar");
   const config = usePublicacaoConfig();
-  const dataRef = useRef<HTMLInputElement>(null);
+  // o DateTimeField não repassa `ref`: o foco vai pelo contêiner
+  const dataRef = useRef<HTMLDivElement>(null);
 
   // Ao abrir: conta pedida, a padrão do perfil ou a primeira; horário pedido ou amanhã 19h.
   useEffect(() => {
@@ -365,20 +367,18 @@ export function AgendarDialog({
               {!agora && (
               <Field label="Data e hora (horário de Brasília)" error={dataErro ?? undefined}>
                 {({ id, describedBy, invalid }) => (
-                  <Input
-                    ref={dataRef}
-                    id={id}
-                    type="datetime-local"
-                    step={300}
-                    value={planned}
-                    aria-invalid={invalid}
-                    aria-describedby={describedBy}
-                    onChange={(e) => {
-                      setPlanned(e.target.value);
-                      setConflito(null);
-                    }}
-                    className="w-auto"
-                  />
+                  <div ref={dataRef} className="w-56">
+                    <DateTimeField
+                      id={id}
+                      value={planned}
+                      aria-invalid={invalid}
+                      aria-describedby={describedBy}
+                      onChange={(iso) => {
+                        setPlanned(iso);
+                        setConflito(null);
+                      }}
+                    />
+                  </div>
                 )}
               </Field>
               )}
@@ -495,7 +495,7 @@ export function AgendarDialog({
                     variant="ghost"
                     onClick={() => {
                       setConflito(null);
-                      dataRef.current?.focus();
+                      dataRef.current?.querySelector("input")?.focus();
                     }}
                   >
                     Escolher outro horário

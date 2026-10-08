@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { cenasKey, conteudoCenasKey, semRetry404, statusCenaLabel, statusCenaTone, useCenas, type CenaResumo } from "@/lib/cenas";
 import { api } from "@/lib/api";
 import { invalidarConteudos } from "@/lib/conteudos";
+import { EmptyState } from "@/components/shell";
 
 export function SeletorCenas({
   conteudo,
@@ -54,7 +55,7 @@ export function SeletorCenas({
       <CardContent className="space-y-2">
         {ligadas.isError && <ApiErrorAlert error={ligadas.error} />}
         {itens.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhuma cena ligada.</p>
+          <EmptyState titulo="Nenhuma cena ligada." className="py-4" />
         ) : (
           <>
             <ul aria-label="Cenas do vídeo" className="space-y-2">
@@ -143,7 +144,7 @@ function EscolherDialog({
         <Input type="search" aria-label="Buscar cenas" placeholder="Buscar por nome, ação, fala ou produto" value={texto} onChange={(e) => setTexto(e.target.value)} />
         {cenas.isError && <ApiErrorAlert error={cenas.error} />}
         {cenas.isPending && <p className="text-sm text-muted-foreground">Carregando…</p>}
-        {cenas.data && opcoes.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma cena pronta encontrada. Marque a cena como pronta antes.</p>}
+        {cenas.data && opcoes.length === 0 && <EmptyState titulo="Nenhuma cena pronta encontrada." descricao="Marque a cena como pronta antes." className="py-4" />}
         <ul aria-label="Cenas prontas do perfil" className="max-h-[50vh] space-y-1 overflow-y-auto">
           {opcoes.map((c) => (
             <li key={c.id}>

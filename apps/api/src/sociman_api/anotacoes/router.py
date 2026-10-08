@@ -39,12 +39,14 @@ def anotacoes_list(
     situacao: Annotated[AnotacaoSituacao | None, Query()] = None,
     tipo: Annotated[AnotacaoTipo | None, Query()] = None,
     autor_cliente_id: Annotated[UUID | None, Query(alias="autorClienteId")] = None,
+    q: Annotated[str | None, Query(max_length=100)] = None,
     cursor: Annotated[str | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> schemas.AnotacoesPage:
-    """Anotações e propostas, das mais novas para as mais antigas, com filtros."""
+    """Anotações e propostas, das mais novas para as mais antigas, com filtros. `q` busca um
+    trecho do texto, sem acento e sem caixa (spec 024)."""
     return service.listar(db, alvo_tipo, alvo_id, perfil_id, situacao, tipo, autor_cliente_id,
-                          cursor, limit)
+                          cursor, limit, q)
 
 
 @router.get("/resumo", operation_id="anotacoes_resumo", response_model=schemas.AnotacoesResumo,

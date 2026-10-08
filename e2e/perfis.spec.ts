@@ -127,7 +127,14 @@ test("dono cria perfil, conta, logo, edita, reverte, arquiva e restaura", async 
   await page.getByRole("link", { name: "Perfis", exact: true }).first().click();
   await expect(page).toHaveURL(/\/app\/perfis$/);
   await expect(page.getByText(name)).toHaveCount(0);
-  await page.getByLabel("Arquivados").check();
+  // checkbox na URL: o react-router navega num transition, e o check() do Playwright não espera
+  await page.getByLabel("Arquivados", { exact: true }).click();
+  await expect(page.getByLabel("Arquivados", { exact: true })).toBeChecked();
+  await expect(page.getByText(name).first()).toBeVisible();
+  // spec 024: o filtro mora na URL e vira etiqueta; recarregar mantém
+  await expect(page).toHaveURL(/[?&]arquivados=1\b/);
+  await page.reload();
+  await expect(page.getByRole("group", { name: "Filtros ativos" })).toContainText("Arquivados: sim");
   await expect(page.getByText(name).first()).toBeVisible();
 
   // restaurar: volta para a lista padrão

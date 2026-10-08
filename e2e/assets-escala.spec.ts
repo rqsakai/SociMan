@@ -33,7 +33,9 @@ test("biblioteca com 200 assets: achar por tag e por nome em menos de 10 s", asy
   // Por tag: abre a aba e clica no chip da tag
   let start = Date.now();
   await page.goto(`/app/perfis/${perfilId}?aba=assets`);
-  await page.getByRole("group", { name: "Filtrar por tag" }).getByRole("button", { name: /#alvo-da-tag/ }).click();
+  await page.getByRole("button", { name: /^Mais filtros/ }).click();
+  await page.getByRole("dialog", { name: "Mais filtros" }).getByRole("group", { name: "Filtrar por tag" }).getByRole("button", { name: /#alvo-da-tag/ }).click();
+  await page.keyboard.press("Escape");
   await expect(grade.getByRole("link", { name: "Selo raro (Sticker)" })).toBeVisible();
   await expect(grade.getByRole("listitem")).toHaveCount(1);
   const porTag = Date.now() - start;

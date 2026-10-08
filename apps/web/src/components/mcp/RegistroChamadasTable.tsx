@@ -1,17 +1,12 @@
-import { Filter } from "lucide-react";
-import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { DataTable, dataTableColumns } from "@/components/data-table";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { Field, NativeSelect } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { useFiltroUrl } from "@/lib/filtros";
 import { resultadoLabel, resultadoTone, useMcpChamadas, viaLabel, type McpChamada, type McpChamadaFilters, type McpCliente } from "@/lib/mcp";
 import { formatDateTime, fromLocal, parseDateKey, toIsoWithOffset } from "@/lib/tz";
-
-type Draft = { clienteId: string; tool: string; resultado: string; via: string; de: string; ate: string };
-const vazio: Draft = { clienteId: "", tool: "", resultado: "", via: "", de: "", ate: "" };
 
 function limiteDoDia(dia: string, fim: boolean): string | undefined {
   if (!dia) return undefined;
@@ -20,16 +15,8 @@ function limiteDoDia(dia: string, fim: boolean): string | undefined {
   return toIsoWithOffset(fim ? new Date(d.getTime() - 1) : d);
 }
 
-function paraFiltros(d: Draft): McpChamadaFilters {
-  return {
-    clienteId: d.clienteId || undefined,
-    tool: d.tool.trim() || undefined,
-    resultado: (d.resultado || undefined) as McpChamadaFilters["resultado"],
-    via: (d.via || undefined) as McpChamadaFilters["via"],
-    de: limiteDoDia(d.de, false),
-    ate: limiteDoDia(d.ate, true),
-  };
-}
+// "2026-10-07" → "07/10/2026" (etiqueta do filtro)
+const diaText = (dia: string) => dia.split("-").reverse().join("/");
 
 const col = dataTableColumns<McpChamada>();
 const columns = col.columns([
@@ -87,70 +74,40 @@ const columns = col.columns([
 
 // Registro de chamadas MCP (spec 009, US5, FR-028/029): da mais nova para a mais antiga, com
 // filtros no servidor e "Carregar mais" por cursor. Os argumentos chegam já mascarados pela API.
+// Spec 024: os filtros ficam na URL com o prefixo `reg_` (a tela tem abas) e valem ao mudar; a busca
+// da barra é o filtro por tool.
 export function RegistroChamadasTable({ clientes }: { clientes: McpCliente[] | undefined }) {
-  const [draft, setDraft] = useState<Draft>(vazio);
-  const [filtros, setFiltros] = useState<McpChamadaFilters>({});
+  const [params, set] = useFiltroUrl("reg_");
+  const clienteId = params.get("cliente") ?? "";
+  const tool = params.get("tool") ?? "";
+  const resultado = (params.get("resultado") ?? "") as McpChamada["resultado"] | "";
+  const via = (params.get("via") ?? "") as McpChamada["via"] | "";
+  const de = params.get("de") ?? "";
+  const ate = params.get("ate") ?? "";
+  const filtros: McpChamadaFilters = {
+    clienteId: clienteId || undefined,
+    tool: tool || undefined,
+    resultado: resultado || undefined,
+    via: via || undefined,
+    de: limiteDoDia(de, false),
+    ate: limiteDoDia(ate, true),
+  };
   const chamadas = useMcpChamadas(filtros);
   const itens = chamadas.data?.pages.flatMap((p) => p.chamadas);
 
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setFiltros(paraFiltros(draft));
-  }
+  const ativos: FiltroAtivo[] = [
+    ...(tool ? [{ chave: "tool", rotulo: "Tool", valor: tool, limpar: () => set({ tool: null }) }] : []),
+    ...(clienteId
+      ? [{ chave: "cliente", rotulo: "Cliente", valor: clientes?.find((c) => c.id === clienteId)?.nome ?? "…", limpar: () => set({ cliente: null }) }]
+      : []),
+    ...(resultado ? [{ chave: "resultado", rotulo: "Resultado", valor: resultadoLabel[resultado] ?? resultado, limpar: () => set({ resultado: null }) }] : []),
+    ...(via ? [{ chave: "via", rotulo: "Via", valor: viaLabel[via] ?? via, limpar: () => set({ via: null }) }] : []),
+    ...(de ? [{ chave: "de", rotulo: "De", valor: diaText(de), limpar: () => set({ de: null }), mais: true }] : []),
+    ...(ate ? [{ chave: "ate", rotulo: "Até", valor: diaText(ate), limpar: () => set({ ate: null }), mais: true }] : []),
+  ];
 
   return (
     <div className="space-y-4">
-      <form onSubmit={onSubmit} className="grid gap-4 border-b pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[repeat(6,minmax(0,1fr))_auto] xl:items-end">
-        <Field label="Cliente">
-          {({ id }) => (
-            <NativeSelect id={id} value={draft.clienteId} onChange={(e) => setDraft({ ...draft, clienteId: e.target.value })}>
-              <option value="">Todos</option>
-              {clientes?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
-        <Field label="Tool">
-          {({ id }) => <Input id={id} value={draft.tool} placeholder="ex.: perfis_list" onChange={(e) => setDraft({ ...draft, tool: e.target.value })} />}
-        </Field>
-        <Field label="Resultado">
-          {({ id }) => (
-            <NativeSelect id={id} value={draft.resultado} onChange={(e) => setDraft({ ...draft, resultado: e.target.value })}>
-              <option value="">Todos</option>
-              {(Object.keys(resultadoLabel) as McpChamada["resultado"][]).map((r) => (
-                <option key={r} value={r}>
-                  {resultadoLabel[r]}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
-        <Field label="Via">
-          {({ id }) => (
-            <NativeSelect id={id} value={draft.via} onChange={(e) => setDraft({ ...draft, via: e.target.value })}>
-              <option value="">Todas</option>
-              {(Object.keys(viaLabel) as McpChamada["via"][]).map((v) => (
-                <option key={v} value={v}>
-                  {viaLabel[v]}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
-        <Field label="De">
-          {({ id }) => <Input id={id} type="date" value={draft.de} onChange={(e) => setDraft({ ...draft, de: e.target.value })} />}
-        </Field>
-        <Field label="Até">
-          {({ id }) => <Input id={id} type="date" value={draft.ate} onChange={(e) => setDraft({ ...draft, ate: e.target.value })} />}
-        </Field>
-        <Button type="submit">
-          <Filter aria-hidden="true" />
-          Filtrar
-        </Button>
-      </form>
       {chamadas.isError && <ApiErrorAlert error={chamadas.error} />}
       <DataTable
         label="Registro de chamadas MCP"
@@ -158,8 +115,69 @@ export function RegistroChamadasTable({ clientes }: { clientes: McpCliente[] | u
         data={itens}
         loading={chamadas.isPending}
         getRowId={(c) => String(c.id)}
-        search={{ placeholder: "Buscar na lista carregada", label: "Buscar no registro" }}
         emptyMessage="Nenhuma chamada encontrada."
+        toolbar={
+          <FilterBar
+            busca={{
+              valor: tool,
+              onChange: (v) => set({ tool: v || null }, { replace: true }),
+              rotulo: "Buscar tool",
+              placeholder: "Buscar tool (ex.: perfis_list)",
+            }}
+            principais={
+              <>
+                <Field label="Cliente" className="w-full sm:w-48">
+                  {({ id }) => (
+                    <NativeSelect id={id} value={clienteId} onChange={(e) => set({ cliente: e.target.value })}>
+                      <option value="">Todos</option>
+                      {clientes?.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  )}
+                </Field>
+                <Field label="Resultado" className="w-full sm:w-40">
+                  {({ id }) => (
+                    <NativeSelect id={id} value={resultado} onChange={(e) => set({ resultado: e.target.value })}>
+                      <option value="">Todos</option>
+                      {(Object.keys(resultadoLabel) as McpChamada["resultado"][]).map((r) => (
+                        <option key={r} value={r}>
+                          {resultadoLabel[r]}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  )}
+                </Field>
+                <Field label="Via" className="w-full sm:w-40">
+                  {({ id }) => (
+                    <NativeSelect id={id} value={via} onChange={(e) => set({ via: e.target.value })}>
+                      <option value="">Todas</option>
+                      {(Object.keys(viaLabel) as McpChamada["via"][]).map((v) => (
+                        <option key={v} value={v}>
+                          {viaLabel[v]}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  )}
+                </Field>
+              </>
+            }
+            mais={
+              <>
+                <Field label="De">
+                  {({ id }) => <DateField id={id} value={de} onChange={(iso) => set({ de: iso || null })} />}
+                </Field>
+                <Field label="Até">
+                  {({ id }) => <DateField id={id} value={ate} onChange={(iso) => set({ ate: iso || null })} />}
+                </Field>
+              </>
+            }
+            ativos={ativos}
+            onLimpar={() => set({ tool: null, cliente: null, resultado: null, via: null, de: null, ate: null })}
+          />
+        }
         pagination={{
           hasMore: chamadas.hasNextPage,
           onLoadMore: () => void chamadas.fetchNextPage(),

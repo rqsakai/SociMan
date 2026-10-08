@@ -5,9 +5,10 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { HeaderCard } from "@/components/shell";
+import { EmptyState, HeaderCard, Page } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FileField } from "@/components/ui/file-field";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,10 +68,8 @@ export function FontesTab({ perfil }: { perfil: Perfil }) {
     ]);
   }
 
-  // flex + gap (e não space-y): o space-y zeraria o mt-6 do HeaderCard, e a faixa subiria sobre o
-  // cartão de cima.
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <UploadFont
         perfilId={perfil.id}
         onUploaded={async (fonte) => {
@@ -94,7 +93,7 @@ export function FontesTab({ perfil }: { perfil: Perfil }) {
         {fontes.isPending && <Skeleton className="h-24 w-full" />}
         {fontes.isError && <ApiErrorAlert error={fontes.error} />}
         {fontes.data && items.length === 0 && (
-          <p className="py-4 text-sm text-muted-foreground">Nenhuma fonte enviada. Use "Enviar fonte" acima.</p>
+          <EmptyState titulo="Nenhuma fonte enviada." descricao={'Use "Enviar fonte" acima.'} className="py-4" />
         )}
         <ul className="divide-y" aria-label="Fontes do perfil">
           {items.map((fonte) => (
@@ -110,7 +109,7 @@ export function FontesTab({ perfil }: { perfil: Perfil }) {
         </ul>
       </HeaderCard>
 
-      <HeaderCard title="Fontes padrão" tone="dark" description="Livres (OFL), sempre disponíveis no kit.">
+      <HeaderCard title="Fontes padrão" description="Livres (OFL), sempre disponíveis no kit.">
         {padrao.isError && <ApiErrorAlert error={padrao.error} />}
         <ul className="divide-y" aria-label="Fontes padrão">
           {(padrao.data?.items ?? []).map((p) => (
@@ -126,7 +125,7 @@ export function FontesTab({ perfil }: { perfil: Perfil }) {
           ))}
         </ul>
       </HeaderCard>
-    </div>
+    </Page>
   );
 }
 
@@ -148,6 +147,8 @@ function FontErrorAlert({ error, onReload }: { error: unknown; onReload: () => v
 
 function UploadFont({ perfilId, onUploaded }: { perfilId: string; onUploaded: (fonte: Fonte) => Promise<void> }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  // zerar o input pela ref exige trocar a key do FileField (o texto volta a "Nenhum arquivo escolhido")
+  const [campoKey, setCampoKey] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [fileError, setFileError] = useState<string | null>(null);
@@ -179,6 +180,7 @@ function UploadFont({ perfilId, onUploaded }: { perfilId: string; onUploaded: (f
       setFile(null);
       setName("");
       if (inputRef.current) inputRef.current.value = "";
+      setCampoKey((k) => k + 1);
       await onUploaded(fonte);
     } catch (err) {
       if (err instanceof ApiError && err.status === 413) setFileError("Arquivo maior que 10 MB");
@@ -189,14 +191,14 @@ function UploadFont({ perfilId, onUploaded }: { perfilId: string; onUploaded: (f
   }
 
   return (
-    <HeaderCard title="Enviar fonte" tone="info" description="TTF ou OTF, até 10 MB. O arquivo é conferido pelo conteúdo.">
+    <HeaderCard title="Enviar fonte" description="TTF ou OTF, até 10 MB. O arquivo é conferido pelo conteúdo.">
       <form onSubmit={(e) => void submit(e)} className="grid items-start gap-4 sm:grid-cols-[1fr_1fr_auto]" noValidate>
         <Field label="Arquivo da fonte" error={fileError ?? undefined}>
           {({ id, describedBy, invalid }) => (
-            <Input
+            <FileField
+              key={campoKey}
               ref={inputRef}
               id={id}
-              type="file"
               accept=".ttf,.otf,font/ttf,font/otf"
               aria-invalid={invalid}
               aria-describedby={describedBy}

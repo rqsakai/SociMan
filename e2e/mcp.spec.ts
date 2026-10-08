@@ -12,6 +12,8 @@ import {
   interruptorMcp,
   login,
   logout,
+  nav,
+  navLink,
 } from "./helpers";
 
 // Spec 009 (T030, T038, T059): a tela "Agentes (MCP)" e o endpoint `/mcp` pelo edge efêmero.
@@ -32,12 +34,8 @@ function toolsEsperadas(): { leitura: number; propostas: number } {
   return { leitura: j.leitura.length, propostas };
 }
 
-function nav(page: Page, name: string): Locator {
-  return page.getByRole("navigation", { name: "Menu principal" }).getByRole("link", { name, exact: true });
-}
-
 function linhaCliente(page: Page, nome: string): Locator {
-  return page.getByRole("table", { name: "Clientes MCP" }).getByRole("row").filter({ hasText: nome });
+  return page.getByRole("table", { name: "Agentes conectados (MCP)" }).getByRole("row").filter({ hasText: nome });
 }
 
 async function nomesDasTools(token: string): Promise<string[]> {
@@ -86,7 +84,7 @@ test("US1: o dono cria, rotaciona e revoga clientes; o interruptor corta todos; 
   // ---- tela: interruptor começa desligado; o dono liga ----
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  await nav(page, "Agentes (MCP)").click();
+  await nav(page, "Agentes (MCP)");
   await expect(page).toHaveURL(/\/app\/configuracoes\/agentes$/);
   await expect(page.getByRole("heading", { name: "Agentes (MCP)" })).toBeVisible();
   await ligarPelaTela(page, true);
@@ -157,8 +155,8 @@ test("US1: o dono cria, rotaciona e revoga clientes; o interruptor corta todos; 
   const member = await createVerifiedMember(page);
   await login(page, member.email, member.final);
   await expect(page).toHaveURL(/\/app$/);
-  await expect(nav(page, "Agentes (MCP)")).toHaveCount(0);
-  await expect(nav(page, "Propostas dos agentes")).toBeVisible();
+  await expect(navLink(page, "Agentes (MCP)")).toHaveCount(0);
+  await expect(navLink(page, "Propostas dos agentes")).toBeVisible();
   await page.goto("/app/configuracoes/agentes");
   await expect(page.getByText("Esta área é só para o dono.")).toBeVisible();
   const memberToken = await apiToken(request, member.email, member.final);
@@ -194,7 +192,7 @@ test("US2/US3: o agente lê pelo /mcp o mesmo que a tela; Origin e PROIBIDAS sã
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
   const daTela = page.waitForResponse((res) => new URL(res.url()).pathname === "/api/perfis" && res.request().method() === "GET");
-  await nav(page, "Perfis").click();
+  await nav(page, "Perfis");
   const telaRes = await daTela;
   expect(new URL(telaRes.url()).searchParams.get("archived")).toBe("false");
   const tela = (await telaRes.json()) as { items: { id: string; name: string }[] };
@@ -261,15 +259,17 @@ test("US5: o registro filtra por cliente e mostra o limite; nenhuma credencial n
   await expect(page).toHaveURL(/aba=registro/);
   const registro = page.getByRole("tabpanel", { name: "Registro" });
   const tabela = registro.getByRole("table", { name: "Registro de chamadas MCP" });
+  // spec 024: os filtros valem ao escolher (sem "Filtrar") e ficam na URL com o prefixo reg_
   await registro.getByLabel("Cliente", { exact: true }).selectOption({ label: a.nome });
-  await registro.getByRole("button", { name: "Filtrar" }).click();
+  await expect(page).toHaveURL(/reg_cliente=/);
   await expect(tabela.getByRole("row").filter({ hasText: "perfis_list" }).first()).toBeVisible();
   await expect(tabela.getByRole("row").filter({ hasText: b.nome })).toHaveCount(0);
   await expect(tabela.getByRole("row").filter({ hasText: a.nome }).first()).toBeVisible();
 
   await registro.getByLabel("Cliente", { exact: true }).selectOption({ label: b.nome });
   await registro.getByLabel("Resultado", { exact: true }).selectOption({ label: "limite" });
-  await registro.getByRole("button", { name: "Filtrar" }).click();
+  await expect(page).toHaveURL(/reg_resultado=/);
+  await expect(registro.getByRole("button", { name: "Remover filtro: Resultado" })).toBeVisible();
   await expect(tabela.getByRole("row").filter({ hasText: "limite" }).first()).toBeVisible();
   await expect(tabela.getByRole("row").filter({ hasText: a.nome })).toHaveCount(0);
 

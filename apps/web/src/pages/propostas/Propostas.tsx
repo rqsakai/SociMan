@@ -1,16 +1,20 @@
 /*
  * "Propostas dos agentes" (spec 009, US4; T049). A caixa de tudo o que os agentes (e as pessoas)
- * anotaram nos itens: filtros por perfil, cliente, tipo e situação no servidor e "Carregar mais".
- * Aplicar e descartar acontecem no próprio item (o link leva até ele).
+ * anotaram nos itens: filtros no servidor e "Carregar mais". Aplicar e descartar acontecem no
+ * próprio item (o link leva até ele).
+ *
+ * Spec 024 (T051, T062): uma busca só (`q` no servidor), a FilterBar com o estado no endereço
+ * (`q`, `perfil`, `situacao`, `autor`, `tipo`; sem `situacao` = "Aberta", `situacao=todas` = todas)
+ * e dois vazios: sem filtro ("Ainda não chegou nenhuma proposta") e com filtro.
  */
-import { Filter } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { DataTable, dataTableColumns } from "@/components/data-table";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
 import { AgenteSelo } from "@/components/mcp/AgenteSelo";
 import { PageHeading } from "@/components/PageHeading";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { EmptyState, HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
@@ -26,20 +30,17 @@ import {
   type AnotacaoSituacao,
   type AnotacaoTipo,
 } from "@/lib/anotacoes";
+import { api } from "@/lib/api";
 import { useAuth } from "@/lib/authStore";
+import { useFiltroUrl } from "@/lib/filtros";
 import { useMcpClientes } from "@/lib/mcp";
 import { usePerfisAtivos } from "@/lib/usePerfis";
 import { formatDateTime } from "@/lib/tz";
 
-type Draft = { perfilId: string; autorClienteId: string; tipo: string; situacao: string };
-const inicial: Draft = { perfilId: "", autorClienteId: "", tipo: "", situacao: "aberta" };
-
-const paraFiltros = (d: Draft): AnotacaoFilters => ({
-  perfilId: d.perfilId || undefined,
-  autorClienteId: d.autorClienteId || undefined,
-  tipo: (d.tipo || undefined) as AnotacaoFilters["tipo"],
-  situacao: (d.situacao || undefined) as AnotacaoFilters["situacao"],
-});
+// Sem `situacao` no endereço, a caixa mostra as abertas; "todas" tira o filtro.
+const SITUACAO_PADRAO: AnotacaoSituacao = "aberta";
+const TODAS = "todas";
+const CHAVES = ["q", "perfil", "situacao", "autor", "tipo"] as const;
 
 const col = dataTableColumns<Anotacao>();
 const columns = col.columns([
@@ -101,8 +102,24 @@ export default function Propostas() {
   const perfis = usePerfisAtivos();
   // Só o dono lista os clientes MCP; o membro filtra pelos autores já carregados.
   const clientes = useMcpClientes(isOwner);
-  const [draft, setDraft] = useState<Draft>(inicial);
-  const [filtros, setFiltros] = useState<AnotacaoFilters>(() => paraFiltros(inicial));
+  const [params, set] = useFiltroUrl();
+  const q = params.get("q") ?? "";
+  const perfilId = params.get("perfil") ?? "";
+  const situacaoUrl = params.get("situacao") ?? "";
+  const situacao = situacaoUrl || SITUACAO_PADRAO;
+  const autorId = params.get("autor") ?? "";
+  const tipo = params.get("tipo") ?? "";
+
+  const filtros = useMemo<AnotacaoFilters>(
+    () => ({
+      q: q || undefined,
+      perfilId: perfilId || undefined,
+      autorClienteId: autorId || undefined,
+      tipo: (tipo || undefined) as AnotacaoFilters["tipo"],
+      situacao: (situacao === TODAS ? undefined : situacao) as AnotacaoFilters["situacao"],
+    }),
+    [q, perfilId, autorId, tipo, situacao],
+  );
   const anotacoes = useAnotacoes(filtros);
   const itens = anotacoes.data?.pages.flatMap((p) => p.anotacoes);
 
@@ -113,81 +130,151 @@ export default function Propostas() {
     return [...vistos].map(([id, nome]) => ({ id, nome }));
   }, [isOwner, clientes.data, itens]);
 
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setFiltros(paraFiltros(draft));
-  }
+  const limpar = () => set(Object.fromEntries(CHAVES.map((k) => [k, null])));
+  const nomePerfil = perfis.data?.find((p) => p.id === perfilId)?.name ?? "perfil";
+  const nomeAutor = opcoesCliente.find((c) => c.id === autorId)?.nome ?? "agente";
+  const ativos: FiltroAtivo[] = [
+    ...(q ? [{ chave: "q", rotulo: "Busca", valor: q, limpar: () => set({ q: null }) }] : []),
+    ...(perfilId ? [{ chave: "perfil", rotulo: "Perfil", valor: nomePerfil, limpar: () => set({ perfil: null }) }] : []),
+    ...(situacaoUrl
+      ? [
+          {
+            chave: "situacao",
+            rotulo: "Situação",
+            valor: situacaoUrl === TODAS ? "Todas" : (situacaoAnotacaoLabel[situacaoUrl as AnotacaoSituacao] ?? situacaoUrl),
+            limpar: () => set({ situacao: null }),
+          },
+        ]
+      : []),
+    ...(autorId ? [{ chave: "autor", rotulo: "Autor", valor: nomeAutor, limpar: () => set({ autor: null }), mais: true }] : []),
+    ...(tipo ? [{ chave: "tipo", rotulo: "Tipo", valor: tipoAnotacaoLabel[tipo as AnotacaoTipo] ?? tipo, limpar: () => set({ tipo: null }), mais: true }] : []),
+  ];
+
+  // Caixa padrão (só abertas) vazia: alguma proposta já chegou? Decide entre os dois vazios.
+  const padraoVazio = ativos.length === 0 && anotacoes.isSuccess && (itens?.length ?? 0) === 0;
+  const algumaJaChegou = useQuery({
+    queryKey: ["anotacoes", "alguma"],
+    queryFn: () => api.anotacoes.list({ limit: 1 }),
+    enabled: padraoVazio,
+    select: (r) => r.anotacoes.length > 0,
+  });
+
+  const vazio =
+    ativos.length > 0 ? (
+      <EmptyState
+        titulo="Nenhuma proposta com estes filtros"
+        acao={
+          <Button size="sm" variant="outline" onClick={limpar}>
+            Limpar filtros
+          </Button>
+        }
+      />
+    ) : algumaJaChegou.data ? (
+      <EmptyState
+        titulo="Nenhuma proposta aberta"
+        descricao="As propostas já aplicadas, descartadas ou arquivadas ficam em Situação: Todas."
+        acao={
+          <Button size="sm" variant="outline" onClick={() => set({ situacao: TODAS })}>
+            Ver todas
+          </Button>
+        }
+      />
+    ) : (
+      <EmptyState
+        titulo="Ainda não chegou nenhuma proposta"
+        descricao="Propostas são sugestões dos agentes da agência (OpenClaw). Elas só chegam depois que os agentes forem ligados ao SociMan pelo MCP, e nada muda até alguém aplicar."
+        acao={
+          isOwner && (
+            <Button size="sm" asChild>
+              <Link to="/app/configuracoes/agentes">Configurar agentes (MCP)</Link>
+            </Button>
+          )
+        }
+      />
+    );
 
   return (
-    <div className="space-y-6">
+    <Page>
       <PageHeading
         title="Propostas dos agentes"
         description="Anotações e propostas de texto gravadas pelos agentes nos itens. Aplique ou descarte no próprio item: nada muda sem o seu clique."
       />
-      <HeaderCard title="Caixa de propostas" description="Da mais nova para a mais antiga" tone="dark">
-        <form onSubmit={onSubmit} className="mb-4 grid gap-4 border-b pb-4 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] lg:items-end">
-          <Field label="Perfil">
-            {({ id }) => (
-              <NativeSelect id={id} value={draft.perfilId} onChange={(e) => setDraft({ ...draft, perfilId: e.target.value })}>
-                <option value="">Todos</option>
-                {perfis.data?.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </Field>
-          <Field label="Cliente">
-            {({ id }) => (
-              <NativeSelect id={id} value={draft.autorClienteId} onChange={(e) => setDraft({ ...draft, autorClienteId: e.target.value })}>
-                <option value="">Todos</option>
-                {opcoesCliente.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </Field>
-          <Field label="Tipo">
-            {({ id }) => (
-              <NativeSelect id={id} value={draft.tipo} onChange={(e) => setDraft({ ...draft, tipo: e.target.value })}>
-                <option value="">Todos</option>
-                {(Object.keys(tipoAnotacaoLabel) as AnotacaoTipo[]).map((t) => (
-                  <option key={t} value={t}>
-                    {tipoAnotacaoLabel[t]}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </Field>
-          <Field label="Situação">
-            {({ id }) => (
-              <NativeSelect id={id} value={draft.situacao} onChange={(e) => setDraft({ ...draft, situacao: e.target.value })}>
-                <option value="">Todas</option>
-                {(Object.keys(situacaoAnotacaoLabel) as AnotacaoSituacao[]).map((s) => (
-                  <option key={s} value={s}>
-                    {situacaoAnotacaoLabel[s]}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </Field>
-          <Button type="submit">
-            <Filter aria-hidden="true" />
-            Filtrar
-          </Button>
-        </form>
+      <HeaderCard title="Caixa de propostas" description="Da mais nova para a mais antiga">
         {anotacoes.isError && <ApiErrorAlert error={anotacoes.error} />}
         <DataTable
           label="Propostas dos agentes"
           columns={columns}
           data={itens}
-          loading={anotacoes.isPending}
+          loading={anotacoes.isPending || (padraoVazio && algumaJaChegou.isPending)}
           getRowId={(a) => a.id}
-          search={{ placeholder: "Buscar na lista carregada", label: "Buscar nas propostas" }}
-          emptyMessage="Nenhuma proposta encontrada."
+          toolbar={
+            <FilterBar
+              busca={{ valor: q, onChange: (v) => set({ q: v || null }, { replace: true }), placeholder: "Buscar no texto das propostas" }}
+              principais={
+                <>
+                  <Field label="Perfil" className="w-full sm:w-48">
+                    {({ id }) => (
+                      <NativeSelect id={id} value={perfilId} onChange={(e) => set({ perfil: e.target.value || null })}>
+                        <option value="">Todos</option>
+                        {perfis.data?.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                  <Field label="Situação" className="w-full sm:w-40">
+                    {({ id }) => (
+                      <NativeSelect
+                        id={id}
+                        value={situacao}
+                        onChange={(e) => set({ situacao: e.target.value === SITUACAO_PADRAO ? null : e.target.value })}
+                      >
+                        <option value={TODAS}>Todas</option>
+                        {(Object.keys(situacaoAnotacaoLabel) as AnotacaoSituacao[]).map((s) => (
+                          <option key={s} value={s}>
+                            {situacaoAnotacaoLabel[s]}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                </>
+              }
+              mais={
+                <>
+                  <Field label="Autor">
+                    {({ id }) => (
+                      <NativeSelect id={id} value={autorId} onChange={(e) => set({ autor: e.target.value || null })}>
+                        <option value="">Todos</option>
+                        {opcoesCliente.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.nome}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                  <Field label="Tipo">
+                    {({ id }) => (
+                      <NativeSelect id={id} value={tipo} onChange={(e) => set({ tipo: e.target.value || null })}>
+                        <option value="">Todos</option>
+                        {(Object.keys(tipoAnotacaoLabel) as AnotacaoTipo[]).map((t) => (
+                          <option key={t} value={t}>
+                            {tipoAnotacaoLabel[t]}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                </>
+              }
+              ativos={ativos}
+              onLimpar={limpar}
+            />
+          }
+          empty={vazio}
           pagination={{
             hasMore: anotacoes.hasNextPage,
             onLoadMore: () => void anotacoes.fetchNextPage(),
@@ -195,6 +282,6 @@ export default function Propostas() {
           }}
         />
       </HeaderCard>
-    </div>
+    </Page>
   );
 }

@@ -18,6 +18,7 @@ import type { OpcoesGrafico } from "@/components/analytics/echarts";
 import { Grafico, type ItemTooltip } from "@/components/analytics/Grafico";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
+import { Page } from "@/components/shell";
 import { notaSemVideo } from "@/components/studio/fonteAnalytics";
 import { DireitoBadge } from "@/components/canais/DireitoBadge";
 import {
@@ -32,6 +33,7 @@ import {
   type EstadoFiltroAnalytics,
   type Medida,
 } from "@/lib/analytics";
+import { aprendizadoPath } from "@/lib/aprendizado";
 import { direitoLabel } from "@/lib/canais";
 
 const MAX_SERIES_DISPERSAO = 3;
@@ -267,13 +269,13 @@ export function OQueFunciona({ estado }: { estado: EstadoFiltroAnalytics }) {
   const vazioCorte = (n: number) => (n > 0 ? null : `Nenhum post vinculado a um corte e já medido neste período.${semVinculo}`);
 
   return (
-    <div className="flex flex-col gap-4">
+    <Page>
       {/* spec 023: o "por que deu certo" do perfil (efeito encolhido, n e confiança) */}
       {estado.filtro.perfilId && (
         <p className="rounded-lg bg-muted/50 p-3 text-sm">
           Quer saber por que um post rendeu e que assunto ampliar ou cortar?{" "}
           <Link
-            to={`/app/perfis/${estado.filtro.perfilId}/aprendizado${estado.filtro.contaId ? `?conta=${estado.filtro.contaId}` : ""}`}
+            to={aprendizadoPath(estado.filtro.perfilId, undefined, estado.filtro.contaId ? { conta: estado.filtro.contaId } : {})}
             className="font-medium underline"
           >
             Abrir o Aprendizado do perfil
@@ -365,6 +367,6 @@ export function OQueFunciona({ estado }: { estado: EstadoFiltroAnalytics }) {
           <Grafico opcoes={padroes.opcoes} descricao={`Mediana por padrão de corte: ${padroes.top.map((l) => `${l.rotulo} ${inteiro(l.mediana)}`).join(", ")}.`} altura={padroes.altura} tooltip={tooltipLinha("Mediana", inteiro, true)} />
         </CardAnalytics>
       </div>
-    </div>
+    </Page>
   );
 }

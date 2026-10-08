@@ -18,6 +18,7 @@ import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -162,11 +163,14 @@ export function VinculoPanel({ destino, vinculo, onChanged }: { destino: Destino
       )}
 
       {!ligado && vinculo.candidatos.length === 0 && vinculo.estado === "sem_vinculo" && vinculo.podeVincular && (
-        <p className="text-sm text-muted-foreground">
-          {marcaPostado
-            ? "Nenhum post recente da conta combina com este vídeo. Depois de postar, use \"Postado\" ou cole o link."
-            : "Nenhum post da conta combina ainda. Se já postou, cole o link."}
-        </p>
+        <EmptyState
+          className="py-4"
+          titulo={
+            marcaPostado
+              ? "Nenhum post recente da conta combina com este vídeo. Depois de postar, use \"Postado\" ou cole o link."
+              : "Nenhum post da conta combina ainda. Se já postou, cole o link."
+          }
+        />
       )}
 
       {error !== null && <ApiErrorAlert error={error} onReload={() => void onChanged()} />}

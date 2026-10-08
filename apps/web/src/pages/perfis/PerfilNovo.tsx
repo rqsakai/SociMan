@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { PageHeading } from "@/components/PageHeading";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -93,10 +93,10 @@ export default function PerfilNovo() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <Page>
       <PageHeading title="Novo perfil" description="Uma marca da agência; as contas nas plataformas entram depois." />
-      <HeaderCard title="Dados do perfil" description="Nome, nicho, descrição, idioma e status." className="mt-12">
-        <form onSubmit={(e) => void onFormSubmit(e)} className="space-y-4" noValidate>
+      <HeaderCard title="Dados do perfil" description="Nome, nicho, descrição, idioma e status.">
+        <form onSubmit={(e) => void onFormSubmit(e)} className="max-w-2xl space-y-4" noValidate>
           {error !== null && <ApiErrorAlert error={error} />}
           <Field label="Nome" error={errors.name?.message}>
             {({ id, describedBy, invalid }) => (
@@ -168,6 +168,6 @@ export default function PerfilNovo() {
           </div>
         </form>
       </HeaderCard>
-    </div>
+    </Page>
   );
 }

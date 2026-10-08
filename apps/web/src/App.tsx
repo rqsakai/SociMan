@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { Offline } from "./components/Offline";
 import { CHANGE_PASSWORD_PATH, RequireAuth } from "./components/RequireAuth";
 import { RequireOwner } from "./components/RequireOwner";
@@ -61,7 +61,7 @@ import CenaHistorico from "./pages/cenas/CenaHistorico";
 
 // 019-analytics: /app/metricas carrega sob demanda (traz o ECharts, chunk `graficos`).
 const Analytics = lazy(() => import("./pages/analytics/Analytics"));
-// 023-aprendizado: /app/perfis/:id/aprendizado também usa o ECharts (rota lazy).
+// 023-aprendizado: /app/aprendizado também usa o ECharts (rota lazy).
 const Aprendizado = lazy(() => import("./pages/aprendizado/Aprendizado"));
 
 // Vitrine dos componentes da spec 005 (só em dev; o build de produção descarta o import).
@@ -70,6 +70,17 @@ const Showcase = import.meta.env.DEV ? lazy(() => import("./pages/_Showcase")) :
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
 });
+
+// Spec 024 (R10): o link antigo do aprendizado do perfil vai para a página nova, com a query de antes
+// (aba, conta, medida).
+function AprendizadoDoPerfilRedirect() {
+  const { id = "" } = useParams();
+  const { search } = useLocation();
+  const q = new URLSearchParams(search);
+  q.delete("perfil");
+  const resto = q.toString();
+  return <Navigate replace to={`/app/aprendizado?perfil=${encodeURIComponent(id)}${resto ? `&${resto}` : ""}`} />;
+}
 
 function RootRedirect() {
   const status = useAuth((s) => s.status);
@@ -131,8 +142,9 @@ export default function App() {
                 <Route path="/app/perfis/novo" element={<PerfilNovo />} />
                 <Route path="/app/perfis/:id" element={<PerfilDetalhe />} />
                 <Route path="/app/perfis/:id/kit/historico" element={<KitHistorico />} />
+                <Route path="/app/perfis/:id/aprendizado" element={<AprendizadoDoPerfilRedirect />} />
                 <Route
-                  path="/app/perfis/:id/aprendizado"
+                  path="/app/aprendizado"
                   element={
                     <Suspense fallback={<p className="text-sm text-muted-foreground" aria-live="polite">Carregando…</p>}>
                       <Aprendizado />

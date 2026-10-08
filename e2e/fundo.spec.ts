@@ -145,10 +145,13 @@ test("dono usa uma imagem de fundo no card final e ela aparece no corte", async 
   const video = testInfo.outputPath("corte.mp4");
   syntheticMp4(video, 4);
   const hookText = `Fundo E2E ${sfx}`;
-  await tab(page, "Cortes").click();
-  await page.getByLabel("Vídeo do corte").setInputFiles(video);
-  await page.getByLabel("Texto do gancho").fill(hookText);
-  await page.getByRole("button", { name: "Enviar corte" }).click();
+  await page.goto(`/app/conteudos?perfil=${perfilId}`);
+  await page.getByRole("button", { name: "Aplicar marca num corte" }).click();
+  const dialogo = page.getByRole("dialog", { name: "Aplicar marca num corte" });
+  await expect(dialogo.getByLabel("Perfil")).toHaveValue(perfilId);
+  await dialogo.getByLabel("Vídeo do corte").setInputFiles(video);
+  await dialogo.getByLabel("Texto do gancho").fill(hookText);
+  await dialogo.getByRole("button", { name: "Enviar corte" }).click();
   await expect(page).toHaveURL(/\/app\/cortes\/[0-9a-f-]{36}$/, { timeout: 30_000 });
   await expect(page.getByText("Kit v1").first()).toBeVisible();
   await expect(page.getByText("Pronto", { exact: true }).first()).toBeVisible({ timeout: 180_000 });

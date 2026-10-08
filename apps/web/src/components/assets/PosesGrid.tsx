@@ -5,6 +5,7 @@ import { api } from "../../lib/api";
 import { activeFiles, archivedFiles, type Asset, type AssetFile, type FileRole } from "../../lib/assets";
 import { AssetFileCard, type RunAction } from "./AssetFileCard";
 import { moveItem } from "./ReorderButtons";
+import { EmptyState } from "@/components/shell";
 
 // Reordena os arquivos ativos de um papel: uma chamada PUT /ordem com a lista inteira (uma versão
 // por reordenação).
@@ -78,7 +79,7 @@ export function PosesGrid({
   return (
     <div className="space-y-3">
       {files.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{empty}</p>
+        <EmptyState titulo={empty} className="py-4" />
       ) : (
         <ol className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4" aria-label={role === "pose" ? "Poses" : "Referências"}>
           {files.map((file: AssetFile, i) => (

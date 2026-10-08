@@ -9,16 +9,24 @@
  *   search?: boolean | { placeholder?: string; label?: string }
  *                                     campo de filtro global por texto (padrão "Filtrar"; o filtro
  *                                     roda sobre as colunas com accessor)
- *   toolbar?: ReactNode               filtros extras à direita da busca (ex.: <select> de status)
+ *   toolbar?: ReactNode               filtros extras à direita da busca (ex.: <select> de status).
+ *                                     Com uma <FilterBar> (spec 024), a tabela não desenha a própria
+ *                                     busca: a busca é a "Buscar" da barra. Com `search` (dados locais)
+ *                                     e a barra sem `busca`, a "Buscar" filtra as linhas carregadas.
  *   initialSorting?: { id: string; desc: boolean }[]
  *   initialPageSize?: 10 | 25 | 50    padrão 10
- *   emptyMessage?: string             padrão "Nenhum resultado"
+ *   emptyMessage?: ReactNode          padrão "Nenhum resultado"
+ *   empty?: ReactNode                 vazio rico (spec 024): um <EmptyState> no lugar do texto; ganha
+ *                                     do `emptyMessage`
  *   label?: string                    aria-label da <table> (ex.: "Perfis")
  *   pagination?: DataTableExternalPagination
  *                                     sem a prop: paginação no cliente (10/25/50 com o total).
  *                                     Com { hasMore, onLoadMore, loadingMore? }: modo externo para
  *                                     listas por cursor; mostra todas as linhas recebidas e o botão
  *                                     "Carregar mais" (ordenação e filtro valem sobre o que já veio).
+ *                                     Com { modo: "servidor", total, pagina, tamanho, onPagina,
+ *                                     onTamanho } (spec 024): páginas numeradas no servidor; a tela
+ *                                     busca só a página (offset) e o rodapé é o <ServerPagination>.
  *   manual?: boolean                  filtro, ordenação e paginação ficam no servidor (spec 014): a
  *                                     tabela mostra as linhas como vieram, sem cabeçalho ordenável
  *                                     nem busca local, e o rodapé é o <CursorPagination> (com o
@@ -43,14 +51,16 @@
  */
 import { useTable, type RowData } from "@tanstack/react-table";
 import { Search } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { cloneElement, isValidElement, useState, type ReactElement, type ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { CursorPagination } from "./CursorPagination";
 import { ClientPagination, LoadMorePagination } from "./DataTablePagination";
+import { ServerPagination, type ServerPaginationProps } from "./ServerPagination";
 import { dataTableFeatures, type DataTableColumnDef } from "./features";
+import { FilterBar, type FilterBarProps } from "./FilterBar";
 import { SortableHeader } from "./SortableHeader";
 
 export interface DataTableExternalPagination {
@@ -59,6 +69,11 @@ export interface DataTableExternalPagination {
   loadingMore?: boolean;
   // Total do filtro no servidor (modo `manual`).
   total?: number;
+}
+
+// Paginação numerada no servidor (spec 024): as linhas recebidas são a página inteira.
+export interface DataTableServerPagination extends ServerPaginationProps {
+  modo: "servidor";
 }
 
 export interface DataTableProps<T extends RowData> {
@@ -70,9 +85,10 @@ export interface DataTableProps<T extends RowData> {
   toolbar?: ReactNode;
   initialSorting?: { id: string; desc: boolean }[];
   initialPageSize?: 10 | 25 | 50;
-  emptyMessage?: string;
+  emptyMessage?: ReactNode;
+  empty?: ReactNode;
   label?: string;
-  pagination?: DataTableExternalPagination;
+  pagination?: DataTableExternalPagination | DataTableServerPagination;
   manual?: boolean;
   // Linha marcada (seleção em lote da página): recebe data-state="selected".
   isRowSelected?: (row: T) => boolean;
@@ -91,6 +107,7 @@ export function DataTable<T extends RowData>({
   initialSorting,
   initialPageSize = 10,
   emptyMessage = "Nenhum resultado",
+  empty,
   label,
   pagination,
   manual,
@@ -116,14 +133,30 @@ export function DataTable<T extends RowData>({
   });
 
   const searchOptions = typeof search === "object" ? search : {};
+  // com a <FilterBar> no toolbar, a busca é a dela (spec 024)
+  const comFilterBar = isValidElement(toolbar) && toolbar.type === FilterBar;
+  const buscaPropria = Boolean(search) && !manual && !comFilterBar;
+  // dados locais (Usuários, Importação): a "Buscar" da barra vira o filtro global da tabela
+  const barra = toolbar as ReactElement<FilterBarProps>;
+  const toolbarFinal =
+    comFilterBar && search && !manual && !barra.props.busca
+      ? cloneElement(barra, {
+          busca: {
+            valor: table.state.globalFilter ?? "",
+            onChange: (v: string) => table.setGlobalFilter(v),
+            placeholder: searchOptions.placeholder,
+            rotulo: searchOptions.label,
+          },
+        })
+      : toolbar;
   const rows = table.getRowModel().rows;
   const columnCount = table.getAllLeafColumns().length;
 
   return (
     <div className="min-w-0">
-      {((search && !manual) || toolbar) && (
+      {(buscaPropria || toolbar) && (
         <div className="flex flex-wrap items-center gap-3 pb-3">
-          {search && !manual && (
+          {buscaPropria && (
             <div className="relative w-full sm:w-64">
               <Search
                 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -139,7 +172,7 @@ export function DataTable<T extends RowData>({
               />
             </div>
           )}
-          {toolbar}
+          {toolbarFinal}
         </div>
       )}
 
@@ -184,9 +217,15 @@ export function DataTable<T extends RowData>({
             ))
           ) : rows.length === 0 ? (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={columnCount} className="py-10 text-center text-muted-foreground">
-                {emptyMessage}
-              </TableCell>
+              {empty ? (
+                <TableCell colSpan={columnCount} className="whitespace-normal">
+                  {empty}
+                </TableCell>
+              ) : (
+                <TableCell colSpan={columnCount} className="py-10 text-center text-muted-foreground">
+                  {emptyMessage}
+                </TableCell>
+              )}
             </TableRow>
           ) : (
             rows.map((row) => (
@@ -203,7 +242,15 @@ export function DataTable<T extends RowData>({
       </Table>
 
       {!loading &&
-        (manual ? (
+        (pagination && "modo" in pagination ? (
+          <ServerPagination
+            total={pagination.total}
+            pagina={pagination.pagina}
+            tamanho={pagination.tamanho}
+            onPagina={pagination.onPagina}
+            onTamanho={pagination.onTamanho}
+          />
+        ) : manual ? (
           pagination && (
             <CursorPagination
               loaded={table.getRowCount()}

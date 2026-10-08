@@ -18,7 +18,8 @@ import { ClassificacaoEditor } from "@/components/aprendizado/ClassificacaoEdito
 import { formatarValor, HistoricoDialog } from "@/components/aprendizado/HistoricoDialog";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { HeaderCard } from "@/components/shell";
+import { FilterBar } from "@/components/data-table/FilterBar";
+import { EmptyState, HeaderCard, Page } from "@/components/shell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +51,7 @@ import {
   type EstiloGancho,
 } from "@/lib/aprendizado";
 import { useEhDono } from "@/lib/conteudos";
+import { useFiltroUrl } from "@/lib/filtros";
 import { formatNumero } from "@/lib/metricas";
 import type { AbaProps } from "../Aprendizado";
 
@@ -72,7 +74,9 @@ const temaLabels: Record<string, string> = {
 
 export function Temas({ perfil, contas, estado }: AbaProps) {
   const dono = useEhDono();
-  const [arquivados, setArquivados] = useState(false);
+  // spec 024 (T057): os filtros da aba moram na URL (`arquivados`, `tema`, `pendentes`)
+  const [params, set] = useFiltroUrl();
+  const arquivados = params.get("arquivados") === "1";
   const temas = useTemas(perfil.id, arquivados);
   const invalidar = useInvalidarAprendizado();
   const atualizar = () => invalidar(perfil.id);
@@ -80,7 +84,7 @@ export function Temas({ perfil, contas, estado }: AbaProps) {
   const ativos = temas.data?.items.filter((t) => !t.archived) ?? [];
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <Page>
       <HeaderCard
         title="Temas do perfil"
         description={
@@ -88,23 +92,27 @@ export function Temas({ perfil, contas, estado }: AbaProps) {
             ? `${formatNumero(ativos.length)} ${ativos.length === 1 ? "tema ativo" : "temas ativos"} (até 30) · taxonomia v${temas.data.taxonomiaVersao}`
             : "Carregando…"
         }
-        actions={
-          <label className="flex items-center gap-2 text-sm text-white">
-            <input type="checkbox" className="size-4 accent-primary" checked={arquivados} onChange={(e) => setArquivados(e.target.checked)} />
-            Mostrar arquivados
-          </label>
-        }
       >
         <div className="flex flex-col gap-4 pb-2">
+          <FilterBar
+            principais={
+              <label className="flex items-center gap-2 pb-2 text-sm">
+                <input type="checkbox" className="size-4 accent-primary" checked={arquivados} onChange={(e) => set({ arquivados: e.target.checked ? "1" : null })} />
+                Mostrar arquivados
+              </label>
+            }
+            ativos={arquivados ? [{ chave: "arquivados", rotulo: "Arquivados", valor: "mostrando", limpar: () => set({ arquivados: null }) }] : []}
+          />
           {dono && <PropostaIa perfilId={perfil.id} temNada={ativos.length === 0} onSalvo={atualizar} />}
           {temas.isError ? (
             <ApiErrorAlert error={temas.error} />
           ) : temas.isPending ? (
             <Skeleton className="h-32 w-full" />
           ) : temas.data.items.length === 0 ? (
-            <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" role="status">
-              Nenhum tema ainda. {dono ? "Crie os temas à mão ou peça uma proposta à IA a partir dos posts publicados." : "O dono define os temas do perfil."}
-            </p>
+            <EmptyState
+              titulo="Nenhum tema ainda."
+              descricao={dono ? "Crie os temas à mão ou peça uma proposta à IA a partir dos posts publicados." : "O dono define os temas do perfil."}
+            />
           ) : (
             <ul className="divide-y" aria-label="Temas">
               {temas.data.items.map((t) => (
@@ -117,7 +125,7 @@ export function Temas({ perfil, contas, estado }: AbaProps) {
       </HeaderCard>
 
       <Classificacoes perfilId={perfil.id} contaId={estado.filtro.contaId} contasCount={contas.length} temas={ativos} dono={dono} onMudou={atualizar} />
-    </div>
+    </Page>
   );
 }
 
@@ -535,8 +543,9 @@ function Classificacoes({
   dono: boolean;
   onMudou: () => Promise<unknown>;
 }) {
-  const [temaId, setTemaId] = useState("");
-  const [pendentes, setPendentes] = useState(false);
+  const [params, set] = useFiltroUrl();
+  const temaId = params.get("tema") ?? "";
+  const pendentes = params.get("pendentes") === "1";
   const [limit, setLimit] = useState(50);
   const [editando, setEditando] = useState<string | null>(null);
   const [historico, setHistorico] = useState<AprendizadoClassificacao | null>(null);
@@ -572,7 +581,6 @@ function Classificacoes({
   return (
     <HeaderCard
       title="Classificação dos posts"
-      tone="dark"
       description={
         d
           ? `${formatNumero(d.pendentes)} aguardando classificação · usadas hoje ${formatNumero(d.limiteHoje.usadas)} / ${formatNumero(d.limiteHoje.limite)}`
@@ -588,24 +596,33 @@ function Classificacoes({
       }
     >
       <div className="flex flex-col gap-4 pb-2">
-        <div className="flex flex-wrap items-end gap-3">
-          <Field label="Tema" className="w-full sm:w-56">
-            {({ id }) => (
-              <NativeSelect id={id} value={temaId} onChange={(e) => setTemaId(e.target.value)}>
-                <option value="">Todos os temas</option>
-                {temas.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.nome}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </Field>
-          <label className="flex items-center gap-2 pb-2 text-sm">
-            <input type="checkbox" className="size-4 accent-primary" checked={pendentes} onChange={(e) => setPendentes(e.target.checked)} />
-            Só pendentes
-          </label>
-        </div>
+        <FilterBar
+          principais={
+            <>
+              <Field label="Tema" className="w-full sm:w-56">
+                {({ id }) => (
+                  <NativeSelect id={id} value={temaId} onChange={(e) => set({ tema: e.target.value || null })}>
+                    <option value="">Todos os temas</option>
+                    {temas.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.nome}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+              <label className="flex items-center gap-2 pb-2 text-sm">
+                <input type="checkbox" className="size-4 accent-primary" checked={pendentes} onChange={(e) => set({ pendentes: e.target.checked ? "1" : null })} />
+                Só pendentes
+              </label>
+            </>
+          }
+          ativos={[
+            ...(temaId ? [{ chave: "tema", rotulo: "Tema", valor: nomeTema(temaId), limpar: () => set({ tema: null }) }] : []),
+            ...(pendentes ? [{ chave: "pendentes", rotulo: "Situação", valor: "só pendentes", limpar: () => set({ pendentes: null }) }] : []),
+          ]}
+          onLimpar={() => set({ tema: null, pendentes: null })}
+        />
         <p className="text-xs text-muted-foreground">
           A IA classifica os posts com 24 h ou mais, até {d ? formatNumero(d.limiteHoje.limite) : "50"} por dia neste perfil; o resto fica para o dia seguinte. Correção do dono nunca é
           sobrescrita.{contasCount > 1 && !contaId ? " Mostrando todas as contas do perfil." : ""}
@@ -616,9 +633,7 @@ function Classificacoes({
         ) : lista.isPending ? (
           <Skeleton className="h-40 w-full" />
         ) : d!.items.length === 0 ? (
-          <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" role="status">
-            {pendentes ? "Nenhum post aguardando classificação." : "Nenhum post classificado com estes filtros."}
-          </p>
+          <EmptyState titulo={pendentes ? "Nenhum post aguardando classificação." : "Nenhum post classificado com estes filtros."} />
         ) : (
           <ul className="divide-y" aria-label="Classificações">
             {d!.items.map((c) => (

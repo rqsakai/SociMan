@@ -1,6 +1,38 @@
 {
   "components": {
     "schemas": {
+      "AfinidadeEstado": {
+        "description": "Spec 024 (R9): por que a afinidade está neutra (`motivo` null quando ativa).",
+        "properties": {
+          "ativa": {
+            "title": "Ativa",
+            "type": "boolean"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "sem_perfil",
+                  "sem_temas",
+                  "desatualizada",
+                  "neutra"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          }
+        },
+        "required": [
+          "ativa",
+          "motivo"
+        ],
+        "title": "AfinidadeEstado",
+        "type": "object"
+      },
       "AgenciaConfirmar": {
         "additionalProperties": false,
         "properties": {
@@ -1842,6 +1874,13 @@
               }
             ],
             "title": "Temanome"
+          },
+          "temas": {
+            "items": {
+              "$ref": "#/components/schemas/TemaCasado"
+            },
+            "title": "Temas",
+            "type": "array"
           }
         },
         "required": [
@@ -10541,6 +10580,35 @@
         "title": "CortesList",
         "type": "object"
       },
+      "CortesResumo": {
+        "description": "Clipes da geração por situação (spec 024, FR-018). A soma é o total, inclusive arquivados.",
+        "properties": {
+          "aceitos": {
+            "title": "Aceitos",
+            "type": "integer"
+          },
+          "arquivados": {
+            "title": "Arquivados",
+            "type": "integer"
+          },
+          "falhou": {
+            "title": "Falhou",
+            "type": "integer"
+          },
+          "pendentes": {
+            "title": "Pendentes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "aceitos",
+          "pendentes",
+          "falhou",
+          "arquivados"
+        ],
+        "title": "CortesResumo",
+        "type": "object"
+      },
       "CotaYoutube": {
         "properties": {
           "limite": {
@@ -12165,6 +12233,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/EnvioConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cortesResumo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CortesResumo"
               },
               {
                 "type": "null"
@@ -22166,6 +22244,52 @@
         "title": "TagCount",
         "type": "object"
       },
+      "TemaCasado": {
+        "description": "Spec 024 (R9): um tema da taxonomia do perfil que casou com o vídeo-fonte.",
+        "properties": {
+          "acao": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ampliar",
+                  "cortar"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acao"
+          },
+          "decisivo": {
+            "title": "Decisivo",
+            "type": "boolean"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "pontos": {
+            "title": "Pontos",
+            "type": "number"
+          },
+          "temaId": {
+            "format": "uuid",
+            "title": "Temaid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "temaId",
+          "nome",
+          "pontos",
+          "acao",
+          "decisivo"
+        ],
+        "title": "TemaCasado",
+        "type": "object"
+      },
       "TentarDeNovoIn": {
         "properties": {
           "confirmoQueNaoChegou": {
@@ -25036,6 +25160,16 @@
       },
       "sociman_api__canais__schemas__VideosList": {
         "properties": {
+          "afinidadeEstado": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AfinidadeEstado"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/VideoFonte"
@@ -27529,7 +27663,7 @@
     },
     "/api/anotacoes": {
       "get": {
-        "description": "Anotações e propostas, das mais novas para as mais antigas, com filtros.",
+        "description": "Anotações e propostas, das mais novas para as mais antigas, com filtros. `q` busca um\ntrecho do texto, sem acento e sem caixa (spec 024).",
         "operationId": "anotacoes_list",
         "parameters": [
           {
@@ -27629,6 +27763,23 @@
                 }
               ],
               "title": "Autorclienteid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
             }
           },
           {
@@ -35796,6 +35947,25 @@
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "description": "Página numerada; não use com `cursor`",
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Página numerada; não use com `cursor`",
+              "title": "Offset"
             }
           }
         ],

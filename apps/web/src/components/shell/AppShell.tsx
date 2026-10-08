@@ -14,7 +14,8 @@
  *
  * Layout: fundo cinza-claro (bg-background); a partir de 1024 px o menu fica fixo à esquerda e o
  * conteúdo ganha margem; abaixo disso o menu vira gaveta (botão "Abrir menu" na barra).
- * O conteúdo nunca rola na horizontal: tabelas largas rolam dentro do próprio cartão.
+ * O conteúdo nunca rola na horizontal: tabelas largas rolam dentro do próprio cartão. A área de
+ * conteúdo tem no máximo 1440 px, centralizada (spec 024, FR-032).
  */
 import { useState, type ReactNode } from "react";
 import { Outlet } from "react-router-dom";
@@ -38,7 +39,9 @@ export function AppShell({ children, search }: AppShellProps) {
         <MobileSidebar open={menuOpen} onOpenChange={setMenuOpen} />
         <div className="flex min-h-screen min-w-0 flex-col lg:pl-72">
           <Topbar onOpenMenu={() => setMenuOpen(true)} search={search} />
-          <main className="min-w-0 flex-1 px-4 pt-4 pb-2 sm:px-6">{children ?? <Outlet />}</main>
+          <main className="min-w-0 flex-1 px-4 pt-4 pb-2 sm:px-6">
+            <div className="mx-auto w-full max-w-[1440px]">{children ?? <Outlet />}</div>
+          </main>
           <Footer />
         </div>
       </div>

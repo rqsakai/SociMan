@@ -27,7 +27,7 @@ export function Offline() {
         </p>
         <Button
           type="button"
-          className="tone-primary w-full text-xs font-bold tracking-wide uppercase"
+          variant="band" className="w-full text-xs font-bold tracking-wide uppercase"
           onClick={onRetry}
           disabled={retrying}
           aria-busy={retrying}

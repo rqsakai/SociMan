@@ -24,7 +24,7 @@ import { Ingredientes } from "@/components/cenas/Ingredientes";
 import { PromptPainel } from "@/components/cenas/PromptPainel";
 import { Tomadas } from "@/components/cenas/Tomadas";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { usePageMeta } from "@/components/shell";
+import { EmptyState, Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -176,7 +176,7 @@ function NovaForm({
   };
 
   return (
-    <div className="space-y-6">
+    <Page>
       <VoltarPerfil perfilId={perfilId} />
       <h1 className="text-xl font-bold">Nova cena</h1>
       {proposta && <FaixaProposta proposta={proposta} />}
@@ -207,7 +207,7 @@ function NovaForm({
           </form>
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }
 
@@ -230,10 +230,10 @@ export default function CenaDetalhe() {
 
   if (q.isPending || p.pendente) {
     return (
-      <div className="space-y-4" aria-live="polite">
+      <Page aria-live="polite">
         <span className="sr-only">Carregando…</span>
         <Skeleton className="h-96 w-full rounded-xl" />
-      </div>
+      </Page>
     );
   }
   if (q.isError || !cena) return <ApiErrorAlert error={q.error} />;
@@ -330,7 +330,7 @@ function CenaEditor({
   };
 
   return (
-    <div className="space-y-6">
+    <Page>
       <VoltarPerfil perfilId={cena.perfilId} />
 
       <Card className="shadow-card">
@@ -534,7 +534,7 @@ function CenaEditor({
           <AnotacoesCard alvoTipo="cena" alvoId={cena.id} arquivado={cena.arquivada} titulo="Anotações da cena" />
         </div>
       </div>
-    </div>
+    </Page>
   );
 }
 
@@ -549,7 +549,7 @@ function UsadaEm({ cena }: { cena: Cena }) {
       </CardHeader>
       <CardContent className="space-y-2">
         {cena.usos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum vídeo ainda.</p>
+          <EmptyState titulo="Nenhum vídeo ainda." className="py-4" />
         ) : (
           <>
             <ul className="space-y-1 text-sm">

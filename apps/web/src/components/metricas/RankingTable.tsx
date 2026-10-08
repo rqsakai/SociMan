@@ -8,18 +8,16 @@
  * conta anônima). Linhas compactas: miniatura do conteúdo (ou ícone), legenda cortada em 40
  * caracteres e Views sempre visível; 24 h, 7 d, engajamento e velocidade somem no celular.
  */
-import { ArrowDown, ArrowUp, ChevronsUpDown, Film, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsUpDown, Film } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { useFiltroUrl } from "@/components/conteudos/FiltrosConteudos";
-import { DataTable, dataTableColumns } from "@/components/data-table";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { HeaderCard } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { Field, NativeSelect } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
   formatCompacto,
   formatEngajamento,
@@ -36,9 +34,11 @@ import {
   truncar,
   type VideoResumo,
 } from "@/lib/metricas";
-import { formatDateTime } from "@/lib/tz";
+import { useFiltroUrl } from "@/lib/filtros";
+import { formatDateKey, formatDateTime } from "@/lib/tz";
+import { usePerfisAtivos } from "@/lib/usePerfis";
 import { cn } from "@/lib/utils";
-import { FiltroContas } from "./FiltroContas";
+import { FiltroContas, useContasTikTok } from "./FiltroContas";
 
 const col = dataTableColumns<VideoResumo>();
 const ORDENS = Object.keys(ordemLabel) as OrdemRanking[];
@@ -122,7 +122,24 @@ export function RankingTable({
   const total = lista.data?.pages[0]?.total;
   const de = params.get("de") ?? "";
   const ate = params.get("ate") ?? "";
-  const algum = proprios.some((k) => params.has(k));
+  const origem = params.get("origem") as OrigemMetricas | null;
+  const perfilId = params.get("perfil") ?? "";
+  const contaId = params.get("conta") ?? "";
+  // perfil, conta e "Publicado" só fora do analytics (sem `escopo`): ficam em "Mais filtros"
+  const perfis = usePerfisAtivos();
+  const contas = useContasTikTok(escopo || semFiltroContas ? "" : perfilId);
+  const ativos: FiltroAtivo[] = [
+    ...(origem ? [{ chave: "origem", rotulo: "Origem", valor: origemMetricasLabel[origem] ?? origem, limpar: () => set({ origem: null }) }] : []),
+    ...(!escopo && !semFiltroContas && perfilId
+      ? [{ chave: "perfil", rotulo: "Perfil", valor: perfis.data?.find((p) => p.id === perfilId)?.name ?? "…", limpar: () => set({ perfil: null, conta: null }), mais: true }]
+      : []),
+    ...(!escopo && !semFiltroContas && contaId
+      ? [{ chave: "conta", rotulo: "Conta", valor: `@${contas.find((c) => c.id === contaId)?.handle ?? "…"}`, limpar: () => set({ conta: null }), mais: true }]
+      : []),
+    ...(!escopo && (de || ate)
+      ? [{ chave: "publicado", rotulo: "Publicado", valor: `${de ? formatDateKey(de) : "…"} a ${ate ? formatDateKey(ate) : "…"}`, limpar: () => set({ de: null, ate: null }), mais: true }]
+      : []),
+  ];
 
   const columns = useMemo(() => {
     // Cabeçalho que muda a ordem da API (a mesma do "Ordenar por"): 1º clique, maior primeiro;
@@ -273,88 +290,88 @@ export function RankingTable({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-end gap-3">
-          {!semFiltroContas && <FiltroContas perfilId={params.get("perfil") ?? ""} contaId={params.get("conta") ?? ""} set={set} />}
-          <Field label="Origem" className="w-full sm:w-44">
-            {({ id }) => (
-              <NativeSelect id={id} value={params.get("origem") ?? ""} onChange={(e) => set({ origem: e.target.value })}>
-                <option value="">Todas</option>
-                {(Object.keys(origemMetricasLabel) as OrigemMetricas[]).map((o) => (
-                  <option key={o} value={o}>
-                    {origemMetricasLabel[o]}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </Field>
-        </div>
-        <div className="flex flex-wrap items-end gap-3">
-          {!escopo && (
-            <fieldset className="space-y-1.5">
-              <legend className="text-sm font-medium">Publicado</legend>
-              <div className="flex items-center gap-1.5">
-                <Input type="date" aria-label="Publicado de" value={de} onChange={(e) => set({ de: e.target.value })} className="w-auto" />
-                <span className="text-sm text-muted-foreground">a</span>
-                <Input
-                  type="date"
-                  aria-label="Publicado até"
-                  value={ate}
-                  aria-invalid={Boolean(de && ate && de > ate)}
-                  onChange={(e) => set({ ate: e.target.value })}
-                  className="w-auto"
-                />
-              </div>
-              {de && ate && de > ate && (
-                <p role="alert" className="text-xs text-destructive">
-                  O início é depois do fim; o período foi ignorado.
-                </p>
+      <FilterBar
+        principais={
+          <>
+            <Field label="Origem" className="w-full sm:w-44">
+              {({ id }) => (
+                <NativeSelect id={id} value={params.get("origem") ?? ""} onChange={(e) => set({ origem: e.target.value || null })}>
+                  <option value="">Todas</option>
+                  {(Object.keys(origemMetricasLabel) as OrigemMetricas[]).map((o) => (
+                    <option key={o} value={o}>
+                      {origemMetricasLabel[o]}
+                    </option>
+                  ))}
+                </NativeSelect>
               )}
-            </fieldset>
-          )}
-          <Field label="Ordenar por" className="w-full sm:w-56">
-            {({ id }) => (
-              <NativeSelect
-                id={id}
-                value={filtros.ordem}
-                onChange={(e) =>
-                  set({
-                    ordem: e.target.value === "views" ? null : e.target.value,
-                  })
-                }
-              >
-                {ORDENS.map((o) => (
-                  <option key={o} value={o}>
-                    {ordemLabel[o]}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </Field>
-          <Field label="Direção" className="w-full sm:w-40">
-            {({ id }) => (
-              <NativeSelect
-                id={id}
-                value={filtros.direcao}
-                onChange={(e) =>
-                  set({
-                    direcao: e.target.value === "desc" ? null : e.target.value,
-                  })
-                }
-              >
-                <option value="desc">Maior primeiro</option>
-                <option value="asc">Menor primeiro</option>
-              </NativeSelect>
-            )}
-          </Field>
-          {algum && (
-            <Button type="button" variant="ghost" size="sm" className="h-9" onClick={() => set(Object.fromEntries(proprios.map((k) => [k, null])))}>
-              <X aria-hidden="true" />
-              Limpar filtros
-            </Button>
-          )}
-        </div>
-      </div>
+            </Field>
+            <Field label="Ordenar por" className="w-full sm:w-56">
+              {({ id }) => (
+                <NativeSelect
+                  id={id}
+                  value={filtros.ordem}
+                  onChange={(e) =>
+                    set({
+                      ordem: e.target.value === "views" ? null : e.target.value,
+                    })
+                  }
+                >
+                  {ORDENS.map((o) => (
+                    <option key={o} value={o}>
+                      {ordemLabel[o]}
+                    </option>
+                  ))}
+                </NativeSelect>
+              )}
+            </Field>
+            <Field label="Direção" className="w-full sm:w-40">
+              {({ id }) => (
+                <NativeSelect
+                  id={id}
+                  value={filtros.direcao}
+                  onChange={(e) =>
+                    set({
+                      direcao: e.target.value === "desc" ? null : e.target.value,
+                    })
+                  }
+                >
+                  <option value="desc">Maior primeiro</option>
+                  <option value="asc">Menor primeiro</option>
+                </NativeSelect>
+              )}
+            </Field>
+          </>
+        }
+        mais={
+          escopo ? undefined : (
+            <>
+              {!semFiltroContas && <FiltroContas perfilId={perfilId} contaId={contaId} set={set} />}
+              <fieldset className="space-y-1.5">
+                <legend className="text-sm font-medium">Publicado</legend>
+                <div className="flex items-center gap-1.5">
+                  <DateField aria-label="Publicado de" value={de} onChange={(iso) => set({ de: iso || null })} className="w-40" />
+                  <span className="text-sm text-muted-foreground">a</span>
+                  <DateField
+                    aria-label="Publicado até"
+                    value={ate}
+                    aria-invalid={Boolean(de && ate && de > ate)}
+                    onChange={(iso) => set({ ate: iso || null })}
+                    className="w-40"
+                  />
+                </div>
+                {de && ate && de > ate && (
+                  <p role="alert" className="text-xs text-destructive">
+                    O início é depois do fim; o período foi ignorado.
+                  </p>
+                )}
+              </fieldset>
+            </>
+          )
+        }
+        ativos={ativos}
+        // "Limpar filtros" também volta a ordem ao padrão, como antes
+        onLimpar={() => set(Object.fromEntries(proprios.map((k) => [k, null])))}
+      />
 
       {semMoldura ? (
         <div>{corpo}</div>

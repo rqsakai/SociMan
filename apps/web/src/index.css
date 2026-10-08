@@ -17,9 +17,10 @@
  * Tema (spec 018, US1): ESCURO por padrão. O variant `dark:` e os tokens escuros ficam
  * presos à classe .dark no <html> (index.html nasce com ela; src/lib/tema.ts troca para
  * claro/sistema). :root guarda o tema claro; .dark sobrescreve só os tokens.
- * No escuro, as cores de estado (primary/success/warning/info/destructive/dark) ficam
+ * No escuro, as cores de estado (primary/success/warning/info/destructive) ficam
  * claras e o texto sobre elas escuro: a mesma cor serve de fundo de selo e de texto sobre
- * o cartão com contraste AA (>= 4.5:1) nos dois usos.
+ * o cartão com contraste AA (>= 4.5:1) nos dois usos. Exceções (spec 024): a faixa
+ * (tone-primary, tokens --band*) é igual nos dois temas, e o --dark continua escuro.
  */
 @custom-variant dark (&:is(.dark *));
 
@@ -59,6 +60,11 @@
   --dark: oklch(0.25 0.02 262);
   --dark-light: oklch(0.38 0.02 262);
   --dark-foreground: oklch(1 0 0);
+  /* faixa do HeaderCard (spec 024, FR-031): a cor da marca, igual nos dois temas, texto branco.
+     Contraste do branco: 5,8:1 no --band e 4,8:1 no --band-light (a ponta clara do degradê). */
+  --band: oklch(0.52 0.2 266);
+  --band-light: oklch(0.56 0.17 260);
+  --band-foreground: oklch(1 0 0);
 
   --border: oklch(0.91 0.008 264);
   --input: oklch(0.88 0.01 264);
@@ -132,10 +138,14 @@
   --info: oklch(0.74 0.12 230);
   --info-light: oklch(0.82 0.1 225);
   --info-foreground: oklch(0.2 0.03 235);
-  /* neutro de contraste: no escuro, invertido (selo claro, texto escuro) */
-  --dark: oklch(0.82 0.015 262);
-  --dark-light: oklch(0.9 0.01 262);
-  --dark-foreground: oklch(0.2 0.02 262);
+  /* neutro: escuro também no tema escuro (spec 024; nunca um bloco cinza-claro), texto claro */
+  --dark: oklch(0.34 0.03 263);
+  --dark-light: oklch(0.44 0.03 263);
+  --dark-foreground: oklch(0.97 0 0);
+  /* a faixa não muda com o tema (ver :root) */
+  --band: oklch(0.52 0.2 266);
+  --band-light: oklch(0.56 0.17 260);
+  --band-foreground: oklch(1 0 0);
 
   --border: oklch(1 0 0 / 0.12);
   --input: oklch(1 0 0 / 0.2);
@@ -242,9 +252,9 @@
  * cabeçalho do AuthShell): fundo em degradê, texto branco e sombra da mesma cor.
  */
 @utility tone-primary {
-  background-image: linear-gradient(195deg, var(--primary-light), var(--primary));
-  color: var(--primary-foreground);
-  box-shadow: 0 0.25rem 1.25rem 0 oklch(0 0 0 / 0.14), 0 0.45rem 0.6rem -0.3rem color-mix(in oklch, var(--primary) 45%, transparent);
+  background-image: linear-gradient(195deg, var(--band-light), var(--band));
+  color: var(--band-foreground);
+  box-shadow: 0 0.25rem 1.25rem 0 oklch(0 0 0 / 0.14), 0 0.45rem 0.6rem -0.3rem color-mix(in oklch, var(--band) 45%, transparent);
 }
 @utility tone-success {
   background-image: linear-gradient(195deg, var(--success-light), var(--success));
@@ -279,6 +289,10 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  /* a largura útil não muda entre páginas com e sem barra de rolagem (spec 024, FR-033) */
+  html {
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-background font-sans text-foreground antialiased;

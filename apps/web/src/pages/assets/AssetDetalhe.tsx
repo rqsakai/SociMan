@@ -5,7 +5,7 @@ import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,11 +84,11 @@ export default function AssetDetalhe() {
 
   if (detail.isPending) {
     return (
-      <div className="space-y-4" aria-live="polite">
+      <Page aria-live="polite">
         <span className="sr-only">Carregando…</span>
         <Skeleton className="h-32 w-full rounded-xl" />
         <Skeleton className="h-64 w-full rounded-xl" />
-      </div>
+      </Page>
     );
   }
   if (detail.isError) {
@@ -122,7 +122,7 @@ export default function AssetDetalhe() {
   const errorUsos = usosFromError(error);
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
         <Link to={`/app/perfis/${asset.perfilId}?aba=assets`}>
           <ArrowLeft aria-hidden="true" />
@@ -300,7 +300,7 @@ export default function AssetDetalhe() {
           </Card>
         </>
       )}
-    </div>
+    </Page>
   );
 }
 

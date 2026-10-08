@@ -10,6 +10,7 @@ import { useId, useState } from "react";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { FileField } from "@/components/ui/file-field";
 import { Label } from "@/components/ui/label";
 import { rotuloSecao } from "@/lib/studio";
 
@@ -81,13 +82,12 @@ export function EnvioArquivos({ lendo, erro, onLer }: { lendo: boolean; erro: un
     >
       <div className="space-y-1.5">
         <Label htmlFor={id}>Arquivos do Studio</Label>
-        <input
+        <FileField
           id={id}
-          type="file"
           multiple
           accept=".zip,.csv,.xlsx"
           aria-describedby={`${id}-dica`}
-          className="block w-full max-w-full text-sm file:mr-3 file:rounded-md file:border file:border-input file:bg-background file:px-3 file:py-1.5 file:text-sm file:font-medium"
+          rotuloBotao="Escolher arquivos"
           onChange={(e) => setArquivos(Array.from(e.target.files ?? []))}
         />
         <p id={`${id}-dica`} className="text-xs text-muted-foreground">

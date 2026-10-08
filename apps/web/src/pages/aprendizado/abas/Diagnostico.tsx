@@ -7,7 +7,7 @@
 import { ClipboardCheck } from "lucide-react";
 import { ChecklistApp, SinaisDistribuicao } from "@/components/aprendizado/SinaisDistribuicao";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { HeaderCard } from "@/components/shell";
+import { EmptyState, HeaderCard, Page } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDiagnostico } from "@/lib/aprendizado";
@@ -22,11 +22,9 @@ export function Diagnostico({ perfil, estado }: AbaProps) {
   const d = diag.data;
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <Page>
       {d.contas.length === 0 && (
-        <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" role="status">
-          Nenhuma conta com posts medidos neste recorte.
-        </p>
+        <EmptyState titulo="Nenhuma conta com posts medidos neste recorte." />
       )}
       {d.contas.map((c) => {
         const daConta = c.sinais.filter((s) => s.alvo === "conta");
@@ -35,7 +33,7 @@ export function Diagnostico({ perfil, estado }: AbaProps) {
           <HeaderCard
             key={c.conta.id}
             title={c.conta.rotulo}
-            tone={c.travada ? "warning" : "dark"}
+            tone={c.travada ? "warning" : "primary"}
             description={`${formatNumero(c.estagnados)} de ${formatNumero(c.medidos)} posts medidos estagnados (0 a 1 view)`}
             actions={c.travada ? <Badge variant="secondary">distribuição travada</Badge> : undefined}
           >
@@ -66,6 +64,6 @@ export function Diagnostico({ perfil, estado }: AbaProps) {
           <ChecklistApp checklist={d.checklist} />
         </div>
       </HeaderCard>
-    </div>
+    </Page>
   );
 }

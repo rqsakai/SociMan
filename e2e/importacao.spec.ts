@@ -1,6 +1,6 @@
-import { expect, test, type APIRequestContext, type Locator, type Page } from "@playwright/test";
+import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 import { OWNER } from "./fixtures";
-import { apiToken, createPerfilViaApi, createVerifiedMember, login, logout, type Member } from "./helpers";
+import { apiToken, createPerfilViaApi, createVerifiedMember, login, logout, nav, type Member } from "./helpers";
 
 // Spec 013 (T023, T029, T035, T044, T048): importação da agência. A pasta lida é a SINTÉTICA de
 // e2e/fixtures/agencia (montada só leitura em /agencia/shared e /agencia/clipes na stack e2e);
@@ -13,10 +13,6 @@ const PAGINA = "/app/configuracoes/importacao";
 
 let member: Member;
 let achadosId: string;
-
-function nav(page: Page, name: string): Locator {
-  return page.getByRole("navigation", { name: "Menu principal" }).getByRole("link", { name, exact: true });
-}
 
 const previa = (page: Page) => page.locator("[data-previa]");
 const tabela = (page: Page) => previa(page).getByRole("table", { name: "Itens da leitura" });
@@ -62,7 +58,7 @@ test.describe.serial("013 importação da agência", () => {
     // ---- o dono lê a pasta ----
     await login(page, OWNER.email, OWNER.password);
     await expect(page).toHaveURL(/\/app$/);
-    await nav(page, "Importar da agência").click();
+    await nav(page, "Importar da agência");
     await expect(page.getByRole("heading", { name: "Importar da agência", level: 1 })).toBeVisible();
     await expect(page.locator('[data-raiz="shared"]')).toContainText("disponível");
     await expect(page.locator('[data-raiz="clipes"]')).toContainText("disponível");
@@ -119,7 +115,7 @@ test.describe.serial("013 importação da agência", () => {
     // ---- o membro vê a página sem "Ler"; a rota da prévia responde 403 ----
     await login(page, member.email, member.final);
     await expect(page).toHaveURL(/\/app$/);
-    await nav(page, "Importar da agência").click();
+    await nav(page, "Importar da agência");
     await expect(page.getByRole("heading", { name: "Importar da agência", level: 1 })).toBeVisible();
     await expect(page.getByText("Só o dono lê a pasta e confirma a importação.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Ler a pasta da agência" })).toHaveCount(0);
@@ -168,7 +164,7 @@ test.describe.serial("013 importação da agência", () => {
     expect(achados.perfil.niche).toBe("Utilidades de cozinha baratas");
 
     // ---- US6: os 2 clipes viraram conteúdos do taverna-teste, sem destino ----
-    await nav(page, "Conteúdos").click();
+    await nav(page, "Conteúdos");
     await expect(page.getByText("A jogada que virou a partida")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Regra de iniciativa em 30 segundos")).toBeVisible();
 

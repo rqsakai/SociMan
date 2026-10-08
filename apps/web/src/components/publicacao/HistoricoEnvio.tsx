@@ -6,6 +6,7 @@
 import type { Destino } from "@sociman/contract";
 import { Loader2 } from "lucide-react";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { acaoTexto, disparoLabel, faseLabel, faseTone, formatBytes, useTentativas } from "@/lib/publicacao";
 import { formatDateTime } from "@/lib/tz";
@@ -38,7 +39,7 @@ export function HistoricoEnvio({ destino }: { destino: Destino }) {
       {tentativas.isError && <ApiErrorAlert error={tentativas.error} />}
       {tentativas.data &&
         (tentativas.data.items.length === 0 ? (
-          <p className="text-muted-foreground">Nenhuma tentativa de envio ainda.</p>
+          <EmptyState titulo="Nenhuma tentativa de envio ainda." className="py-4" />
         ) : (
           <ol aria-label="Tentativas" className="space-y-2">
             {tentativas.data.items.map((t) => (

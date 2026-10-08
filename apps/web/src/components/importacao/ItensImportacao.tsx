@@ -2,13 +2,14 @@
  * Itens de uma importação da agência (spec 013, US2/US7): origem, situação lida, a escolha do dono,
  * o resultado (criado, atualizado, mantido, não gravado…) com o motivo, o link para a entidade e,
  * depois do desfazer, "desfeito" ou "não desfeito" com o motivo. Filtros por perfil, tipo e
- * resultado.
+ * resultado (na URL, spec 024).
  */
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { DataTable, dataTableColumns } from "@/components/data-table";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
 import { Badge } from "@/components/ui/badge";
-import { NativeSelect } from "@/components/ui/field";
+import { Field, NativeSelect } from "@/components/ui/field";
+import { useFiltroUrl } from "@/lib/filtros";
 import {
   arquivoCurto,
   direitoLabel,
@@ -112,15 +113,23 @@ const columns = col.columns([
 ]);
 
 export function ItensImportacao({ itens }: { itens: ItemImportacao[] }) {
-  const [perfil, setPerfil] = useState("");
-  const [tipo, setTipo] = useState("");
-  const [resultado, setResultado] = useState("");
+  const [params, set] = useFiltroUrl();
+  const perfil = params.get("perfil") ?? "";
+  const tipo = params.get("tipo") ?? "";
+  const resultado = params.get("resultado") ?? "";
   const perfis = useMemo(() => [...new Set(itens.map((i) => i.perfilSlug).filter((s): s is string => Boolean(s)))].sort(), [itens]);
   const tipos = useMemo(() => [...new Set(itens.map((i) => i.tipo))], [itens]);
   const filtrados = useMemo(
     () => itens.filter((i) => (!perfil || i.perfilSlug === perfil) && (!tipo || i.tipo === tipo) && (!resultado || i.resultado === resultado)),
     [itens, perfil, tipo, resultado],
   );
+  const ativos: FiltroAtivo[] = [
+    ...(perfil ? [{ chave: "perfil", rotulo: "Perfil", valor: perfil, limpar: () => set({ perfil: null }) }] : []),
+    ...(tipo ? [{ chave: "tipo", rotulo: "Tipo", valor: tipoLabel[tipo as TipoItem] ?? tipo, limpar: () => set({ tipo: null }) }] : []),
+    ...(resultado
+      ? [{ chave: "resultado", rotulo: "Resultado", valor: resultadoLabel[resultado as Resultado] ?? resultado, limpar: () => set({ resultado: null }) }]
+      : []),
+  ];
   return (
     <DataTable
       label="Itens da importação"
@@ -131,32 +140,50 @@ export function ItensImportacao({ itens }: { itens: ItemImportacao[] }) {
       search={{ label: "Buscar item", placeholder: "Buscar item" }}
       emptyMessage="Nenhum item com estes filtros"
       toolbar={
-        <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3">
-          <NativeSelect aria-label="Filtrar por perfil" value={perfil} onChange={(e) => setPerfil(e.target.value)}>
-            <option value="">Todos os perfis</option>
-            {perfis.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </NativeSelect>
-          <NativeSelect aria-label="Filtrar por tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-            <option value="">Todos os tipos</option>
-            {tipos.map((t) => (
-              <option key={t} value={t}>
-                {tipoLabel[t as TipoItem]}
-              </option>
-            ))}
-          </NativeSelect>
-          <NativeSelect aria-label="Filtrar por resultado" value={resultado} onChange={(e) => setResultado(e.target.value)}>
-            <option value="">Todos os resultados</option>
-            {(Object.keys(resultadoLabel) as Resultado[]).map((r) => (
-              <option key={r} value={r}>
-                {resultadoLabel[r]}
-              </option>
-            ))}
-          </NativeSelect>
-        </div>
+        <FilterBar
+          principais={
+            <>
+              <Field label="Perfil" className="w-full sm:w-44">
+                {({ id }) => (
+                  <NativeSelect id={id} aria-label="Filtrar por perfil" value={perfil} onChange={(e) => set({ perfil: e.target.value })}>
+                    <option value="">Todos os perfis</option>
+                    {perfis.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+              <Field label="Tipo" className="w-full sm:w-44">
+                {({ id }) => (
+                  <NativeSelect id={id} aria-label="Filtrar por tipo" value={tipo} onChange={(e) => set({ tipo: e.target.value })}>
+                    <option value="">Todos os tipos</option>
+                    {tipos.map((t) => (
+                      <option key={t} value={t}>
+                        {tipoLabel[t as TipoItem]}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+              <Field label="Resultado" className="w-full sm:w-44">
+                {({ id }) => (
+                  <NativeSelect id={id} aria-label="Filtrar por resultado" value={resultado} onChange={(e) => set({ resultado: e.target.value })}>
+                    <option value="">Todos os resultados</option>
+                    {(Object.keys(resultadoLabel) as Resultado[]).map((r) => (
+                      <option key={r} value={r}>
+                        {resultadoLabel[r]}
+                      </option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+            </>
+          }
+          ativos={ativos}
+          onLimpar={() => set({ perfil: null, tipo: null, resultado: null })}
+        />
       }
     />
   );

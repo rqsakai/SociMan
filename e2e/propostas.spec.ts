@@ -4,7 +4,16 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test, type APIRequestContext, type Locator, type Page } from "@playwright/test";
 import { OWNER } from "./fixtures";
-import { apiToken, chamarTool, createPerfilViaApi, criarClienteMcp, interruptorMcp, login, syntheticMp4 } from "./helpers";
+import {
+  apiToken,
+  chamarTool,
+  createPerfilViaApi,
+  createVerifiedMember,
+  criarClienteMcp,
+  interruptorMcp,
+  login,
+  syntheticMp4,
+} from "./helpers";
 
 // Spec 009 (T052): o agente com escopo "propostas" grava pelo `/mcp` e o dono decide.
 // - a edição de textos de um destino pendente leva o selo "Agente" no histórico, e o dono reverte em
@@ -173,4 +182,102 @@ test("US4: proposta do agente → aplicar e salvar; descartar; selo e reversão;
   expect(sel.isError ?? false, JSON.stringify(sel.structuredContent)).toBe(false);
   await page.goto(`/app/envios?perfil=${perfilId}`);
   await expect(page.getByText(tituloVideo).first()).toBeVisible();
+});
+
+// ---- spec 024 (T051, T060, T062): FilterBar, busca no servidor e os dois vazios ----
+
+test("024: busca no servidor, filtro de 'Mais filtros' vira etiqueta, recarregar mantém, remover pela etiqueta", async ({ page, request }) => {
+  const sfx = randomUUID().slice(0, 6);
+  const token = await apiToken(request, OWNER.email, OWNER.password);
+  const auth = { Authorization: `Bearer ${token}` };
+  const perfilId = await createPerfilViaApi(request, token, { name: `Filtros ${sfx}`, slug: `filtros-${sfx}` });
+  const texto = `Observação única ${sfx} sobre a legenda`;
+  const r = await request.post("/api/anotacoes", { headers: auth, data: { alvoTipo: "perfil", alvoId: perfilId, texto } });
+  expect(r.status(), `POST anotacoes: ${await r.text()}`).toBe(201);
+
+  await login(page, OWNER.email, OWNER.password);
+  await expect(page).toHaveURL(/\/app$/);
+  await page.goto("/app/propostas");
+  const tabela = page.getByRole("table", { name: "Propostas dos agentes" });
+  // sem botão "Filtrar" e com uma busca só
+  await expect(page.getByRole("button", { name: "Filtrar" })).toHaveCount(0);
+  await expect(page.getByRole("searchbox", { name: "Buscar nas propostas" })).toHaveCount(0);
+
+  // busca no servidor, sem acento e sem caixa
+  await page.getByRole("searchbox", { name: "Buscar", exact: true }).fill(`OBSERVACAO UNICA ${sfx}`);
+  await expect(page).toHaveURL(new RegExp(`[?&]q=OBSERVACAO`));
+  await expect(tabela.getByRole("row").filter({ hasText: texto })).toBeVisible();
+  await expect(tabela.getByRole("row")).toHaveCount(2); // cabeçalho + a linha
+
+  // filtro dentro de "Mais filtros": vira etiqueta e conta no botão
+  await page.getByRole("button", { name: "Mais filtros" }).click();
+  const gaveta = page.getByRole("dialog", { name: "Mais filtros" });
+  await gaveta.getByLabel("Tipo").selectOption({ label: "Observação" });
+  await page.keyboard.press("Escape");
+  await expect(gaveta).toBeHidden();
+  const ativos = page.getByRole("group", { name: "Filtros ativos" });
+  await expect(ativos.getByText("Tipo:")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Mais filtros (1)" })).toBeVisible();
+  await expect(page).toHaveURL(/[?&]tipo=observacao/);
+
+  // recarregar mantém os filtros
+  await page.reload();
+  await expect(page.getByRole("searchbox", { name: "Buscar", exact: true })).toHaveValue(`OBSERVACAO UNICA ${sfx}`);
+  await expect(ativos.getByText("Tipo:")).toBeVisible();
+  await expect(tabela.getByRole("row").filter({ hasText: texto })).toBeVisible();
+
+  // remover pela etiqueta
+  await ativos.getByRole("button", { name: "Remover filtro: Tipo" }).click();
+  await expect(ativos.getByText("Tipo:")).toHaveCount(0);
+  await expect(page).not.toHaveURL(/[?&]tipo=/);
+  await expect(page.getByRole("button", { name: "Mais filtros", exact: true })).toBeVisible();
+});
+
+test("024: vazio com filtro mostra 'Limpar filtros', que volta à caixa padrão", async ({ page }) => {
+  await login(page, OWNER.email, OWNER.password);
+  await expect(page).toHaveURL(/\/app$/);
+  await page.goto(`/app/propostas?q=nada-${randomUUID().slice(0, 8)}`);
+  const tabela = page.getByRole("table", { name: "Propostas dos agentes" });
+  await expect(tabela.getByRole("status")).toHaveText("Nenhuma proposta com estes filtros");
+  await tabela.getByRole("button", { name: "Limpar filtros" }).click();
+  await expect(page).toHaveURL(/\/app\/propostas$/);
+  await expect(page.getByRole("searchbox", { name: "Buscar", exact: true })).toHaveValue("");
+});
+
+// A caixa é global (outros testes gravam propostas): a lista vazia vem de uma resposta interceptada.
+async function semPropostas(page: Page) {
+  await page.route(
+    (url) => url.pathname === "/api/anotacoes",
+    (route) =>
+      route.request().method() === "GET"
+        ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ anotacoes: [], nextCursor: null }) })
+        : route.fallback(),
+  );
+}
+
+const SEM_PROPOSTA = "Ainda não chegou nenhuma proposta";
+
+test("024: vazio sem filtro — o dono vê 'Configurar agentes (MCP)'", async ({ page }) => {
+  await semPropostas(page);
+  await login(page, OWNER.email, OWNER.password);
+  await expect(page).toHaveURL(/\/app$/);
+  await page.goto("/app/propostas");
+  const tabela = page.getByRole("table", { name: "Propostas dos agentes" });
+  await expect(tabela.getByRole("status")).toHaveText(SEM_PROPOSTA);
+  await expect(tabela.getByText(/só chegam depois que os agentes forem ligados ao SociMan pelo MCP/)).toBeVisible();
+  await tabela.getByRole("link", { name: "Configurar agentes (MCP)" }).click();
+  await expect(page).toHaveURL(/\/app\/configuracoes\/agentes$/);
+});
+
+test("024: vazio sem filtro — o membro não vê a ação de configurar", async ({ page }) => {
+  test.setTimeout(120_000);
+  const membro = await createVerifiedMember(page);
+  await semPropostas(page);
+  await login(page, membro.email, membro.final);
+  await expect(page).toHaveURL(/\/app$/);
+  await page.goto("/app/propostas");
+  const tabela = page.getByRole("table", { name: "Propostas dos agentes" });
+  await expect(tabela.getByRole("status")).toHaveText(SEM_PROPOSTA);
+  await expect(tabela.getByText(/só chegam depois que os agentes forem ligados/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "Configurar agentes (MCP)" })).toHaveCount(0);
 });

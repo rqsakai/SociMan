@@ -24,6 +24,7 @@
 import { BarChart3, Download, Table2 } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -120,15 +121,22 @@ export function CardAnalytics({
       ) : carregando ? (
         <Skeleton className="h-60 w-full" />
       ) : vazio ? (
-        <div className="flex flex-col items-start gap-2 rounded-lg border border-dashed p-4 text-sm text-muted-foreground" role="status">
-          <p>{vazio}</p>
-          {onAmpliarPeriodo && (
-            <Button type="button" size="sm" variant="outline" onClick={onAmpliarPeriodo}>
-              Ampliar período
-            </Button>
-          )}
-          {acoesVazio}
-        </div>
+        <EmptyState
+          className="rounded-lg border border-dashed py-8"
+          titulo={vazio}
+          acao={
+            onAmpliarPeriodo || acoesVazio ? (
+              <>
+                {onAmpliarPeriodo && (
+                  <Button type="button" size="sm" variant="outline" onClick={onAmpliarPeriodo}>
+                    Ampliar período
+                  </Button>
+                )}
+                {acoesVazio}
+              </>
+            ) : undefined
+          }
+        />
       ) : vista === "tabela" && temTabela ? (
         <TabelaAlternativa titulo={titulo} dados={tabela!} />
       ) : (

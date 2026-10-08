@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,11 +45,11 @@ export default function ContaGuia() {
   if (guia.isError) return <ApiErrorAlert error={guia.error} />;
   if (guia.isPending) {
     return (
-      <div className="space-y-4" aria-live="polite">
+      <Page aria-live="polite">
         <span className="sr-only">Carregando…</span>
         <Skeleton className="h-40 w-full rounded-xl" />
         <Skeleton className="h-96 w-full rounded-xl" />
-      </div>
+      </Page>
     );
   }
 
@@ -57,7 +57,7 @@ export default function ContaGuia() {
   const arquivado = Boolean(conta?.archived || perfil.data?.perfil.archived);
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Link to={guiaPerfilPath(perfilId)} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="size-4" aria-hidden="true" />
         Guia do perfil
@@ -133,6 +133,6 @@ export default function ContaGuia() {
           </Card>
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

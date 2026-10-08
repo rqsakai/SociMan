@@ -1,14 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Perfil, UpdatePerfilRequest } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, ArrowLeft, Lightbulb, Loader2, Save } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { Archive, ArchiveRestore, ArrowLeft, Loader2, Save } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { ImageUpload } from "../../components/ImageUpload";
 import { ProfileAvatar } from "../../components/ProfileAvatar";
 import { HistoryHeading, VersionHistory } from "../../components/VersionHistory";
@@ -33,7 +34,6 @@ import {
   perfilVersionsKey,
 } from "../../lib/perfis";
 import { ContasTab } from "./ContasTab";
-import { CortesTab } from "./tabs/CortesTab";
 import { FontesTab } from "./tabs/FontesTab";
 import { MarcaTab } from "./tabs/MarcaTab";
 import { AssetsTab } from "./tabs/AssetsTab";
@@ -47,7 +47,6 @@ const tabs = [
   { id: "marca", label: "Marca" },
   { id: "guia", label: "Guia" },
   { id: "fontes", label: "Fontes" },
-  { id: "cortes", label: "Cortes" },
   { id: "padroes", label: "Padrões de corte" },
   { id: "assets", label: "Assets" },
   { id: "cenas", label: "Cenas" },
@@ -55,9 +54,11 @@ const tabs = [
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
 
-// /app/perfis/:id: cabeçalho "profile" (banner, logo e abas em pílula), abas Dados, Contas, Marca,
-// Guia, Fontes, Cortes e Histórico, e as ações Arquivar/Restaurar. A aba fica na URL (?aba=contas) para o voltar do
-// navegador e o link direto funcionarem. Sucesso vira toast; erro da API fica num Alert.
+// /app/perfis/:id: cabeçalho "profile" (banner, se houver, logo e abas em pílula), as abas do perfil
+// e as ações Arquivar/Restaurar. A aba fica na URL (?aba=contas) para o voltar do navegador e o link
+// direto funcionarem. Sucesso vira toast; erro da API fica num Alert.
+// Spec 024 (R11): a aba Cortes saiu; o envio de corte é o "Aplicar marca num corte" de Conteúdos, e o
+// link antigo (?aba=cortes) vai para Conteúdos filtrado pelo perfil. O Aprendizado é página própria.
 export default function PerfilDetalhe() {
   const { id = "" } = useParams();
   const queryClient = useQueryClient();
@@ -88,21 +89,22 @@ export default function PerfilDetalhe() {
     setParams(next === "dados" ? {} : { aba: next }, { replace: true });
   }
 
+  if (params.get("aba") === "cortes") return <Navigate replace to={`/app/conteudos?perfil=${id}`} />;
   if (detail.isPending) {
     return (
-      <div className="space-y-4" aria-live="polite">
+      <Page aria-live="polite">
         <span className="sr-only">Carregando…</span>
         <Skeleton className="h-44 w-full rounded-xl" />
         <Skeleton className="mx-4 h-24 rounded-xl" />
-      </div>
+      </Page>
     );
   }
   if (detail.isError) {
     return (
-      <div className="space-y-4">
+      <Page>
         <BackLink />
         <ApiErrorAlert error={detail.error} />
-      </div>
+      </Page>
     );
   }
 
@@ -136,28 +138,14 @@ export default function PerfilDetalhe() {
   }
 
   return (
-    <div className="space-y-6">
+    <Page>
       <BackLink />
-      <Tabs value={tab} onValueChange={selectTab} className="gap-6">
+      <Tabs value={tab} onValueChange={selectTab}>
         <PerfilHeader
           perfil={perfil}
-          tabs={
-            <TabsList aria-label="Seções do perfil" className="h-10 max-w-full justify-start overflow-x-auto rounded-full bg-muted p-1 [scrollbar-width:none]">
-              {tabs.map((t) => (
-                <TabsTrigger key={t.id} value={t.id} className="rounded-full px-4 data-[state=active]:shadow-sm">
-                  {t.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          }
+          tabs={<AbasPerfil ativa={tab} />}
           actions={
             <>
-              <Button variant="outline" asChild>
-                <Link to={`/app/perfis/${perfil.id}/aprendizado`}>
-                  <Lightbulb aria-hidden="true" />
-                  Aprendizado
-                </Link>
-              </Button>
               <ConfirmButton
                 label={perfil.archived ? "Restaurar" : "Arquivar"}
                 icon={perfil.archived ? ArchiveRestore : Archive}
@@ -203,9 +191,6 @@ export default function PerfilDetalhe() {
         <TabsContent value="fontes">
           <FontesTab perfil={perfil} />
         </TabsContent>
-        <TabsContent value="cortes">
-          <CortesTab perfil={perfil} />
-        </TabsContent>
         <TabsContent value="padroes">
           <PadroesCorteTab perfil={perfil} contas={contas} />
         </TabsContent>
@@ -219,7 +204,7 @@ export default function PerfilDetalhe() {
           <PerfilHistorico perfil={perfil} onReverted={refresh} />
         </TabsContent>
       </Tabs>
-    </div>
+    </Page>
   );
 }
 
@@ -232,18 +217,66 @@ function BackLink() {
   );
 }
 
-// Cabeçalho no estilo "profile": banner largo (a imagem do perfil ou um degradê) e um cartão
-// branco sobreposto com o logo, o nome, o status, as abas em pílula e a ação principal.
+// Abas em pílula. No celular a lista rola de lado: as bordas ganham um fade quando há mais abas
+// daquele lado, e a aba ativa rola para a vista.
+function AbasPerfil({ ativa }: { ativa: TabId }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [fade, setFade] = useState({ esq: false, dir: false });
+
+  function medir() {
+    const el = ref.current;
+    if (!el) return;
+    setFade({ esq: el.scrollLeft > 1, dir: el.scrollLeft + el.clientWidth < el.scrollWidth - 1 });
+  }
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const alvo = el.querySelector<HTMLElement>('[data-state="active"]');
+    if (alvo) el.scrollTo({ left: alvo.offsetLeft - (el.clientWidth - alvo.offsetWidth) / 2, behavior: "smooth" });
+    medir();
+    const obs = new ResizeObserver(medir);
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [ativa]);
+
+  const mascara =
+    fade.esq && fade.dir
+      ? "[mask-image:linear-gradient(to_right,transparent,black_2rem,black_calc(100%-2rem),transparent)]"
+      : fade.esq
+        ? "[mask-image:linear-gradient(to_right,transparent,black_2rem)]"
+        : fade.dir
+          ? "[mask-image:linear-gradient(to_left,transparent,black_2rem)]"
+          : "";
+
+  return (
+    <TabsList
+      ref={ref}
+      onScroll={medir}
+      aria-label="Seções do perfil"
+      className={cn("h-10 max-w-full justify-start overflow-x-auto rounded-full bg-muted p-1 [scrollbar-width:none]", mascara)}
+    >
+      {tabs.map((t) => (
+        <TabsTrigger key={t.id} value={t.id} className="flex-none rounded-full px-4 data-[state=active]:shadow-sm">
+          {t.label}
+        </TabsTrigger>
+      ))}
+    </TabsList>
+  );
+}
+
+// Cabeçalho no estilo "profile": com banner, a imagem larga e um cartão sobreposto com o logo, o
+// nome, o status, as abas em pílula e a ação principal; sem banner, só o cartão (linha de identidade).
 function PerfilHeader({ perfil, tabs, actions }: { perfil: Perfil; tabs: ReactNode; actions: ReactNode }) {
   return (
     <div>
-      <div className="relative h-36 overflow-hidden rounded-xl bg-sidebar-gradient shadow-card sm:h-48">
-        {perfil.banner && (
+      {perfil.banner && (
+        <div className="relative h-36 overflow-hidden rounded-xl bg-sidebar-gradient shadow-card sm:h-48">
           <img src={perfil.banner.urls.medium} alt={`Banner de ${perfil.name}`} className="size-full object-cover" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-dark/50" aria-hidden="true" />
-      </div>
-      <div className="relative mx-3 -mt-12 rounded-xl bg-card p-4 shadow-card sm:mx-6 sm:-mt-16">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-dark/50" aria-hidden="true" />
+        </div>
+      )}
+      <div className={cn("relative rounded-xl bg-card p-4 shadow-card", perfil.banner && "mx-3 -mt-12 sm:mx-6 sm:-mt-16")}>
         <div className="flex flex-wrap items-center gap-4">
           <ProfileAvatar name={perfil.name} logo={perfil.logo} size="lg" className="ring-4 ring-card" />
           <div className="min-w-0 flex-1">

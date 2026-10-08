@@ -33,7 +33,9 @@ def _lista(ap, **params) -> dict:  # noqa: F811
     r = ap.client.get("/api/videos-fonte", headers=ap.h,
                       params={"perfilId": ap.perfil_id, **params})
     assert r.status_code == 200, r.text
-    return r.json()
+    out = r.json()
+    out.pop("afinidadeEstado")  # spec 024: o motivo da neutra muda (test_024_descobrir.py)
+    return out
 
 
 def _titulos(lista) -> list[str]:

@@ -12,7 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PedidoAnalise } from "@/components/aprendizado/PedidoAnalise";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { HeaderCard } from "@/components/shell";
+import { EmptyState, HeaderCard, Page } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
@@ -57,7 +57,7 @@ export function AnalisesIa({ perfil, contas, estado }: AbaProps) {
   };
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <Page>
       {dono && (
         <HeaderCard title="Pedir análise dos melhores" description="A IA compara os melhores posts com os piores que também saíram do zero e propõe hipóteses a conferir.">
           <div className="pb-2">
@@ -65,16 +65,14 @@ export function AnalisesIa({ perfil, contas, estado }: AbaProps) {
           </div>
         </HeaderCard>
       )}
-      <HeaderCard title="Análises" tone="dark" description="Guardadas: reabrir não chama a IA de novo.">
+      <HeaderCard title="Análises" description="Guardadas: reabrir não chama a IA de novo.">
         <div className="pb-2">
           {lista.isError ? (
             <ApiErrorAlert error={lista.error} />
           ) : lista.isPending ? (
             <Skeleton className="h-32 w-full" />
           ) : lista.data.items.length === 0 ? (
-            <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" role="status">
-              Nenhuma análise da IA ainda.{dono ? " Peça uma acima." : ""}
-            </p>
+            <EmptyState titulo="Nenhuma análise da IA ainda." descricao={dono ? "Peça uma acima." : undefined} />
           ) : (
             <ul className="flex flex-col gap-4" aria-label="Análises da IA">
               {lista.data.items.map((a) => (
@@ -84,7 +82,7 @@ export function AnalisesIa({ perfil, contas, estado }: AbaProps) {
           )}
         </div>
       </HeaderCard>
-    </div>
+    </Page>
   );
 }
 

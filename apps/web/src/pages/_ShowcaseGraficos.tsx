@@ -8,6 +8,7 @@ import type { OpcoesGrafico } from "@/components/analytics/echarts";
 import { Grafico } from "@/components/analytics/Grafico";
 import { Indicador } from "@/components/analytics/Indicador";
 import { useTemaGraficos } from "@/components/analytics/tema";
+import { Page } from "@/components/shell";
 import { formatCompacto } from "@/lib/metricas";
 
 const DIAS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"];
@@ -57,7 +58,7 @@ export default function ShowcaseGraficos() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <Page className="p-6">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Indicador rotulo="Views ganhas" valor={18400} anterior={15200} formatar={formatCompacto} />
         <Indicador rotulo="Seguidores ganhos" valor={-12} anterior={30} formatar={formatCompacto} />
@@ -76,6 +77,6 @@ export default function ShowcaseGraficos() {
         </CardAnalytics>
         <CardAnalytics titulo="Card vazio" comoLer="estado vazio com atalho." vazio="Nenhum post no período." onAmpliarPeriodo={() => undefined} />
       </div>
-    </div>
+    </Page>
   );
 }

@@ -20,7 +20,8 @@ test("dono cria membro, que verifica, troca a senha provisória e não gerencia 
   // dono cria o membro
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByRole("link", { name: "Segurança" })).toBeVisible();
+  // 024: Segurança fica no grupo Configurações, fechado por padrão (o link existe, oculto).
+  await expect(page.getByRole("link", { name: "Segurança", includeHidden: true })).toHaveCount(1);
   await expect(page.getByRole("link", { name: "Minha conta" })).toBeVisible();
   await createMember(page, member);
 

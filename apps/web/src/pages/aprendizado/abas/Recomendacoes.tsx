@@ -18,7 +18,7 @@ import { CartaoRecomendacao } from "@/components/aprendizado/CartaoRecomendacao"
 import { formatarValor, HistoricoDialog } from "@/components/aprendizado/HistoricoDialog";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { HeaderCard } from "@/components/shell";
+import { EmptyState, HeaderCard, Page } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,7 +56,7 @@ export function Recomendacoes({ perfil, contas, estado }: AbaProps) {
   };
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <Page>
       <HeaderCard
         title="Recomendações abertas"
         description={recs.data ? `${formatNumero(recs.data.abertas.length)} para decidir` : "Carregando…"}
@@ -67,9 +67,10 @@ export function Recomendacoes({ perfil, contas, estado }: AbaProps) {
           ) : recs.isPending ? (
             <Skeleton className="h-32 w-full" />
           ) : recs.data.abertas.length === 0 ? (
-            <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground" role="status">
-              Nenhuma recomendação agora. Elas só aparecem com confiança moderada ou forte, separáveis de outros fatores e fora de conta com distribuição travada.
-            </p>
+            <EmptyState
+              titulo="Nenhuma recomendação agora."
+              descricao="Elas só aparecem com confiança moderada ou forte, separáveis de outros fatores e fora de conta com distribuição travada."
+            />
           ) : (
             <ul className="flex flex-col gap-3" aria-label="Recomendações abertas">
               {recs.data.abertas.map((r) => (
@@ -81,7 +82,7 @@ export function Recomendacoes({ perfil, contas, estado }: AbaProps) {
       </HeaderCard>
 
       {recs.data && recs.data.decididas.length > 0 && (
-        <HeaderCard title="Decididas" tone="dark" description="O que o dono já aceitou ou rejeitou. Reverter fica no histórico.">
+        <HeaderCard title="Decididas" description="O que o dono já aceitou ou rejeitou. Reverter fica no histórico.">
           <ul className="divide-y pb-2" aria-label="Recomendações decididas">
             {recs.data.decididas.map((d) => (
               <Decidida key={d.id} d={d} perfilId={perfil.id} dono={dono} nomeTema={nomeTema} onMudou={atualizar} />
@@ -91,7 +92,7 @@ export function Recomendacoes({ perfil, contas, estado }: AbaProps) {
       )}
 
       <Preferencias perfilId={perfil.id} contaId={filtro.contaId} contaRotulo={rotuloConta(filtro.contaId)} dono={dono} onMudou={atualizar} />
-    </div>
+    </Page>
   );
 }
 
@@ -204,7 +205,7 @@ function Preferencias({ perfilId, contaId, contaRotulo, dono, onMudou }: { perfi
   ];
 
   return (
-    <HeaderCard title="Preferências" tone="dark" description="O que o dono aceitou e vale hoje. Orienta o Descobrir, o Mercado e o assistente de textos.">
+    <HeaderCard title="Preferências" description="O que o dono aceitou e vale hoje. Orienta o Descobrir, o Mercado e o assistente de textos.">
       <div className="flex flex-col gap-5 pb-2">
         <div className="flex flex-col gap-3 rounded-lg bg-muted/40 p-3" role="group" aria-label="Controles do perfil">
           <label className="flex items-center justify-between gap-3 text-sm">

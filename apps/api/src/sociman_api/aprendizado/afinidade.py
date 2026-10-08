@@ -23,6 +23,7 @@ import re
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Literal
 
 from sqlalchemy import ColumnElement, Numeric, String, case, cast, false, func, literal, select
 from sqlalchemy.orm import Session
@@ -41,6 +42,7 @@ class TemaAfinidade:
     a: float
     cortado: bool
     rotulo_efeito: str | None  # "≈ 2,4× o típico da conta" (o motivo)
+    acao: Literal["ampliar", "cortar"] | None = None  # a preferência efetiva (spec 024)
 
 
 @dataclass(frozen=True)
@@ -107,7 +109,9 @@ def valores(db: Session, perfil_id: uuid.UUID | None) -> Valores | None:
             rotulo = "tema a ampliar"
         elif cortado:
             rotulo = "tema cortado"
-        out.append(TemaAfinidade(t.id, t.nome, tuple(t.palavras_chave), a, cortado, rotulo))
+        acao = pref if pref in ("ampliar", "cortar") else None
+        out.append(TemaAfinidade(t.id, t.nome, tuple(t.palavras_chave), a, cortado, rotulo,
+                                 acao))
     if not any(t.a for t in out) and not canais:
         return None
     return Valores(perfil_id, tuple(out), canais)
@@ -179,3 +183,62 @@ def motivo(v: Valores, tema_id: str | None, pontos: float, maior_006: float) -> 
     if t is None or abs(pontos) < K.MOTIVO_MIN_PONTOS or abs(pontos) <= maior_006:
         return None
     return f"Tema {t.nome}: {t.rotulo_efeito}" if t.rotulo_efeito else f"Tema {t.nome}"
+
+
+# ---- spec 024 (US4, R9): os temas casados e o estado da afinidade, para o "Por quê?" ----
+
+Motivo = Literal["sem_perfil", "sem_temas", "desatualizada", "neutra"]
+
+
+@dataclass(frozen=True)
+class TemaCasado:
+    tema_id: uuid.UUID
+    nome: str
+    pontos: float  # a × 20, com 1 casa (a contribuição isolada do tema)
+    acao: Literal["ampliar", "cortar"] | None
+    decisivo: bool
+
+
+def temas_por_video(db: Session, v: Valores,
+                    video_ids: Sequence[uuid.UUID]) -> dict[uuid.UUID, list[TemaCasado]]:
+    """Todos os temas casados de cada vídeo da página (uma consulta pela chave primária). O
+    decisivo é o 1º do `_ordem` (o mesmo das `expressoes`); depois |pontos| e o nome."""
+    from sociman_api.aprendizado.fonte_temas import FonteTema
+
+    if not video_ids:
+        return {}
+    por_id = {t.id: t for t in v.temas}
+    rank = {t.id: i for i, t in enumerate(_ordem(v.temas))}
+    casados: dict[uuid.UUID, list[TemaAfinidade]] = {}
+    for vid, tid in db.execute(select(FonteTema.video_fonte_id, FonteTema.tema_id).where(
+            FonteTema.perfil_id == v.perfil_id, FonteTema.video_fonte_id.in_(list(video_ids)))):
+        if tid in por_id:
+            casados.setdefault(vid, []).append(por_id[tid])
+    out: dict[uuid.UUID, list[TemaCasado]] = {}
+    for vid, temas in casados.items():
+        decisivo = min((t for t in temas if t.id in rank), key=lambda t: rank[t.id],
+                       default=None)
+        itens = [TemaCasado(t.id, t.nome, round(t.a * K.PESO_AFINIDADE, 1), t.acao,
+                            t is decisivo) for t in temas]
+        out[vid] = sorted(itens, key=lambda x: (not x.decisivo, -abs(x.pontos), x.nome))
+    return out
+
+
+def estado(db: Session, perfil_id: uuid.UUID | None,
+           v: Valores | None) -> tuple[bool, Motivo | None]:
+    """Por que a afinidade está neutra (`v` é o que `valores` devolveu, sem recalcular)."""
+    if v is not None:
+        return True, None
+    if perfil_id is None:
+        return False, "sem_perfil"
+    from sociman_api.aprendizado import fonte_temas
+    from sociman_api.aprendizado.models import Tema
+
+    tem_tema = db.scalar(select(Tema.id).where(
+        Tema.perfil_id == perfil_id, Tema.archived_at.is_(None),
+        func.cardinality(Tema.palavras_chave) > 0).limit(1))
+    if tem_tema is None:
+        return False, "sem_temas"
+    if not fonte_temas.em_dia(db, perfil_id):
+        return False, "desatualizada"
+    return False, "neutra"

@@ -71,6 +71,28 @@ export function envioEtapasLista(legendaKit: boolean): EnvioEtapa[] {
   return etapas;
 }
 
+// Clipes da geração por situação (spec 024, FR-018): "3 aceitos · 2 pendentes · 1 arquivado · 1 com
+// falha", só as partes não zero. `null` = a geração ainda não tem clipe.
+export type CortesResumo = NonNullable<Envio["cortesResumo"]>;
+export type CortesResumoParte = { chave: keyof CortesResumo; n: number; texto: string };
+
+const resumoRotulo: [keyof CortesResumo, string, string][] = [
+  ["aceitos", "aceito", "aceitos"],
+  ["pendentes", "pendente", "pendentes"],
+  ["arquivados", "arquivado", "arquivados"],
+  ["falhou", "com falha", "com falha"],
+];
+
+export function cortesResumoPartes(r: CortesResumo | null | undefined): CortesResumoParte[] {
+  if (!r) return [];
+  return resumoRotulo
+    .filter(([chave]) => r[chave] > 0)
+    .map(([chave, um, varios]) => ({ chave, n: r[chave], texto: `${r[chave]} ${r[chave] === 1 ? um : varios}` }));
+}
+
+export const cortesResumoTexto = (r: CortesResumo | null | undefined) =>
+  cortesResumoPartes(r).map((p) => p.texto).join(" · ");
+
 export const envioStatusTone: Record<EnvioStatus, string> = {
   selecionado: "bg-secondary text-secondary-foreground",
   na_fila: "bg-info text-info-foreground",

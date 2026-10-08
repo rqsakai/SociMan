@@ -2,12 +2,13 @@
  * "Agentes (MCP)" (spec 009, US1 e US5; T028/T058). Só para o dono humano.
  *
  * Abas na URL (?aba=clientes|registro):
- * - Clientes: o interruptor geral (dois níveis: MCP_HABILITADO no .env, só leitura aqui, e o botão
- *   desta tela), "Novo cliente" com a credencial mostrada uma vez, e a tabela com as ações.
+ * - Clientes: o interruptor geral numa faixa compacta (dois níveis: MCP_HABILITADO no .env, só
+ *   leitura aqui, e o botão desta tela; o aviso só quando desligado), e "Agentes conectados" com
+ *   "Novo cliente" no cabeçalho (credencial mostrada uma vez) e a tabela com as ações (spec 024, R14).
  * - Registro: toda chamada MCP, com filtros e "Carregar mais".
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bot, CircleCheck, CirclePause, History, Plus, Server } from "lucide-react";
+import { Bot, CirclePause, History, Plus } from "lucide-react";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -17,12 +18,12 @@ import { NovoClienteDialog } from "@/components/mcp/NovoClienteDialog";
 import { RegistroChamadasTable } from "@/components/mcp/RegistroChamadasTable";
 import { TokenUmaVezDialog } from "@/components/mcp/TokenUmaVezDialog";
 import { PageHeading } from "@/components/PageHeading";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { VersionHistory } from "@/components/VersionHistory";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
@@ -39,27 +40,27 @@ export default function Agentes() {
   const clientes = useMcpClientes();
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <PageHeading
         title="Agentes (MCP)"
         description="Credenciais dos agentes que acessam o SociMan pelo MCP. Eles leem e deixam propostas; aprovar, agendar, publicar e reverter continuam só com você."
       />
-      <Tabs value={aba} onValueChange={(v) => setParams(v === "clientes" ? {} : { aba: v }, { replace: true })} className="gap-4">
+      <Tabs value={aba} onValueChange={(v) => setParams(v === "clientes" ? {} : { aba: v }, { replace: true })}>
         <TabsList aria-label="Seções dos agentes">
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
           <TabsTrigger value="registro">Registro</TabsTrigger>
         </TabsList>
-        <TabsContent value="clientes" className="space-y-6">
+        <TabsContent value="clientes">
           <Interruptor />
           <ClientesCard clientes={clientes} />
         </TabsContent>
         <TabsContent value="registro">
-          <HeaderCard title="Registro de chamadas" description="Da mais nova para a mais antiga. Os argumentos aparecem resumidos e sem segredos." tone="dark">
+          <HeaderCard title="Registro de chamadas" description="Da mais nova para a mais antiga. Os argumentos aparecem resumidos e sem segredos.">
             <RegistroChamadasTable clientes={clientes.data?.clientes} />
           </HeaderCard>
         </TabsContent>
       </Tabs>
-    </div>
+    </Page>
   );
 }
 
@@ -68,13 +69,16 @@ function ClientesCard({ clientes }: { clientes: ReturnType<typeof useMcpClientes
   const [criado, setCriado] = useState<{ nome: string; token: string } | null>(null);
 
   return (
-    <HeaderCard title="Clientes" description="Um cliente por agente, com escopo, limites e validade próprios." tone="dark">
-      <div className="mb-4 flex justify-end">
-        <Button type="button" onClick={() => setNovo(true)}>
+    <HeaderCard
+      title="Agentes conectados"
+      description="Um cliente por agente, com escopo, limites e validade próprios."
+      actions={
+        <Button type="button" variant="secondary" size="sm" onClick={() => setNovo(true)}>
           <Plus aria-hidden="true" />
           Novo cliente
         </Button>
-      </div>
+      }
+    >
       {clientes.isError && <ApiErrorAlert error={clientes.error} />}
       <ClientesTable clientes={clientes.data?.clientes} loading={clientes.isPending} />
       <NovoClienteDialog open={novo} onOpenChange={setNovo} onCriado={(c, token) => setCriado({ nome: c.nome, token })} />
@@ -113,67 +117,56 @@ function Interruptor() {
 
   const estado = !c.servidorHabilitado ? "Desligado no servidor (.env)" : c.habilitado ? "Ligado" : "Desligado";
   return (
-    <Card className="max-w-2xl shadow-card">
-      <CardHeader>
-        <CardTitle>
-          <h2 className="flex items-center gap-2">
-            <Bot className="size-5" aria-hidden="true" />
-            Interruptor geral
-          </h2>
-        </CardTitle>
-        <CardDescription>Com o servidor ou este botão desligado, todo agente é recusado.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-          <div>
-            <p id="mcp-label" className="font-medium">
-              Acesso MCP
-            </p>
-            <p className="text-sm text-muted-foreground" data-testid="mcp-estado">
-              {estado}
-            </p>
+    <div className="space-y-3">
+      <Card className="shadow-card gap-0 py-0">
+        <CardContent className="flex flex-wrap items-center gap-x-6 gap-y-3 py-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <Bot className="size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <div className="min-w-0">
+              <h2 id="mcp-label" className="font-medium">
+                Acesso MCP
+              </h2>
+              <p className="text-sm text-muted-foreground" data-testid="mcp-estado">
+                {estado}
+              </p>
+            </div>
+            <Switch
+              aria-labelledby="mcp-label"
+              checked={c.servidorHabilitado && c.habilitado}
+              disabled={busy || !c.servidorHabilitado}
+              onCheckedChange={(on) => void mudar(on)}
+            />
           </div>
-          <Switch aria-labelledby="mcp-label" checked={c.servidorHabilitado && c.habilitado} disabled={busy || !c.servidorHabilitado} onCheckedChange={(on) => void mudar(on)} />
-        </div>
-        <div className="flex items-start gap-3 rounded-lg border p-3">
-          <Server className="mt-0.5 size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <div className="min-w-0 space-y-1">
-            <p className="font-medium">
-              Servidor:{" "}
-              <Badge className={c.servidorHabilitado ? "bg-success text-success-foreground" : "bg-secondary text-secondary-foreground"}>
-                {c.servidorHabilitado ? "ligado" : "desligado"}
-              </Badge>
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {c.servidorHabilitado
-                ? "MCP_HABILITADO=true no .env do servidor."
-                : "Para ligar, quem tem acesso ao servidor põe MCP_HABILITADO=true no .env da raiz e reinicia a API. Esta tela não liga o servidor."}
-            </p>
-          </div>
-        </div>
-        {mcpLigado(c) ? (
-          <Alert>
-            <CircleCheck aria-hidden="true" />
-            <AlertTitle>MCP ligado</AlertTitle>
-            <AlertDescription>Os clientes ativos acessam o SociMan dentro do escopo e dos limites de cada um.</AlertDescription>
-          </Alert>
-        ) : (
-          <Alert>
-            <CirclePause aria-hidden="true" />
-            <AlertTitle>MCP desligado</AlertTitle>
-            <AlertDescription>Toda chamada é recusada com "acesso MCP desligado pelo dono", e a recusa fica no registro.</AlertDescription>
-          </Alert>
-        )}
-        {error !== null && <ApiErrorAlert error={error} onReload={() => void config.refetch()} />}
-        <div>
+          <Badge
+            className={c.servidorHabilitado ? "bg-success text-success-foreground" : "bg-secondary text-secondary-foreground"}
+            title={c.servidorHabilitado ? "MCP_HABILITADO=true no .env do servidor." : "MCP_HABILITADO no .env do servidor está desligado."}
+          >
+            {c.servidorHabilitado ? "Servidor ligado" : "Servidor desligado"}
+          </Badge>
           <Button type="button" variant="ghost" size="sm" aria-expanded={showHistory} onClick={() => setShowHistory((s) => !s)}>
             <History aria-hidden="true" />
-            {showHistory ? "Esconder histórico" : "Histórico do interruptor"}
+            {showHistory ? "Esconder histórico" : "Histórico"}
           </Button>
-          {showHistory && <ConfigHistorico />}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+        {showHistory && (
+          <CardContent className="border-t py-3">
+            <ConfigHistorico />
+          </CardContent>
+        )}
+      </Card>
+      {!mcpLigado(c) && (
+        <Alert className="border-warning/60 bg-warning/10">
+          <CirclePause aria-hidden="true" className="text-warning" />
+          <AlertTitle>MCP desligado</AlertTitle>
+          <AlertDescription>
+            Toda chamada é recusada com "acesso MCP desligado pelo dono", e a recusa fica no registro.
+            {!c.servidorHabilitado &&
+              " Para ligar o servidor, quem tem acesso a ele põe MCP_HABILITADO=true no .env da raiz e reinicia a API; esta tela não liga o servidor."}
+          </AlertDescription>
+        </Alert>
+      )}
+      {error !== null && <ApiErrorAlert error={error} onReload={() => void config.refetch()} />}
+    </div>
   );
 }
 

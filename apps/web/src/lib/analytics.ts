@@ -10,8 +10,8 @@ import type {
 } from "@sociman/contract";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useFiltroUrl } from "@/components/conteudos/FiltrosConteudos";
 import { api } from "./api";
+import { useFiltroUrl } from "./filtros";
 import { addDays, localDateKey, parseDateKey } from "./tz";
 
 // Analytics de decisão (spec 019): filtros globais na URL e as queries das 8 abas. Tudo é leitura.

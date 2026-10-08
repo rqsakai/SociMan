@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CircleAlert, CircleCheck, DollarSign, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { HeaderCard, MetricCard } from "@/components/shell";
+import { HeaderCard, MetricCard, Page } from "@/components/shell";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -30,7 +30,7 @@ export function ResumoTab() {
   const taxa = r && r.chamadas > 0 ? `${Math.round((usadas / r.chamadas) * 100)}%` : "—";
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <Field label="Mês" className="w-full sm:w-48">
         {({ id }) => <Input id={id} type="month" value={mes} max={mesAtual()} onChange={(e) => e.target.value && setMes(e.target.value)} />}
       </Field>
@@ -77,7 +77,7 @@ export function ResumoTab() {
               </TableBody>
             </Table>
           </HeaderCard>
-          <HeaderCard title="Por perfil" tone="dark">
+          <HeaderCard title="Por perfil">
             <Table aria-label="Gasto por perfil">
               <TableHeader>
                 <TableRow>
@@ -106,6 +106,6 @@ export function ResumoTab() {
           </HeaderCard>
         </div>
       )}
-    </div>
+    </Page>
   );
 }

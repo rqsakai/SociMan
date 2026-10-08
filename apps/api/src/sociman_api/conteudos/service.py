@@ -417,8 +417,10 @@ def _cursor_decode(cursor: str) -> tuple[datetime, uuid.UUID]:
         raise _invalid("Cursor inválido; recarregue a lista") from exc
 
 
-def list_conteudos(db: Session, f: Filtros, cursor: str | None, limit: int = LIMIT_PADRAO
-                   ) -> s.ConteudosList:
+def list_conteudos(db: Session, f: Filtros, cursor: str | None, limit: int = LIMIT_PADRAO,
+                   offset: int | None = None) -> s.ConteudosList:
+    if cursor and offset is not None:
+        raise ApiError(400, "paginacao_invalida", "Use offset ou cursor, não os dois.")
     tz = app_tz()
     agora = datetime.now(UTC)
     conds = _condicoes(f, agora, tz)
@@ -437,6 +439,8 @@ def list_conteudos(db: Session, f: Filtros, cursor: str | None, limit: int = LIM
         query = query.where(pos > tuple_(literal(valor), literal(item_id))
                             if f.ordem == s.OrdemConteudos.agenda
                             else pos < tuple_(literal(valor), literal(item_id)))
+    elif offset:
+        query = query.offset(offset)
     rows = db.execute(query.order_by(*ordem).limit(limit + 1)).all()
     proximo = None
     if len(rows) > limit:

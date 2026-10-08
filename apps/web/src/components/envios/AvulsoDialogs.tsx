@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
+import { FileField } from "@/components/ui/file-field";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { ARQUIVO_ACEITO, MAX_ARQUIVO_BYTES, uploadEnvioArquivo, type Envio } from "@/lib/envios";
@@ -115,6 +116,8 @@ export function EnviarArquivoDialog({ open, onOpenChange, perfilId, onCreated }:
   const [fileError, setFileError] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [progress, setProgress] = useState<number | null>(null);
+  // zerar o input pela ref não volta o texto do FileField: troca a key junto
+  const [inputKey, setInputKey] = useState(0);
   const unavailable = storage.data !== undefined && !storage.data.available;
 
   function pick(f: File | null) {
@@ -141,6 +144,7 @@ export function EnviarArquivoDialog({ open, onOpenChange, perfilId, onCreated }:
       setFile(null);
       setTitulo("");
       if (inputRef.current) inputRef.current.value = "";
+      setInputKey((k) => k + 1);
       onOpenChange(false);
       onCreated?.(envio);
     } catch (err) {
@@ -164,10 +168,10 @@ export function EnviarArquivoDialog({ open, onOpenChange, perfilId, onCreated }:
         <form id="enviar-arquivo" onSubmit={(e) => void submit(e)} className="space-y-4" noValidate>
           <Field label="Arquivo de vídeo" error={fileError ?? undefined}>
             {({ id, describedBy, invalid }) => (
-              <Input
+              <FileField
+                key={inputKey}
                 ref={inputRef}
                 id={id}
-                type="file"
                 accept={ARQUIVO_ACEITO.join(",")}
                 disabled={progress !== null || unavailable}
                 aria-invalid={invalid}

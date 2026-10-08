@@ -329,15 +329,18 @@ test("stickers com tags, filtro e busca, sticker opaco recusado e sticker na mar
   }
   await page.reload();
 
-  // Filtro pela tag "promo": só promo-10 e uau
-  const porTag = page.getByRole("group", { name: "Filtrar por tag" });
+  // Filtro pela tag "promo" (spec 024: chips em "Mais filtros", etiqueta na barra): só promo-10 e uau
+  await page.getByRole("button", { name: /^Mais filtros/ }).click();
+  const porTag = page.getByRole("dialog", { name: "Mais filtros" }).getByRole("group", { name: "Filtrar por tag" });
   await expect(porTag.getByRole("button", { name: /#reação\s*2/ })).toBeVisible();
   await porTag.getByRole("button", { name: /#promo/ }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Mais filtros (1)" })).toBeVisible();
   await expect(grade.getByRole("listitem")).toHaveCount(2);
   await expect(grade.getByRole("link", { name: "promo-10 (Sticker)" })).toBeVisible();
   await expect(grade.getByRole("link", { name: "uau (Sticker)" })).toBeVisible();
   await page.screenshot({ path: ".playwright-mcp/sociman/007-filtro-tag.png", fullPage: true });
-  await porTag.getByRole("button", { name: /#promo/ }).click();
+  await page.getByRole("button", { name: "Remover filtro: Tag" }).click();
   await expect(grade.getByRole("listitem")).toHaveCount(3);
 
   // Busca pelo nome

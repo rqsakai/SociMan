@@ -13,15 +13,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { EmptyState } from "@/components/shell/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "../lib/authStore";
+import { formatDateTime } from "../lib/tz";
 import { ApiErrorAlert } from "./ApiErrorAlert";
 import { iaDaVersao, IaSelo } from "./ia/IaSelo";
 import { AgenteSelo } from "./mcp/AgenteSelo";
 
-const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "medium" });
 
 export const actionLabel: Record<EntityVersion["action"], string> = {
   created: "Criado",
@@ -96,7 +97,7 @@ export function VersionHistory({ versions, labels, formatValue, onRevert, onRelo
   }
 
   if (versions.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nenhuma alteração registrada.</p>;
+    return <EmptyState titulo="Nenhuma alteração registrada." className="py-6" />;
   }
 
   return (
@@ -142,7 +143,7 @@ export function VersionHistory({ versions, labels, formatValue, onRevert, onRelo
                   )}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {agente ?? actorText(v)} · <time dateTime={v.occurredAt}>{dateFormat.format(new Date(v.occurredAt))}</time>
+                  {agente ?? actorText(v)} · <time dateTime={v.occurredAt}>{formatDateTime(v.occurredAt)}</time>
                 </p>
               </div>
 

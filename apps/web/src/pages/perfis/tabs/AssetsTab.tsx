@@ -1,26 +1,51 @@
 import type { Perfil } from "@sociman/contract";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { HeaderCard } from "@/components/shell";
+import { EmptyState, HeaderCard, Page } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AssetFilters } from "../../../components/assets/AssetFilters";
 import { AssetGrid } from "../../../components/assets/AssetGrid";
 import { NovoAssetMenu } from "../../../components/assets/NovoAssetMenu";
 import { api } from "../../../lib/api";
-import { assetsKey, assetsListKey, type AssetListFilters } from "../../../lib/assets";
+import { assetsKey, assetsListKey, TIPOS, type AssetListFilters, type AssetTipo } from "../../../lib/assets";
+import { useFiltroUrl } from "../../../lib/filtros";
 
 const PAGE = 48;
-const initialFilters: AssetListFilters = { tipo: [], tag: [], q: "", archived: "false" };
+const lista = (v: string | null) => (v ? v.split(",").filter(Boolean) : []);
 
 // Aba Assets do perfil (spec 007, FR-001/FR-005): filtros (tipo, tag, busca, arquivados), a grade
-// de cards com "Carregar mais" (cursor da API, R8) e "Novo asset".
+// de cards com "Carregar mais" (cursor da API, R8) e "Novo asset". Spec 024: os filtros ficam na URL
+// (`q`, `tipo` e `tag` separados por vírgula, `arquivados=1`).
 export function AssetsTab({ perfil }: { perfil: Perfil }) {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState<AssetListFilters>(initialFilters);
-  const onFilters = useCallback((next: AssetListFilters) => setFilters(next), []);
+  const [params, set] = useFiltroUrl();
+  const tipoParam = params.get("tipo");
+  const tagParam = params.get("tag");
+  const q = params.get("q") ?? "";
+  const archived = params.get("arquivados") === "1" ? "all" : "false";
+  const filters = useMemo<AssetListFilters>(
+    () => ({
+      tipo: lista(tipoParam).filter((t): t is AssetTipo => (TIPOS as readonly string[]).includes(t)),
+      tag: lista(tagParam),
+      q,
+      archived,
+    }),
+    [tipoParam, tagParam, q, archived],
+  );
+  const onFilters = (patch: Partial<AssetListFilters>) =>
+    set(
+      {
+        ...("q" in patch ? { q: patch.q || null } : {}),
+        ...(patch.tipo ? { tipo: patch.tipo.join(",") || null } : {}),
+        ...(patch.tag ? { tag: patch.tag.join(",") || null } : {}),
+        ...(patch.archived ? { arquivados: patch.archived === "all" ? "1" : null } : {}),
+      },
+      // a busca digitada não empilha no histórico
+      { replace: "q" in patch },
+    );
 
   const assets = useInfiniteQuery({
     queryKey: assetsListKey(perfil.id, filters),
@@ -41,14 +66,19 @@ export function AssetsTab({ perfil }: { perfil: Perfil }) {
   const filtering = filters.tipo.length > 0 || filters.tag.length > 0 || filters.q.trim() !== "";
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <HeaderCard
         title="Biblioteca de assets"
         description="Avatares, cenários, fundos, stickers, marcas d'água e imagens do perfil. Nada é apagado: arquive e restaure."
         actions={<NovoAssetMenu perfilId={perfil.id} disabled={perfil.archived} onCreated={() => queryClient.invalidateQueries({ queryKey: assetsKey(perfil.id) })} />}
       >
         <div className="space-y-4">
-          <AssetFilters value={filters} tags={tags} onChange={onFilters} />
+          <AssetFilters
+            value={filters}
+            tags={tags}
+            onChange={onFilters}
+            onLimpar={() => set({ q: null, tipo: null, tag: null, arquivados: null })}
+          />
           {assets.isPending && (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" aria-live="polite">
               <span className="sr-only">Carregando…</span>
@@ -59,9 +89,10 @@ export function AssetsTab({ perfil }: { perfil: Perfil }) {
           )}
           {assets.isError && <ApiErrorAlert error={assets.error} />}
           {assets.data && items.length === 0 && (
-            <p className="py-4 text-sm text-muted-foreground">
-              {filtering ? "Nenhum asset com esses filtros." : 'Nenhum asset ainda. Use "Novo asset" para criar o primeiro.'}
-            </p>
+            <EmptyState
+              titulo={filtering ? "Nenhum asset com esses filtros." : 'Nenhum asset ainda. Use "Novo asset" para criar o primeiro.'}
+              className="py-6"
+            />
           )}
           {items.length > 0 && <AssetGrid items={items} />}
           {assets.hasNextPage && (
@@ -80,6 +111,6 @@ export function AssetsTab({ perfil }: { perfil: Perfil }) {
           )}
         </div>
       </HeaderCard>
-    </div>
+    </Page>
   );
 }

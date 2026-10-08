@@ -16,7 +16,7 @@ import { FiltrosGlobais, TrilhaConta } from "@/components/analytics/FiltrosGloba
 import { ColetaStatus } from "@/components/metricas/ColetaStatus";
 import { ExportarDialog } from "@/components/metricas/ExportarDialog";
 import { PageHeading } from "@/components/PageHeading";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ABAS_ANALYTICS, abaLabel, useFiltroAnalytics, type AbaAnalytics } from "@/lib/analytics";
@@ -58,7 +58,7 @@ export default function Analytics() {
   const { aba, filtro } = estado;
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeading
           title="Métricas"
@@ -77,7 +77,7 @@ export default function Analytics() {
       <FiltrosGlobais estado={estado} />
       <TrilhaConta estado={estado} />
 
-      <Tabs value={aba} onValueChange={(v) => estado.setAba(v as AbaAnalytics)} className="gap-4">
+      <Tabs value={aba} onValueChange={(v) => estado.setAba(v as AbaAnalytics)}>
         <div className="-mx-1 overflow-x-auto px-1 pb-1">
           <TabsList aria-label="Seções do analytics">
             {ABAS_ANALYTICS.map((a) => (
@@ -103,6 +103,6 @@ export default function Analytics() {
       </p>
 
       {dono && exportar && <ExportarDialog open onOpenChange={setExportar} perfilId={filtro.perfilId ?? ""} contaId={filtro.contaId ?? ""} />}
-    </div>
+    </Page>
   );
 }

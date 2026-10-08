@@ -3,7 +3,8 @@
  *
  * - Seletor de perfil no topo ("Cortar para"): liga o "já cortado", filtra os canais do perfil e é o
  *   destino da seleção. Fica na URL (?perfil=…), com os filtros, para voltar e compartilhar.
- * - Filtros: canal, período, duração, "só não cortados", "mostrar não recomendados", texto e ordem.
+ * - Filtros (spec 024, FilterBar): Buscar, Canal e Ordenar à vista; período, duração e os 3
+ *   checkboxes em "Mais filtros". Tudo na URL (`useFiltroUrl`).
  * - Tabela com paginação no servidor ("Carregar mais", cursor), miniatura, título, canal, duração,
  *   publicação, views, views/h, pontuação e o motivo em uma linha ("Por quê?" abre a conta).
  * - "Selecionar" em um clique, desfazível (toast com "Desfazer"); marcar vários e "Selecionar N".
@@ -16,17 +17,19 @@
  *   quando ele é o principal); vídeos de tema "cortar" ficam ocultos, com "N ocultos por tema
  *   cortado" e o filtro "Mostrar temas cortados" (`?cortados=1`), que os traz com o selo. O aviso de
  *   direito não muda.
+ * - spec 024 (US4): a linha mostra o tema casado (o decisivo) e o motivo resumido; o "Por quê?" soma
+ *   as parcelas (já cortado e afinidade) e explica a afinidade neutra (`afinidadeEstado`).
  */
 import { ApiError } from "@sociman/contract";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, CircleAlert, Link2, ListChecks, Loader2, Plus, Scissors, Upload } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { DataTable, dataTableColumns } from "@/components/data-table";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
 import { PageHeading } from "@/components/PageHeading";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { EmptyState, HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -41,15 +44,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { DireitoBadge } from "../../components/canais/DireitoBadge";
-import { ScoreBadge, ScoreReason } from "../../components/canais/ScoreReason";
+import { motivoCurto, ScoreBadge, ScoreReason } from "../../components/canais/ScoreReason";
 import { VideoCard } from "../../components/canais/VideoCard";
 import { ColarLinkDialog, EnviarArquivoDialog } from "../../components/envios/AvulsoDialogs";
 import { EnviarDialog } from "../../components/envios/EnviarDialog";
 import { api } from "../../lib/api";
 import { canaisKey, formatSeconds, videosKey, type VideoFonte } from "../../lib/canais";
 import { envioStatusLabel, enviosKey } from "../../lib/envios";
+import { useFiltroUrl } from "../../lib/filtros";
 import { integracoesQuery, youtubeAviso } from "../../lib/integracoes";
 import { usePerfisAtivos } from "../../lib/usePerfis";
 
@@ -72,33 +75,17 @@ const duracoes: Record<string, { label: string; min?: number; max?: number }> = 
 
 const ordens: Record<string, string> = { score: "Pontuação", vph: "Views por hora", views: "Views", data: "Mais recentes" };
 
-function useDebounced<T>(value: T, ms: number): T {
-  const [v, setV] = useState(value);
-  useEffect(() => {
-    const t = setTimeout(() => setV(value), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return v;
-}
-
 export default function Descobrir() {
   usePageMeta({ title: "Descobrir vídeos" });
   const queryClient = useQueryClient();
-  const [params, setParams] = useSearchParams();
+  const [params, set] = useFiltroUrl();
   const perfis = usePerfisAtivos();
   const integracoes = useQuery(integracoesQuery);
   const aviso = youtubeAviso(integracoes.data);
 
-  // Filtros em estado local (fonte da verdade) e espelhados na URL (?perfil=…&canal=…) para o
-  // voltar do navegador e o link direto; a URL só é lida na entrada.
-  const [f, setF] = useState<Record<string, string>>(() => Object.fromEntries(params.entries()));
-  const get = (k: string) => f[k] ?? "";
-  const setParam = (k: string, v: string) => setF((cur) => ({ ...cur, [k]: v }));
-  const setParamsRef = useRef(setParams);
-  setParamsRef.current = setParams;
-  useEffect(() => {
-    setParamsRef.current(Object.fromEntries(Object.entries(f).filter(([, v]) => v)), { replace: true });
-  }, [f]);
+  // Filtros na URL (?perfil=…&canal=…): voltar, recarregar e o link direto mantêm a lista.
+  const get = (k: string) => params.get(k) ?? "";
+  const setParam = (k: string, v: string) => set({ [k]: v || null });
 
   // Perfil padrão: o primeiro perfil ativo (a seleção sempre tem um destino).
   const perfilId = get("perfil") || perfis.data?.[0]?.id || "";
@@ -111,9 +98,7 @@ export default function Descobrir() {
   // spec 023: com perfil, os vídeos de tema "cortar" ficam ocultos; o filtro os traz com o selo
   const mostrarCortados = get("cortados") === "1";
   const ordem = get("ordem") || "score";
-  const [texto, setTexto] = useState(get("q"));
-  const q = useDebounced(texto.trim(), 300);
-  useEffect(() => setParam("q", q), [q]); // eslint-disable-line react-hooks/exhaustive-deps
+  const q = get("q");
 
   const canais = useQuery({ queryKey: canaisKey({}), queryFn: () => api.canais.list({}) });
 
@@ -156,6 +141,7 @@ export default function Descobrir() {
   const rows = useMemo(() => videos.data?.pages.flatMap((p) => p.items) ?? [], [videos.data]);
   const total = videos.data?.pages[0]?.total;
   const ocultosPorTema = videos.data?.pages[0]?.ocultosPorTema ?? 0;
+  const afinidadeEstado = videos.data?.pages[0]?.afinidadeEstado ?? null;
 
   // Selecionados do perfil (envios em "selecionado"): alimentam a barra fixa e o diálogo de geração.
   const selecionados = useQuery({
@@ -275,12 +261,20 @@ export default function Descobrir() {
       cell: (c) => {
         const v = c.row.original;
         const corte = v.jaCortado.find((j) => j.perfilId === perfilId);
+        const temas = v.afinidade?.temas ?? [];
+        const tema = temas.find((t) => t.decisivo) ?? temas[0];
         return (
           <div className="min-w-64 space-y-1.5">
-            {v.afinidade?.cortado && (
+            {v.afinidade?.cortado ? (
               <Badge variant="outline" data-tema-cortado>
                 tema cortado{v.afinidade.temaNome ? `: ${v.afinidade.temaNome}` : ""}
               </Badge>
+            ) : (
+              tema && (
+                <Badge variant="secondary" data-tema title="Tema casado com o vídeo">
+                  {tema.nome}
+                </Badge>
+              )
             )}
             <VideoCard
               video={v}
@@ -288,8 +282,11 @@ export default function Descobrir() {
               className={v.id === videoDestaqueId ? "rounded-md ring-2 ring-primary ring-offset-2 ring-offset-card" : undefined}
             />
             <div className="sm:hidden">
-              <ScoreReason video={v} compact />
+              <ScoreReason video={v} compact perfilId={perfilId} afinidadeEstado={afinidadeEstado} />
             </div>
+            <p className="hidden text-xs text-muted-foreground sm:line-clamp-2" data-motivo>
+              {motivoCurto(v)}
+            </p>
           </div>
         );
       },
@@ -300,9 +297,9 @@ export default function Descobrir() {
       enableSorting: false,
       enableGlobalFilter: false,
       cell: (c) => (
-        <div className="flex max-w-72 min-w-48 items-start gap-2">
+        <div className="flex items-center gap-1">
           <ScoreBadge score={c.getValue()} />
-          <ScoreReason video={c.row.original} />
+          <ScoreReason video={c.row.original} semTexto perfilId={perfilId} afinidadeEstado={afinidadeEstado} />
         </div>
       ),
       meta: { className: "hidden sm:table-cell whitespace-normal", headerClassName: "hidden sm:table-cell" },
@@ -354,10 +351,23 @@ export default function Descobrir() {
   ]);
 
   const canaisOptions = canais.data?.items.filter((c) => !c.archived && (!perfilId || c.perfis.length === 0 || c.perfis.some((p) => p.id === perfilId) || c.id === canalId)) ?? [];
+  // Etiquetas dos filtros (o perfil fica no cartão "Cortar para o perfil", fora da barra). Os rótulos
+  // das etiquetas não repetem os dos checkboxes, para o getByLabel dos e2e não achar dois.
+  const limpar = (k: string) => () => setParam(k, "");
+  const ativos: FiltroAtivo[] = [
+    ...(q ? [{ chave: "q", rotulo: "Busca", valor: q, limpar: limpar("q") }] : []),
+    ...(canalId ? [{ chave: "canal", rotulo: "Canal", valor: canais.data?.items.find((c) => c.id === canalId)?.title ?? "…", limpar: limpar("canal") }] : []),
+    ...(ordem !== "score" ? [{ chave: "ordem", rotulo: "Ordem", valor: ordens[ordem] ?? ordem, limpar: limpar("ordem") }] : []),
+    ...(periodos[periodo]?.dias ? [{ chave: "periodo", rotulo: "Período", valor: periodos[periodo].label, limpar: limpar("periodo"), mais: true }] : []),
+    ...(duracoes[duracao] && duracao ? [{ chave: "duracao", rotulo: "Duração", valor: duracoes[duracao].label, limpar: limpar("duracao"), mais: true }] : []),
+    ...(naoCortados ? [{ chave: "naoCortados", rotulo: "Cortes", valor: "só os não cortados", limpar: limpar("naoCortados"), mais: true }] : []),
+    ...(todos ? [{ chave: "todos", rotulo: "Recomendação", valor: "inclui os não recomendados", limpar: limpar("todos"), mais: true }] : []),
+    ...(mostrarCortados ? [{ chave: "cortados", rotulo: "Temas cortados", valor: "visíveis", limpar: limpar("cortados"), mais: true }] : []),
+  ];
   const semCanais = canais.isSuccess && canais.data.items.filter((c) => !c.archived).length === 0;
 
   return (
-    <div className="flex flex-col gap-6 pb-24">
+    <Page className="pb-24">
       <PageHeading
         title="Descobrir vídeos"
         description="Os vídeos dos canais-fonte, do maior potencial de corte para o menor. Selecione os que quer cortar e envie de uma vez."
@@ -462,69 +472,15 @@ export default function Descobrir() {
             ? `${total.toLocaleString("pt-BR")} vídeos com estes filtros${!mostrarCortados && ocultosPorTema > 0 ? ` · ${ocultosPorTema.toLocaleString("pt-BR")} ocultos por tema cortado` : ""}`
             : "Carregando…"
         }
-      >
-        <div className="grid gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Input type="search" aria-label="Buscar no título" placeholder="Buscar no título" value={texto} onChange={(e) => setTexto(e.target.value)} />
-          <NativeSelect aria-label="Canal" value={canalId} onChange={(e) => setParam("canal", e.target.value)}>
-            <option value="">Todos os canais{perfil ? " do perfil" : ""}</option>
-            {canaisOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title}
-              </option>
-            ))}
-          </NativeSelect>
-          <NativeSelect aria-label="Período" value={periodo} onChange={(e) => setParam("periodo", e.target.value)}>
-            {Object.entries(periodos).map(([k, p]) => (
-              <option key={k} value={k}>
-                {p.label}
-              </option>
-            ))}
-          </NativeSelect>
-          <NativeSelect aria-label="Duração" value={duracao} onChange={(e) => setParam("duracao", e.target.value)}>
-            {Object.entries(duracoes).map(([k, d]) => (
-              <option key={k} value={k}>
-                {d.label}
-              </option>
-            ))}
-          </NativeSelect>
-          <NativeSelect aria-label="Ordenar por" value={ordem} onChange={(e) => setParam("ordem", e.target.value === "score" ? "" : e.target.value)}>
-            {Object.entries(ordens).map(([k, label]) => (
-              <option key={k} value={k}>
-                Ordenar: {label}
-              </option>
-            ))}
-          </NativeSelect>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={naoCortados}
-              disabled={!perfilId}
-              onChange={(e) => setParam("naoCortados", e.target.checked ? "1" : "")}
-            />
-            Só não cortados
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" className="size-4 accent-primary" checked={todos} onChange={(e) => setParam("todos", e.target.checked ? "1" : "")} />
-            Mostrar não recomendados
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="size-4 accent-primary"
-              checked={mostrarCortados}
-              disabled={!perfilId}
-              onChange={(e) => setParam("cortados", e.target.checked ? "1" : "")}
-            />
-            Mostrar temas cortados
-          </label>
-          {marcados.length > 0 && (
-            <Button type="button" variant="secondary" disabled={busy !== null} aria-busy={busy === "lote"} onClick={() => void selecionarMarcados()}>
+        actions={
+          marcados.length > 0 && (
+            <Button type="button" variant="secondary" size="sm" disabled={busy !== null} aria-busy={busy === "lote"} onClick={() => void selecionarMarcados()}>
               {busy === "lote" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <ListChecks aria-hidden="true" />}
               Selecionar {marcados.length} {marcados.length === 1 ? "marcado" : "marcados"}
             </Button>
-          )}
-        </div>
+          )
+        }
+      >
         {videos.isError ? (
           <ApiErrorAlert error={videos.error} />
         ) : (
@@ -534,8 +490,94 @@ export default function Descobrir() {
             data={rows}
             loading={videos.isPending}
             getRowId={(v) => v.id}
-            emptyMessage={
-              todos ? "Nenhum vídeo com estes filtros." : "Nenhum vídeo recomendado com estes filtros. Tente \"Mostrar não recomendados\"."
+            toolbar={
+              <FilterBar
+                busca={{ valor: q, onChange: (v) => set({ q: v || null }, { replace: true }), placeholder: "Buscar no título" }}
+                principais={
+                  <>
+                    <Field label="Canal" className="w-full sm:w-56">
+                      {({ id }) => (
+                        <NativeSelect id={id} value={canalId} onChange={(e) => setParam("canal", e.target.value)}>
+                          <option value="">Todos os canais{perfil ? " do perfil" : ""}</option>
+                          {canaisOptions.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.title}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      )}
+                    </Field>
+                    <Field label="Ordenar por" className="w-full sm:w-48">
+                      {({ id }) => (
+                        <NativeSelect id={id} value={ordem} onChange={(e) => setParam("ordem", e.target.value === "score" ? "" : e.target.value)}>
+                          {Object.entries(ordens).map(([k, label]) => (
+                            <option key={k} value={k}>
+                              {label}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      )}
+                    </Field>
+                  </>
+                }
+                mais={
+                  <>
+                    <Field label="Período">
+                      {({ id }) => (
+                        <NativeSelect id={id} value={periodo} onChange={(e) => setParam("periodo", e.target.value)}>
+                          {Object.entries(periodos).map(([k, p]) => (
+                            <option key={k} value={k}>
+                              {p.label}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      )}
+                    </Field>
+                    <Field label="Duração">
+                      {({ id }) => (
+                        <NativeSelect id={id} value={duracao} onChange={(e) => setParam("duracao", e.target.value)}>
+                          {Object.entries(duracoes).map(([k, d]) => (
+                            <option key={k} value={k}>
+                              {d.label}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      )}
+                    </Field>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary"
+                        checked={naoCortados}
+                        disabled={!perfilId}
+                        onChange={(e) => setParam("naoCortados", e.target.checked ? "1" : "")}
+                      />
+                      Só não cortados
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" className="size-4 accent-primary" checked={todos} onChange={(e) => setParam("todos", e.target.checked ? "1" : "")} />
+                      Mostrar não recomendados
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary"
+                        checked={mostrarCortados}
+                        disabled={!perfilId}
+                        onChange={(e) => setParam("cortados", e.target.checked ? "1" : "")}
+                      />
+                      Mostrar temas cortados
+                    </label>
+                  </>
+                }
+                ativos={ativos}
+                onLimpar={() => set({ q: null, canal: null, ordem: null, periodo: null, duracao: null, naoCortados: null, todos: null, cortados: null })}
+              />
+            }
+            empty={
+              <EmptyState
+                titulo={todos ? "Nenhum vídeo com estes filtros." : "Nenhum vídeo recomendado com estes filtros. Tente \"Mostrar não recomendados\"."}
+              />
             }
             pagination={{
               hasMore: Boolean(videos.hasNextPage),
@@ -550,7 +592,7 @@ export default function Descobrir() {
         <div
           role="region"
           aria-label="Selecionados"
-          className="fixed inset-x-4 bottom-4 z-30 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-sidebar-gradient px-4 py-3 text-white shadow-float lg:left-80"
+          className="sticky bottom-4 z-30 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-sidebar-gradient px-4 py-3 text-white shadow-float"
         >
           <p className="text-sm">
             <strong>{selecionadosItems.length}</strong> {selecionadosItems.length === 1 ? "vídeo selecionado" : "vídeos selecionados"} para{" "}
@@ -560,7 +602,7 @@ export default function Descobrir() {
             <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 hover:text-white" asChild>
               <Link to={`/app/envios?perfil=${perfilId}`}>Ver selecionados</Link>
             </Button>
-            <Button size="sm" className="tone-primary" onClick={() => setEnviar(true)}>
+            <Button size="sm" variant="band" onClick={() => setEnviar(true)}>
               <Scissors aria-hidden="true" />
               Gerar cortes
             </Button>
@@ -588,6 +630,6 @@ export default function Descobrir() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </Page>
   );
 }

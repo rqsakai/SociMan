@@ -1,4 +1,4 @@
-import type { CanalFonte, CanalSyncStatus, Direito, VideoFonte } from "@sociman/contract";
+import type { CanalFonte, CanalSyncStatus, Direito, VideoFonte, components } from "@sociman/contract";
 
 export type { CanalFonte, CanalCandidato, CanalSyncStatus, Direito, VideoFonte, VideoFonteFilters } from "@sociman/contract";
 
@@ -73,6 +73,26 @@ export const scoreComponentLabel: Record<string, string> = {
 };
 
 export const scoreWeights: Record<string, number> = { v: 0.45, e: 0.2, r: 0.15, d: 0.2 };
+
+// Já cortado para o perfil do filtro: a pontuação da 006 vale 30% (canais/score.py).
+export const FATOR_JA_CORTADO = 0.3;
+
+// Afinidade com o perfil (spec 023; spec 024, R9): temas casados e o estado da lista.
+export type TemaCasado = components["schemas"]["TemaCasado"];
+export type AfinidadeEstado = components["schemas"]["AfinidadeEstado"];
+
+export const temaAcaoLabel: Record<NonNullable<TemaCasado["acao"]>, string> = {
+  ampliar: "A ampliar",
+  cortar: "Cortado",
+};
+
+// Por que a afinidade está neutra (o diálogo "Por quê?" explica, FR-017).
+export const afinidadeMotivoLabel: Record<NonNullable<AfinidadeEstado["motivo"]>, string> = {
+  sem_perfil: "Escolha um perfil para somar a afinidade com o que funciona nele.",
+  sem_temas: "Sem temas neste perfil: a afinidade fica neutra.",
+  desatualizada: "Casamento de temas desatualizado: a afinidade fica neutra até a próxima atualização.",
+  neutra: "Afinidade neutra: os temas e canais deste perfil ainda não mostram efeito.",
+};
 
 // Aviso de vídeo que não entra na recomendação.
 export function videoWarning(v: Pick<VideoFonte, "disponivel" | "live" | "durationS">): string | null {

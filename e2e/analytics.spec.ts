@@ -8,6 +8,15 @@ import { apiToken, createPerfilViaApi, login, sqlE2e } from "./helpers";
 // gravam `de`/`ate` e o padrão (7 d) some da URL. As histórias acrescentam os cards.
 
 // spec 022: "Público" entra logo depois de "Quando postar"
+// spec 024: a medida do post fica em "Mais filtros" (Sheet); escolhe e fecha a gaveta.
+async function escolherMedida(page: Page, valor: "h1" | "h24" | "d7"): Promise<void> {
+  await page.getByRole("button", { name: /^Mais filtros/ }).click();
+  const gaveta = page.getByRole("dialog", { name: "Mais filtros" });
+  await gaveta.getByLabel("Medida do post").selectOption(valor);
+  await page.keyboard.press("Escape");
+  await expect(gaveta).toBeHidden();
+}
+
 const ABAS = ["Visão geral", "Quando postar", "Público", "O que funciona", "Curvas", "Contas", "Funil", "Mercado", "Alertas"];
 
 test("019 base: 8 abas, aba e período na URL", async ({ page }) => {
@@ -44,10 +53,17 @@ test("019 base: 8 abas, aba e período na URL", async ({ page }) => {
   await expect(page).not.toHaveURL(/[?&](de|ate)=/);
 
   // ---- medida do post: o padrão (24 h) fora da URL ----
-  await page.getByLabel("Medida do post").selectOption("h1");
+  await escolherMedida(page, "h1");
   await expect(page).toHaveURL(/[?&]medida=h1\b/);
-  await page.getByLabel("Medida do post").selectOption("h24");
+  await expect(page.getByRole("button", { name: "Mais filtros (1)" })).toBeVisible();
+  await escolherMedida(page, "h24");
   await expect(page).not.toHaveURL(/medida=/);
+  // a etiqueta tira o filtro: 30 d vira etiqueta "Período", e remover volta ao padrão
+  await atalhos.getByRole("button", { name: "30 d" }).click();
+  await expect(page.getByRole("group", { name: "Filtros ativos" })).toContainText("Período: 30 d");
+  await page.getByRole("button", { name: "Remover filtro: Período" }).click();
+  await expect(page).not.toHaveURL(/[?&](de|ate)=/);
+  await expect(atalhos.getByRole("button", { name: "7 d" })).toHaveAttribute("aria-pressed", "true");
 });
 
 // ---- T057: transversais (FR-005, FR-006, FR-008, FR-009; SC-005, SC-006) ----

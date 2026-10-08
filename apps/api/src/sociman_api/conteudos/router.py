@@ -54,13 +54,15 @@ def list_conteudos(
     archived: Annotated[bool, Query()] = False,
     cursor: Annotated[str | None, Query(max_length=500)] = None,
     limit: Annotated[int, Query(ge=1, le=100)] = service.LIMIT_PADRAO,
+    offset: Annotated[int | None, Query(ge=0, description="Página numerada; não use com "
+                                                          "`cursor`")] = None,
 ) -> schemas.ConteudosList:
     filtros = service.Filtros(
         perfil_ids=perfil_id, conta_id=conta_id, plataforma=plataforma, estados=estado,
         origem=origem, agendado_de=agendado_de, agendado_ate=agendado_ate, criado_de=criado_de,
         criado_ate=criado_ate, q=q, atalho=atalho, ordem=ordem, archived=archived,
     )
-    return service.list_conteudos(db, filtros, cursor, limit)
+    return service.list_conteudos(db, filtros, cursor, limit, offset)
 
 
 @router.get("/resumo", operation_id="conteudos_resumo", response_model=schemas.Atalhos,

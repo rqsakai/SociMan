@@ -16,9 +16,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ProgressBar } from "@/components/marca/CorteStatusBadge";
+import { EmptyState } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DateField } from "@/components/ui/date-field";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -231,13 +233,12 @@ export function SequenciaDialog({
               </Field>
               <Field label="Primeira data">
                 {({ id }) => (
-                  <Input
+                  <DateField
                     id={id}
-                    type="date"
                     value={inicio}
                     min={localDateKey(new Date())}
-                    onChange={(e) => {
-                      setInicio(e.target.value);
+                    onChange={(iso) => {
+                      setInicio(iso);
                       setPrevia(null);
                       setFase("config");
                     }}
@@ -337,7 +338,7 @@ export function SequenciaDialog({
                     </TableBody>
                   </Table>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Nenhum conteúdo elegível para agendar.</p>
+                  <EmptyState titulo="Nenhum conteúdo elegível para agendar." className="py-4" />
                 )}
                 {previa.pulados.length > 0 && (
                   <div>

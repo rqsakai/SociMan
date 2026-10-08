@@ -20,6 +20,7 @@ import { MatrizHashtagTema, tabelaMatriz } from "@/components/aprendizado/Matriz
 import { CardAnalytics } from "@/components/analytics/CardAnalytics";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { Page } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -192,7 +193,7 @@ export function Analise({ perfil, estado }: AbaProps) {
   if (analise.isPending || !d) return <Skeleton className="h-96 w-full" />;
 
   return (
-    <div className="flex min-w-0 flex-col gap-6">
+    <Page>
       <Contexto d={d} perfilId={perfil.id} />
       <div className="grid min-w-0 gap-6 lg:grid-cols-2">
         <Parte parte="entrega" efeitos={entrega} travadas={d.contexto.contas.some((c) => c.travada)} />
@@ -222,6 +223,6 @@ export function Analise({ perfil, estado }: AbaProps) {
           <MatrizHashtagTema matriz={d.matriz} />
         </CardAnalytics>
       </div>
-    </div>
+    </Page>
   );
 }

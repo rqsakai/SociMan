@@ -17,6 +17,7 @@ import {
   type AssetTipo,
 } from "../../lib/assets";
 import { errorText } from "../../lib/perfis";
+import { EmptyState } from "@/components/shell";
 
 const RECENT = 12;
 
@@ -117,7 +118,7 @@ export function ProfileImagePicker({
           ))}
         </div>
       ) : (
-        !images.isPending && <p className="text-sm text-muted-foreground">Nenhuma imagem na biblioteca ainda.</p>
+        !images.isPending && <EmptyState titulo="Nenhuma imagem na biblioteca ainda." className="items-start py-2 text-left" />
       )}
       {chosenOutside && <p className="text-xs text-muted-foreground">A imagem escolhida não está entre as {RECENT} mais recentes; veja em "Abrir biblioteca".</p>}
       <div className="flex flex-wrap gap-2">

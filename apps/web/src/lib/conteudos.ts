@@ -1,7 +1,8 @@
 import type { Atalhos, Conteudo, ConteudoFilters, EstadoEfetivo, Origem, PropostaOpenshorts, Situacao } from "@sociman/contract";
-import { useInfiniteQuery, useQuery, type QueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, type QueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import { useAuth } from "./authStore";
+import { useFiltroUrl } from "./filtros";
 
 export type {
   Atalhos,
@@ -23,7 +24,8 @@ export type {
 } from "@sociman/contract";
 
 // Central de conteúdos (spec 014): queries, chaves e rótulos em pt-BR. Os filtros moram na URL
-// (R10): a lista usa os parâmetros como chave do TanStack e pagina por cursor no servidor.
+// (R10): a lista usa os parâmetros como chave do TanStack e pagina no servidor (páginas numeradas
+// desde a spec 024: `pagina` e `tamanho` também na URL).
 
 export const conteudosKey = (filters: object) => ["conteudos", filters] as const;
 export const resumoKey = (filters: object) => ["conteudos-resumo", filters] as const;
@@ -31,7 +33,6 @@ export const conteudoKey = (id: string) => ["conteudo", id] as const;
 export const conteudoVersionsKey = (id: string) => ["conteudo-versions", id] as const;
 export const destinoVersionsKey = (id: string) => ["destino-versions", id] as const;
 
-export const PAGE_LIMIT = 50;
 
 // ---------------------------------------------------------------------------------------------
 // Rótulos
@@ -153,12 +154,44 @@ export function filtersFromParams(params: URLSearchParams): ConteudoFilters {
   return f as ConteudoFilters;
 }
 
-export function useConteudos(filters: ConteudoFilters) {
-  return useInfiniteQuery({
-    queryKey: conteudosKey(filters),
-    queryFn: ({ pageParam }) => api.conteudos.list({ ...filters, limit: PAGE_LIMIT, ...(pageParam ? { cursor: pageParam } : {}) }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (last) => last.nextCursor ?? undefined,
+export const TAMANHO_PADRAO = 25;
+const TAMANHOS = [10, 25, 50];
+
+// Página (1-based) e tamanho lidos da URL; valores inválidos caem no padrão.
+export function paginaDaUrl(params: URLSearchParams): { pagina: number; tamanho: number } {
+  const pagina = Number(params.get("pagina"));
+  const tamanho = Number(params.get("tamanho"));
+  return {
+    pagina: Number.isInteger(pagina) && pagina >= 1 ? pagina : 1,
+    tamanho: TAMANHOS.includes(tamanho) ? tamanho : TAMANHO_PADRAO,
+  };
+}
+
+// `useFiltroUrl` dos filtros de Conteúdos: mudar qualquer filtro (ou a ordem) volta à página 1.
+export function useFiltroConteudos() {
+  const [params, set] = useFiltroUrl();
+  const setFiltro = (patch: Record<string, string | null>, opts?: { replace?: boolean }) =>
+    set({ ...patch, pagina: null }, opts);
+  return [params, setFiltro] as const;
+}
+
+// Paginação numerada (spec 024, R7): uma página por vez, com offset. A chave começa com
+// "conteudos", então o `invalidarConteudos` também a alcança. Enquanto a próxima página chega,
+// a anterior continua na tela.
+export function useConteudosPagina({
+  filtros,
+  pagina,
+  tamanho = TAMANHO_PADRAO,
+}: {
+  filtros: ConteudoFilters;
+  pagina: number;
+  tamanho?: number;
+}) {
+  const offset = (Math.max(pagina, 1) - 1) * tamanho;
+  return useQuery({
+    queryKey: [...conteudosKey(filtros), { offset, limit: tamanho }] as const,
+    queryFn: () => api.conteudos.list({ ...filtros, offset, limit: tamanho }),
+    placeholderData: keepPreviousData,
   });
 }
 

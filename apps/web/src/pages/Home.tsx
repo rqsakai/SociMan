@@ -2,7 +2,7 @@ import type { Platform, SecurityEvent } from "@sociman/contract";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, CircleCheck, CircleX, LayoutGrid, Users, Video } from "lucide-react";
 import { Link } from "react-router-dom";
-import { HeaderCard, MetricCard } from "@/components/shell";
+import { EmptyState, HeaderCard, MetricCard, Page } from "@/components/shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,9 +12,9 @@ import { api } from "../lib/api";
 import { useAuth } from "../lib/authStore";
 import { platformLabel } from "../lib/perfis";
 import { actorText, eventTypeLabel } from "../lib/securityEvents";
+import { formatDateTime } from "../lib/tz";
 
 const RECENT_EVENTS = 8;
-const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
 // /app: métricas com os números reais que a API já expõe (FR-006) e, para o dono, os eventos de
 // segurança mais recentes. Sem rota nova: soma a partir das listas de perfis e usuários.
@@ -55,7 +55,7 @@ export default function Home() {
   const membros = ativos.length - donos;
 
   return (
-    <div className="space-y-8">
+    <Page>
       <PageHeading title="Início" description="Resumo da agência: perfis, contas e acessos." />
 
       {(perfis.isError || users.isError) && (
@@ -106,8 +106,6 @@ export default function Home() {
         <HeaderCard
           title="Eventos recentes"
           description="Logins, trocas de senha e mudanças de acesso"
-          tone="dark"
-          className="max-w-3xl"
           actions={
             <Button asChild variant="secondary" size="sm">
               <Link to="/app/seguranca">
@@ -128,13 +126,13 @@ export default function Home() {
               ))}
             </div>
           ) : events.data.items.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">Nenhum evento ainda.</p>
+            <EmptyState titulo="Nenhum evento ainda." className="py-6" />
           ) : (
             <Timeline events={events.data.items.slice(0, RECENT_EVENTS)} />
           )}
         </HeaderCard>
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -160,7 +158,7 @@ function Timeline({ events }: { events: SecurityEvent[] }) {
             <div className="min-w-0 pt-1">
               <p className="text-sm font-semibold">{eventTypeLabel[event.type] ?? event.type}</p>
               <p className="truncate text-xs text-muted-foreground">
-                <time dateTime={event.occurredAt}>{dateFormat.format(new Date(event.occurredAt))}</time>
+                <time dateTime={event.occurredAt}>{formatDateTime(event.occurredAt)}</time>
                 {" · "}
                 {actorText(event)}
                 {event.subjectName && event.subjectName !== event.actorName && ` → ${event.subjectName}`}

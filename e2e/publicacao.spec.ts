@@ -12,6 +12,7 @@ import {
   login,
   logout,
   pedidosTikTok,
+  preencherData,
   syntheticMp4,
   type Member,
 } from "./helpers";
@@ -399,7 +400,7 @@ test("US2: rascunho criado no horário, com Copiar textos e Postado", async ({ p
   const conta = dlg.getByLabel("Conta").and(page.locator("select")).first();
   const opcao = conta.locator("option").filter({ hasText: p.handle }).first();
   await conta.selectOption((await opcao.getAttribute("value"))!);
-  await dlg.getByLabel(/Data e hora/).fill(proximoMinutoSp(45_000));
+  await preencherData(dlg.getByLabel(/Data e hora/), proximoMinutoSp(45_000));
   const modo = dlg.getByLabel("Modo", { exact: true });
   await expect(modo.locator("option[value=criar_rascunho]")).toBeEnabled();
   await modo.selectOption("criar_rascunho");
@@ -701,7 +702,7 @@ test("US3: publicar no horário exige a tela da TikTok e chega a Publicado", asy
   const conta = dlg.getByLabel("Conta").and(page.locator("select")).first();
   const opcao = conta.locator("option").filter({ hasText: p.handle }).first();
   await conta.selectOption((await opcao.getAttribute("value"))!);
-  await dlg.getByLabel(/Data e hora/).fill(proximoMinutoSp(45_000));
+  await preencherData(dlg.getByLabel(/Data e hora/), proximoMinutoSp(45_000));
   const modo = dlg.getByLabel("Modo", { exact: true });
   await expect(modo.locator("option[value=publicar]")).toBeEnabled();
   await modo.selectOption("publicar");

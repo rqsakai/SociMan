@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DateField } from "@/components/ui/date-field";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -209,13 +210,12 @@ export function NovoClienteDialog({
           </div>
           <Field label="Vence em" error={errors.expiraEm} hint="Opcional. Vencida, a credencial para de valer; a tela avisa 7 dias antes.">
             {({ id, describedBy, invalid }) => (
-              <Input
+              <DateField
                 id={id}
-                type="date"
                 value={draft.expiraEm}
                 aria-invalid={invalid}
                 aria-describedby={describedBy}
-                onChange={(e) => setDraft({ ...draft, expiraEm: e.target.value })}
+                onChange={(iso) => setDraft({ ...draft, expiraEm: iso })}
               />
             )}
           </Field>

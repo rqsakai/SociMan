@@ -125,7 +125,7 @@ export default function Login() {
         </Field>
         <Button
           type="submit"
-          className="tone-primary w-full text-xs font-bold tracking-wide uppercase"
+          variant="band" className="w-full text-xs font-bold tracking-wide uppercase"
           disabled={isSubmitting}
           aria-busy={isSubmitting}
         >

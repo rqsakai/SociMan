@@ -12,7 +12,9 @@
  *   footer?: ReactNode     rodapé com separador (ex.: <><Clock /> atualizado há 4 min</>)
  *   className?: string
  *
- * Deixe espaço acima para a faixa: o cartão já tem mt-6 (a faixa sobe 1,5 rem).
+ * Estrutura (spec 024, R3): um invólucro com pt-6 (não colapsa), o cartão e a faixa com -mt-6,
+ * que sobe sobre a borda ocupando o padding do invólucro. Nenhuma margem externa: o espaço
+ * entre blocos é o gap do <Page>.
  */
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -40,23 +42,25 @@ export function HeaderCard({
   className,
 }: HeaderCardProps) {
   return (
-    <section className={cn("mt-6 min-w-0 rounded-xl bg-card text-card-foreground shadow-card", className)}>
-      <div className={cn("relative -top-6 mx-4 -mb-2 rounded-lg px-4 py-4 sm:px-5", toneClass[tone])}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-lg font-bold">{title}</h2>
-            {description && <p className="text-sm opacity-90">{description}</p>}
+    <section data-slot="header-card" className={cn("flex min-w-0 flex-col pt-6", className)}>
+      <div className="flex min-w-0 flex-1 flex-col rounded-xl bg-card text-card-foreground shadow-card">
+        <div data-slot="header-card-band" className={cn("-mt-6 mx-4 rounded-lg px-4 py-4 sm:px-5", toneClass[tone])}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg font-bold">{title}</h2>
+              {description && <p className="text-sm">{description}</p>}
+            </div>
+            {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
           </div>
-          {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+          {band && <div className="mt-3">{band}</div>}
         </div>
-        {band && <div className="mt-3">{band}</div>}
+        {children && <div data-slot="header-card-body" className="min-w-0 px-5 pt-4 pb-5">{children}</div>}
+        {footer && (
+          <div className="mx-5 flex items-center gap-1.5 border-t py-3 text-sm text-muted-foreground [&_svg]:size-4">
+            {footer}
+          </div>
+        )}
       </div>
-      {children && <div className="min-w-0 px-4 pb-4 sm:px-5">{children}</div>}
-      {footer && (
-        <div className="mx-4 flex items-center gap-1.5 border-t py-3 text-sm text-muted-foreground sm:mx-5 [&_svg]:size-4">
-          {footer}
-        </div>
-      )}
     </section>
   );
 }

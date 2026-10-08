@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { PageHeading } from "@/components/PageHeading";
+import { Page } from "@/components/shell";
 import { VersionHistory } from "@/components/VersionHistory";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -75,7 +76,7 @@ export default function Publicacao() {
   }
 
   return (
-    <div className="space-y-6">
+    <Page>
       <PageHeading title="Publicação automática" description="Controle geral do envio de rascunhos para as redes. Desligado, nada sai do SociMan." />
       {config.isPending && (
         <p aria-live="polite" className="text-sm text-muted-foreground">
@@ -86,7 +87,7 @@ export default function Publicacao() {
 
       {c && (
         <>
-          <Card className="max-w-2xl shadow-card">
+          <Card className="shadow-card">
             <CardHeader>
               <CardTitle>
                 <h2>Interruptor</h2>
@@ -171,7 +172,7 @@ export default function Publicacao() {
             </CardContent>
           </Card>
 
-          <Card className="max-w-2xl shadow-card">
+          <Card className="shadow-card">
             <CardHeader>
               <CardTitle>
                 <h2>App da TikTok</h2>
@@ -237,7 +238,7 @@ export default function Publicacao() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </Page>
   );
 }
 

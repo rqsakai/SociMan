@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, History } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { VersionHistory } from "../../components/VersionHistory";
@@ -32,7 +32,7 @@ export default function ContaHistorico() {
   }
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" onClick={() => navigate(-1)}>
         <ArrowLeft aria-hidden="true" />
         Voltar
@@ -70,6 +70,6 @@ export default function ContaHistorico() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }

@@ -207,16 +207,16 @@ test("US1 e US2: montar a cena, copiar o prompt, pronta, mudou/remontar, rascunh
   const tabela = page.getByRole("table", { name: "Cenas do perfil" });
   await expect(tabela.getByRole("link", { name: "Achadinhos abre a panela", exact: true })).toBeVisible();
   await expect(tabela.getByRole("link", { name: /\(cópia\)/ })).toHaveCount(0);
+  // spec 024: os filtros valem ao escolher (sem "Filtrar"), viram etiquetas e ficam na URL
   await page.getByLabel("Status", { exact: true }).selectOption("rascunho");
-  await page.getByRole("button", { name: "Filtrar" }).click();
   await expect(tabela.getByText("Nenhuma cena com esses filtros", { exact: false }).or(page.getByText("Nenhuma cena com esses filtros", { exact: false }))).toBeVisible();
   await page.getByLabel("Status", { exact: true }).selectOption("pronta");
   await page.getByLabel("Avatar", { exact: true }).selectOption({ label: "Achadinhos" });
-  await page.getByRole("button", { name: "Filtrar" }).click();
+  await expect(page).toHaveURL(/status=pronta/);
+  await expect(page.getByRole("button", { name: "Remover filtro: Avatar" })).toBeVisible();
   await expect(tabela.getByRole("link", { name: "Achadinhos abre a panela", exact: true })).toBeVisible();
   await page.getByLabel("Mostrar arquivadas").click();
-  await page.getByLabel("Status", { exact: true }).selectOption("");
-  await page.getByRole("button", { name: "Filtrar" }).click();
+  await page.getByRole("button", { name: "Remover filtro: Status" }).click();
   await expect(tabela.getByRole("link", { name: /\(cópia\)/ })).toBeVisible();
 
   // 390 px sem rolagem horizontal na cena
@@ -391,7 +391,6 @@ test("US5: proposta de cena do agente → Aceitar → Salvar → cena em rascunh
   await page.goto(`/app/perfis/${perfilId}?aba=cenas`);
   await expect(page.getByRole("table", { name: "Cenas do perfil" }).getByRole("link", { name: nome })).toBeVisible();
   await page.goto("/app/propostas");
-  await page.getByLabel("Situação").selectOption("aplicada");
-  await page.getByRole("button", { name: "Filtrar" }).click();
+  await page.getByLabel("Situação", { exact: true }).selectOption("aplicada");
   await expect(page.getByRole("row").filter({ hasText: "Abertura com a Achadinhos" }).getByText("Aplicada")).toBeVisible();
 });

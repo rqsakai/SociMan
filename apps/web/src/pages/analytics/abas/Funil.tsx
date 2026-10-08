@@ -16,6 +16,7 @@ import type { OpcoesGrafico } from "@/components/analytics/echarts";
 import { Grafico } from "@/components/analytics/Grafico";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
+import { Page } from "@/components/shell";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { formatIdadeHoras, formatNumero, useAnalytics, type AnalyticsEtapaFunil, type AnalyticsFunil, type EstadoFiltroAnalytics } from "@/lib/analytics";
@@ -168,7 +169,7 @@ export function Funil({ estado }: { estado: EstadoFiltroAnalytics }) {
   const verCusto = dono && custo !== null && custo !== undefined;
 
   return (
-    <div className="flex flex-col gap-4">
+    <Page>
       <div className="flex flex-wrap items-end gap-3">
         <Field label="Patamar de views em 24 h" className="w-full sm:w-56">
           {({ id }) => (
@@ -247,6 +248,6 @@ export function Funil({ estado }: { estado: EstadoFiltroAnalytics }) {
           </CardAnalytics>
         )}
       </div>
-    </div>
+    </Page>
   );
 }

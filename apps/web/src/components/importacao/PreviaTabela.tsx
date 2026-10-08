@@ -12,10 +12,11 @@
  * Membro (`podeEscolher = false`) vê tudo sem os controles (na prática, só o dono gera a prévia).
  */
 import { createContext, useContext, useMemo, useState } from "react";
-import { DataTable, dataTableColumns } from "@/components/data-table";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
-import { NativeSelect } from "@/components/ui/field";
+import { Field, NativeSelect } from "@/components/ui/field";
+import { useFiltroUrl } from "@/lib/filtros";
 import {
   arquivoCurto,
   escolhaEfetiva,
@@ -191,9 +192,18 @@ export function PreviaTabela({
   personaPerfil: string;
   onPersonaPerfil: (slug: string) => void;
 }) {
-  const [perfil, setPerfil] = useState("");
-  const [tipo, setTipo] = useState("");
-  const [situacao, setSituacao] = useState("");
+  // filtros na URL (spec 024)
+  const [params, set] = useFiltroUrl();
+  const perfil = params.get("perfil") ?? "";
+  const tipo = params.get("tipo") ?? "";
+  const situacao = params.get("situacao") ?? "";
+  const ativos: FiltroAtivo[] = [
+    ...(perfil ? [{ chave: "perfil", rotulo: "Perfil", valor: perfil, limpar: () => set({ perfil: null }) }] : []),
+    ...(tipo ? [{ chave: "tipo", rotulo: "Tipo", valor: tipoLabel[tipo as TipoItem] ?? tipo, limpar: () => set({ tipo: null }) }] : []),
+    ...(situacao
+      ? [{ chave: "situacao", rotulo: "Situação", valor: situacaoLabel[situacao as Situacao] ?? situacao, limpar: () => set({ situacao: null }) }]
+      : []),
+  ];
 
   const perfis = useMemo(() => [...new Set(previa.itens.map((i) => i.perfilSlug).filter((s): s is string => Boolean(s)))].sort(), [previa.itens]);
   const tipos = useMemo(() => [...new Set(previa.itens.map((i) => i.tipo))], [previa.itens]);
@@ -214,7 +224,7 @@ export function PreviaTabela({
               <dt className="text-xs text-muted-foreground">{rotulo}</dt>
               <dd className="text-xl font-semibold tabular-nums">{previa.contagens[chave]}</dd>
               {sit && previa.contagens[chave] > 0 && (
-                <button type="button" className="text-xs text-primary underline-offset-2 hover:underline" onClick={() => setSituacao(sit)}>
+                <button type="button" className="text-xs text-primary underline-offset-2 hover:underline" onClick={() => set({ situacao: sit })}>
                   ver
                 </button>
               )}
@@ -279,32 +289,50 @@ export function PreviaTabela({
           search={{ label: "Buscar item", placeholder: "Buscar item" }}
           emptyMessage="Nenhum item com estes filtros"
           toolbar={
-            <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:grid-cols-3">
-              <NativeSelect aria-label="Filtrar por perfil" value={perfil} onChange={(e) => setPerfil(e.target.value)}>
-                <option value="">Todos os perfis</option>
-                {perfis.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </NativeSelect>
-              <NativeSelect aria-label="Filtrar por tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-                <option value="">Todos os tipos</option>
-                {tipos.map((t) => (
-                  <option key={t} value={t}>
-                    {tipoLabel[t as TipoItem]}
-                  </option>
-                ))}
-              </NativeSelect>
-              <NativeSelect aria-label="Filtrar por situação" value={situacao} onChange={(e) => setSituacao(e.target.value)}>
-                <option value="">Todas as situações</option>
-                {(Object.keys(situacaoLabel) as Situacao[]).map((s) => (
-                  <option key={s} value={s}>
-                    {situacaoLabel[s]}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
+            <FilterBar
+              principais={
+                <>
+                  <Field label="Perfil" className="w-full sm:w-44">
+                    {({ id }) => (
+                      <NativeSelect id={id} aria-label="Filtrar por perfil" value={perfil} onChange={(e) => set({ perfil: e.target.value })}>
+                        <option value="">Todos os perfis</option>
+                        {perfis.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                  <Field label="Tipo" className="w-full sm:w-44">
+                    {({ id }) => (
+                      <NativeSelect id={id} aria-label="Filtrar por tipo" value={tipo} onChange={(e) => set({ tipo: e.target.value })}>
+                        <option value="">Todos os tipos</option>
+                        {tipos.map((t) => (
+                          <option key={t} value={t}>
+                            {tipoLabel[t as TipoItem]}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                  <Field label="Situação" className="w-full sm:w-44">
+                    {({ id }) => (
+                      <NativeSelect id={id} aria-label="Filtrar por situação" value={situacao} onChange={(e) => set({ situacao: e.target.value })}>
+                        <option value="">Todas as situações</option>
+                        {(Object.keys(situacaoLabel) as Situacao[]).map((s) => (
+                          <option key={s} value={s}>
+                            {situacaoLabel[s]}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                </>
+              }
+              ativos={ativos}
+              onLimpar={() => set({ perfil: null, tipo: null, situacao: null })}
+            />
           }
         />
 

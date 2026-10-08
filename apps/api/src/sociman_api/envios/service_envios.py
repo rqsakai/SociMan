@@ -23,7 +23,7 @@ from sociman_api import history, imaging
 from sociman_api.auth.deps import Actor
 from sociman_api.canais.models import CanalDireito, CanalFonte, VideoFonte
 from sociman_api.cortes import service as cortes_service
-from sociman_api.cortes.models import Corte
+from sociman_api.cortes.models import Corte, CorteStatus
 from sociman_api.envios import progresso, schemas, service_padroes
 from sociman_api.envios.models import DireitoEnvio, Envio, EnvioOrigem, EnvioStatus
 from sociman_api.errors import ApiError
@@ -88,6 +88,7 @@ def envios_out(db: Session, envios: Sequence[Envio]) -> list[schemas.Envio]:
     canais = {c.id: c for c in db.scalars(select(CanalFonte).where(CanalFonte.id.in_(canal_ids)))} \
         if canal_ids else {}
     users = user_refs(db, [e.created_by for e in envios])
+    resumos = _cortes_resumo(db, [e.id for e in envios])
     out = []
     for e in envios:
         video = videos.get(e.video_fonte_id) if e.video_fonte_id else None
@@ -112,8 +113,28 @@ def envios_out(db: Session, envios: Sequence[Envio]) -> list[schemas.Envio]:
             sent_at=e.sent_at, finished_at=e.finished_at, archived=e.archived,
             version=e.version, created_at=e.created_at,
             created_by=users.get(e.created_by) if e.created_by else None,
+            cortes_resumo=resumos.get(e.id),
         ))
     return out
+
+
+def _cortes_resumo(db: Session, envio_ids: list[uuid.UUID]) -> dict[uuid.UUID, schemas.CortesResumo]:
+    """Contagem dos clipes por geração (spec 024, R8), numa consulta só; sem corte, sem chave."""
+    if not envio_ids:
+        return {}
+    ativo = Corte.archived_at.is_(None)
+    rows = db.execute(
+        select(
+            Corte.envio_id,
+            func.count().filter(ativo, Corte.status.in_(
+                (CorteStatus.na_fila, CorteStatus.processando, CorteStatus.pronto))),
+            func.count().filter(ativo, Corte.status == CorteStatus.revisao),
+            func.count().filter(ativo, Corte.status == CorteStatus.falhou),
+            func.count().filter(Corte.archived_at.is_not(None)),
+        ).where(Corte.envio_id.in_(envio_ids)).group_by(Corte.envio_id)
+    )
+    return {envio_id: schemas.CortesResumo(aceitos=a, pendentes=p, falhou=f, arquivados=arq)
+            for envio_id, a, p, f, arq in rows}
 
 
 def envio_out(db: Session, envio: Envio) -> schemas.Envio:

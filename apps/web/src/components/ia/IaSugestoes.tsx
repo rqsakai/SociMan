@@ -42,6 +42,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ProibidasMarcadas } from "../guia/ProibidasMarcadas";
 import { IaBotao } from "./IaBotao";
+import { EmptyState } from "@/components/shell";
 
 interface Item {
   id: string;
@@ -283,7 +284,7 @@ export function IaSugestoes({ tipo, perfilId, alvo, value, onSave, disabled, onR
         {s.chamadas.length > 0 && (
           <div className="space-y-3 border-t pt-3">
             {s.itens.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhuma sugestão nova desta vez.</p>
+              <EmptyState titulo="Nenhuma sugestão nova desta vez." className="py-4" />
             ) : (
               <ul aria-label="Sugestões" className="space-y-1.5">
                 {s.itens.map((item) => {

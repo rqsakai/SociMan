@@ -17,6 +17,7 @@ import type { OpcoesGrafico } from "@/components/analytics/echarts";
 import { Grafico } from "@/components/analytics/Grafico";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
+import { Page } from "@/components/shell";
 import { notaSemVideo } from "@/components/studio/fonteAnalytics";
 import { Field, NativeSelect } from "@/components/ui/field";
 import {
@@ -170,7 +171,7 @@ export function Curvas({ estado }: { estado: EstadoFiltroAnalytics }) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <Page>
       {notaSemVideo(dados.data?.contexto) && (
         <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground" data-nota-studio>
           {notaSemVideo(dados.data?.contexto)}
@@ -272,6 +273,6 @@ export function Curvas({ estado }: { estado: EstadoFiltroAnalytics }) {
           />
         </CardAnalytics>
       </div>
-    </div>
+    </Page>
   );
 }

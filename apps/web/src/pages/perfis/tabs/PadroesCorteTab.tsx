@@ -4,6 +4,7 @@ import { Loader2, Save } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { Page } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -76,73 +77,75 @@ export function PadroesCorteTab({ perfil, contas }: { perfil: Perfil; contas: Co
   const contasAtivas = contas.filter((c) => !c.archived);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
-      <Card className="shadow-card">
-        <CardHeader>
-          <CardTitle>
-            <h2>Padrões de corte</h2>
-          </CardTitle>
-          <CardDescription className="flex flex-wrap items-center gap-2">
-            Preenchem toda geração de cortes deste perfil no SociShorts; dá para ajustar geração a geração.
-            {p && (p.version === 0 ? <Badge variant="secondary">Padrão (ainda não salvo)</Badge> : <Badge variant="secondary">Versão {p.version}</Badge>)}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {padroes.isError && <ApiErrorAlert error={padroes.error} />}
-          {!config ? (
-            <Skeleton className="h-64 w-full" />
-          ) : (
-            <form onSubmit={(e) => void submit(e)} className="space-y-4" noValidate>
-              <ConfigCampos value={config} onChange={setConfig} errors={errors} disabled={saving || perfil.archived} />
-              <Field label="Conta padrão da postagem" error={errors.contaPadraoId} hint="A conta que já vem escolhida ao preparar a postagem do corte.">
-                {({ id, describedBy, invalid }) => (
-                  <NativeSelect id={id} value={contaId} aria-invalid={invalid} aria-describedby={describedBy} disabled={saving || perfil.archived} onChange={(e) => setContaId(e.target.value)}>
-                    <option value="">Nenhuma</option>
-                    {contasAtivas.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {contaPlatformText(c)} @{c.handle}
-                      </option>
-                    ))}
-                  </NativeSelect>
-                )}
-              </Field>
-              <p className="text-xs text-muted-foreground">O gancho automático do SociShorts fica sempre desligado: o gancho vem do kit.</p>
-              {error !== null && <ApiErrorAlert error={error} onReload={() => void refresh()} />}
-              <Button type="submit" disabled={saving || perfil.archived} aria-busy={saving}>
-                {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
-                Salvar padrões
-              </Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
-      <Card className="shadow-card">
-        <CardHeader>
-          <HistoryHeading>Histórico dos padrões</HistoryHeading>
-        </CardHeader>
-        <CardContent>
-          {versions.isError && <ApiErrorAlert error={versions.error} />}
-          {versions.data && (
-            <VersionHistory
-              versions={versions.data.items}
-              labels={padroesFieldLabel}
-              formatValue={(field, value) =>
-                field === "conta_padrao_id" && typeof value === "string"
-                  ? (() => {
-                      const c = contas.find((x) => x.id === value);
-                      return c ? `${contaPlatformText(c)} @${c.handle}` : value.slice(0, 8);
-                    })()
-                  : formatPadroesValue(field, value)
-              }
-              onRevert={async (toVersion) => {
-                await api.padroesCorte.revert(perfil.id, p?.version ?? 0, toVersion);
-                await refresh();
-              }}
-              onReload={refresh}
-            />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <Page>
+      <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle>
+              <h2>Padrões de corte</h2>
+            </CardTitle>
+            <CardDescription className="flex flex-wrap items-center gap-2">
+              Preenchem toda geração de cortes deste perfil no SociShorts; dá para ajustar geração a geração.
+              {p && (p.version === 0 ? <Badge variant="secondary">Padrão (ainda não salvo)</Badge> : <Badge variant="secondary">Versão {p.version}</Badge>)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {padroes.isError && <ApiErrorAlert error={padroes.error} />}
+            {!config ? (
+              <Skeleton className="h-64 w-full" />
+            ) : (
+              <form onSubmit={(e) => void submit(e)} className="space-y-4" noValidate>
+                <ConfigCampos value={config} onChange={setConfig} errors={errors} disabled={saving || perfil.archived} />
+                <Field label="Conta padrão da postagem" error={errors.contaPadraoId} hint="A conta que já vem escolhida ao preparar a postagem do corte.">
+                  {({ id, describedBy, invalid }) => (
+                    <NativeSelect id={id} value={contaId} aria-invalid={invalid} aria-describedby={describedBy} disabled={saving || perfil.archived} onChange={(e) => setContaId(e.target.value)}>
+                      <option value="">Nenhuma</option>
+                      {contasAtivas.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {contaPlatformText(c)} @{c.handle}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  )}
+                </Field>
+                <p className="text-xs text-muted-foreground">O gancho automático do SociShorts fica sempre desligado: o gancho vem do kit.</p>
+                {error !== null && <ApiErrorAlert error={error} onReload={() => void refresh()} />}
+                <Button type="submit" disabled={saving || perfil.archived} aria-busy={saving}>
+                  {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                  Salvar padrões
+                </Button>
+              </form>
+            )}
+          </CardContent>
+        </Card>
+        <Card className="shadow-card">
+          <CardHeader>
+            <HistoryHeading>Histórico dos padrões</HistoryHeading>
+          </CardHeader>
+          <CardContent>
+            {versions.isError && <ApiErrorAlert error={versions.error} />}
+            {versions.data && (
+              <VersionHistory
+                versions={versions.data.items}
+                labels={padroesFieldLabel}
+                formatValue={(field, value) =>
+                  field === "conta_padrao_id" && typeof value === "string"
+                    ? (() => {
+                        const c = contas.find((x) => x.id === value);
+                        return c ? `${contaPlatformText(c)} @${c.handle}` : value.slice(0, 8);
+                      })()
+                    : formatPadroesValue(field, value)
+                }
+                onRevert={async (toVersion) => {
+                  await api.padroesCorte.revert(perfil.id, p?.version ?? 0, toVersion);
+                  await refresh();
+                }}
+                onReload={refresh}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </Page>
   );
 }

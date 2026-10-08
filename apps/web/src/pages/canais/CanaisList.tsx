@@ -3,18 +3,19 @@ import { CircleAlert, Gauge, Loader2, Plus, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { DataTable, dataTableColumns } from "@/components/data-table";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
 import { PageHeading } from "@/components/PageHeading";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { NativeSelect } from "@/components/ui/field";
+import { Field, NativeSelect } from "@/components/ui/field";
 import { CanalForm } from "../../components/canais/CanalForm";
 import { DireitoBadge } from "../../components/canais/DireitoBadge";
 import { ProgressBar } from "../../components/marca/CorteStatusBadge";
 import { api } from "../../lib/api";
 import { canaisKey, formatCount, syncText, type CanalFonte } from "../../lib/canais";
+import { useFiltroUrl } from "../../lib/filtros";
 import { integracoesQuery, youtubeAviso } from "../../lib/integracoes";
 import { formatTime } from "../../lib/tz";
 import { usePerfisAtivos } from "../../lib/usePerfis";
@@ -96,27 +97,41 @@ const busySync = (c: CanalFonte) => c.sync.status === "pendente" || c.sync.statu
 
 // /app/fontes (spec 006, US1; T031): canais-fonte com avatar, inscritos, vídeos, selo de direito
 // (aviso em "Sem acordo"), perfis e o estado da busca; "Adicionar canal"; a cota do YouTube (T073).
-// A lista se atualiza a cada 5 s enquanto algum canal está buscando vídeos.
+// A lista se atualiza a cada 5 s enquanto algum canal está buscando vídeos. Filtros na URL (spec 024):
+// `q` (título ou @, no servidor), `perfil` e `arquivados`.
 export default function CanaisList() {
   usePageMeta({ title: "Canais-fonte" });
   const [adding, setAdding] = useState(false);
-  const [perfilId, setPerfilId] = useState("");
-  const [archived, setArchived] = useState(false);
+  const [filtro, set] = useFiltroUrl();
+  const q = filtro.get("q") ?? "";
+  const perfilId = filtro.get("perfil") ?? "";
+  const archived = filtro.get("arquivados") === "1";
   const perfis = usePerfisAtivos();
   const integracoes = useQuery(integracoesQuery);
   const aviso = youtubeAviso(integracoes.data);
 
-  const params = useMemo(() => ({ archived, ...(perfilId ? { perfilId } : {}) }), [archived, perfilId]);
+  const params = useMemo(
+    () => ({ archived, ...(perfilId ? { perfilId } : {}), ...(q ? { q } : {}) }),
+    [archived, perfilId, q],
+  );
   const canais = useQuery({
     queryKey: canaisKey(params),
     queryFn: () => api.canais.list(params),
-    refetchInterval: (q) => (q.state.data?.items.some(busySync) ? 5000 : false),
+    placeholderData: (previous) => previous,
+    refetchInterval: (query) => (query.state.data?.items.some(busySync) ? 5000 : false),
   });
+
+  const perfilNome = perfis.data?.find((p) => p.id === perfilId)?.name;
+  const ativos: FiltroAtivo[] = [
+    ...(q ? [{ chave: "q", rotulo: "Busca", valor: q, limpar: () => set({ q: null }) }] : []),
+    ...(perfilId ? [{ chave: "perfil", rotulo: "Perfil", valor: perfilNome ?? "…", limpar: () => set({ perfil: null }) }] : []),
+    ...(archived ? [{ chave: "arquivados", rotulo: "Só arquivados", valor: "sim", limpar: () => set({ arquivados: null }) }] : []),
+  ];
 
   const cota = integracoes.data?.cotaYoutube;
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <PageHeading
         title="Canais-fonte"
         description="Canais do YouTube de onde saem os cortes. O SociMan busca todos os vídeos e recomenda quais cortar."
@@ -165,30 +180,51 @@ export default function CanaisList() {
             data={canais.data?.items}
             loading={canais.isPending}
             getRowId={(c) => c.id}
-            search={{ placeholder: "Filtrar canais" }}
             initialSorting={[{ id: "title", desc: false }]}
-            emptyMessage={archived ? "Nenhum canal arquivado." : "Nenhum canal cadastrado. Clique em \"Adicionar canal\"."}
+            emptyMessage={
+              q || perfilId
+                ? "Nenhum canal com estes filtros."
+                : archived
+                  ? "Nenhum canal arquivado."
+                  : "Nenhum canal cadastrado. Clique em \"Adicionar canal\"."
+            }
             toolbar={
-              <>
-                <NativeSelect aria-label="Perfil" value={perfilId} onChange={(e) => setPerfilId(e.target.value)} className="w-48">
-                  <option value="">Todos os perfis</option>
-                  {perfis.data?.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </NativeSelect>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" className="size-4 accent-primary" checked={archived} onChange={(e) => setArchived(e.target.checked)} />
-                  Só arquivados
-                </label>
-              </>
+              <FilterBar
+                busca={{ valor: q, onChange: (v) => set({ q: v || null }, { replace: true }), placeholder: "Título ou @ do canal" }}
+                principais={
+                  <>
+                    <Field label="Perfil" className="w-full sm:w-48">
+                      {({ id }) => (
+                        <NativeSelect id={id} value={perfilId} onChange={(e) => set({ perfil: e.target.value || null })}>
+                          <option value="">Todos os perfis</option>
+                          {perfis.data?.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.name}
+                            </option>
+                          ))}
+                        </NativeSelect>
+                      )}
+                    </Field>
+                    <label className="flex h-9 items-center gap-2 text-sm font-medium">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-primary"
+                        checked={archived}
+                        onChange={(e) => set({ arquivados: e.target.checked ? "1" : null })}
+                      />
+                      Só arquivados
+                    </label>
+                  </>
+                }
+                ativos={ativos}
+                onLimpar={() => set({ q: null, perfil: null, arquivados: null })}
+              />
             }
           />
         )}
       </HeaderCard>
 
       <CanalForm open={adding} onOpenChange={setAdding} perfilIdInicial={perfilId || undefined} />
-    </div>
+    </Page>
   );
 }

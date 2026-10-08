@@ -5,6 +5,7 @@ import { activeFiles, archivedFiles, type Asset, type AssetFile } from "../../li
 import { AssetFileCard, type RunAction } from "./AssetFileCard";
 import { reorderFiles, useNativeDrag } from "./PosesGrid";
 import { moveItem } from "./ReorderButtons";
+import { EmptyState } from "@/components/shell";
 
 const NO_LOOK = "Sem look";
 
@@ -38,7 +39,7 @@ export function LooksSection({ asset, run }: { asset: Asset; run: RunAction }) {
 
   return (
     <div className="space-y-5">
-      {files.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma imagem de referência ainda.</p>}
+      {files.length === 0 && <EmptyState titulo="Nenhuma imagem de referência ainda." className="py-4" />}
       {[...groups.entries()].map(([look, group]) => (
         <section key={look} aria-label={`Look ${look}`} className="space-y-2">
           <h3 className="text-sm font-semibold">

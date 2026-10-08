@@ -27,13 +27,13 @@ import {
   type EstadoFiltroAnalytics,
   type Medida,
 } from "@/lib/analytics";
+import { Page } from "@/components/shell";
 import { contasStudioDe, fonteDe, fonteLabel, NOTA_FUSO_STUDIO, notaSemVideo } from "@/components/studio/fonteAnalytics";
-import { parseDateKey } from "@/lib/tz";
+import { formatDateKey, parseDateKey } from "@/lib/tz";
 import { CardAtividade } from "./Publico";
 
 const compactoInteiro = (v: number) => formatCompacto(Math.round(v));
 const NOTA_FUSO = "Horário de Brasília (São Paulo).";
-const dataBr = (dia: string) => dia.split("-").reverse().join("/");
 // 0 = domingo (o `getUTCDay`), só para contar as semanas do calendário
 const diaDaSemana = (dia: string) => {
   const d = parseDateKey(dia);
@@ -105,7 +105,7 @@ function calendario(dados: AnalyticsQuandoPostar | undefined, tema: TemaGraficos
   const temStudio = dias.some((d) => fonteDe(d) !== "coletado");
   const tabela: DadosTabela = {
     colunas: [
-      { titulo: "Dia", formatar: (v) => dataBr(String(v)) },
+      { titulo: "Dia", formatar: (v) => formatDateKey(String(v)) },
       { titulo: "Posts publicados", numerica: true },
       { titulo: "Views ganhas", numerica: true },
       ...(temStudio ? [{ titulo: "Fonte" }] : []),
@@ -114,7 +114,7 @@ function calendario(dados: AnalyticsQuandoPostar | undefined, tema: TemaGraficos
   };
   const posts = dias.reduce((t, d) => t + d.posts, 0);
   const views = dias.reduce((t, d) => t + d.views, 0);
-  return { opcoes, tabela, altura, largura, vazio: posts === 0 && views === 0, vertical, temStudio, descricao: `Calendário de ${dataBr(de)} a ${dataBr(ate)}: ${formatNumero(posts)} posts e ${formatNumero(views)} views ganhas.` };
+  return { opcoes, tabela, altura, largura, vazio: posts === 0 && views === 0, vertical, temStudio, descricao: `Calendário de ${formatDateKey(de)} a ${formatDateKey(ate)}: ${formatNumero(posts)} posts e ${formatNumero(views)} views ganhas.` };
 }
 
 const tooltipCalendario = (itens: ItemTooltip[]) => {
@@ -123,7 +123,7 @@ const tooltipCalendario = (itens: ItemTooltip[]) => {
   if (!v) return null;
   const fonte = item.fonte ?? "coletado";
   return {
-    titulo: dataBr(v[0]),
+    titulo: formatDateKey(v[0]),
     linhas: [
       { rotulo: "Views ganhas", valor: formatNumero(v[1]) },
       { rotulo: "Posts publicados", valor: formatNumero(v[2]) },
@@ -151,90 +151,92 @@ export function QuandoPostar({ estado }: { estado: EstadoFiltroAnalytics }) {
   const temAudiencia = audiencia.some((c) => (c.valor ?? 0) > 0);
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      {notaSemVideo(d?.contexto) && (
-        <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground lg:col-span-2" data-nota-studio>
-          {notaSemVideo(d?.contexto)}
-        </p>
-      )}
-      <CardAnalytics
-        titulo="Desempenho por horário de publicação"
-        comoLer={
-          <>
-            cada célula é a {rotuloMedida.toLowerCase()} dos posts publicados naquele dia da semana e hora; o número é a quantidade de posts. Quanto mais forte a cor, melhor.
-            Célula esmaecida: menos de {minimo} posts. {NOTA_FUSO}
-            {aguardando > 0 && ` Aguardando o marco (fora do mapa): ${formatNumero(aguardando)}.`}
-          </>
-        }
-        carregando={carregando}
-        erro={dados.error}
-        vazio={temPublicacao ? null : aguardando > 0 ? `Nenhum post do período chegou ao marco (${formatNumero(aguardando)} aguardando).` : "Nenhum post publicado neste período."}
-        onAmpliarPeriodo={estado.ampliarPeriodo}
-        tabela={mapaTabela(publicacao, rotuloMedida, "posts")}
-        largo
-      >
-        <MapaSemana
-          celulas={publicacao}
-          rotuloValor={rotuloMedida}
-          rotuloN="posts"
-          minimo={minimo}
-          formatar={compactoInteiro}
-          descricao={`Mapa de calor da ${rotuloMedida.toLowerCase()} por dia da semana e hora de publicação, horário de Brasília.`}
-        />
-      </CardAnalytics>
-      <CardAnalytics
-        titulo="Audiência por hora"
-        comoLer={
-          <>
-            views ganhas em cada hora do dia, somando todos os vídeos: mostra quando o público assiste; o número é a quantidade de vídeos com ganho na célula.{" "}
-            {semHora > 0 && (
-              <span data-sem-hora>
-                {formatNumero(semHora)} views vieram de intervalos de mais de 3 h entre fotos e ficaram sem hora atribuída.{" "}
-              </span>
-            )}
-            {NOTA_FUSO}
-          </>
-        }
-        carregando={carregando}
-        erro={dados.error}
-        vazio={temAudiencia ? null : semHora > 0 ? `Nenhuma view com hora atribuída neste período (${formatNumero(semHora)} sem hora).` : "Nenhuma view ganha neste período."}
-        onAmpliarPeriodo={estado.ampliarPeriodo}
-        tabela={mapaTabela(audiencia, "Views ganhas", "vídeos")}
-        largo
-      >
-        <MapaSemana
-          celulas={audiencia}
-          rotuloValor="Views ganhas"
-          rotuloN="vídeos"
-          minimo={minimo}
-          formatar={compactoInteiro}
-          descricao="Mapa de calor das views ganhas por dia da semana e hora do dia, horário de Brasília."
-        />
-      </CardAnalytics>
-      {d && "atividadeSeguidores" in d && (
-        <CardAtividade titulo="Seguidores on-line (TikTok Studio)" contas={atividadeSeguidoresDe(d)} carregando={carregando} erro={dados.error} estado={estado} />
-      )}
-      <CardAnalytics
-        titulo="Calendário"
-        comoLer={
-          <>
-            {cal.vertical ? "um quadrado por dia: a cor são as views ganhas no dia e o número, os posts publicados." : "um quadrado por dia: a cor são as views ganhas no dia; os posts estão no tooltip e na tabela."}
-            {cal.temStudio && ` Contorno tracejado: views importadas do Studio. ${NOTA_FUSO_STUDIO}`}
-          </>
-        }
-        carregando={carregando}
-        erro={dados.error}
-        vazio={cal.vazio ? "Nenhum post nem view neste período." : null}
-        onAmpliarPeriodo={estado.ampliarPeriodo}
-        tabela={cal.tabela}
-        largo={!cal.vertical}
-      >
-        <div className="-mx-1 overflow-x-auto px-1">
-          <div style={{ minWidth: cal.largura || undefined }}>
-            <Grafico opcoes={cal.opcoes} descricao={cal.descricao} altura={cal.altura} tooltip={tooltipCalendario} />
+    <Page>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {notaSemVideo(d?.contexto) && (
+          <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground lg:col-span-2" data-nota-studio>
+            {notaSemVideo(d?.contexto)}
+          </p>
+        )}
+        <CardAnalytics
+          titulo="Desempenho por horário de publicação"
+          comoLer={
+            <>
+              cada célula é a {rotuloMedida.toLowerCase()} dos posts publicados naquele dia da semana e hora; o número é a quantidade de posts. Quanto mais forte a cor, melhor.
+              Célula esmaecida: menos de {minimo} posts. {NOTA_FUSO}
+              {aguardando > 0 && ` Aguardando o marco (fora do mapa): ${formatNumero(aguardando)}.`}
+            </>
+          }
+          carregando={carregando}
+          erro={dados.error}
+          vazio={temPublicacao ? null : aguardando > 0 ? `Nenhum post do período chegou ao marco (${formatNumero(aguardando)} aguardando).` : "Nenhum post publicado neste período."}
+          onAmpliarPeriodo={estado.ampliarPeriodo}
+          tabela={mapaTabela(publicacao, rotuloMedida, "posts")}
+          largo
+        >
+          <MapaSemana
+            celulas={publicacao}
+            rotuloValor={rotuloMedida}
+            rotuloN="posts"
+            minimo={minimo}
+            formatar={compactoInteiro}
+            descricao={`Mapa de calor da ${rotuloMedida.toLowerCase()} por dia da semana e hora de publicação, horário de Brasília.`}
+          />
+        </CardAnalytics>
+        <CardAnalytics
+          titulo="Audiência por hora"
+          comoLer={
+            <>
+              views ganhas em cada hora do dia, somando todos os vídeos: mostra quando o público assiste; o número é a quantidade de vídeos com ganho na célula.{" "}
+              {semHora > 0 && (
+                <span data-sem-hora>
+                  {formatNumero(semHora)} views vieram de intervalos de mais de 3 h entre fotos e ficaram sem hora atribuída.{" "}
+                </span>
+              )}
+              {NOTA_FUSO}
+            </>
+          }
+          carregando={carregando}
+          erro={dados.error}
+          vazio={temAudiencia ? null : semHora > 0 ? `Nenhuma view com hora atribuída neste período (${formatNumero(semHora)} sem hora).` : "Nenhuma view ganha neste período."}
+          onAmpliarPeriodo={estado.ampliarPeriodo}
+          tabela={mapaTabela(audiencia, "Views ganhas", "vídeos")}
+          largo
+        >
+          <MapaSemana
+            celulas={audiencia}
+            rotuloValor="Views ganhas"
+            rotuloN="vídeos"
+            minimo={minimo}
+            formatar={compactoInteiro}
+            descricao="Mapa de calor das views ganhas por dia da semana e hora do dia, horário de Brasília."
+          />
+        </CardAnalytics>
+        {d && "atividadeSeguidores" in d && (
+          <CardAtividade titulo="Seguidores on-line (TikTok Studio)" contas={atividadeSeguidoresDe(d)} carregando={carregando} erro={dados.error} estado={estado} />
+        )}
+        <CardAnalytics
+          titulo="Calendário"
+          comoLer={
+            <>
+              {cal.vertical ? "um quadrado por dia: a cor são as views ganhas no dia e o número, os posts publicados." : "um quadrado por dia: a cor são as views ganhas no dia; os posts estão no tooltip e na tabela."}
+              {cal.temStudio && ` Contorno tracejado: views importadas do Studio. ${NOTA_FUSO_STUDIO}`}
+            </>
+          }
+          carregando={carregando}
+          erro={dados.error}
+          vazio={cal.vazio ? "Nenhum post nem view neste período." : null}
+          onAmpliarPeriodo={estado.ampliarPeriodo}
+          tabela={cal.tabela}
+          largo={!cal.vertical}
+        >
+          <div className="-mx-1 overflow-x-auto px-1">
+            <div style={{ minWidth: cal.largura || undefined }}>
+              <Grafico opcoes={cal.opcoes} descricao={cal.descricao} altura={cal.altura} tooltip={tooltipCalendario} />
+            </div>
           </div>
-        </div>
-      </CardAnalytics>
-    </div>
+        </CardAnalytics>
+      </div>
+    </Page>
   );
 }

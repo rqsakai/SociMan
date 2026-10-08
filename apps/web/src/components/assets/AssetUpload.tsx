@@ -3,6 +3,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { Button } from "@/components/ui/button";
+import { FileField } from "@/components/ui/file-field";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { checkImageFile, fileRule, uploadAssetFile, type AssetTipo, type FileFields, type FileRole } from "../../lib/assets";
@@ -29,6 +30,8 @@ export function AssetUpload({
   onUploaded: () => Promise<void>;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  // zerar o input pela ref exige trocar a key do FileField (o texto volta a "Nenhum arquivo escolhido")
+  const [campoKey, setCampoKey] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [look, setLook] = useState("");
   const [uso, setUso] = useState("");
@@ -74,6 +77,7 @@ export function AssetUpload({
       setQuandoUsar("");
       setUso("");
       if (inputRef.current) inputRef.current.value = "";
+      setCampoKey((k) => k + 1);
       await onUploaded();
     } catch (err) {
       setError(err);
@@ -88,10 +92,10 @@ export function AssetUpload({
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Imagem" error={fileError ?? undefined} hint={rule.hint}>
           {({ id, describedBy, invalid }) => (
-            <Input
+            <FileField
+              key={campoKey}
               ref={inputRef}
               id={id}
-              type="file"
               accept={rule.accepted.join(",")}
               disabled={disabled || busy}
               aria-invalid={invalid}

@@ -177,6 +177,16 @@ class Selecionado(CamelModel):
     envio_id: UUID
 
 
+class TemaCasado(CamelModel):
+    """Spec 024 (R9): um tema da taxonomia do perfil que casou com o vídeo-fonte."""
+
+    tema_id: UUID
+    nome: str
+    pontos: float  # a do tema × 20 (a contribuição isolada)
+    acao: Literal["ampliar", "cortar"] | None
+    decisivo: bool  # o que decidiu a afinidade
+
+
 class AprendizadoAfinidade(CamelModel):
     """Spec 023 (R9): a afinidade do vídeo-fonte com o perfil escolhido (só com `perfilId`)."""
 
@@ -185,6 +195,7 @@ class AprendizadoAfinidade(CamelModel):
     tema_nome: str | None
     cortado: bool
     motivo: str | None  # null se a afinidade não for o componente principal
+    temas: list[TemaCasado] = Field(default_factory=list)  # spec 024: o decisivo primeiro
 
 
 class VideoFonte(CamelModel):
@@ -211,11 +222,19 @@ class VideoFonte(CamelModel):
     afinidade: AprendizadoAfinidade | None = None  # spec 023
 
 
+class AfinidadeEstado(CamelModel):
+    """Spec 024 (R9): por que a afinidade está neutra (`motivo` null quando ativa)."""
+
+    ativa: bool
+    motivo: Literal["sem_perfil", "sem_temas", "desatualizada", "neutra"] | None
+
+
 class VideosList(CamelModel):
     items: list[VideoFonte]
     next_cursor: str | None
     total: int
     ocultos_por_tema: int = 0  # spec 023: escondidos por tema cortado (sem `mostrarCortados`)
+    afinidade_estado: AfinidadeEstado | None = None  # spec 024
 
 
 class Metrica(CamelModel):

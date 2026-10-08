@@ -43,7 +43,7 @@ export function UpdatePrompt() {
         <Button
           type="button"
           size="sm"
-          className="tone-primary text-xs font-bold tracking-wide uppercase"
+          variant="band" className="text-xs font-bold tracking-wide uppercase"
           onClick={() => void updateServiceWorker(true)}
         >
           Atualizar

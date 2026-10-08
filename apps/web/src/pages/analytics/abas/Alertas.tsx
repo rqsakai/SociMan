@@ -12,6 +12,7 @@ import { ArrowRight, Info, TrendingUp, TriangleAlert, type LucideIcon } from "lu
 import { Link } from "react-router-dom";
 import { CardAnalytics } from "@/components/analytics/CardAnalytics";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
+import { Page } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { formatIdadeHoras, formatNumero, useAnalytics, type AnalyticsAlerta, type EstadoFiltroAnalytics, type FiltroAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -134,7 +135,7 @@ export function Alertas({ estado }: { estado: EstadoFiltroAnalytics }) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <Page>
       <CardAnalytics
         titulo="Alertas do período"
         comoLer="o que precisa de atenção agora: posts estagnados, contas sem coleta e vínculos a confirmar, além dos destaques positivos. Nada é gravado: o alerta some quando a condição deixa de valer."
@@ -176,6 +177,6 @@ export function Alertas({ estado }: { estado: EstadoFiltroAnalytics }) {
           })}
         </div>
       </CardAnalytics>
-    </div>
+    </Page>
   );
 }

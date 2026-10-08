@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
-import { usePageMeta } from "@/components/shell";
+import { Page, usePageMeta } from "@/components/shell";
 import { CoberturaBarras } from "@/components/studio/CoberturaBarras";
 import { EnvioArquivos } from "@/components/studio/EnvioArquivos";
 import { ListaImportacoes } from "@/components/studio/ListaImportacoes";
@@ -64,7 +64,7 @@ export default function ContaStudio() {
   }
 
   return (
-    <div className="space-y-6">
+    <Page>
       {perfilId && (
         <Link to={`/app/perfis/${perfilId}?aba=contas`} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" aria-hidden="true" />
@@ -163,6 +163,6 @@ export default function ContaStudio() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </Page>
   );
 }

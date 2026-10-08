@@ -193,10 +193,25 @@ def _decode(cursor: str) -> tuple[datetime, uuid.UUID]:
         raise ApiError(400, "validation_error", "cursor: inválido") from exc
 
 
+# Busca sem acento e sem caixa (spec 024, R6): mesma tabela do `translate` das cenas (010), no
+# banco e no termo, para os dois lados serem dobrados igual.
+_ACENTOS = ("áàâãäéèêëíìîïóòôõöúùûüç", "aaaaaeeeeiiiiooooouuuuc")
+_DOBRA = str.maketrans(*_ACENTOS)
+
+
+def _sem_acento(col):
+    return func.translate(func.lower(col), *_ACENTOS)
+
+
+def _termo(q: str) -> str:
+    termo = q.strip().lower().translate(_DOBRA)
+    return termo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 def listar(db: Session, alvo_tipo: AnotacaoAlvo | None, alvo_id: uuid.UUID | None,
            perfil_id: uuid.UUID | None, situacao: AnotacaoSituacao | None,
            tipo: AnotacaoTipo | None, autor_cliente_id: uuid.UUID | None, cursor: str | None,
-           limit: int) -> schemas.AnotacoesPage:
+           limit: int, q: str | None = None) -> schemas.AnotacoesPage:
     stmt = select(Anotacao)
     if alvo_tipo is not None:
         stmt = stmt.where(Anotacao.alvo_tipo == alvo_tipo)
@@ -210,6 +225,8 @@ def listar(db: Session, alvo_tipo: AnotacaoAlvo | None, alvo_id: uuid.UUID | Non
         stmt = stmt.where(Anotacao.tipo == tipo)
     if autor_cliente_id is not None:
         stmt = stmt.where(Anotacao.autor_mcp_cliente_id == autor_cliente_id)
+    if q and q.strip():
+        stmt = stmt.where(_sem_acento(Anotacao.texto).like(f"%{_termo(q)}%", escape="\\"))
     if cursor is not None:
         stmt = stmt.where(tuple_(Anotacao.created_at, Anotacao.id) < _decode(cursor))
     rows = list(db.scalars(stmt.order_by(Anotacao.created_at.desc(), Anotacao.id.desc())

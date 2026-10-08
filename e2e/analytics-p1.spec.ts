@@ -46,6 +46,15 @@ interface Cena {
   url: (extra?: string) => string;
 }
 
+// spec 024: a medida do post fica em "Mais filtros" (Sheet); escolhe e fecha a gaveta.
+async function escolherMedida(page: Page, valor: "h1" | "h24" | "d7"): Promise<void> {
+  await page.getByRole("button", { name: /^Mais filtros/ }).click();
+  const gaveta = page.getByRole("dialog", { name: "Mais filtros" });
+  await gaveta.getByLabel("Medida do post").selectOption(valor);
+  await page.keyboard.press("Escape");
+  await expect(gaveta).toBeHidden();
+}
+
 async function semear(request: APIRequestContext, nome: string): Promise<Cena> {
   const sfx = randomUUID().slice(0, 8);
   const token = await apiToken(request, OWNER.email, OWNER.password);
@@ -225,7 +234,7 @@ test("019 US2: célula do mapa com o valor e o n certos; a medida 1 h muda valor
   await expect(cal.getByRole("img", { name: /Calendário de/ })).toHaveAttribute("aria-label", /7 posts/);
 
   // ---- medida 1 h: a célula de A vira 100 e G sai do "aguardando" ----
-  await page.getByLabel("Medida do post").selectOption("h1");
+  await escolherMedida(page, "h1");
   await expect(page).toHaveURL(/[?&]medida=h1\b/);
   await expect(mapa).not.toContainText("Aguardando o marco");
   await expect(mapa).toContainText("Mediana de views em 1 h");

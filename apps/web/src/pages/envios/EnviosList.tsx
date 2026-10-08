@@ -5,7 +5,7 @@
  * - Aba "Gerações": status ao vivo ("Na fila (2º)", "Processando: 3 clipes prontos", "Importando
  *   4/6", "Pronto", "Sem clipes", "Falhou" com "Tentar de novo"; "Confirmar qualidade" com "Enviar
  *   mesmo assim"/"Descartar"), com polling de 5 s enquanto houver envio em andamento.
- * Perfil e aba ficam na URL (?perfil=…&aba=envios).
+ * Perfil, aba e o status das gerações ficam na URL (?perfil=…&aba=envios&status=…).
  */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Eye, Link2, Loader2, RotateCcw, Scissors, Trash2, Upload } from "lucide-react";
@@ -14,9 +14,9 @@ import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { DataTable, dataTableColumns } from "@/components/data-table";
+import { DataTable, dataTableColumns, FilterBar } from "@/components/data-table";
 import { PageHeading } from "@/components/PageHeading";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { EmptyState, HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,6 +27,7 @@ import { EnviarDialog, envioDireito, envioTitulo } from "../../components/envios
 import { EnvioStatus } from "../../components/envios/EnvioStatus";
 import { api } from "../../lib/api";
 import { emAndamento, envioStatusLabel, enviosKey, origemLabel, type Envio, type EnvioStatus as Status } from "../../lib/envios";
+import { useFiltroUrl } from "../../lib/filtros";
 import { errorText } from "../../lib/perfis";
 import { formatDateTime } from "../../lib/tz";
 import { usePerfisAtivos } from "../../lib/usePerfis";
@@ -53,27 +54,28 @@ export default function EnviosList() {
   const perfilName = (id: string) => perfis.data?.find((p) => p.id === id)?.name ?? "Perfil";
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <PageHeading title="Geração de cortes" description="Dos vídeos selecionados ao SociShorts e de volta como cortes do perfil." />
-      <div className="flex flex-wrap items-end gap-3">
-        <Field label="Perfil" className="w-full sm:w-72">
-          {({ id }) => (
-            <NativeSelect id={id} value={perfilId} onChange={(e) => set("perfil", e.target.value)}>
-              <option value="">Todos os perfis</option>
-              {perfis.data?.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </NativeSelect>
-          )}
-        </Field>
-      </div>
-      <Tabs value={aba} onValueChange={(v) => set("aba", v === "selecionados" ? "" : v)} className="gap-2">
-        <TabsList aria-label="Seções da geração de cortes">
-          <TabsTrigger value="selecionados">Selecionados</TabsTrigger>
-          <TabsTrigger value="envios">Gerações</TabsTrigger>
-        </TabsList>
+      <Tabs value={aba} onValueChange={(v) => set("aba", v === "selecionados" ? "" : v)}>
+        {/* spec 024 (T054): o Perfil vale para as duas abas e fica na linha delas, à direita */}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <TabsList aria-label="Seções da geração de cortes">
+            <TabsTrigger value="selecionados">Selecionados</TabsTrigger>
+            <TabsTrigger value="envios">Gerações</TabsTrigger>
+          </TabsList>
+          <Field label="Perfil" className="w-full sm:w-72">
+            {({ id }) => (
+              <NativeSelect id={id} value={perfilId} onChange={(e) => set("perfil", e.target.value)}>
+                <option value="">Todos os perfis</option>
+                {perfis.data?.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
+          </Field>
+        </div>
         <TabsContent value="selecionados">
           <Selecionados perfilId={perfilId} perfilName={perfilName} perfisIds={perfis.data?.map((p) => p.id) ?? []} />
         </TabsContent>
@@ -81,7 +83,7 @@ export default function EnviosList() {
           <EnviosTabela perfilId={perfilId} perfilName={perfilName} />
         </TabsContent>
       </Tabs>
-    </div>
+    </Page>
   );
 }
 
@@ -100,21 +102,27 @@ function Selecionados({ perfilId, perfilName, perfisIds }: { perfilId: string; p
   if (query.isPending) return <p className="py-6 text-sm text-muted-foreground">Carregando…</p>;
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       {perfilId && !grupos.some(([id]) => id === perfilId) && <GrupoSelecionados perfilId={perfilId} perfilName={perfilName(perfilId)} envios={[]} />}
       {grupos.map(([id, envios]) => (
         <GrupoSelecionados key={id} perfilId={id} perfilName={perfilName(id)} envios={envios} />
       ))}
       {!perfilId && grupos.length === 0 && (
-        <p className="rounded-xl bg-card p-6 text-sm text-muted-foreground shadow-card">
-          Nenhum vídeo selecionado. Escolha vídeos em{" "}
-          <Link to="/app/descobrir" className="underline">
-            Descobrir
-          </Link>
-          {perfisIds.length > 0 ? " ou escolha um perfil acima para colar um link ou enviar um arquivo." : "."}
-        </p>
+        <EmptyState
+          className="rounded-xl bg-card shadow-card"
+          titulo="Nenhum vídeo selecionado."
+          descricao={
+            <>
+              Escolha vídeos em{" "}
+              <Link to="/app/descobrir" className="underline">
+                Descobrir
+              </Link>
+              {perfisIds.length > 0 ? " ou escolha um perfil para colar um link ou enviar um arquivo." : "."}
+            </>
+          }
+        />
       )}
-    </div>
+    </Page>
   );
 }
 
@@ -162,12 +170,15 @@ function GrupoSelecionados({ perfilId, perfilName, envios }: { perfilId: string;
       }
     >
       {envios.length === 0 ? (
-        <p className="py-4 text-sm text-muted-foreground">
-          Nenhum vídeo selecionado para este perfil.{" "}
-          <Link to={`/app/descobrir?perfil=${perfilId}`} className="underline">
-            Escolher em Descobrir
-          </Link>
-        </p>
+        <EmptyState
+          className="py-6"
+          titulo="Nenhum vídeo selecionado para este perfil."
+          acao={
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/app/descobrir?perfil=${perfilId}`}>Escolher em Descobrir</Link>
+            </Button>
+          }
+        />
       ) : (
         <ul aria-label={`Selecionados de ${perfilName}`} className="divide-y">
           {envios.map((e) => (
@@ -212,11 +223,13 @@ function GrupoSelecionados({ perfilId, perfilName, envios }: { perfilId: string;
 
 function EnviosTabela({ perfilId, perfilName }: { perfilId: string; perfilName: (id: string) => string }) {
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState("");
+  const [filtros, setFiltros] = useFiltroUrl();
+  const statusUrl = filtros.get("status") ?? "";
+  const status = (ENVIOS_STATUS as string[]).includes(statusUrl) ? (statusUrl as Status) : "";
   const [busy, setBusy] = useState<string | null>(null);
   const query = useQuery({
     queryKey: enviosKey({ perfilId: perfilId || undefined, status: status || "todos" }),
-    queryFn: () => api.envios.list({ ...(perfilId ? { perfilId } : {}), status: status ? [status as Status] : ENVIOS_STATUS, limit: 100 }),
+    queryFn: () => api.envios.list({ ...(perfilId ? { perfilId } : {}), status: status ? [status] : ENVIOS_STATUS, limit: 100 }),
     refetchInterval: (q) => (q.state.data?.items.some(emAndamento) ? 5000 : false),
   });
 
@@ -346,17 +359,29 @@ function EnviosTabela({ perfilId, perfilName }: { perfilId: string; perfilName: 
           data={query.data?.items}
           loading={query.isPending}
           getRowId={(e) => e.id}
-          search={{ placeholder: "Filtrar gerações" }}
-          emptyMessage="Nenhuma geração ainda."
+          search={{ placeholder: "Buscar gerações", label: "Buscar" }}
+          emptyMessage={status ? "Nenhuma geração com este status." : "Nenhuma geração ainda."}
           toolbar={
-            <NativeSelect aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} className="w-52">
-              <option value="">Todos os status</option>
-              {ENVIOS_STATUS.map((s) => (
-                <option key={s} value={s}>
-                  {envioStatusLabel[s]}
-                </option>
-              ))}
-            </NativeSelect>
+            // spec 024 (T054): a "Buscar" filtra as linhas carregadas (a tabela liga a busca da
+            // barra); o status vai para a URL (?status=…)
+            <FilterBar
+              principais={
+                <Field label="Status" className="w-full sm:w-52">
+                  {({ id }) => (
+                    <NativeSelect id={id} value={status} onChange={(e) => setFiltros({ status: e.target.value || null })}>
+                      <option value="">Todos os status</option>
+                      {ENVIOS_STATUS.map((s) => (
+                        <option key={s} value={s}>
+                          {envioStatusLabel[s]}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  )}
+                </Field>
+              }
+              ativos={status ? [{ chave: "status", rotulo: "Status", valor: envioStatusLabel[status], limpar: () => setFiltros({ status: null }) }] : []}
+              onLimpar={() => setFiltros({ status: null })}
+            />
           }
         />
       )}

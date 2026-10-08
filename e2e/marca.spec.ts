@@ -110,10 +110,13 @@ test("dono edita o kit, envia fonte, exporta e aplica a marca num corte", async 
   const video = testInfo.outputPath("corte.mp4");
   syntheticMp4(video, 6);
   const hookText = `Achadinho E2E ${sfx}`;
-  await tab(page, "Cortes").click();
-  await page.getByLabel("Vídeo do corte").setInputFiles(video);
-  await page.getByLabel("Texto do gancho").fill(hookText);
-  await page.getByRole("button", { name: "Enviar corte" }).click();
+  await page.goto(`/app/conteudos?perfil=${perfilId}`);
+  await page.getByRole("button", { name: "Aplicar marca num corte" }).click();
+  const dialogo = page.getByRole("dialog", { name: "Aplicar marca num corte" });
+  await expect(dialogo.getByLabel("Perfil")).toHaveValue(perfilId);
+  await dialogo.getByLabel("Vídeo do corte").setInputFiles(video);
+  await dialogo.getByLabel("Texto do gancho").fill(hookText);
+  await dialogo.getByRole("button", { name: "Enviar corte" }).click();
   await expect(page).toHaveURL(/\/app\/cortes\/[0-9a-f-]{36}$/, { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: hookText })).toBeVisible();
   await expect(page.getByText("Kit v2").first()).toBeVisible();
@@ -147,4 +150,28 @@ test("dono edita o kit, envia fonte, exporta e aplica a marca num corte", async 
   const partial = await request.get(href!, { headers: { Range: "bytes=0-1023" } });
   expect(partial.status()).toBe(206);
   expect(partial.headers()["content-type"]).toContain("video/mp4");
+});
+
+// Spec 024 (T025): o "Aplicar marca num corte" de Conteúdos lê o estado do HD ao abrir; HD
+// indisponível bloqueia o envio com o aviso. O fake não desmonta o HD: a resposta de
+// /api/armazenamento é interceptada no navegador.
+test("HD indisponível bloqueia o envio do corte", async ({ page, request }) => {
+  const sfx = randomUUID().slice(0, 8);
+  const token = await apiToken(request, OWNER.email, OWNER.password);
+  const perfilId = await createPerfilViaApi(request, token, { name: `HD E2E ${sfx}`, slug: `hd-e2e-${sfx}` });
+  await page.route("**/api/armazenamento", (route) =>
+    route.fulfill({
+      json: { available: false, reason: "sem_sentinela", freeBytes: null, totalBytes: null, cortesBytes: 0, minFreeBytes: 5 * 1024 ** 3 },
+    }),
+  );
+
+  await login(page, OWNER.email, OWNER.password);
+  await expect(page).toHaveURL(/\/app$/);
+  await page.goto(`/app/conteudos?perfil=${perfilId}`);
+  await page.getByRole("button", { name: "Aplicar marca num corte" }).click();
+  const dialogo = page.getByRole("dialog", { name: "Aplicar marca num corte" });
+  await expect(dialogo.getByText("O HD de dados não está disponível", { exact: true })).toBeVisible();
+  await expect(dialogo.getByText("Envio desabilitado: O HD de dados não está disponível.")).toBeVisible();
+  await expect(dialogo.getByLabel("Vídeo do corte")).toBeDisabled();
+  await expect(dialogo.getByRole("button", { name: "Enviar corte" })).toBeDisabled();
 });

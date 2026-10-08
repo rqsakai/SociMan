@@ -7,11 +7,14 @@ import { Clock, LayoutGrid, Plus, ShieldCheck, Users, Video } from "lucide-react
 import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { DataTable, dataTableColumns } from "@/components/data-table";
-import { AppShell, AuthShell, HeaderCard, MetricCard, usePageMeta } from "@/components/shell";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
+import { AppShell, AuthShell, HeaderCard, MetricCard, Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { DateField, DateTimeField } from "@/components/ui/date-field";
+import { Field, NativeSelect } from "@/components/ui/field";
+import { FileField } from "@/components/ui/file-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -103,6 +106,97 @@ function eventosAte(n: number): EventoFicticio[] {
   }));
 }
 
+// FilterBar (spec 024) com estado local; nas telas o estado fica na URL (useFiltroUrl).
+function PerfisFiltrados() {
+  const [q, setQ] = useState("");
+  const [nicho, setNicho] = useState("");
+  const [status, setStatus] = useState("");
+  const dados = PERFIS.filter(
+    (p) =>
+      (!q || p.nome.toLowerCase().includes(q.toLowerCase())) &&
+      (!nicho || p.nicho === nicho) &&
+      (!status || p.status === status),
+  );
+  const ativos: FiltroAtivo[] = [
+    ...(q ? [{ chave: "q", rotulo: "Busca", valor: q, limpar: () => setQ("") }] : []),
+    ...(nicho ? [{ chave: "nicho", rotulo: "Nicho", valor: nicho, limpar: () => setNicho("") }] : []),
+    ...(status ? [{ chave: "status", rotulo: "Status", valor: status, limpar: () => setStatus(""), mais: true }] : []),
+  ];
+  return (
+    <HeaderCard title="Perfis com FilterBar" description="Busca, filtro principal e Mais filtros">
+      <DataTable
+        label="Perfis filtrados"
+        columns={columns}
+        data={dados}
+        getRowId={(p) => p.id}
+        toolbar={
+          <FilterBar
+            busca={{ valor: q, onChange: setQ, placeholder: "Buscar perfis" }}
+            principais={
+              <Field label="Nicho" className="w-full sm:w-48">
+                {({ id }) => (
+                  <NativeSelect id={id} value={nicho} onChange={(e) => setNicho(e.target.value)}>
+                    <option value="">Todos</option>
+                    {NICHOS.map((n) => (
+                      <option key={n}>{n}</option>
+                    ))}
+                  </NativeSelect>
+                )}
+              </Field>
+            }
+            mais={
+              <Field label="Status">
+                {({ id }) => (
+                  <NativeSelect id={id} value={status} onChange={(e) => setStatus(e.target.value)}>
+                    <option value="">Todos</option>
+                    <option value="ativo">ativo</option>
+                    <option value="arquivado">arquivado</option>
+                  </NativeSelect>
+                )}
+              </Field>
+            }
+            ativos={ativos}
+            onLimpar={() => {
+              setQ("");
+              setNicho("");
+              setStatus("");
+            }}
+          />
+        }
+      />
+    </HeaderCard>
+  );
+}
+
+// DateField, DateTimeField e FileField (spec 024, R12): o valor ISO aparece ao lado.
+function CamposDataArquivo() {
+  const [data, setData] = useState("2026-10-07");
+  const [quando, setQuando] = useState("");
+  const [arquivos, setArquivos] = useState<string[]>([]);
+  return (
+    <HeaderCard title="Campos de data e arquivo" description="dd/mm/aaaa digitável, calendário e soltar arquivo">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Data" hint={`ISO: ${data || "—"}`}>
+          {({ id, describedBy }) => <DateField id={id} aria-describedby={describedBy} value={data} onChange={setData} />}
+        </Field>
+        <Field label="Agendar para" hint={`ISO: ${quando || "—"} (a partir de hoje)`}>
+          {({ id, describedBy }) => (
+            <DateTimeField id={id} aria-describedby={describedBy} value={quando} onChange={setQuando} min="2026-10-07T00:00" />
+          )}
+        </Field>
+        <Field label="Vídeo" hint="Um arquivo .mp4 ou .mov">
+          {({ id, describedBy }) => (
+            <FileField id={id} aria-describedby={describedBy} accept=".mp4,.mov,video/mp4" onChange={(e) => setArquivos(Array.from(e.target.files ?? [], (f) => f.name))} />
+          )}
+        </Field>
+        <Field label="Imagens" hint={arquivos.length ? `Último vídeo: ${arquivos.join(", ")}` : "Várias imagens"}>
+          {({ id, describedBy }) => <FileField id={id} aria-describedby={describedBy} accept="image/*" multiple rotuloBotao="Escolher imagens" />}
+        </Field>
+      </div>
+    </HeaderCard>
+  );
+}
+
 function Painel() {
   usePageMeta({ title: "Vitrine", breadcrumbs: [{ label: "Dev" }] });
   const [loading, setLoading] = useState(false);
@@ -110,7 +204,7 @@ function Painel() {
   const eventosData = useMemo(() => eventosAte(eventos), [eventos]);
 
   return (
-    <div className="space-y-8">
+    <Page>
       <h1 className="sr-only">Vitrine de componentes</h1>
       <div className="grid gap-x-6 gap-y-10 pt-6 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
@@ -167,7 +261,11 @@ function Painel() {
         />
       </HeaderCard>
 
-      <HeaderCard title="Eventos de segurança" description="Paginação por cursor" tone="dark">
+      <PerfisFiltrados />
+
+      <CamposDataArquivo />
+
+      <HeaderCard title="Eventos de segurança" description="Paginação por cursor">
         <DataTable
           label="Eventos"
           columns={eventoColumns}
@@ -177,10 +275,10 @@ function Painel() {
         />
       </HeaderCard>
 
-      <HeaderCard title="Sem resultados" tone="info">
+      <HeaderCard title="Sem resultados">
         <DataTable label="Vazia" columns={eventoColumns} data={[]} />
       </HeaderCard>
-    </div>
+    </Page>
   );
 }
 
@@ -210,7 +308,7 @@ function AcessoExemplo() {
             Lembrar de mim
           </Label>
         </div>
-        <Button type="submit" className="tone-primary w-full text-xs font-bold tracking-wide uppercase">
+        <Button type="submit" variant="band" className="w-full text-xs font-bold tracking-wide uppercase">
           Entrar
         </Button>
       </form>

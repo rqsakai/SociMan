@@ -13,6 +13,7 @@
  */
 import { useMemo } from "react";
 import { formatNumero, FONTE_STUDIO, type PublicoConta, type PublicoDistribuicao } from "@/lib/analytics";
+import { formatDateKey } from "@/lib/tz";
 import { cn } from "@/lib/utils";
 import type { OpcoesGrafico } from "./echarts";
 import { Grafico, type ItemTooltip } from "./Grafico";
@@ -21,7 +22,6 @@ import { useTemaGraficos } from "./tema";
 
 const pct1 = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 1 });
 export const formatPct = (v: number | null | undefined) => (v === null || v === undefined ? "sem dado" : `${pct1.format(v)}%`);
-export const dataBr = (dia: string) => dia.split("-").reverse().join("/");
 
 export function formatPp(dif: number | null | undefined): string | null {
   if (dif === null || dif === undefined) return null;
@@ -65,7 +65,7 @@ export function distribuicaoTabela(contas: PublicoConta[], tipo: "genero" | "ter
     colunas: [
       ...(varias ? [{ titulo: "conta" }] : []),
       { titulo: "fonte", secundaria: true },
-      { titulo: "data_foto", formatar: (v) => dataBr(String(v)) },
+      { titulo: "data_foto", formatar: (v) => formatDateKey(String(v)) },
       { titulo: "rotulo" },
       { titulo: "pct", numerica: true },
       { titulo: "pct_comparacao", numerica: true, secundaria: true },
@@ -128,8 +128,8 @@ export function Distribuicao({ dist, tipo, descricao, className }: DistribuicaoP
     return {
       titulo: l.rotulo,
       linhas: [
-        { rotulo: `Foto de ${dataBr(dist.dataFoto)}`, valor: formatPct(l.pct) },
-        ...(i && dist.dataFotoComparacao ? [{ rotulo: `Foto de ${dataBr(dist.dataFotoComparacao)}`, valor: formatPct(i.pctComparacao) }] : []),
+        { rotulo: `Foto de ${formatDateKey(dist.dataFoto)}`, valor: formatPct(l.pct) },
+        ...(i && dist.dataFotoComparacao ? [{ rotulo: `Foto de ${formatDateKey(dist.dataFotoComparacao)}`, valor: formatPct(i.pctComparacao) }] : []),
         ...(i && formatPp(i.difPp) ? [{ rotulo: "Mudança", valor: formatPp(i.difPp)! }] : []),
       ],
       nota: l.item ? `Fonte: ${FONTE_STUDIO} (importação ${dist.importacaoId.slice(0, 8)})` : "100% menos a soma dos países listados",
@@ -140,14 +140,14 @@ export function Distribuicao({ dist, tipo, descricao, className }: DistribuicaoP
     <div className={cn("flex min-w-0 flex-col gap-2", className)} data-distribuicao={tipo}>
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground" data-data-foto={dist.dataFoto}>
         <span>
-          Foto de <span className="font-medium text-foreground">{dataBr(dist.dataFoto)}</span>
+          Foto de <span className="font-medium text-foreground">{formatDateKey(dist.dataFoto)}</span>
         </span>
         {dist.anteriorAoPeriodo && (
           <span className="rounded-full bg-warning/15 px-2 py-0.5 font-medium text-foreground ring-1 ring-warning/50" data-anterior-ao-periodo>
             anterior ao período
           </span>
         )}
-        <span>{dist.dataFotoComparacao ? `comparada com a de ${dataBr(dist.dataFotoComparacao)}` : "sem foto anterior para comparar"}</span>
+        <span>{dist.dataFotoComparacao ? `comparada com a de ${formatDateKey(dist.dataFotoComparacao)}` : "sem foto anterior para comparar"}</span>
         {dist.seguidoresNaData !== null && <span>· {formatNumero(dist.seguidoresNaData)} seguidores na data</span>}
       </p>
       <Grafico opcoes={opcoes} descricao={descricao} altura={Math.max(80, linhas.length * 36 + 12)} tooltip={tooltip} />

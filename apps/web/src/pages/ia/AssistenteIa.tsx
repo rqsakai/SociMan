@@ -10,7 +10,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { DataTable, dataTableColumns } from "@/components/data-table";
 import { PageHeading } from "@/components/PageHeading";
-import { HeaderCard, usePageMeta } from "@/components/shell";
+import { HeaderCard, Page, usePageMeta } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "../../lib/authStore";
@@ -30,12 +30,12 @@ export default function AssistenteIa() {
   const aba: Aba = pedida && ABAS.includes(pedida) && (pedida === "regras" || isOwner) ? pedida : "regras";
 
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <PageHeading
         title="Assistente de IA"
         description="As regras que a IA segue em cada tipo de campo, o registro das chamadas e o gasto do mês. A IA só propõe textos: nada é salvo sem o seu clique."
       />
-      <Tabs value={aba} onValueChange={(v) => setParams(v === "regras" ? {} : { aba: v }, { replace: true })} className="gap-4">
+      <Tabs value={aba} onValueChange={(v) => setParams(v === "regras" ? {} : { aba: v }, { replace: true })}>
         <TabsList aria-label="Seções do assistente de IA">
           <TabsTrigger value="regras">Regras</TabsTrigger>
           {isOwner && <TabsTrigger value="registro">Registro</TabsTrigger>}
@@ -55,7 +55,7 @@ export default function AssistenteIa() {
           </TabsContent>
         )}
       </Tabs>
-    </div>
+    </Page>
   );
 }
 

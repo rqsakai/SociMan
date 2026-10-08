@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { api } from "../../lib/api";
 import { checkerClass, libraryImagesKey, tipoLabel, type AssetTipo, type LibraryImage } from "../../lib/assets";
+import { EmptyState } from "@/components/shell";
 
 // "Abrir biblioteca" dos seletores do kit (FR-006, R6): as imagens escolhíveis do perfil (arquivos
 // ativos de assets ativos) dos tipos do seletor, com busca por nome ou tag e filtro de tipo.
@@ -83,7 +84,7 @@ export function LibraryImageDialog({
             Carregando…
           </p>
         )}
-        {images.data && items.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma imagem encontrada.</p>}
+        {images.data && items.length === 0 && <EmptyState titulo="Nenhuma imagem encontrada." className="py-4" />}
         {items.length > 0 && (
           <ul aria-label="Imagens da biblioteca" className="grid max-h-[60vh] grid-cols-3 gap-3 overflow-y-auto p-1 sm:grid-cols-4 md:grid-cols-5">
             {items.map((item) => {

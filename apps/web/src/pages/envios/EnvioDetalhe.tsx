@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
 import { ConfirmButton } from "@/components/ConfirmButton";
-import { usePageMeta } from "@/components/shell";
+import { EmptyState, Page, usePageMeta } from "@/components/shell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +22,7 @@ import { DireitoBadge } from "../../components/canais/DireitoBadge";
 import { ClipReview } from "../../components/envios/ClipReview";
 import { envioTitulo } from "../../components/envios/EnviarDialog";
 import { EnvioEtapas, EnvioStatus } from "../../components/envios/EnvioStatus";
+import { ResumoCortes } from "../../components/envios/ResumoCortes";
 import { HistoryHeading, VersionHistory } from "../../components/VersionHistory";
 import { api } from "../../lib/api";
 import {
@@ -145,11 +146,11 @@ export default function EnvioDetalhe() {
 
   if (detail.isPending) {
     return (
-      <div className="space-y-4" aria-live="polite">
+      <Page aria-live="polite">
         <span className="sr-only">Carregando…</span>
         <Skeleton className="h-40 w-full rounded-xl" />
         <Skeleton className="h-96 w-full rounded-xl" />
-      </div>
+      </Page>
     );
   }
   if (detail.isError || !envio) return <ApiErrorAlert error={detail.error} />;
@@ -158,7 +159,7 @@ export default function EnvioDetalhe() {
   const direito = envio.direitoNoEnvio ?? (envio.origem === "canal" && envio.canal ? envio.canal.direito : "avulso");
 
   return (
-    <div className="space-y-6">
+    <Page>
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
         <Link to="/app/envios?aba=envios">
           <ArrowLeft aria-hidden="true" />
@@ -185,7 +186,7 @@ export default function EnvioDetalhe() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div aria-live="polite">
-            <EnvioStatus envio={envio} className="max-w-sm" />
+            <EnvioStatus envio={envio} resumo={false} className="max-w-sm" />
           </div>
           <EnvioEtapas envio={envio} legendaKit={envio.config?.legenda === "kit"} className="max-w-md" />
           {envio.status === "aguardando_openshorts" && (
@@ -250,7 +251,10 @@ export default function EnvioDetalhe() {
             <Detail label="Iniciada por">{envio.createdBy?.name ?? "—"}</Detail>
             <Detail label="Iniciada em">{envio.sentAt ? formatDateTime(envio.sentAt) : "—"}</Detail>
             <Detail label="Concluído em">{envio.finishedAt ? formatDateTime(envio.finishedAt) : "—"}</Detail>
-            <Detail label="Clipes">{envio.clipsTotal === null || envio.clipsTotal === undefined ? "—" : `${envio.clipsImportados} de ${envio.clipsTotal}`}</Detail>
+            <Detail label="Clipes">
+              {envio.clipsTotal === null || envio.clipsTotal === undefined ? "—" : `${envio.clipsImportados} de ${envio.clipsTotal}`}
+              <ResumoCortes resumo={envio.cortesResumo} className="mt-0.5 font-normal" />
+            </Detail>
             {config && (
               <>
                 <Detail label="Duração">
@@ -276,11 +280,7 @@ export default function EnvioDetalhe() {
             <h2 id="clipes-titulo" className="text-lg font-bold">
               Clipes
             </h2>
-            <p className="text-sm text-muted-foreground">
-              {cortes.length === 0
-                ? "Os clipes aparecem aqui quando o SociShorts terminar."
-                : `${emRevisao.length} em revisão. Arquive os ruins e aplique a marca do kit nos bons.`}
-            </p>
+            {cortes.length > 0 && <p className="text-sm text-muted-foreground">Arquive os ruins e aplique a marca do kit nos bons.</p>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-2 text-sm">
@@ -311,6 +311,7 @@ export default function EnvioDetalhe() {
           </div>
         </div>
         {links.isError && <ApiErrorAlert error={links.error} />}
+        {cortes.length === 0 && <EmptyState titulo="Os clipes aparecem aqui quando o SociShorts terminar." className="rounded-xl bg-card shadow-card" />}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {visiveis.map((c) => (
             <ClipReview
@@ -338,7 +339,7 @@ export default function EnvioDetalhe() {
           <EnvioHistorico id={envio.id} />
         </CardContent>
       </Card>
-    </div>
+    </Page>
   );
 }
 

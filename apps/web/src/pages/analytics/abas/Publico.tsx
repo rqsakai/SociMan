@@ -17,13 +17,14 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { CardAnalytics } from "@/components/analytics/CardAnalytics";
 import { corDoSlot, useOrdemContas, type OrdemContas } from "@/components/analytics/coresContas";
-import { dataBr, distribuicaoTabela, Distribuicao } from "@/components/analytics/Distribuicao";
+import { distribuicaoTabela, Distribuicao } from "@/components/analytics/Distribuicao";
 import type { OpcoesGrafico } from "@/components/analytics/echarts";
 import { Grafico, type ItemTooltip, type LinhaTooltip } from "@/components/analytics/Grafico";
 import { Indicador } from "@/components/analytics/Indicador";
 import { faixaHora, MapaSemana, DIAS_SEMANA } from "@/components/analytics/MapaSemana";
 import type { DadosTabela } from "@/components/analytics/TabelaAlternativa";
 import { useTemaGraficos, type TemaGraficos } from "@/components/analytics/tema";
+import { Page } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
 import {
@@ -43,7 +44,7 @@ import {
 } from "@/lib/analytics";
 import { useEhDono } from "@/lib/conteudos";
 import { studioContaPath } from "@/lib/studio";
-import { addDays } from "@/lib/tz";
+import { addDays, formatDateKey } from "@/lib/tz";
 
 const decimal = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
 const formatMedia = (v: number | null | undefined) => (v === null || v === undefined ? "—" : decimal.format(v));
@@ -238,13 +239,13 @@ function espectadores(contas: PublicoConta[], ordem: OrdemContas, tema: TemaGraf
       cor: typeof p.color === "string" ? p.color : undefined,
     }));
     const semDado = linhas.some((l) => l.valor === "sem dado");
-    return { titulo: dataBr(dias[i]), linhas, nota: semDado ? `"sem dado": a TikTok não informou o número neste dia. Fonte: ${FONTE_STUDIO}.` : `Fonte: ${FONTE_STUDIO}.` };
+    return { titulo: formatDateKey(dias[i]), linhas, nota: semDado ? `"sem dado": a TikTok não informou o número neste dia. Fonte: ${FONTE_STUDIO}.` : `Fonte: ${FONTE_STUDIO}.` };
   };
   const tabela: DadosTabela = {
     colunas: [
       ...(varias ? [{ titulo: "conta" }] : []),
       { titulo: "fonte", secundaria: true },
-      { titulo: "dia", formatar: (v) => dataBr(String(v)) },
+      { titulo: "dia", formatar: (v) => formatDateKey(String(v)) },
       { titulo: "total", numerica: true },
       { titulo: "novos", numerica: true },
       { titulo: "recorrentes", numerica: true },
@@ -295,7 +296,7 @@ function CardDistribuicao({ tipo, contas, carregando, erro }: { tipo: "genero" |
             : "os países com mais seguidores (até 5) na foto mais recente até o fim do período; \"Outros\" é o resto"}
           , com a mudança em pontos percentuais (p.p.) contra a foto anterior ao período. As fotos são do dia da exportação, não diárias; a TikTok não diz sobre quantos
           seguidores calculou. Fonte: {FONTE_STUDIO}
-          {fotos.length > 0 && ` (foto de ${fotos.map(dataBr).join(", ")})`}.
+          {fotos.length > 0 && ` (foto de ${fotos.map(formatDateKey).join(", ")})`}.
         </>
       }
       carregando={carregando}
@@ -317,7 +318,7 @@ function CardDistribuicao({ tipo, contas, carregando, erro }: { tipo: "genero" |
                 </p>
               )}
               {d ? (
-                <Distribuicao dist={d} tipo={tipo} descricao={`${titulo} de ${c.conta.rotulo}, foto de ${dataBr(d.dataFoto)}.`} />
+                <Distribuicao dist={d} tipo={tipo} descricao={`${titulo} de ${c.conta.rotulo}, foto de ${formatDateKey(d.dataFoto)}.`} />
               ) : (
                 <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">{motivoPublicoLabel[c.motivos[tipo] ?? "sem_importacao"]}</p>
               )}
@@ -340,39 +341,41 @@ export function Publico({ estado }: { estado: EstadoFiltroAnalytics }) {
   const diasSemDado = esp.comSerie.reduce((t, c) => t + c.espectadores!.diasSemDado, 0);
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <CardDistribuicao tipo="genero" contas={contas} carregando={carregando} erro={dados.error} />
-      <CardDistribuicao tipo="territorios" contas={contas} carregando={carregando} erro={dados.error} />
-      <CardAtividade titulo="Atividade dos seguidores" contas={atividades} carregando={carregando} erro={dados.error} estado={estado} />
-      <CardAnalytics
-        titulo="Espectadores"
-        comoLer={
-          <>
-            espectadores únicos de cada dia: as barras dividem os novos e os recorrentes, e a linha é o total. Os novos são somados no período; o total e os recorrentes viram média
-            diária (o mesmo recorrente volta em vários dias, então não se somam).{" "}
-            {esp.dias.length > 0 && (
-              <span data-dias-cobertos>
-                {formatNumero(esp.dias.length)} dias cobertos{diasSemDado > 0 && `, ${formatNumero(diasSemDado)} "sem dado" (buraco na linha)`}.{" "}
-              </span>
-            )}
-            Fonte: {FONTE_STUDIO}.
-          </>
-        }
-        carregando={carregando}
-        erro={dados.error}
-        vazio={esp.comSerie.length === 0 ? motivoDoCard(contas, "espectadores") : null}
-        acoesVazio={<AtalhosStudio contas={contas.filter((c) => c.motivos.espectadores !== "sem_dado_no_periodo").map((c) => c.conta)} />}
-        onAmpliarPeriodo={contas.some((c) => c.motivos.espectadores === "sem_dado_no_periodo") ? estado.ampliarPeriodo : undefined}
-        tabela={esp.tabela}
-        largo
-      >
-        <div className="flex flex-col gap-4">
-          {esp.comSerie.map((c) => (
-            <IndicadoresEspectadores key={chaveConta(c.conta)} c={c} varias={esp.comSerie.length > 1} />
-          ))}
-          <Grafico opcoes={esp.opcoes} descricao={`Espectadores por dia de ${esp.comSerie.map((c) => c.conta.rotulo).join(", ")}: novos e recorrentes em barras e o total em linha.`} altura={300} tooltip={esp.tooltip} />
-        </div>
-      </CardAnalytics>
-    </div>
+    <Page>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <CardDistribuicao tipo="genero" contas={contas} carregando={carregando} erro={dados.error} />
+        <CardDistribuicao tipo="territorios" contas={contas} carregando={carregando} erro={dados.error} />
+        <CardAtividade titulo="Atividade dos seguidores" contas={atividades} carregando={carregando} erro={dados.error} estado={estado} />
+        <CardAnalytics
+          titulo="Espectadores"
+          comoLer={
+            <>
+              espectadores únicos de cada dia: as barras dividem os novos e os recorrentes, e a linha é o total. Os novos são somados no período; o total e os recorrentes viram média
+              diária (o mesmo recorrente volta em vários dias, então não se somam).{" "}
+              {esp.dias.length > 0 && (
+                <span data-dias-cobertos>
+                  {formatNumero(esp.dias.length)} dias cobertos{diasSemDado > 0 && `, ${formatNumero(diasSemDado)} "sem dado" (buraco na linha)`}.{" "}
+                </span>
+              )}
+              Fonte: {FONTE_STUDIO}.
+            </>
+          }
+          carregando={carregando}
+          erro={dados.error}
+          vazio={esp.comSerie.length === 0 ? motivoDoCard(contas, "espectadores") : null}
+          acoesVazio={<AtalhosStudio contas={contas.filter((c) => c.motivos.espectadores !== "sem_dado_no_periodo").map((c) => c.conta)} />}
+          onAmpliarPeriodo={contas.some((c) => c.motivos.espectadores === "sem_dado_no_periodo") ? estado.ampliarPeriodo : undefined}
+          tabela={esp.tabela}
+          largo
+        >
+          <div className="flex flex-col gap-4">
+            {esp.comSerie.map((c) => (
+              <IndicadoresEspectadores key={chaveConta(c.conta)} c={c} varias={esp.comSerie.length > 1} />
+            ))}
+            <Grafico opcoes={esp.opcoes} descricao={`Espectadores por dia de ${esp.comSerie.map((c) => c.conta.rotulo).join(", ")}: novos e recorrentes em barras e o total em linha.`} altura={300} tooltip={esp.tooltip} />
+          </div>
+        </CardAnalytics>
+      </div>
+    </Page>
   );
 }

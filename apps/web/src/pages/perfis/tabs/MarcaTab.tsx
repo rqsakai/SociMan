@@ -5,6 +5,7 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { Page } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,8 +52,8 @@ import {
 import { api } from "../../../lib/api";
 import { comRebase, useFormRebase, type IaOnSave } from "../../../lib/ia";
 import { contaPlatformText } from "../../../lib/perfis";
+import { formatDateTime } from "@/lib/tz";
 
-const dateFormat = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
 // Aba Marca do perfil (US1, T013): editor do kit por seção com a prévia 9:16 ao lado (embaixo no
 // celular). Salva o kit inteiro com a versão lida (controle otimista); o histórico fica em
@@ -229,265 +230,267 @@ function KitEditor({
   const apiField = refusedField ? kitFieldText(refusedField.field) : null;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="min-w-0 space-y-6">
-        <Card className="gap-0 py-4 shadow-card">
-          <CardContent className="flex flex-wrap items-center gap-3">
-            <div className="mr-auto flex flex-wrap items-center gap-2 text-sm">
-              {kit.persisted ? (
-                <Badge variant="secondary">Versão {kit.version}</Badge>
-              ) : (
-                <Badge variant="outline">Kit padrão (ainda não salvo)</Badge>
-              )}
-              {kit.updatedAt && (
-                <span className="text-muted-foreground">
-                  {kit.updatedBy?.name ?? "—"} · {dateFormat.format(new Date(kit.updatedAt))}
-                </span>
-              )}
-              {dirty && <Badge className="bg-warning text-warning-foreground">Alterações não salvas</Badge>}
-            </div>
-            <Button type="button" variant="ghost" size="sm" asChild>
-              <Link to={`/app/perfis/${perfil.id}/kit/historico`}>
-                <History aria-hidden="true" />
-                Histórico do kit
-              </Link>
-            </Button>
-            <Button type="button" variant="outline" size="sm" disabled={exporting} aria-busy={exporting} onClick={() => void exportKit()}>
-              {exporting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Download aria-hidden="true" />}
-              Exportar kit (JSON)
-            </Button>
-            <Button type="button" size="sm" disabled={saving} aria-busy={saving} onClick={() => void save()}>
-              {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
-              Salvar kit
-            </Button>
-          </CardContent>
-        </Card>
-
-        {apiError !== null && (
-          <div className="space-y-1">
-            {apiField && <p className="text-sm font-medium text-destructive">Campo recusado: {apiField}</p>}
-            <ApiErrorAlert error={apiError} onReload={onReload} />
-          </div>
-        )}
-
-        <SectionCard title="Paleta" description="Cores com nome, usadas nos seletores de cor das outras seções.">
-          <PaletteEditor
-            palette={draft.palette}
-            savedKeys={savedKeys}
-            usage={(key) => paletteUsage(draft, key)}
-            onChange={(palette) => setDraft((d) => ({ ...d, palette }))}
-            onRekey={(from, to) => setDraft((d) => replaceColorKey(d, from, to))}
-            errors={errors}
-          />
-        </SectionCard>
-
-        <SectionCard title="Legenda" description="Os parâmetros que o gerador de cortes aplica na legenda.">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FontSelect label="Fonte" value={caption.fonte} options={fontOptions} onChange={(fonte) => set("caption", { fonte })} error={err("caption.fonte")} />
-            <NumberField label="Tamanho" value={caption.tamanho} min={10} max={200} onChange={(tamanho) => set("caption", { tamanho })} error={err("caption.tamanho")} />
-            <ColorTokenInput label="Cor do texto" value={caption.cor_texto} palette={draft.palette} onChange={(cor_texto) => set("caption", { cor_texto })} error={err("caption.cor_texto")} />
-            <ColorTokenInput label="Cor de destaque" value={caption.cor_destaque} palette={draft.palette} onChange={(cor_destaque) => set("caption", { cor_destaque })} error={err("caption.cor_destaque")} />
-            <ColorTokenInput label="Cor do contorno" value={caption.cor_contorno} palette={draft.palette} onChange={(cor_contorno) => set("caption", { cor_contorno })} error={err("caption.cor_contorno")} />
-            <NumberField label="Espessura do contorno" value={caption.espessura_contorno} min={0} max={10} onChange={(espessura_contorno) => set("caption", { espessura_contorno })} error={err("caption.espessura_contorno")} />
-            <ColorTokenInput label="Cor do fundo" value={caption.cor_fundo} palette={draft.palette} onChange={(cor_fundo) => set("caption", { cor_fundo })} error={err("caption.cor_fundo")} />
-            <NumberField label="Opacidade do fundo" value={caption.opacidade_fundo} min={0} max={1} step={0.05} hint="De 0 (sem fundo) a 1" onChange={(opacidade_fundo) => set("caption", { opacidade_fundo })} error={err("caption.opacidade_fundo")} />
-            <SelectField label="Estilo" value={caption.estilo} labels={legendaEstiloLabel} onChange={(estilo) => set("caption", { estilo })} error={err("caption.estilo")} />
-            <SelectField label="Efeito" value={caption.efeito} labels={legendaEfeitoLabel} onChange={(efeito) => set("caption", { efeito })} error={err("caption.efeito")} />
-            <SelectField label="Posição" value={caption.posicao} labels={legendaPosicaoLabel} onChange={(posicao) => set("caption", { posicao })} error={err("caption.posicao")} />
-            <SwitchField label="Maiúsculas" checked={caption.maiusculas} onChange={(maiusculas) => set("caption", { maiusculas })} />
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="Gancho"
-          description="O cartão com o texto do gancho no início do corte."
-          enabled={hook.ligado}
-          onEnabledChange={(ligado) => set("hook", { ligado })}
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FontSelect label="Fonte" value={hook.fonte} options={fontOptions} onChange={(fonte) => set("hook", { fonte })} error={err("hook.fonte")} />
-            <SelectField label="Tamanho" value={hook.tamanho} labels={ganchoTamanhoLabel} onChange={(tamanho) => set("hook", { tamanho })} error={err("hook.tamanho")} />
-            <ColorTokenInput label="Cor do texto" value={hook.cor_texto} palette={draft.palette} onChange={(cor_texto) => set("hook", { cor_texto })} error={err("hook.cor_texto")} />
-            <SelectField label="Tipo de fundo" value={hook.fundo_tipo} labels={fundoTipoLabel} onChange={(fundo_tipo) => set("hook", { fundo_tipo })} error={err("hook.fundo_tipo")} />
-            <ColorTokenInput label="Cor do fundo" value={hook.cor_fundo} palette={draft.palette} onChange={(cor_fundo) => set("hook", { cor_fundo })} error={err("hook.cor_fundo")} />
-            {hook.fundo_tipo === "imagem" ? (
-              <NumberField label="Opacidade da camada" value={hook.opacidade_fundo} min={0} max={1} step={0.05} hint="A cor do fundo por cima da imagem, de 0 (só a imagem) a 1" onChange={(opacidade_fundo) => set("hook", { opacidade_fundo })} error={err("hook.opacidade_fundo")} />
-            ) : (
-              <NumberField label="Opacidade do fundo" value={hook.opacidade_fundo} min={0} max={1} step={0.05} hint="De 0 (sem fundo) a 1" onChange={(opacidade_fundo) => set("hook", { opacidade_fundo })} error={err("hook.opacidade_fundo")} />
-            )}
-            <ColorTokenInput label="Cor do contorno" value={hook.cor_contorno} palette={draft.palette} onChange={(cor_contorno) => set("hook", { cor_contorno })} error={err("hook.cor_contorno")} />
-            <NumberField label="Espessura do contorno" value={hook.espessura_contorno} min={0} max={10} onChange={(espessura_contorno) => set("hook", { espessura_contorno })} error={err("hook.espessura_contorno")} />
-            <SelectField label="Posição" value={hook.posicao} labels={ganchoPosicaoLabel} onChange={(posicao) => set("hook", { posicao })} error={err("hook.posicao")} />
-            <NumberField label="Duração (s)" value={hook.duracao_s} min={1} max={10} step={0.5} hint="De 1 a 10 s, em passos de 0,5" onChange={(duracao_s) => set("hook", { duracao_s })} error={err("hook.duracao_s")} />
-          </div>
-          {hook.fundo_tipo === "imagem" && (
-            <FundoImagePicker
-              perfilId={perfil.id}
-              value={hook.fundo_imagem_id ?? null}
-              onChange={(image) => {
-                set("hook", { fundo_imagem_id: image.id });
-                clearError("hook.fundo_imagem_id");
-                setFundoUrls((u) => ({ ...u, [image.id]: image.urls.medium }));
-              }}
-              error={err("hook.fundo_imagem_id")}
-            />
-          )}
-        </SectionCard>
-
-        <SectionCard
-          title="Marca d'água"
-          description="Logo, imagem própria ou o @ da conta durante todo o corte."
-          enabled={watermark.ligado}
-          onEnabledChange={(ligado) => set("watermark", { ligado })}
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <SelectField label="Tipo" value={watermark.tipo} labels={marcaTipoLabel} onChange={(tipo) => set("watermark", { tipo })} error={err("watermark.tipo")} />
-            <SelectField label="Posição" value={watermark.posicao} labels={marcaPosicaoLabel} onChange={(posicao) => set("watermark", { posicao })} error={err("watermark.posicao")} />
-          </div>
-          {watermark.tipo === "logo" && !perfil.logo && (
-            <p role="alert" className="text-sm text-destructive">
-              O perfil ainda não tem logo. Envie o logo na aba Dados ou escolha outro tipo.
-            </p>
-          )}
-          {watermark.tipo === "imagem" && (
-            <WatermarkImagePicker
-              perfilId={perfil.id}
-              value={watermark.imagem_id ?? null}
-              onChange={(image) => {
-                set("watermark", { imagem_id: image.id });
-                setWatermarkUrl(image.urls.medium);
-              }}
-              error={err("watermark.imagem_id")}
-            />
-          )}
-          {watermark.tipo === "texto" && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Conta do @" error={err("watermark.conta_id")} hint={activeContas.length === 0 ? "Cadastre uma conta na aba Contas." : undefined}>
-                {({ id, describedBy, invalid }) => (
-                  <NativeSelect
-                    id={id}
-                    aria-invalid={invalid}
-                    aria-describedby={describedBy}
-                    value={watermark.conta_id ?? ""}
-                    onChange={(e) => set("watermark", { conta_id: e.target.value || null })}
-                  >
-                    <option value="">Escolha a conta</option>
-                    {activeContas.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        @{c.handle} ({contaPlatformText(c)})
-                      </option>
-                    ))}
-                  </NativeSelect>
+    <Page>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-6">
+          <Card className="gap-0 py-4 shadow-card">
+            <CardContent className="flex flex-wrap items-center gap-3">
+              <div className="mr-auto flex flex-wrap items-center gap-2 text-sm">
+                {kit.persisted ? (
+                  <Badge variant="secondary">Versão {kit.version}</Badge>
+                ) : (
+                  <Badge variant="outline">Kit padrão (ainda não salvo)</Badge>
                 )}
-              </Field>
-              <FontSelect label="Fonte do @" value={watermark.fonte} options={fontOptions} onChange={(fonte) => set("watermark", { fonte })} error={err("watermark.fonte")} />
-              <ColorTokenInput label="Cor do @" value={watermark.cor_texto} palette={draft.palette} onChange={(cor_texto) => set("watermark", { cor_texto })} error={err("watermark.cor_texto")} />
+                {kit.updatedAt && (
+                  <span className="text-muted-foreground">
+                    {kit.updatedBy?.name ?? "—"} · {formatDateTime(kit.updatedAt)}
+                  </span>
+                )}
+                {dirty && <Badge className="bg-warning text-warning-foreground">Alterações não salvas</Badge>}
+              </div>
+              <Button type="button" variant="ghost" size="sm" asChild>
+                <Link to={`/app/perfis/${perfil.id}/kit/historico`}>
+                  <History aria-hidden="true" />
+                  Histórico do kit
+                </Link>
+              </Button>
+              <Button type="button" variant="outline" size="sm" disabled={exporting} aria-busy={exporting} onClick={() => void exportKit()}>
+                {exporting ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Download aria-hidden="true" />}
+                Exportar kit (JSON)
+              </Button>
+              <Button type="button" size="sm" disabled={saving} aria-busy={saving} onClick={() => void save()}>
+                {saving ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
+                Salvar kit
+              </Button>
+            </CardContent>
+          </Card>
+
+          {apiError !== null && (
+            <div className="space-y-1">
+              {apiField && <p className="text-sm font-medium text-destructive">Campo recusado: {apiField}</p>}
+              <ApiErrorAlert error={apiError} onReload={onReload} />
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <NumberField label="Escala (%)" value={watermark.escala_pct} min={5} max={40} hint="Da largura do vídeo, de 5 a 40" onChange={(escala_pct) => set("watermark", { escala_pct })} error={err("watermark.escala_pct")} />
-            <NumberField label="Opacidade (%)" value={watermark.opacidade_pct} min={10} max={100} onChange={(opacidade_pct) => set("watermark", { opacidade_pct })} error={err("watermark.opacidade_pct")} />
-            <NumberField label="Margem (%)" value={watermark.margem_pct} min={0} max={10} hint="Da largura, de 0 a 10" onChange={(margem_pct) => set("watermark", { margem_pct })} error={err("watermark.margem_pct")} />
-          </div>
-        </SectionCard>
 
-        <SectionCard
-          title="Card final"
-          description="O CTA por cima dos últimos segundos (a duração do corte não muda)."
-          enabled={endCard.ligado}
-          onEnabledChange={(ligado) => set("endCard", { ligado })}
-        >
-          <Field label="CTA" error={err("endCard.cta")} hint={`${endCard.cta.length}/80`}>
-            {({ id, describedBy, invalid }) => (
-              <Input
-                id={id}
-                value={endCard.cta}
-                maxLength={80}
-                aria-invalid={invalid}
-                aria-describedby={describedBy}
-                onChange={(e) => set("endCard", { cta: e.target.value })}
+          <SectionCard title="Paleta" description="Cores com nome, usadas nos seletores de cor das outras seções.">
+            <PaletteEditor
+              palette={draft.palette}
+              savedKeys={savedKeys}
+              usage={(key) => paletteUsage(draft, key)}
+              onChange={(palette) => setDraft((d) => ({ ...d, palette }))}
+              onRekey={(from, to) => setDraft((d) => replaceColorKey(d, from, to))}
+              errors={errors}
+            />
+          </SectionCard>
+
+          <SectionCard title="Legenda" description="Os parâmetros que o gerador de cortes aplica na legenda.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FontSelect label="Fonte" value={caption.fonte} options={fontOptions} onChange={(fonte) => set("caption", { fonte })} error={err("caption.fonte")} />
+              <NumberField label="Tamanho" value={caption.tamanho} min={10} max={200} onChange={(tamanho) => set("caption", { tamanho })} error={err("caption.tamanho")} />
+              <ColorTokenInput label="Cor do texto" value={caption.cor_texto} palette={draft.palette} onChange={(cor_texto) => set("caption", { cor_texto })} error={err("caption.cor_texto")} />
+              <ColorTokenInput label="Cor de destaque" value={caption.cor_destaque} palette={draft.palette} onChange={(cor_destaque) => set("caption", { cor_destaque })} error={err("caption.cor_destaque")} />
+              <ColorTokenInput label="Cor do contorno" value={caption.cor_contorno} palette={draft.palette} onChange={(cor_contorno) => set("caption", { cor_contorno })} error={err("caption.cor_contorno")} />
+              <NumberField label="Espessura do contorno" value={caption.espessura_contorno} min={0} max={10} onChange={(espessura_contorno) => set("caption", { espessura_contorno })} error={err("caption.espessura_contorno")} />
+              <ColorTokenInput label="Cor do fundo" value={caption.cor_fundo} palette={draft.palette} onChange={(cor_fundo) => set("caption", { cor_fundo })} error={err("caption.cor_fundo")} />
+              <NumberField label="Opacidade do fundo" value={caption.opacidade_fundo} min={0} max={1} step={0.05} hint="De 0 (sem fundo) a 1" onChange={(opacidade_fundo) => set("caption", { opacidade_fundo })} error={err("caption.opacidade_fundo")} />
+              <SelectField label="Estilo" value={caption.estilo} labels={legendaEstiloLabel} onChange={(estilo) => set("caption", { estilo })} error={err("caption.estilo")} />
+              <SelectField label="Efeito" value={caption.efeito} labels={legendaEfeitoLabel} onChange={(efeito) => set("caption", { efeito })} error={err("caption.efeito")} />
+              <SelectField label="Posição" value={caption.posicao} labels={legendaPosicaoLabel} onChange={(posicao) => set("caption", { posicao })} error={err("caption.posicao")} />
+              <SwitchField label="Maiúsculas" checked={caption.maiusculas} onChange={(maiusculas) => set("caption", { maiusculas })} />
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Gancho"
+            description="O cartão com o texto do gancho no início do corte."
+            enabled={hook.ligado}
+            onEnabledChange={(ligado) => set("hook", { ligado })}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FontSelect label="Fonte" value={hook.fonte} options={fontOptions} onChange={(fonte) => set("hook", { fonte })} error={err("hook.fonte")} />
+              <SelectField label="Tamanho" value={hook.tamanho} labels={ganchoTamanhoLabel} onChange={(tamanho) => set("hook", { tamanho })} error={err("hook.tamanho")} />
+              <ColorTokenInput label="Cor do texto" value={hook.cor_texto} palette={draft.palette} onChange={(cor_texto) => set("hook", { cor_texto })} error={err("hook.cor_texto")} />
+              <SelectField label="Tipo de fundo" value={hook.fundo_tipo} labels={fundoTipoLabel} onChange={(fundo_tipo) => set("hook", { fundo_tipo })} error={err("hook.fundo_tipo")} />
+              <ColorTokenInput label="Cor do fundo" value={hook.cor_fundo} palette={draft.palette} onChange={(cor_fundo) => set("hook", { cor_fundo })} error={err("hook.cor_fundo")} />
+              {hook.fundo_tipo === "imagem" ? (
+                <NumberField label="Opacidade da camada" value={hook.opacidade_fundo} min={0} max={1} step={0.05} hint="A cor do fundo por cima da imagem, de 0 (só a imagem) a 1" onChange={(opacidade_fundo) => set("hook", { opacidade_fundo })} error={err("hook.opacidade_fundo")} />
+              ) : (
+                <NumberField label="Opacidade do fundo" value={hook.opacidade_fundo} min={0} max={1} step={0.05} hint="De 0 (sem fundo) a 1" onChange={(opacidade_fundo) => set("hook", { opacidade_fundo })} error={err("hook.opacidade_fundo")} />
+              )}
+              <ColorTokenInput label="Cor do contorno" value={hook.cor_contorno} palette={draft.palette} onChange={(cor_contorno) => set("hook", { cor_contorno })} error={err("hook.cor_contorno")} />
+              <NumberField label="Espessura do contorno" value={hook.espessura_contorno} min={0} max={10} onChange={(espessura_contorno) => set("hook", { espessura_contorno })} error={err("hook.espessura_contorno")} />
+              <SelectField label="Posição" value={hook.posicao} labels={ganchoPosicaoLabel} onChange={(posicao) => set("hook", { posicao })} error={err("hook.posicao")} />
+              <NumberField label="Duração (s)" value={hook.duracao_s} min={1} max={10} step={0.5} hint="De 1 a 10 s, em passos de 0,5" onChange={(duracao_s) => set("hook", { duracao_s })} error={err("hook.duracao_s")} />
+            </div>
+            {hook.fundo_tipo === "imagem" && (
+              <FundoImagePicker
+                perfilId={perfil.id}
+                value={hook.fundo_imagem_id ?? null}
+                onChange={(image) => {
+                  set("hook", { fundo_imagem_id: image.id });
+                  clearError("hook.fundo_imagem_id");
+                  setFundoUrls((u) => ({ ...u, [image.id]: image.urls.medium }));
+                }}
+                error={err("hook.fundo_imagem_id")}
               />
             )}
-          </Field>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <FontSelect label="Fonte" value={endCard.fonte} options={fontOptions} onChange={(fonte) => set("endCard", { fonte })} error={err("endCard.fonte")} />
-            <NumberField label="Duração (s)" value={endCard.duracao_s} min={1} max={5} step={0.5} hint="De 1 a 5 s, em passos de 0,5" onChange={(duracao_s) => set("endCard", { duracao_s })} error={err("endCard.duracao_s")} />
-            <ColorTokenInput label="Cor do texto" value={endCard.cor_texto} palette={draft.palette} onChange={(cor_texto) => set("endCard", { cor_texto })} error={err("endCard.cor_texto")} />
-            <SelectField label="Tipo de fundo" value={endCard.fundo_tipo} labels={fundoTipoLabel} onChange={(fundo_tipo) => set("endCard", { fundo_tipo })} error={err("endCard.fundo_tipo")} />
-            <ColorTokenInput label="Cor do fundo" value={endCard.cor_fundo} palette={draft.palette} onChange={(cor_fundo) => set("endCard", { cor_fundo })} error={err("endCard.cor_fundo")} />
-            {endCard.fundo_tipo === "imagem" && (
-              <NumberField label="Opacidade da camada" value={endCard.opacidade_fundo} min={0} max={1} step={0.05} hint="A cor do fundo por cima da imagem, de 0 (só a imagem) a 1" onChange={(opacidade_fundo) => set("endCard", { opacidade_fundo })} error={err("endCard.opacidade_fundo")} />
+          </SectionCard>
+
+          <SectionCard
+            title="Marca d'água"
+            description="Logo, imagem própria ou o @ da conta durante todo o corte."
+            enabled={watermark.ligado}
+            onEnabledChange={(ligado) => set("watermark", { ligado })}
+          >
+            <div className="grid gap-4 sm:grid-cols-2">
+              <SelectField label="Tipo" value={watermark.tipo} labels={marcaTipoLabel} onChange={(tipo) => set("watermark", { tipo })} error={err("watermark.tipo")} />
+              <SelectField label="Posição" value={watermark.posicao} labels={marcaPosicaoLabel} onChange={(posicao) => set("watermark", { posicao })} error={err("watermark.posicao")} />
+            </div>
+            {watermark.tipo === "logo" && !perfil.logo && (
+              <p role="alert" className="text-sm text-destructive">
+                O perfil ainda não tem logo. Envie o logo na aba Dados ou escolha outro tipo.
+              </p>
             )}
-            <SwitchField label="Mostrar logo" checked={endCard.mostrar_logo} onChange={(mostrar_logo) => set("endCard", { mostrar_logo })} />
-          </div>
-          {endCard.fundo_tipo === "imagem" && (
-            <FundoImagePicker
-              perfilId={perfil.id}
-              value={endCard.fundo_imagem_id ?? null}
-              onChange={(image) => {
-                set("endCard", { fundo_imagem_id: image.id });
-                clearError("endCard.fundo_imagem_id");
-                setFundoUrls((u) => ({ ...u, [image.id]: image.urls.medium }));
-              }}
-              error={err("endCard.fundo_imagem_id")}
-            />
-          )}
-        </SectionCard>
+            {watermark.tipo === "imagem" && (
+              <WatermarkImagePicker
+                perfilId={perfil.id}
+                value={watermark.imagem_id ?? null}
+                onChange={(image) => {
+                  set("watermark", { imagem_id: image.id });
+                  setWatermarkUrl(image.urls.medium);
+                }}
+                error={err("watermark.imagem_id")}
+              />
+            )}
+            {watermark.tipo === "texto" && (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Conta do @" error={err("watermark.conta_id")} hint={activeContas.length === 0 ? "Cadastre uma conta na aba Contas." : undefined}>
+                  {({ id, describedBy, invalid }) => (
+                    <NativeSelect
+                      id={id}
+                      aria-invalid={invalid}
+                      aria-describedby={describedBy}
+                      value={watermark.conta_id ?? ""}
+                      onChange={(e) => set("watermark", { conta_id: e.target.value || null })}
+                    >
+                      <option value="">Escolha a conta</option>
+                      {activeContas.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          @{c.handle} ({contaPlatformText(c)})
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  )}
+                </Field>
+                <FontSelect label="Fonte do @" value={watermark.fonte} options={fontOptions} onChange={(fonte) => set("watermark", { fonte })} error={err("watermark.fonte")} />
+                <ColorTokenInput label="Cor do @" value={watermark.cor_texto} palette={draft.palette} onChange={(cor_texto) => set("watermark", { cor_texto })} error={err("watermark.cor_texto")} />
+              </div>
+            )}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <NumberField label="Escala (%)" value={watermark.escala_pct} min={5} max={40} hint="Da largura do vídeo, de 5 a 40" onChange={(escala_pct) => set("watermark", { escala_pct })} error={err("watermark.escala_pct")} />
+              <NumberField label="Opacidade (%)" value={watermark.opacidade_pct} min={10} max={100} onChange={(opacidade_pct) => set("watermark", { opacidade_pct })} error={err("watermark.opacidade_pct")} />
+              <NumberField label="Margem (%)" value={watermark.margem_pct} min={0} max={10} hint="Da largura, de 0 a 10" onChange={(margem_pct) => set("watermark", { margem_pct })} error={err("watermark.margem_pct")} />
+            </div>
+          </SectionCard>
 
-        <SectionCard title="Bordões e séries" description="Textos de referência para roteiros e títulos; um por linha.">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <IaSugestoes tipo="kit.bordoes" {...iaLista} value={draft.catchphrases} onSave={iaSaveLista("catchphrases")} campo="Bordões">
-              {(botao) => (
-                <LinesField label="Bordões" action={botao} value={draft.catchphrases} max={120} onChange={(catchphrases) => setDraft((d) => ({ ...d, catchphrases }))} error={err("catchphrases")} />
+          <SectionCard
+            title="Card final"
+            description="O CTA por cima dos últimos segundos (a duração do corte não muda)."
+            enabled={endCard.ligado}
+            onEnabledChange={(ligado) => set("endCard", { ligado })}
+          >
+            <Field label="CTA" error={err("endCard.cta")} hint={`${endCard.cta.length}/80`}>
+              {({ id, describedBy, invalid }) => (
+                <Input
+                  id={id}
+                  value={endCard.cta}
+                  maxLength={80}
+                  aria-invalid={invalid}
+                  aria-describedby={describedBy}
+                  onChange={(e) => set("endCard", { cta: e.target.value })}
+                />
               )}
-            </IaSugestoes>
-            <IaSugestoes tipo="kit.series" {...iaLista} value={draft.series} onSave={iaSaveLista("series")} campo="Séries">
-              {(botao) => (
-                <LinesField label="Séries" action={botao} value={draft.series} max={60} onChange={(series) => setDraft((d) => ({ ...d, series }))} error={err("series")} />
+            </Field>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FontSelect label="Fonte" value={endCard.fonte} options={fontOptions} onChange={(fonte) => set("endCard", { fonte })} error={err("endCard.fonte")} />
+              <NumberField label="Duração (s)" value={endCard.duracao_s} min={1} max={5} step={0.5} hint="De 1 a 5 s, em passos de 0,5" onChange={(duracao_s) => set("endCard", { duracao_s })} error={err("endCard.duracao_s")} />
+              <ColorTokenInput label="Cor do texto" value={endCard.cor_texto} palette={draft.palette} onChange={(cor_texto) => set("endCard", { cor_texto })} error={err("endCard.cor_texto")} />
+              <SelectField label="Tipo de fundo" value={endCard.fundo_tipo} labels={fundoTipoLabel} onChange={(fundo_tipo) => set("endCard", { fundo_tipo })} error={err("endCard.fundo_tipo")} />
+              <ColorTokenInput label="Cor do fundo" value={endCard.cor_fundo} palette={draft.palette} onChange={(cor_fundo) => set("endCard", { cor_fundo })} error={err("endCard.cor_fundo")} />
+              {endCard.fundo_tipo === "imagem" && (
+                <NumberField label="Opacidade da camada" value={endCard.opacidade_fundo} min={0} max={1} step={0.05} hint="A cor do fundo por cima da imagem, de 0 (só a imagem) a 1" onChange={(opacidade_fundo) => set("endCard", { opacidade_fundo })} error={err("endCard.opacidade_fundo")} />
               )}
-            </IaSugestoes>
-          </div>
-        </SectionCard>
-      </div>
+              <SwitchField label="Mostrar logo" checked={endCard.mostrar_logo} onChange={(mostrar_logo) => set("endCard", { mostrar_logo })} />
+            </div>
+            {endCard.fundo_tipo === "imagem" && (
+              <FundoImagePicker
+                perfilId={perfil.id}
+                value={endCard.fundo_imagem_id ?? null}
+                onChange={(image) => {
+                  set("endCard", { fundo_imagem_id: image.id });
+                  clearError("endCard.fundo_imagem_id");
+                  setFundoUrls((u) => ({ ...u, [image.id]: image.urls.medium }));
+                }}
+                error={err("endCard.fundo_imagem_id")}
+              />
+            )}
+          </SectionCard>
 
-      <aside aria-label="Prévia do kit" className="space-y-3 lg:sticky lg:top-20 lg:self-start">
-        <div className="flex justify-center gap-1 rounded-full bg-muted p-1" role="group" aria-label="Momento da prévia">
-          {(
-            [
-              ["inicio", "Início"],
-              ["fim", "Fim (card final)"],
-            ] as const
-          ).map(([value, label]) => (
-            <Button
-              key={value}
-              type="button"
-              size="sm"
-              variant={moment === value ? "default" : "ghost"}
-              className="flex-1 rounded-full"
-              aria-pressed={moment === value}
-              onClick={() => setMoment(value)}
-            >
-              {label}
-            </Button>
-          ))}
+          <SectionCard title="Bordões e séries" description="Textos de referência para roteiros e títulos; um por linha.">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <IaSugestoes tipo="kit.bordoes" {...iaLista} value={draft.catchphrases} onSave={iaSaveLista("catchphrases")} campo="Bordões">
+                {(botao) => (
+                  <LinesField label="Bordões" action={botao} value={draft.catchphrases} max={120} onChange={(catchphrases) => setDraft((d) => ({ ...d, catchphrases }))} error={err("catchphrases")} />
+                )}
+              </IaSugestoes>
+              <IaSugestoes tipo="kit.series" {...iaLista} value={draft.series} onSave={iaSaveLista("series")} campo="Séries">
+                {(botao) => (
+                  <LinesField label="Séries" action={botao} value={draft.series} max={60} onChange={(series) => setDraft((d) => ({ ...d, series }))} error={err("series")} />
+                )}
+              </IaSugestoes>
+            </div>
+          </SectionCard>
         </div>
-        <KitPreview
-          tokens={draft}
-          fontsReady={fontsReady}
-          moment={moment}
-          hookText={sampleHook || " "}
-          logoUrl={perfil.logo?.urls.medium ?? null}
-          watermarkImageUrl={chosenImage?.urls.medium ?? watermarkUrl}
-          handle={conta?.handle ?? activeContas[0]?.handle ?? null}
-          backgroundUrl={poster}
-          hookImageUrl={fundoUrl(hook.fundo_tipo, hook.fundo_imagem_id)}
-          endCardImageUrl={fundoUrl(endCard.fundo_tipo, endCard.fundo_imagem_id)}
-        />
-        <Field label="Texto de exemplo do gancho">
-          {({ id }) => <Input id={id} value={sampleHook} maxLength={120} onChange={(e) => setSampleHook(e.target.value)} />}
-        </Field>
-      </aside>
-    </div>
+
+        <aside aria-label="Prévia do kit" className="space-y-3 lg:sticky lg:top-20 lg:self-start">
+          <div className="flex justify-center gap-1 rounded-full bg-muted p-1" role="group" aria-label="Momento da prévia">
+            {(
+              [
+                ["inicio", "Início"],
+                ["fim", "Fim (card final)"],
+              ] as const
+            ).map(([value, label]) => (
+              <Button
+                key={value}
+                type="button"
+                size="sm"
+                variant={moment === value ? "default" : "ghost"}
+                className="flex-1 rounded-full"
+                aria-pressed={moment === value}
+                onClick={() => setMoment(value)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+          <KitPreview
+            tokens={draft}
+            fontsReady={fontsReady}
+            moment={moment}
+            hookText={sampleHook || " "}
+            logoUrl={perfil.logo?.urls.medium ?? null}
+            watermarkImageUrl={chosenImage?.urls.medium ?? watermarkUrl}
+            handle={conta?.handle ?? activeContas[0]?.handle ?? null}
+            backgroundUrl={poster}
+            hookImageUrl={fundoUrl(hook.fundo_tipo, hook.fundo_imagem_id)}
+            endCardImageUrl={fundoUrl(endCard.fundo_tipo, endCard.fundo_imagem_id)}
+          />
+          <Field label="Texto de exemplo do gancho">
+            {({ id }) => <Input id={id} value={sampleHook} maxLength={120} onChange={(e) => setSampleHook(e.target.value)} />}
+          </Field>
+        </aside>
+      </div>
+    </Page>
   );
 }
 

@@ -83,6 +83,15 @@ class EnvioConfigIn(CamelModel):
     marca_automatica: bool | None = None
 
 
+class CortesResumo(CamelModel):
+    """Clipes da geração por situação (spec 024, FR-018). A soma é o total, inclusive arquivados."""
+
+    aceitos: int  # não arquivados com a marca aplicada ou em aplicação (na_fila, processando, pronto)
+    pendentes: int  # não arquivados em revisão
+    falhou: int  # não arquivados com falha
+    arquivados: int
+
+
 class Envio(CamelModel):
     id: UUID
     perfil_id: UUID
@@ -114,6 +123,7 @@ class Envio(CamelModel):
     version: int
     created_at: datetime
     created_by: UserRef | None
+    cortes_resumo: CortesResumo | None = None  # null: a geração não tem nenhum corte
 
 
 class EnvioOut(CamelModel):

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/marca/CorteStatusBadge";
+import { ResumoCortes } from "@/components/envios/ResumoCortes";
 import {
   emAndamento,
   envioEtapaLabel,
@@ -27,7 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type EnvioLike = Pick<Envio, "status" | "queuePosition" | "progress" | "clipsTotal" | "clipsImportados">;
-type EnvioComEtapa = EnvioLike & Pick<Envio, "etapa" | "etapaMensagem">;
+type EnvioComEtapa = EnvioLike & Pick<Envio, "etapa" | "etapaMensagem"> & Partial<Pick<Envio, "cortesResumo">>;
 
 // Status da geração (US3): "Na fila (2º)", "Pronto: 3 clipes", "Sem clipes", "Falhou".
 export function EnvioStatusBadge({ envio, className }: { envio: EnvioLike; className?: string }) {
@@ -66,12 +67,15 @@ export function EnvioEtapaLinha({ envio, className }: { envio: EnvioComEtapa; cl
 }
 
 // Em andamento no OpenShorts: a linha da etapa + a barra do % geral; nos outros status, o badge.
-export function EnvioStatus({ envio, className }: { envio: EnvioComEtapa; className?: string }) {
+// Abaixo, os clipes por situação (spec 024, FR-018), quando já houver algum; `resumo={false}` no
+// detalhe, que mostra o resumo no `dl`.
+export function EnvioStatus({ envio, resumo = true, className }: { envio: EnvioComEtapa; resumo?: boolean; className?: string }) {
   const andamento = envio.status === "processando" || envio.status === "importando";
   return (
     <div className={cn("min-w-32 space-y-1", className)}>
       {andamento ? <EnvioEtapaLinha envio={envio} /> : <EnvioStatusBadge envio={envio} />}
       {andamento && <ProgressBar value={envio.progress / 100} label="Progresso da geração" className="h-1.5" />}
+      {resumo && <ResumoCortes resumo={envio.cortesResumo} />}
     </div>
   );
 }

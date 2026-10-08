@@ -33,8 +33,8 @@ import {
   visitasDe,
   type FonteCalendario,
 } from "@/components/studio/fonteAnalytics";
+import { Page } from "@/components/shell";
 import { Button } from "@/components/ui/button";
-import { useFiltroUrl } from "@/components/conteudos/FiltrosConteudos";
 import {
   formatCompacto,
   formatEngajamento,
@@ -49,15 +49,15 @@ import {
   type EstadoFiltroAnalytics,
   type Medida,
 } from "@/lib/analytics";
+import { useFiltroUrl } from "@/lib/filtros";
 import { linkDoVideo, nomeDaConta, origemMetricasLabel, useRanking, type MarcoValor } from "@/lib/metricas";
 import { useAuth } from "@/lib/authStore";
 import { studioContaPath, useCoberturaStudio } from "@/lib/studio";
-import { formatDateTime } from "@/lib/tz";
+import { formatDateKey, formatDateTime } from "@/lib/tz";
 import { cn } from "@/lib/utils";
 
 const diaCurto = (dia: string) => `${dia.slice(8, 10)}/${dia.slice(5, 7)}`;
 const linkVideo = (id: string) => `/app/metricas/videos/${id}`;
-const dataBr = (dia: string) => dia.split("-").reverse().join("/");
 
 type Chave = AnalyticsIndicador["chave"];
 const ORDEM_INDICADORES: Chave[] = ["views", "likes", "engajamento", "seguidores", "posts", "mediana_post"];
@@ -206,7 +206,7 @@ function serieDiaria(dados: AnalyticsVisaoGeral | undefined, ordem: OrdemContas,
       if (s && comp !== null && comp !== undefined) linhas.push({ rotulo: `  ${s.studio ? "coletado" : "Studio"} (comparação)`, valor: formatNumero(comp) });
     }
     const f = fontes[i];
-    return { titulo: serie[i] ? dataBr(serie[i].dia) : undefined, linhas, nota: temStudio ? `Fonte: ${fonteLabel[(f ?? "coletado") as FonteCalendario]}` : undefined };
+    return { titulo: serie[i] ? formatDateKey(serie[i].dia) : undefined, linhas, nota: temStudio ? `Fonte: ${fonteLabel[(f ?? "coletado") as FonteCalendario]}` : undefined };
   };
   const nomesContas = colunas.map((s) => s.nome).join(", ");
   return {
@@ -339,7 +339,7 @@ export function VisaoGeral({ estado }: { estado: EstadoFiltroAnalytics }) {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <Page>
       <section aria-label="Indicadores do período" className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {ORDEM_INDICADORES.map((chave) => {
           const ind = porChave.get(chave);
@@ -364,7 +364,7 @@ export function VisaoGeral({ estado }: { estado: EstadoFiltroAnalytics }) {
       </section>
       {dados.error ? null : ctx && (
         <p className="text-xs text-muted-foreground" data-contexto>
-          Período de {dataBr(ctx.de)} a {dataBr(ctx.ate)}, comparado com {dataBr(ctx.anteriorDe)} a {dataBr(ctx.anteriorAte)}.{" "}
+          Período de {formatDateKey(ctx.de)} a {formatDateKey(ctx.ate)}, comparado com {formatDateKey(ctx.anteriorDe)} a {formatDateKey(ctx.anteriorAte)}.{" "}
           {ctx.aguardando > 0 && `Aguardando o marco de ${medidaLabel[medida].replace(/^Views em /, "")}: ${formatNumero(ctx.aguardando)}.`}
           {studio.dias > 0 && ` ${formatNumero(studio.dias)} ${studio.dias === 1 ? "dia veio" : "dias vieram"} do histórico importado do Studio. ${NOTA_FUSO_STUDIO}`}
         </p>
@@ -433,6 +433,6 @@ export function VisaoGeral({ estado }: { estado: EstadoFiltroAnalytics }) {
       >
         <RankingTable semFiltroContas semMoldura escopo={escopo} />
       </CardAnalytics>
-    </div>
+    </Page>
   );
 }

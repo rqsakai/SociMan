@@ -2,19 +2,21 @@
  * Aba Cenas do perfil (spec 010, US2; FR-007): a biblioteca de cenas (tomadas para o Flow/Veo) com
  * filtros por status, avatar, cenário, produto e tag, busca por nome, ação, fala e produto, "Nova
  * cena", "Duplicar" e "Arquivadas". Também os "Padrões das cenas" (iluminação e estilo e negative que
- * valem quando a cena deixa o campo vazio). A URL aceita `avatarId`, `cenarioId` e
- * `produtoImagemId` (o "onde é usado" dos assets abre a aba já filtrada).
+ * valem quando a cena deixa o campo vazio). Os filtros ficam na URL (spec 024: `q`, `status`, `tag`,
+ * `arquivadas=1`, `avatarId`, `cenarioId` e `produtoImagemId`; o "onde é usado" dos assets abre a aba
+ * já filtrada) e valem ao mudar.
  */
 import type { Perfil } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Film, Filter, Loader2, Plus, Save } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Copy, Film, Loader2, Plus, Save } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { PropostaCard } from "@/components/anotacoes/PropostaCard";
-import { DataTable, dataTableColumns } from "@/components/data-table";
-import { HeaderCard } from "@/components/shell";
+import { BUSCA_DEBOUNCE_MS } from "@/components/data-table/FilterBar";
+import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
+import { HeaderCard, Page } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +28,6 @@ import { api } from "@/lib/api";
 import { useAnotacoes } from "@/lib/anotacoes";
 import {
   cenaPadroesKey,
-  
   invalidarCena,
   LIM,
   modoCenaLabel,
@@ -38,19 +39,34 @@ import {
   type CenaResumo,
   type CenaStatus,
 } from "@/lib/cenas";
+import { useFiltroUrl } from "@/lib/filtros";
 import { formatDateTime } from "@/lib/tz";
 
-type Draft = { q: string; status: string; avatarId: string; cenarioId: string; produtoImagemId: string; tag: string; arquivadas: boolean };
+type AssetFiltro = "avatarId" | "cenarioId" | "produtoImagemId";
 
-const paraFiltros = (d: Draft): CenaFiltros => ({
-  q: d.q.trim() || undefined,
-  status: (d.status || undefined) as CenaStatus | undefined,
-  avatarId: d.avatarId || undefined,
-  cenarioId: d.cenarioId || undefined,
-  produtoImagemId: d.produtoImagemId || undefined,
-  tag: d.tag.trim().toLowerCase() || undefined,
-  arquivadas: d.arquivadas || undefined,
-});
+// Campo "Tag" em "Mais filtros": aplica 300 ms depois da última tecla, como a busca da barra.
+function TagFiltro({ id, valor, onChange }: { id: string; valor: string; onChange: (v: string) => void }) {
+  const [texto, setTexto] = useState(valor);
+  const enviado = useRef(valor);
+  useEffect(() => {
+    enviado.current = valor;
+    setTexto(valor);
+  }, [valor]);
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
+  useEffect(() => {
+    const final = texto.trim().toLowerCase();
+    if (final === enviado.current) return;
+    const t = setTimeout(() => {
+      enviado.current = final;
+      onChangeRef.current(final);
+    }, BUSCA_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [texto]);
+  return <Input id={id} value={texto} maxLength={100} onChange={(e) => setTexto(e.target.value)} />;
+}
 
 function DuplicarBotao({ cena, perfilId }: { cena: CenaResumo; perfilId: string }) {
   const navigate = useNavigate();
@@ -153,18 +169,25 @@ function colunas(perfilId: string) {
 }
 
 export function CenasTab({ perfil }: { perfil: Perfil }) {
-  const [params] = useSearchParams();
-  const inicial: Draft = {
-    q: "",
-    status: "",
+  const [params, set] = useFiltroUrl();
+  const q = params.get("q") ?? "";
+  const status = (params.get("status") ?? "") as CenaStatus | "";
+  const tag = params.get("tag") ?? "";
+  const arquivadas = params.get("arquivadas") === "1";
+  const ids: Record<AssetFiltro, string> = {
     avatarId: params.get("avatarId") ?? "",
     cenarioId: params.get("cenarioId") ?? "",
     produtoImagemId: params.get("produtoImagemId") ?? "",
-    tag: "",
-    arquivadas: false,
   };
-  const [draft, setDraft] = useState<Draft>(inicial);
-  const [filtros, setFiltros] = useState<CenaFiltros>(() => paraFiltros(inicial));
+  const filtros: CenaFiltros = {
+    q: q || undefined,
+    status: status || undefined,
+    avatarId: ids.avatarId || undefined,
+    cenarioId: ids.cenarioId || undefined,
+    produtoImagemId: ids.produtoImagemId || undefined,
+    tag: tag || undefined,
+    arquivadas: arquivadas || undefined,
+  };
   const cenas = useCenas(perfil.id, filtros);
   const itens = useMemo(() => cenas.data?.pages.flatMap((p) => p.items), [cenas.data]);
   const columns = useMemo(() => colunas(perfil.id), [perfil.id]);
@@ -176,20 +199,22 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
   const avatares = useQuery(opcoes("avatar"));
   const cenarios = useQuery(opcoes("cenario"));
   const imagens = useQuery(opcoes("imagem"));
+  const listas: Record<AssetFiltro, { id: string; name: string }[] | undefined> = {
+    avatarId: avatares.data?.items,
+    cenarioId: cenarios.data?.items,
+    produtoImagemId: imagens.data?.items,
+  };
+  const rotulos: Record<AssetFiltro, string> = { avatarId: "Avatar", cenarioId: "Cenário", produtoImagemId: "Foto do produto" };
+  // o filtro vindo da URL pode ser de um asset arquivado
+  const nomeAsset = (key: AssetFiltro) => listas[key]?.find((a) => a.id === ids[key])?.name ?? "Asset escolhido";
 
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setFiltros(paraFiltros(draft));
-  }
-
-  const selectAsset = (label: string, key: "avatarId" | "cenarioId" | "produtoImagemId", lista: { id: string; name: string }[] | undefined) => (
-    <Field label={label}>
+  const selectAsset = (key: AssetFiltro, className?: string) => (
+    <Field label={rotulos[key]} className={className}>
       {({ id }) => (
-        <NativeSelect id={id} value={draft[key]} onChange={(e) => setDraft({ ...draft, [key]: e.target.value })}>
+        <NativeSelect id={id} value={ids[key]} onChange={(e) => set({ [key]: e.target.value })}>
           <option value="">Todos</option>
-          {/* o filtro vindo da URL pode ser de um asset arquivado */}
-          {draft[key] && !lista?.some((a) => a.id === draft[key]) && <option value={draft[key]}>Asset escolhido</option>}
-          {lista?.map((a) => (
+          {ids[key] && !listas[key]?.some((a) => a.id === ids[key]) && <option value={ids[key]}>Asset escolhido</option>}
+          {listas[key]?.map((a) => (
             <option key={a.id} value={a.id}>
               {a.name}
             </option>
@@ -199,8 +224,21 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
     </Field>
   );
 
+  const ativos: FiltroAtivo[] = [
+    ...(status ? [{ chave: "status", rotulo: "Status", valor: statusCenaLabel[status] ?? status, limpar: () => set({ status: null }) }] : []),
+    ...(ids.avatarId ? [{ chave: "avatarId", rotulo: "Avatar", valor: nomeAsset("avatarId"), limpar: () => set({ avatarId: null }) }] : []),
+    ...(arquivadas ? [{ chave: "arquivadas", rotulo: "Arquivadas", valor: "mostrando", limpar: () => set({ arquivadas: null }) }] : []),
+    ...(ids.cenarioId
+      ? [{ chave: "cenarioId", rotulo: "Cenário", valor: nomeAsset("cenarioId"), limpar: () => set({ cenarioId: null }), mais: true }]
+      : []),
+    ...(ids.produtoImagemId
+      ? [{ chave: "produtoImagemId", rotulo: "Foto do produto", valor: nomeAsset("produtoImagemId"), limpar: () => set({ produtoImagemId: null }), mais: true }]
+      : []),
+    ...(tag ? [{ chave: "tag", rotulo: "Tag", valor: `#${tag}`, limpar: () => set({ tag: null }), mais: true }] : []),
+  ];
+
   return (
-    <div className="flex flex-col gap-6">
+    <Page>
       <HeaderCard
         title="Cenas"
         description="Tomadas de até 8 s para gerar no Google Flow: avatar, cenário, ação, fala e o prompt pronto para copiar."
@@ -215,41 +253,6 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
           )
         }
       >
-        <form onSubmit={onSubmit} className="mb-4 grid gap-4 border-b pb-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Filtros das cenas">
-          <Field label="Buscar cenas" className="sm:col-span-2">
-            {({ id }) => (
-              <Input id={id} type="search" placeholder="Nome, ação, fala ou produto" value={draft.q} maxLength={100} onChange={(e) => setDraft({ ...draft, q: e.target.value })} />
-            )}
-          </Field>
-          <Field label="Status">
-            {({ id }) => (
-              <NativeSelect id={id} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value })}>
-                <option value="">Todos</option>
-                {(Object.keys(statusCenaLabel) as CenaStatus[]).map((s) => (
-                  <option key={s} value={s}>
-                    {statusCenaLabel[s]}
-                  </option>
-                ))}
-              </NativeSelect>
-            )}
-          </Field>
-          <Field label="Tag">
-            {({ id }) => <Input id={id} value={draft.tag} onChange={(e) => setDraft({ ...draft, tag: e.target.value })} />}
-          </Field>
-          {selectAsset("Avatar", "avatarId", avatares.data?.items)}
-          {selectAsset("Cenário", "cenarioId", cenarios.data?.items)}
-          {selectAsset("Foto do produto", "produtoImagemId", imagens.data?.items)}
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <label className="flex h-9 items-center gap-2 text-sm">
-              <Switch checked={draft.arquivadas} onCheckedChange={(arquivadas) => setDraft({ ...draft, arquivadas })} aria-label="Mostrar arquivadas" />
-              Arquivadas
-            </label>
-            <Button type="submit">
-              <Filter aria-hidden="true" />
-              Filtrar
-            </Button>
-          </div>
-        </form>
         {cenas.isError && <ApiErrorAlert error={cenas.error} />}
         <DataTable
           label="Cenas do perfil"
@@ -258,12 +261,52 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
           loading={cenas.isPending}
           getRowId={(c) => c.id}
           emptyMessage={'Nenhuma cena com esses filtros. Use "Nova cena" para criar.'}
+          toolbar={
+            <FilterBar
+              busca={{
+                valor: q,
+                onChange: (v) => set({ q: v || null }, { replace: true }),
+                rotulo: "Buscar cenas",
+                placeholder: "Nome, ação, fala ou produto",
+              }}
+              principais={
+                <>
+                  <Field label="Status" className="w-full sm:w-40">
+                    {({ id }) => (
+                      <NativeSelect id={id} value={status} onChange={(e) => set({ status: e.target.value })}>
+                        <option value="">Todos</option>
+                        {(Object.keys(statusCenaLabel) as CenaStatus[]).map((st) => (
+                          <option key={st} value={st}>
+                            {statusCenaLabel[st]}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
+                  {selectAsset("avatarId", "w-full sm:w-48")}
+                  <label className="flex h-9 items-center gap-2 text-sm">
+                    <Switch checked={arquivadas} onCheckedChange={(on) => set({ arquivadas: on ? "1" : null })} aria-label="Mostrar arquivadas" />
+                    Arquivadas
+                  </label>
+                </>
+              }
+              mais={
+                <>
+                  {selectAsset("cenarioId")}
+                  {selectAsset("produtoImagemId")}
+                  <Field label="Tag">{({ id }) => <TagFiltro id={id} valor={tag} onChange={(v) => set({ tag: v || null })} />}</Field>
+                </>
+              }
+              ativos={ativos}
+              onLimpar={() => set({ q: null, status: null, tag: null, arquivadas: null, avatarId: null, cenarioId: null, produtoImagemId: null })}
+            />
+          }
           pagination={{ hasMore: cenas.hasNextPage, onLoadMore: () => void cenas.fetchNextPage(), loadingMore: cenas.isFetchingNextPage }}
         />
       </HeaderCard>
       <PropostasAbertas perfilId={perfil.id} />
       <PadroesCenas perfil={perfil} />
-    </div>
+    </Page>
   );
 }
 

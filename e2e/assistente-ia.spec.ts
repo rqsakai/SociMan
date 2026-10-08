@@ -360,16 +360,18 @@ test("regras do título e textos da postagem pelo mesmo painel", async ({ page, 
   expect(conta.status(), "POST contas").toBe(201);
   const member = await createVerifiedMember(page);
 
-  // um corte pronto (MP4 sintético pela aba Cortes; o worker processa em segundo plano)
+  // um corte pronto (MP4 sintético pelo "Aplicar marca num corte" de Conteúdos; o worker processa em segundo plano)
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
   const video = testInfo.outputPath("corte.mp4");
   syntheticMp4(video, 4);
-  await page.goto(`/app/perfis/${perfilId}`);
-  await tab(page, "Cortes").click();
-  await page.getByLabel("Vídeo do corte").setInputFiles(video);
-  await page.getByLabel("Texto do gancho").fill(`Gancho IA ${sfx}`);
-  await page.getByRole("button", { name: "Enviar corte" }).click();
+  await page.goto(`/app/conteudos?perfil=${perfilId}`);
+  await page.getByRole("button", { name: "Aplicar marca num corte" }).click();
+  const dialogo = page.getByRole("dialog", { name: "Aplicar marca num corte" });
+  await expect(dialogo.getByLabel("Perfil")).toHaveValue(perfilId);
+  await dialogo.getByLabel("Vídeo do corte").setInputFiles(video);
+  await dialogo.getByLabel("Texto do gancho").fill(`Gancho IA ${sfx}`);
+  await dialogo.getByRole("button", { name: "Enviar corte" }).click();
   await expect(page).toHaveURL(/\/app\/cortes\/[0-9a-f-]{36}$/, { timeout: 30_000 });
   const corteUrl = page.url();
 

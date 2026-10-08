@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { FileField } from "@/components/ui/file-field";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -33,6 +34,7 @@ import {
 import { api } from "@/lib/api";
 import { formatBytes } from "@/lib/marca";
 import { formatDateTime } from "@/lib/tz";
+import { EmptyState } from "@/components/shell";
 
 export function Tomadas({ cena }: { cena: Cena }) {
   const queryClient = useQueryClient();
@@ -65,7 +67,7 @@ export function Tomadas({ cena }: { cena: Cena }) {
         </label>
         {tomadas.isError && <ApiErrorAlert error={tomadas.error} />}
         {tomadas.isPending && <p className="text-sm text-muted-foreground">Carregando…</p>}
-        {tomadas.data && tomadas.data.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma tomada.</p>}
+        {tomadas.data && tomadas.data.length === 0 && <EmptyState titulo="Nenhuma tomada." className="py-4" />}
         {tomadas.data && tomadas.data.length > 0 && (
           <ul aria-label="Tomadas" className="space-y-4">
             {tomadas.data.map((t, i) => (
@@ -87,6 +89,8 @@ function EnviarTomada({ cenaId, onEnviada }: { cenaId: string; onEnviada: () => 
   const [progress, setProgress] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // zerar o input pela ref exige trocar a key do FileField (o texto volta a "Nenhum arquivo escolhido")
+  const [campoKey, setCampoKey] = useState(0);
 
   function pick(f: File | null) {
     setFileError(null);
@@ -109,6 +113,7 @@ function EnviarTomada({ cenaId, onEnviada }: { cenaId: string; onEnviada: () => 
       else toast.success("Tomada enviada.");
       setFile(null);
       if (inputRef.current) inputRef.current.value = "";
+      setCampoKey((k) => k + 1);
       await onEnviada();
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") toast.info("Envio cancelado; nada foi gravado.");
@@ -126,10 +131,10 @@ function EnviarTomada({ cenaId, onEnviada }: { cenaId: string; onEnviada: () => 
     <div className="space-y-3 rounded-lg border p-3">
       <Field label="Nova tomada" error={fileError ?? undefined}>
         {({ id, describedBy, invalid }) => (
-          <Input
+          <FileField
+            key={campoKey}
             ref={inputRef}
             id={id}
-            type="file"
             accept={TOMADA_ACCEPTED.join(",")}
             disabled={enviando}
             aria-invalid={invalid}

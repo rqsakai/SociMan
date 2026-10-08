@@ -74,6 +74,13 @@ no SociMan (ADR 0001). As capturas ficam em `.playwright-mcp/ref/`, que é gitig
   vermelho, aviso laranja, info azul, destaque rosa e escuro (cerca de `#344767`). O SociMan
   define a própria paleta em tokens do Tailwind/shadcn (ver a spec de base de UI).
 
+## Ritmo do SociMan (spec 024)
+- **Entre blocos:** `gap-6` (24 px) em toda página, pela raiz `Page`; abas (`Tabs`) e grades de cards lado a lado também com `gap-6`. O espaço mora no contêiner, nunca na margem do cartão.
+- **Dentro do cartão:** `px-5` nas laterais e `gap-4` entre os elementos (`Card`: `gap-4 py-5`; `HeaderCard`: corpo `px-5 pt-4 pb-5`).
+- **Faixa do `HeaderCard`:** na cor da marca (`--band*`, igual nos dois temas), subindo `-mt-6` sobre o invólucro `pt-6`. Outros tons só quando a faixa indica estado.
+- **Largura:** o conteúdo para em 1440 px, centralizado; `scrollbar-gutter: stable` evita o pulo quando a rolagem aparece.
+- **Menu:** grupos recolhíveis (Cortes, Analytics, Configurações), lembrados por aparelho.
+
 ## Mapeamento para o SociMan
 | Na demo | No SociMan |
 |---|---|
