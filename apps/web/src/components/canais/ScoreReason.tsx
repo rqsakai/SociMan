@@ -72,7 +72,10 @@ export function ScoreReason({
   const descontoCortado = jaCortado ? base * FATOR_JA_CORTADO - base : 0;
   const afinidade = video.afinidade ?? null;
   const temas = afinidade?.temas ?? [];
-  const motivoNeutro = !afinidade && afinidadeEstado?.motivo ? afinidadeMotivoLabel[afinidadeEstado.motivo] : null;
+  // A pontuação é limitada a 0..100: o que passar vira uma linha própria, para a soma fechar.
+  const soma = base + descontoCortado + (afinidade?.pontos ?? 0);
+  const ajusteLimite = Math.abs(video.score - soma) > 0.5 && (video.score >= 99.5 || video.score <= 0.5) ? video.score - soma : 0;
+  const motivoNeutro =!afinidade && afinidadeEstado?.motivo ? afinidadeMotivoLabel[afinidadeEstado.motivo] : null;
 
   return (
     <div className="flex min-w-0 items-start gap-1">
@@ -123,6 +126,14 @@ export function ScoreReason({
                     Afinidade (tema e canal)
                   </td>
                   <td className="py-1.5 text-right tabular-nums">{sinalFmt.format(afinidade.pontos)}</td>
+                </tr>
+              )}
+              {ajusteLimite !== 0 && (
+                <tr className="border-t">
+                  <td className="py-1.5" colSpan={3}>
+                    Limite da escala (0 a 100)
+                  </td>
+                  <td className="py-1.5 text-right tabular-nums">{sinalFmt.format(ajusteLimite)}</td>
                 </tr>
               )}
             </tbody>

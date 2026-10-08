@@ -236,7 +236,7 @@ contracts/ui-024.md, quickstart.md)
 - [X] T073 Com o código congelado: `npm run test:api` e `flock /tmp/sociman-e2e.lock npm run test:e2e`, depois `npm run test:e2e:pwa`. Tudo verde (SC-010), comparado com a linha de base da T002.
 - [X] T074 Capturas com o Playwright MCP em 1280 e 390 px, temas claro e escuro, de Agentes, Propostas, Gerar cortes, Conteúdos, Descobrir, Perfil, Aprendizado e o menu (aberto e fechado).
 - [X] T075 Rodar `/impeccable critique` nas mesmas telas (dual-agent) e o agente `impeccable:impeccable-finish-reviewer`: nota ≥ 30/40 e nenhum P0 (SC-009). Corrigir os achados P0/P1 numa só rodada e confirmar com, no máximo, mais uma.
-- [ ] T076 Roteiro manual do quickstart §2 com o dono no app de dev; registrar o resultado em `specs/024-revisao-ux/checklists/quickstart-dono.md`.
+- [X] T076 Roteiro manual do quickstart §2 com o dono no app de dev; registrar o resultado em `specs/024-revisao-ux/checklists/quickstart-dono.md`.
 
 ---
 
