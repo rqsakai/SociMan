@@ -57,3 +57,55 @@ mudança não commitada, PARE e me pergunte o que fazer. Não faça commit sem e
 - Atualize o backlog em `docs/visao.md` (021, 022 e 012 com status "spec pronta").
 - Me dê um resumo: entidades criadas/alteradas por spec, migrations previstas, perguntas que ficaram abertas
   e riscos.
+
+---
+
+# Rodada 2: 011-roteiros-video-local (2026-10-08)
+
+Cole numa sessão nova do Claude Code em `/home/sakai/Projects/tiktok-shop/SociMan`:
+
+```text
+Vamos especificar a 011 (roteiros com vídeo local) com o Spec Kit, a partir do insumo já decidido pelo dono.
+Siga o CLAUDE.md do SociMan (um passo por vez, nada de código sem spec aprovada) e a constitution.
+
+## Leia antes de começar
+- docs/insumos/011-roteiros-video-local.md (o insumo; é um HANDOFF do pipeline que já gerou um vídeo aprovado).
+- specs/010-cenas/data-model.md (a cena que esta spec ESTENDE: tomada_origem, cena_tomadas, Duplicar, status usada).
+- specs/021-geracao-local/spec.md e data-model.md (a lista fechada de passos do FR-002 que esta spec AUMENTA,
+  a trava de GPU, a regra "escolha sempre humana" que o modo automático altera só dentro do roteiro).
+- specs/012-produtos-shop/data-model.md (ponte cenas.produto_id / produto_variante_id) e
+  specs/025-cadastro-padronizado/data-model.md (kit do avatar, vozes, assets.voz_id).
+- specs/014-central-de-conteudos/data-model.md (o vídeo final vira conteúdo de origem video_proprio, como rascunho).
+Referência técnica (só leitura, não copie código sem spec): ../comfyui-docker/pipeline/PADROES.md,
+../comfyui-docker/pipeline/{run_storyboard,finalizar_hd}.py, ../comfyui-docker/runs/bia_vo/{gerar,refazer}.py,
+../comfyui-docker/output/candidatos/candidato_01_bia_vestido_verde.txt.
+
+## Numeração e branch
+Número 11, short-name `roteiros-video-local`. Antes de criar a branch rode `git status` e me mostre; se houver
+mudança não commitada, PARE e pergunte. Não faça commit sem eu pedir.
+
+## Sequência (pare entre as etapas para eu aprovar)
+1. /speckit-specify com o insumo (--number 11 --short-name roteiros-video-local). Leve TODAS as entidades,
+   estados, portões, invalidações e regras aprendidas; o que estende a 010 e a 021 vira FR próprio desta spec
+   ("a 010 ganha…", "a lista do FR-002 da 021 ganha…"), sem reescrever aquelas specs.
+2. /speckit-clarify. Já decidido (registre em Clarifications com data 2026-10-08, não pergunte de novo):
+   - portões aprovados por dono ou membro; histórico registra quem;
+   - roteiro com um ou vários produtos (roteiro_produtos);
+   - modo automático escolhe a opção 1, autor "sistema (automático)", só dentro do roteiro;
+   - no automático o vídeo final vai para a 014 como RASCUNHO; publicar/agendar segue a aprovação humana;
+   - formato único: voice over (fala na câmera e lip-sync fora do escopo).
+   Abertas (no máximo 3 perguntas): limite de cenas por roteiro; retenção das tomadas não usadas.
+3. /speckit-plan. Obrigatório no plano:
+   - fakes do ComfyUI (bloco keyframe/clipe/upscale devolvendo imagem e vídeo pequenos) e do shop-tts
+     (/tts_paragraph com tempos) nos testes e no e2e; nenhum teste chama GPU real;
+   - mídia de vídeo nos candidatos da 021 (video_key no bucket de vídeos + miniatura);
+   - montagem (ffmpeg) no worker, sem GPU, fora da trava de GPU; acabamento dentro da trava;
+   - o dicionário de pronúncia vira tabela por perfil e passa a ir no pedido ao shop-tts (mudança de contrato
+     em contracts/, dependência externa no ../comfyui-docker; NÃO edite o comfyui-docker nesta sessão);
+   - contrato gerado (npm run gen:contract) e migrations Alembic na sequência das existentes.
+4. /speckit-tasks e /speckit-analyze; me mostre as inconsistências.
+5. NÃO rode /speckit-implement sem eu pedir.
+
+Ao terminar: atualize o backlog em docs/visao.md (011 com status "spec pronta") e me dê o resumo
+(entidades novas e estendidas, passos novos da 021, portões e estados, migrations, perguntas abertas, riscos).
+```
