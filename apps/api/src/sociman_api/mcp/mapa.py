@@ -15,7 +15,7 @@ Rota nova da API nunca vira tool sozinha.
 """
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 Escopo = Literal["leitura", "propostas"]
 
@@ -29,6 +29,8 @@ class Tool:
     limite_padrao: int | None = None  # listas: `limit`/`limite` quando o agente não manda
     entidade: str | None = None  # escritas: o tipo do item alterado (registro, R8)
     ocultar: tuple[str, ...] = ()  # campos do corpo/query fora do alcance do agente
+    # Spec 012: valores da query quando o agente não manda (ex.: só produtos aprovados).
+    padroes: tuple[tuple[str, Any], ...] = ()
 
 
 def _l(titulo: str, descricao: str, limite_padrao: int | None = None,
@@ -265,6 +267,48 @@ TOOLS: dict[str, Tool] = {
     "cenas_padroes_versions": _versoes("os padrões das cenas"),
     "conteudos_cenas_get": _l("Cenas de um conteúdo", "Cenas que compõem um conteúdo de vídeo "
                               "próprio."),
+    # ---- produtos do Shop (spec 012, R14: só leitura) ----
+    "produtos_listar": Tool(
+        "Listar produtos", "Produtos do TikTok Shop do perfil. Por padrão, só os aprovados "
+        "(`status=aprovado`): é o que vale para usar em cenas e roteiros. Filtre por estado, "
+        "busca (`q`) e arquivados; paginação por `cursor`.", limite_padrao=50,
+        padroes=(("status", ["aprovado"]),)),
+    "produtos_ver": _l("Ver produto", "Detalhe de um produto: a ficha técnica (as palavras "
+                       "exatas em inglês para os prompts, os cuidados e a descrição de venda), "
+                       "as variantes (cor, foto original, recorte e flat por link), o estado, "
+                       "as pendências e onde é usado. Para sugerir algo, grave uma "
+                       "`observacao` no produto com `anotacoes_create`."),
+    "produtos_versoes": _versoes("um produto"),
+    # ---- vozes do perfil (spec 025, R18: só leitura) ----
+    "vozes_listar": _l("Listar vozes", "Vozes do perfil (gravação ou sintética), com a situação "
+                       "(rascunho, gerando, revisão, aprovada), a sincronização com o serviço de "
+                       "voz e quantos avatares a usam como padrão.", limite_padrao=20),
+    "vozes_detalhe": _l("Ver voz", "Detalhe de uma voz: tom, descrição (sintética), referência "
+                        "aprovada e a transcrição, análise da gravação, consentimento (sem a "
+                        "prova), avatares que a usam e o último teste."),
+    "vozes_versoes": _versoes("uma voz"),
+    # ---- biblioteca da agência (spec 029: perfil base opcional; as rotas por perfil continuam) ----
+    "assets_listar_agencia": _l("Listar a biblioteca de assets", "Assets da agência inteira "
+                                "(avatares, cenários, fundos, stickers, marcas d'água e imagens), "
+                                "de qualquer perfil base ou sem perfil. Filtre por perfil base "
+                                "(`perfilId`: um id ou `sem`), tipo, tag, busca e arquivados; "
+                                "paginação por `cursor`.", limite_padrao=50),
+    "assets_imagens_agencia": _l("Listar imagens da biblioteca", "Imagens da agência de um tipo, "
+                                 "com o perfil base de cada uma e busca por texto.",
+                                 limite_padrao=50),
+    "cenas_listar_agencia": _l("Listar cenas da agência", "Cenas de qualquer perfil base ou sem "
+                               "perfil, com status, filtros e paginação (`cursor`).",
+                               limite_padrao=50),
+    "produtos_listar_agencia": Tool(
+        "Listar produtos da agência", "Produtos do TikTok Shop de qualquer perfil base ou sem "
+        "perfil. Por padrão, só os aprovados (`status=aprovado`). Filtre por perfil base "
+        "(`perfilId`: um id ou `sem`), estado, busca e arquivados; paginação por `cursor`.",
+        limite_padrao=50, padroes=(("status", ["aprovado"]),)),
+    "vozes_listar_agencia": _l("Listar vozes da agência", "Vozes de qualquer perfil base ou sem "
+                               "perfil, com a situação e a sincronização.", limite_padrao=20),
+    "estudio_resumo": _l("Resumo do AI Studio", "Quantos avatares, cenários, assets, cenas, "
+                         "produtos e vozes ativos existem (de um perfil base, sem perfil ou no "
+                         "total)."),
     # ---- anotações (leitura) ----
     "anotacoes_list": _l("Listar anotações e propostas", "Anotações e propostas presas aos itens, "
                          "com filtros (alvo, perfil, situação, tipo, cliente) e paginação "
@@ -369,6 +413,26 @@ _PROIBIDAS_DONO |= {op: "geração local: ato humano (spec 021)" for op in (
     "geracoes_criar", "geracoes_escolher", "geracoes_cancelar", "geracoes_tentar_de_novo",
     "geracoes_gerar_outras", "audios_enviar")}
 
+# Spec 012 (R14, R15): toda escrita de produto é de um humano (dono ou membro).
+_PROIBIDAS_DONO |= {op: "produtos: cadastro humano (spec 012)" for op in (
+    "produtos_criar", "produtos_editar", "produtos_salvar_ficha", "produtos_pedir_ficha",
+    "produtos_aprovar", "produtos_arquivar", "produtos_restaurar", "produtos_reverter",
+    "produtos_variante_criar", "produtos_variantes_ordenar", "produtos_variante_editar",
+    "produtos_variante_arquivar", "produtos_variante_restaurar", "produtos_refazer_flat",
+    "produtos_refazer_recorte")}
+
+# Spec 025 (R18): revogar e reverter são do princípio VII; o resto do cadastro é ato humano.
+_PROIBIDAS_DONO |= {op: "princípio VII: revogação e reversão só do dono humano (spec 025)"
+                    for op in ("vozes_revert", "assets_consentimento_revogar",
+                               "vozes_consentimento_revogar", "assets_consentimento_previa")}
+_PROIBIDAS_DONO |= {op: "cadastro é ato humano (009 FR-023, spec 025)" for op in (
+    "vozes_criar", "vozes_update", "vozes_archive", "vozes_restore",
+    "assets_consentimento_registrar", "vozes_consentimento_registrar")}
+
+# Spec 029: as versões da agência das mesmas escritas humanas.
+_PROIBIDAS_DONO |= {op: "ato humano (spec 029, como a rota por perfil)" for op in (
+    "geracoes_pedir_agencia", "audios_enviar_agencia", "produtos_criar_agencia",
+    "vozes_criar_agencia")}
 # Spec 026: a gestão da coleta de mercado (clientes, aceite de risco, interruptor, pausar,
 # continuar, reverts) é só do dono humano (FR-035).
 _PROIBIDAS_COLETA = {op: "gestão da coleta de mercado (só o dono humano, spec 026)" for op in (
@@ -433,6 +497,11 @@ _FORA_DONO |= {op: "IA paga ou dado de dono" for op in (
 _FORA_DONO |= {op: "geração local só pela interface no primeiro corte (spec 021)" for op in (
     "geracoes_listar", "geracoes_detalhe", "geracoes_versoes", "audios_detalhe")}
 
+# Spec 029: criar na biblioteca da agência e ler as gerações de um item seguem as da 007/010/021.
+_FORA_ESCRITAS |= {op: "escrita fora do primeiro corte (spec 029)" for op in (
+    "assets_criar_agencia", "cenas_criar_agencia")}
+_FORA_UPLOAD |= {"assets_criar_arquivo_agencia": "upload ou binário (só pela interface)"}
+_FORA_DONO |= {"geracoes_listar_agencia": "geração local só pela interface (spec 029)"}
 # Spec 026: o protocolo do coletor é do serviço `sociman-coletor` (token `scol_`, nunca MCP);
 # as leituras operacionais da coleta (rodadas, eventos, fila) não têm valor para o agente.
 _FORA_COLETA = {op: "serviço do coletor de mercado (spec 026)" for op in (

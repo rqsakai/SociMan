@@ -7,7 +7,11 @@
   (`ia.guia.achar_proibidas`: palavra inteira, sem acento e sem caixa);
 - `assets_mudaram`: prompt congelado com versão do avatar ou do cenário diferente da atual, com o
   texto da parte antes e depois (o serviço monta as duas);
-- `asset_arquivado`: avatar, cenário ou foto do produto arquivados.
+- `asset_arquivado`: avatar, cenário ou foto do produto arquivados;
+- `produto_fora_de_aprovado` (spec 012): o produto do catálogo saiu de `aprovado` ou foi
+  arquivado (a cena continua; o aviso pede para conferir);
+- `sem_perfil_base` (spec 029): a cena não tem perfil base, então vale o estilo e o negative do
+  código, sem os padrões nem as proibidas de um guia.
 """
 
 import math
@@ -53,6 +57,8 @@ class EntradaAvisos:
     proibidas: Sequence[str] = ()
     mudancas: Sequence[Mudanca] = ()
     arquivados: Sequence[str] = field(default_factory=tuple)  # papéis: avatar, cenario, produto
+    catalogo_fora: bool = False  # spec 012
+    sem_perfil_base: bool = False  # spec 029
 
 
 def limite_palavras(duracao_s: int) -> int:
@@ -89,4 +95,10 @@ def calcular(e: EntradaAvisos) -> list[Aviso]:
         avisos.append(Aviso("asset_arquivado", _ARQUIVADO[papel],
                             {"avatar": "avatarId", "cenario": "cenarioId",
                              "produto": "produtoImagemId"}[papel], {"parte": papel}))
+    if e.catalogo_fora:
+        avisos.append(Aviso("produto_fora_de_aprovado", "O produto saiu de aprovado ou foi "
+                            "arquivado; confira a ficha antes de gerar", "produtoId"))
+    if e.sem_perfil_base:
+        avisos.append(Aviso("sem_perfil_base", "Sem perfil base: sem padrões nem guia",
+                            "perfilId"))
     return avisos

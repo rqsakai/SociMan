@@ -21,8 +21,8 @@ description: "Tarefas da feature 012-produtos-shop"
   - `fila.abertas_do_alvo`;
   - o registro de `uso.py`;
   - os fakes `comfyui_fake`/`dockerctl_fake` e os componentes `components/geracao/`;
-- a **025-cadastro-padronizado** com `0021_cadastro_padronizado`. Se ela ainda não entrou, a 012 entra
-  logo depois da 021, e o `down_revision` muda (T001).
+- a 025 **não** é pré-requisito: no gate de 2026-10-08 o head era `0021_geracao_interrupcoes` (da 021),
+  e a 012 entra antes da 025 (que passa a ser a `0023`).
 
 A 012 mexe em:
 - `cenas/models.py`, `cenas/service.py`, `cenas/prompt.py`, `cenas/ingredientes.py`, `cenas/avisos.py`
@@ -64,7 +64,7 @@ Nenhum outro agente pode estar editando esses arquivos ao mesmo tempo.
 
 ## Phase 1: Setup
 
-- [ ] T001 **Gate:**
+- [X] T001 **Gate:**
   - `ls apps/api/migrations/versions/` e `docker compose exec api uv run alembic heads` mostram
     **`0021_cadastro_padronizado`** como único head, com `0020_geracao_local` antes dele;
   - se a 025 ainda não entrou (o head é `0020_geracao_local`), a migration da 012 vira `0021_produtos_shop`
@@ -78,7 +78,7 @@ Nenhum outro agente pode estar editando esses arquivos ao mesmo tempo.
     recortes e flats do produto **não** estão em `asset_files`). Se a validação de "imagem em arquivo ativo
     de asset ativo" estiver fixa no serviço, e não só na rota genérica, pare e combine com o líder;
   - `git status` só tem o esperado.
-- [ ] T002 [P] `docker/nginx/default.conf.template`: `location ~
+- [X] T002 [P] `docker/nginx/default.conf.template`: `location ~
   ^/api/(perfis/[^/]+/produtos|produtos/[^/]+/variantes)$` com `client_max_body_size 130m` e o mesmo bloco
   de proxy das rotas de upload da 007 (R12). Depois, `docker compose restart edge` (armadilha 13).
 
@@ -88,20 +88,20 @@ Nenhum outro agente pode estar editando esses arquivos ao mesmo tempo.
 
 **Objetivo:** banco, modelos, enums, imagem `produto`, funções puras e fakes.
 
-- [ ] T003 Migration `apps/api/migrations/versions/0022_produtos_shop.py` (`revision =
-  "0022_produtos_shop"`, `down_revision = "0021_cadastro_padronizado"`, conferido na T001), conforme o
+- [X] T003 Migration `apps/api/migrations/versions/0022_produtos_shop.py` (`revision =
+  "0022_produtos_shop"`, `down_revision = "0021_geracao_interrupcoes"`, conferido na T001), conforme o
   data-model:
   - os valores `produto` em `image_kind` e `anotacao_alvo` (em `autocommit_block`);
   - `produto_status` e `produto_ficha_por`;
   - as tabelas `produtos` e `produto_variantes`, com CHECKs e índices;
   - as 2 colunas, os 2 CHECKs e o índice em `cenas`;
   - o downgrade com recusa quando há dados.
-- [ ] T004 [P] `tests/integration/test_migration_0022.py`:
+- [X] T004 [P] `tests/integration/test_migration_0022.py`:
   - sobe sobre o head anterior com cenas existentes, que ficam com as colunas novas NULL;
   - cada CHECK recusa com `INSERT` direto (`ck_variantes_flat`, `ck_cenas_produto_modo`,
     `ck_cenas_produto_variante`, `ck_produtos_aprovado`);
   - o downgrade vazio passa e o downgrade com produto é recusado.
-- [ ] T005 `produtos/models.py`:
+- [X] T005 `produtos/models.py`:
   - `Produto` (`_Versioned` + `AuditMixin`, os `__versioned_fields__` com a propriedade `variantes`, e
     `perfil_id` imutável);
   - `ProdutoVariante`;
@@ -109,14 +109,14 @@ Nenhum outro agente pode estar editando esses arquivos ao mesmo tempo.
 
   Também: `perfis/models.py` com `ImageKind.produto`; `history.py` com `entity_type "produto"` (se a lista
   for fechada); e o registro no metadata.
-- [ ] T006 [P] `imaging.py`: `"produto"` em `MIN_SIZE` (512×512), `_KIND_FORMATS` (PNG/JPG/WebP) e
+- [X] T006 [P] `imaging.py`: `"produto"` em `MIN_SIZE` (512×512), `_KIND_FORMATS` (PNG/JPG/WebP) e
   `ImageKind`. Em `tests/unit/test_imaging.py`: 511×511 recusado, 512×512 aceito e GIF recusado.
-- [ ] T007 [P] `produtos/estados.py` (R8, R9; puro):
+- [X] T007 [P] `produtos/estados.py` (R8, R9; puro):
   - `ficha_completa(produto, variantes)`;
   - `pendencias(produto, variantes, abertas)`;
   - `proximo(produto, variantes, abertas, evento) -> (status, pedidos)`, onde `pedidos` é a lista de
     `(passo, variante_id?)` a criar.
-- [ ] T008 [P] `tests/unit/test_produtos_estados.py`:
+- [X] T008 [P] `tests/unit/test_produtos_estados.py`:
   - cada linha da tabela de transições do data-model;
   - sem variante → `rascunho`;
   - a ficha ausente pede `produto.ficha` uma vez só (com uma aberta, não pede);
@@ -125,10 +125,10 @@ Nenhum outro agente pode estar editando esses arquivos ao mesmo tempo.
   - uma geração falha não é repedida;
   - `aprovado` + edição → `revisao`;
   - pendências exatas (`sem_cor`, `geracao_em_andamento`…).
-- [ ] T009 [P] `produtos/flat.py` (R7): `instrucao(ficha, variante)` com o texto exato do pipeline, os
+- [X] T009 [P] `produtos/flat.py` (R7): `instrucao(ficha, variante)` com o texto exato do pipeline, os
   `detalhes_visiveis` unidos por "; " e a `cor_en` da variante. `tests/unit/test_produtos_flat.py` confere o
   texto byte a byte para o `shorts_canelado` e a mudança quando cor ou material mudam.
-- [ ] T010 [P] `produtos/ficha.py` (R5):
+- [X] T010 [P] `produtos/ficha.py` (R5):
   - `FichaSaida` (pydantic, espelha o `Ficha` do pipeline, com `detalhes_visiveis: list[str]` e
     `cores: [{foto, en, pt}]`);
   - `SYSTEM` (o texto do pipeline, adaptado ao SociMan);
@@ -141,15 +141,15 @@ Nenhum outro agente pode estar editando esses arquivos ao mesmo tempo.
   - os limites de cada campo;
   - `material_en` com 6 palavras é recusado;
   - os campos em inglês são guardados sem trim.
-- [ ] T011 [P] `ia/tipos.py` (acréscimo, R14 da 021): `produto.ficha` em `TipoCampoId`, com o schema
+- [X] T011 [P] `ia/tipos.py` (acréscimo, R14 da 021): `produto.ficha` em `TipoCampoId`, com o schema
   `FichaSaida`, a regra padrão e `PROMPT_VERSION` `produto/1` em `details`, **fora** do `listar_regras`. Em
   `tests/unit/test_ia_tipos.py`: o tipo existe e não aparece na lista de regras editáveis.
-- [ ] T012 [P] Fakes do Claude:
+- [X] T012 [P] Fakes do Claude:
   - `tests/fakes/anthropic_fake.py` e `e2e/fakes/server.py` respondem a ficha quando o `system` é o da
     ficha: `shorts_canelado` determinístico, uma cor por foto e `precisa_flat` conforme a instrução;
   - modos "recusa" e "ficha inválida";
   - o fake conta as chamadas de ficha (para o SC-002).
-- [ ] T013 `produtos/schemas.py` (camelCase): `ProdutoResumo`, `Produto`, `Ficha`, `Variante`,
+- [X] T013 `produtos/schemas.py` (camelCase): `ProdutoResumo`, `Produto`, `Ficha`, `Variante`,
   `ImagemRef`, `Pendencia`, `UsoProduto` e os corpos de entrada, conforme `contracts/api.md`.
 
 **Checkpoint:** migração verde, funções puras testadas e fakes prontos.
@@ -164,7 +164,7 @@ e registrada na 008.
 **Independent Test:** com o Claude falso, criar com 3 fotos e conferir a ficha, as cores, o Registro (com
 `geracao_id`) e o histórico; com a GPU fora, a ficha continua e não é pedida de novo.
 
-- [ ] T014 [US1] `produtos/service.py`, parte 1:
+- [X] T014 [US1] `produtos/service.py`, parte 1:
   - `criar(db, actor, perfil, name, obs, url_loja, fotos)`:
     - valida **todas** as fotos (`imaging.validate_image` com kind `produto` e 20 MB) antes de gravar
       qualquer uma;
@@ -176,13 +176,13 @@ e registrada na 008.
   - `editar` (`name`, `obs`, `url_loja` com `https://`);
   - `ver` com estado efetivo, pendências, passos (`fila.abertas_do_alvo` + a última de cada passo ×
     variante) e links (sem validade nas imagens da variante).
-- [ ] T015 [US1] `produtos/fluxo.py` (R8): `reavaliar(db, actor, produto)`:
+- [X] T015 [US1] `produtos/fluxo.py` (R8): `reavaliar(db, actor, produto)`:
   - aplica `estados.proximo`;
   - cria as gerações pedidas pelo serviço de pedido da 021, com o `params` do data-model e o ator humano
     (no gancho, o `created_by` da geração que terminou);
   - grava o status com versão;
   - é idempotente, porque confere as gerações abertas antes de criar.
-- [ ] T016 [US1] `produtos/aplicadores.py`, parte 1:
+- [X] T016 [US1] `produtos/aplicadores.py`, parte 1:
   - o aplicador de `produto.ficha`:
     - `validar_alvo` (produto do perfil, não arquivado);
     - `montar_params`;
@@ -191,12 +191,12 @@ e registrada na 008.
   - o `ao_mudar_estado` dos três passos, que chama `fluxo.reavaliar`;
   - o registro dos três passos em `geracao/passos.py` com `image_kind = "produto"`;
   - o import no `main.py` e no `cli.py` do gerador.
-- [ ] T017 [US1] `geracao/router.py` (acréscimo, R1): o `POST /api/perfis/{id}/geracoes` com `alvoTipo =
+- [X] T017 [US1] `geracao/router.py` (acréscimo, R1): o `POST /api/perfis/{id}/geracoes` com `alvoTipo =
   produto` responde 409 `alvo_incompativel` ("use as ações do produto").
-- [ ] T018 [US1] `produtos/router_perfil.py` (`produtos_listar`, `produtos_criar` multipart) e
+- [X] T018 [US1] `produtos/router_perfil.py` (`produtos_listar`, `produtos_criar` multipart) e
   `produtos/router.py` (`produtos_ver`, `produtos_editar`, `produtos_pedir_ficha`), com `RequireHuman` nas
   escritas e `RequireUser` nas leituras, incluídos no `main.py`. Depois, `npm run gen:contract`.
-- [ ] T019 [P] [US1] `tests/integration/test_produtos_crud.py`:
+- [X] T019 [P] [US1] `tests/integration/test_produtos_crud.py`:
   - criar com 3 fotos → 3 variantes em ordem, `gerando`, 1 geração `produto.ficha`;
   - criar sem fotos → `rascunho`;
   - foto 511 px, foto de 21 MB ou GIF → 400 `invalid_image` com `field = fotos[N]`, sem nenhuma linha
@@ -204,19 +204,19 @@ e registrada na 008.
   - 7 fotos → 409 `limite_variantes`;
   - membro cria; token MCP → 403 `somente_humano`;
   - HD sem sentinela → 503.
-- [ ] T020 [P] [US1] `tests/integration/test_produtos_fluxo.py`, parte 1 (fake do Claude e o gerador da 021
+- [X] T020 [P] [US1] `tests/integration/test_produtos_fluxo.py`, parte 1 (fake do Claude e o gerador da 021
   rodando em teste):
   - a ficha aplicada preenche todos os campos e as cores, com `ficha_por = ia`;
   - `ia_chamadas` tem 1 linha `produto.ficha` com `geracao_id`, custo e desfecho `aplicada`;
   - a versão do produto tem `details.geracao_id`;
   - a observação "jeans" com a resposta "ribbed knit" mantém o que o fake devolveu em `cuidados`.
-- [ ] T021 [P] [US1] `tests/integration/test_produtos_falhas.py`, parte 1:
+- [X] T021 [P] [US1] `tests/integration/test_produtos_falhas.py`, parte 1:
   - sem chave → a geração `falhou` com o código da 008/021 e o produto fica `gerando`, com
     `produtos_pedir_ficha` disponível depois de cancelar;
   - recusa e saída inválida → nada na ficha e o Registro com `erro`;
   - **SC-002:** com a ficha aplicada e o ComfyUI fora, "Tentar de novo" no recorte **não** gera nova
     chamada de ficha (contador do fake = 1).
-- [ ] T022 [US1] SPA:
+- [X] T022 [US1] SPA:
   - `lib/produtos.ts` (hooks; polling enquanto houver passo aberto);
   - `pages/perfis/tabs/ProdutosTab.tsx`: `DataTable` com miniatura, nome comercial ou interno, categoria,
     variantes, estado e data; filtro por estado, busca e "Ver arquivados"; diálogo "Novo produto" com nome,
@@ -234,23 +234,23 @@ e registrada na 008.
 **Independent Test:** com o ComfyUI falso, produto de roupa com 2 variantes → 2 recortes, 2 × 2 opções,
 escolhas, "Gerar outras" e "Refazer flat"; produto que não é roupa → sem flat.
 
-- [ ] T023 [US2] `produtos/aplicadores.py`, parte 2:
+- [X] T023 [US2] `produtos/aplicadores.py`, parte 2:
   - o aplicador de `produto.recorte`: a variante de `extras.varianteId` é do produto e está ativa; `aplicar`
     grava `recorte_image_id` com versão `automatico`;
   - o aplicador de `produto.flat`:
     - `montar_params` com a `flat.instrucao` e o recorte vigente;
     - `aplicar` só pela escolha humana: confere que o recorte de `params` ainda é o da variante (senão,
       `entrada_invalida`) e grava `flat_image_id` + `flat_geracao_id` com versão `details.geracao_id`.
-- [ ] T024 [US2] `produtos/service.py`, parte 2: `refazer_flat(db, actor, produto, variante)`:
+- [X] T024 [US2] `produtos/service.py`, parte 2: `refazer_flat(db, actor, produto, variante)`:
   - com a última aberta em `revisao` → 409 `estado_invalido` ("use Gerar outras");
   - ficha incompleta ou variante sem recorte → 409 `produto_incompleto`;
   - nos outros casos, cria a geração pelo serviço da 021 (seeds depois da maior) e `reavaliar`;
   - num produto `aprovado`, volta a `revisao`.
 
   Rota `produtos_refazer_flat`; depois, `gen:contract`.
-- [ ] T025 [US2] `produtos/uso.py` (R12): o provedor do `midia_em_uso` da 021 com toda imagem de
+- [X] T025 [US2] `produtos/uso.py` (R12): o provedor do `midia_em_uso` da 021 com toda imagem de
   `produto_variantes` (original, recorte e flat, de variante ou produto arquivados).
-- [ ] T026 [P] [US2] `tests/integration/test_produtos_fluxo.py`, parte 2:
+- [X] T026 [P] [US2] `tests/integration/test_produtos_fluxo.py`, parte 2:
   - ficha com `precisa_flat` → recortes (1 por variante, `escolhido` sem revisão) → flats (2 opções cada,
     `revisao`), com os nós do `cutout`/`keyframe` preenchidos no fake (instrução e recorte);
   - "Usar opção 2" → `flat_image_id` e `flat_geracao_id`, versão com a geração, e o produto `revisao` só
@@ -258,19 +258,19 @@ escolhas, "Gerar outras" e "Refazer flat"; produto que não é roupa → sem fla
   - "Gerar outras" → seeds novas e a antiga `descartada`, com o flat vigente intacto até a nova escolha;
   - `refazer-flat` depois de escolhido;
   - `precisa_flat = false` → sem passo de flat, direto para `revisao`.
-- [ ] T027 [P] [US2] `tests/integration/test_produtos_falhas.py`, parte 2:
+- [X] T027 [P] [US2] `tests/integration/test_produtos_falhas.py`, parte 2:
   - GPU ocupada → "Aguardando a GPU ficar livre", e o passo começa sozinho quando ela libera;
   - `OutOfMemoryError` no flat → `falhou` `sem_memoria`, e o `dockerctl_fake` mostra 28 → 12 GB;
   - cancelar um flat → 12 GB, e o produto fica `gerando` com o passo pendente (sem recriar sozinho);
   - o gerador **nunca** chama `aplicar` do `produto.flat` (guarda da 021, estendida);
   - escolher por token MCP → 403.
-- [ ] T028 [P] [US2] `tests/integration/test_produtos_limpeza.py`:
+- [X] T028 [P] [US2] `tests/integration/test_produtos_limpeza.py`:
   - limpeza de 90 dias (CLI `sociman geracoes limpar`) apaga as opções não escolhidas de flat;
   - mantém o flat escolhido, os recortes e as originais, e também uma imagem de variante arquivada
     (provedor `uso.py`);
   - grava o evento `eliminacao_candidatos`;
   - a folha continua com o flat escolhido.
-- [ ] T029 [US2] SPA, `pages/produtos/ProdutoPage.tsx`, parte 1:
+- [X] T029 [US2] SPA, `pages/produtos/ProdutoPage.tsx`, parte 1:
   - os passos com `AndamentoGeracao` (progresso, "Aguardando a GPU ficar livre", erro, "Tentar de novo" e
     "Cancelar");
   - por variante, `OpcoesGeracao` com o flat lado a lado, "Usar opção N" (AlertDialog) e "Gerar outras";
@@ -287,7 +287,7 @@ escolhas, "Gerar outras" e "Refazer flat"; produto que não é roupa → sem fla
 **Independent Test:** levar um produto a `revisao`, editar uma cor, aprovar e conferir a origem, o estado, o
 histórico e o seletor; editar de novo → `revisao`.
 
-- [ ] T030 [US3] `produtos/service.py`, parte 3:
+- [X] T030 [US3] `produtos/service.py`, parte 3:
   - `salvar_ficha(db, actor, produto, version, ficha, cores)`:
     - aplica as regras de `ficha_por` do R9 (`null → humano`, `ia → ia_editada`);
     - cancela a `produto.ficha` aberta;
@@ -301,8 +301,8 @@ histórico e o seletor; editar de novo → `revisao`.
 
   Cada mutação passa por `history.record` e `version`. As rotas `produtos_salvar_ficha`,
   `produtos_aprovar` e `produtos_variante_*` ficam com `RequireHuman`; depois, `gen:contract`.
-- [ ] T031 [US3] Aviso `flat_desatualizado` (R10) e `sem_cor` na leitura da variante (`service.ver`).
-- [ ] T032 [P] [US3] `tests/integration/test_produtos_aprovar.py`:
+- [X] T031 [US3] Aviso `flat_desatualizado` (R10) e `sem_cor` na leitura da variante (`service.ver`).
+- [X] T032 [P] [US3] `tests/integration/test_produtos_aprovar.py`:
   - aprovar sem flat → 409 com `sem_flat` na variante certa;
   - com `produto.flat` em `revisao` → `geracao_em_andamento`;
   - variante sem cor → `sem_cor`;
@@ -313,7 +313,7 @@ histórico e o seletor; editar de novo → `revisao`.
   - `flat_desatualizado` aparece só quando cor, material, corte ou detalhes mudam;
   - `version_conflict` em edição concorrente;
   - 7ª variante → 409; arquivar a última → 400.
-- [ ] T033 [US3] SPA, `ProdutoPage.tsx`, parte 2:
+- [X] T033 [US3] SPA, `ProdutoPage.tsx`, parte 2:
   - `FolhaRevisao.tsx`: linhas originais | recortes | flats numeradas; no celular, uma coluna por variante
     (SC-007);
   - `FichaForm.tsx`: `Field`, listas editáveis item a item, selo "vai literal para os prompts" nos campos
@@ -334,25 +334,25 @@ o recorte como ingrediente; as cenas antigas continuam.
 **Independent Test:** ligar uma cena a um produto aprovado e conferir o seletor, o prompt, o ingrediente, o
 "onde é usado" e uma cena antiga.
 
-- [ ] T034 [US4] `cenas/models.py` e `cenas/service.py` (acréscimo, R13):
+- [X] T034 [US4] `cenas/models.py` e `cenas/service.py` (acréscimo, R13):
   - `produto_id` e `produto_variante_id` em `__versioned_fields__` e nos campos que mudam o prompt;
   - validação ao ligar: produto do perfil, aprovado e não arquivado; variante ativa e com recorte;
     exclusão com `produto_nome`/`produto_imagem_id` (400 `invalid_cena`, field `produtoId`);
   - "Ligar ao catálogo" = PATCH que limpa os campos leves numa versão só;
   - o filtro `produtoId` na lista.
-- [ ] T035 [US4] `cenas/prompt.py`: `Entrada` ganha `produto_prompt` e `produto_cor`. Com catálogo, a ação
+- [X] T035 [US4] `cenas/prompt.py`: `Entrada` ganha `produto_prompt` e `produto_cor`. Com catálogo, a ação
   recebe ", with the product exactly as in the reference image", e entra a parte `produto` logo depois:
   a `descricao_prompt` literal + "Color: {cor_en}." quando há variante. A referência leve fica igual.
   `cenas/ingredientes.py`: com catálogo, o ingrediente `produto` é o recorte da variante (ou da 1ª ativa),
   com `produtoId`/`produtoVarianteId`. `cenas/avisos.py`: `produto_fora_de_aprovado`. `cenas/schemas.py`:
   `produto?` e os campos do `Ingrediente`. Depois, `gen:contract`.
-- [ ] T036 [US4] `produtos/usos.py`: as cenas por `produto_id` (origem `cena`, `bloqueia = false`, href),
+- [X] T036 [US4] `produtos/usos.py`: as cenas por `produto_id` (origem `cena`, `bloqueia = false`, href),
   no `service.ver`.
-- [ ] T037 [P] [US4] `tests/unit/test_cenas_prompt_produto.py`:
+- [X] T037 [P] [US4] `tests/unit/test_cenas_prompt_produto.py`:
   - prompt com catálogo (com e sem variante), byte a byte;
   - prompt com referência leve **idêntico** ao da 010 (regressão);
   - a parte `produto` na ordem certa.
-- [ ] T038 [P] [US4] `tests/integration/test_produtos_cenas.py`:
+- [X] T038 [P] [US4] `tests/integration/test_produtos_cenas.py`:
   - ligar a produto em `revisao` → 400; aprovado → ok;
   - variante de outro produto → 400; produto + `produtoNome` → 400;
   - "Ligar ao catálogo" numa cena antiga → uma versão, campos leves nulos;
@@ -360,7 +360,7 @@ o recorte como ingrediente; as cenas antigas continuam.
   - o produto volta a `revisao` → a cena mostra `produto_fora_de_aprovado` e continua;
   - "onde é usado" do produto lista a cena; arquivar o produto não é bloqueado;
   - cenas antigas sem mudança de prompt congelado.
-- [ ] T039 [US4] SPA, cenas:
+- [X] T039 [US4] SPA, cenas:
   - no formulário da cena, o seletor de produto (só aprovados, `NativeSelect`) e de variante (com
     miniatura);
   - nas cenas com referência leve, "Ligar ao catálogo";
@@ -373,21 +373,21 @@ o recorte como ingrediente; as cenas antigas continuam.
 
 **Goal:** filtros, busca, arquivar e restaurar mantendo o estado, histórico e reversão pelo dono.
 
-- [ ] T040 [US5] `produtos/service.py`, parte 4:
+- [X] T040 [US5] `produtos/service.py`, parte 4:
   - `arquivar` (com `cancelarGeracoes?`, que cancela as abertas pela 021) e `restaurar` (só limpa
     `archived_at`; o status fica como estava, R4);
   - `versoes` e `reverter` (só dono, `RequireOwner`): restaura ficha, cores e referências de imagem **sem
     gerar nada**, seguido de `reavaliar`. Uma versão alvo `aprovado` volta a `revisao`.
 
   As rotas e `gen:contract`.
-- [ ] T041 [P] [US5] `tests/integration/test_produtos_historico.py`:
+- [X] T041 [P] [US5] `tests/integration/test_produtos_historico.py`:
   - arquivar e restaurar um aprovado → continua `aprovado`, sem geração nova;
   - o produto arquivado sai do seletor;
   - geração aberta num produto arquivado aplica no produto arquivado (R4);
   - reverter a ficha → a versão anterior volta e o histórico tem `reverted`;
   - o membro tenta reverter → 403;
   - filtros por estado, busca sem acento e "arquivados=so".
-- [ ] T042 [US5] SPA: na `ProdutoPage`, arquivar/restaurar (AlertDialog, com a opção de cancelar as
+- [X] T042 [US5] SPA: na `ProdutoPage`, arquivar/restaurar (AlertDialog, com a opção de cancelar as
   gerações), a seção "Onde é usado" e o histórico (o componente de versões das outras entidades, com
   "Reverter" só para o dono).
 
@@ -395,13 +395,13 @@ o recorte como ingrediente; as cenas antigas continuam.
 
 ## Phase 8: User Story 6 - MCP só leitura (Priority: P3)
 
-- [ ] T043 [US6] `mcp/mapa.py` (acréscimo, R14):
+- [X] T043 [US6] `mcp/mapa.py` (acréscimo, R14):
   - `produtos_listar` ("Listar produtos", padrão `status=aprovado`), `produtos_ver` e `produtos_versoes`
     como `leitura`;
   - todas as outras rotas `produtos_*` em `PROIBIDAS`.
 
   `anotacoes/models.py` e `anotacoes/service.py`: o alvo `produto`, só com `observacao`.
-- [ ] T044 [P] [US6] `tests/integration/test_produtos_mcp.py` e `tests/unit/test_mcp_mapa.py`:
+- [X] T044 [P] [US6] `tests/integration/test_produtos_mcp.py` e `tests/unit/test_mcp_mapa.py`:
   - o cliente "só leitura" lista os aprovados e lê a ficha, com a chamada registrada;
   - o cliente "propostas" grava `observacao` num produto, que aparece na caixa "Propostas dos agentes",
     sem mudar a ficha;
@@ -413,16 +413,16 @@ o recorte como ingrediente; as cenas antigas continuam.
 
 ## Phase 9: Polish & Cross-Cutting
 
-- [ ] T045 [P] `tests/unit/test_constitution_guards.py` (acréscimo):
+- [X] T045 [P] `tests/unit/test_constitution_guards.py` (acréscimo):
   - `produtos/` não importa `publicacao` nem `mcp`, e não chama `storage.apagar_por_excecao`;
   - sem "tiktok"/"youtube" em `produtos_*`;
   - sem DELETE em `produtos`/`produto_variantes`;
   - as escritas de `produtos/` com `RequireHuman` (ou `RequireOwner` no revert).
-- [ ] T046 [P] `tests/integration/test_produtos_permissoes.py`:
+- [X] T046 [P] `tests/integration/test_produtos_permissoes.py`:
   - todas as escritas com membro → ok (menos `reverter` → 403);
   - `system:*` e token MCP → 403 `somente_humano` mais o evento de recusa;
   - as leituras aceitam membro e MCP.
-- [ ] T047 `e2e/produtos.spec.ts` (Claude e ComfyUI falsos):
+- [X] T047 `e2e/produtos.spec.ts` (Claude e ComfyUI falsos):
   - criar com 2 fotos e ver a ficha;
   - esperar os recortes e escolher os 2 flats (um com "Gerar outras");
   - editar uma cor e aprovar;
@@ -431,7 +431,7 @@ o recorte como ingrediente; as cenas antigas continuam.
   - no celular (390 px), a folha sem rolagem horizontal.
 
   Com a trava dos e2e; nunca `npx playwright test` direto.
-- [ ] T048 `CLAUDE.md` (acréscimo): a seção "Produtos do Shop (desde a spec 012)", com:
+- [X] T048 `CLAUDE.md` (acréscimo): a seção "Produtos do Shop (desde a spec 012)", com:
   - o pacote e as tabelas;
   - os 3 passos e os aplicadores da 021;
   - o recorte automático e o flat humano;
@@ -441,7 +441,7 @@ o recorte como ingrediente; as cenas antigas continuam.
   - a `location` de 130m.
 
   `docs/visao.md`: o item 12 no backlog.
-- [ ] T049 Verificação final:
+- [X] T049 Verificação final:
   - `npm run test:api` inteiro, ruff, `npm run gen:contract && npm run check:web`;
   - a suíte e2e inteira (com trava);
   - o quickstart §1 no dev.

@@ -344,7 +344,11 @@ houver geração não final). Na cena (010), seletor de produto (só aprovados) 
 
 ## R19. Migration e ordem
 
-**Decisão:** `0022_produtos_shop`, com `down_revision = "0021_cadastro_padronizado"` **provisório**: a
+**Atualização (gate de 2026-10-08):** o head real é `0021_geracao_interrupcoes` (da 021) e a 025 ainda não
+entrou; a 012 fica `0022_produtos_shop` com `down_revision = "0021_geracao_interrupcoes"`, e a 025 passa a ser a
+`0023`.
+
+**Decisão original:** `0022_produtos_shop`, com `down_revision = "0021_cadastro_padronizado"` **provisório**: a
 cadeia depende da ordem real de merge da 021 (`0020_geracao_local`, também provisório) e da 025 (`0021_cadastro_padronizado`). Se a 025
 atrasar, a 012 pode entrar logo depois da 021 e o `down_revision` muda para a revisão da 021 (o gate do
 `/speckit-implement` confere com `alembic heads` antes de gerar o arquivo). Conteúdo: valor `produto` no

@@ -85,11 +85,9 @@ def test_recusas(client, db, base):
     pronta = cena_pronta(client, h, base)
     rascunho = criar_cena(client, h, base, nome="Rascunho")
     arquivada = acao(client, h, cena_pronta(client, h, base, nome="Arq"), "arquivar")
-    outro = montar_perfil(client, h, "outro", proibida=None)
-    alheia = cena_pronta(client, h, outro)
     c = video_proprio(db, base["perfil"]["id"])
-    for cena, codigo in ((rascunho, "cena_rascunho"), (arquivada, "cena_arquivada"),
-                         (alheia, "cena_outro_perfil")):
+    # 029 (FR-014): a cena de outro perfil base é aceita (test_cena_cruzada.py).
+    for cena, codigo in ((rascunho, "cena_rascunho"), (arquivada, "cena_arquivada")):
         erro = _put(client, h, c.id, 1, [pronta["id"], cena["id"]], status=422)["error"]
         assert erro["code"] == codigo
     assert get(client, h, pronta["id"])["status"] == "pronta"  # nada mudou

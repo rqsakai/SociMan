@@ -9,6 +9,7 @@ import { UpdatePrompt } from "./components/UpdatePrompt";
 import { Toaster } from "./components/ui/sonner";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { bootstrapSession } from "./lib/authActions";
+import { perfilLembrado } from "./lib/aprendizado";
 import { useAuth } from "./lib/authStore";
 import Account from "./pages/Account";
 import ChangePassword from "./pages/ChangePassword";
@@ -58,11 +59,24 @@ import ImportacaoDetalhe from "./pages/configuracoes/ImportacaoDetalhe";
 // 010-cenas
 import CenaDetalhe, { CenaNova } from "./pages/cenas/CenaDetalhe";
 import CenaHistorico from "./pages/cenas/CenaHistorico";
+// 012-produtos-shop
+import ProdutoPage from "./pages/produtos/ProdutoPage";
+// 025-cadastro-padronizado
+import VozDetalhe from "./pages/vozes/VozDetalhe";
 
 // 019-analytics: /app/metricas carrega sob demanda (traz o ECharts, chunk `graficos`).
 const Analytics = lazy(() => import("./pages/analytics/Analytics"));
 // 023-aprendizado: /app/aprendizado também usa o ECharts (rota lazy).
 const Aprendizado = lazy(() => import("./pages/aprendizado/Aprendizado"));
+// 029-ai-studio: uma rota lazy por lista.
+const EstudioAvatares = lazy(() => import("./pages/estudio/Avatares"));
+const EstudioCenarios = lazy(() => import("./pages/estudio/Cenarios"));
+const EstudioVozes = lazy(() => import("./pages/estudio/Vozes"));
+const EstudioProdutos = lazy(() => import("./pages/estudio/Produtos"));
+const EstudioCenas = lazy(() => import("./pages/estudio/Cenas"));
+const EstudioAssets = lazy(() => import("./pages/estudio/Assets"));
+const EstudioMovimentos = lazy(() => import("./pages/estudio/Movimentos"));
+const carregando = <p className="text-sm text-muted-foreground" aria-live="polite">Carregando…</p>;
 // 026-mercado-shop: cockpit e detalhe do produto (também usam o ECharts).
 const Mercado = lazy(() => import("./pages/mercado/Mercado"));
 const ProdutoMercado = lazy(() => import("./pages/mercado/ProdutoMercado"));
@@ -84,6 +98,23 @@ function AprendizadoDoPerfilRedirect() {
   q.delete("perfil");
   const resto = q.toString();
   return <Navigate replace to={`/app/aprendizado?perfil=${encodeURIComponent(id)}${resto ? `&${resto}` : ""}`} />;
+}
+
+// Spec 029 (FR-019): a página provisória /app/estudio vai para Avatares, com o perfil da URL ou o
+// lembrado neste aparelho como filtro.
+function EstudioRedirect() {
+  const { search } = useLocation();
+  const perfil = new URLSearchParams(search).get("perfil") ?? perfilLembrado();
+  return <Navigate replace to={`/app/estudio/avatares${perfil ? `?perfil=${encodeURIComponent(perfil)}` : ""}`} />;
+}
+
+// A nova cena do perfil vive no AI Studio, com o perfil como perfil base (e a proposta, se houver).
+function CenaNovaDoPerfilRedirect() {
+  const { id = "" } = useParams();
+  const { search } = useLocation();
+  const q = new URLSearchParams(search);
+  q.set("perfil", id);
+  return <Navigate replace to={`/app/estudio/cenas/nova?${q.toString()}`} />;
 }
 
 function RootRedirect() {
@@ -155,6 +186,16 @@ export default function App() {
                     </Suspense>
                   }
                 />
+                {/* 029-ai-studio */}
+                <Route path="/app/estudio" element={<EstudioRedirect />} />
+                <Route path="/app/estudio/avatares" element={<Suspense fallback={carregando}><EstudioAvatares /></Suspense>} />
+                <Route path="/app/estudio/cenarios" element={<Suspense fallback={carregando}><EstudioCenarios /></Suspense>} />
+                <Route path="/app/estudio/vozes" element={<Suspense fallback={carregando}><EstudioVozes /></Suspense>} />
+                <Route path="/app/estudio/produtos" element={<Suspense fallback={carregando}><EstudioProdutos /></Suspense>} />
+                <Route path="/app/estudio/cenas" element={<Suspense fallback={carregando}><EstudioCenas /></Suspense>} />
+                <Route path="/app/estudio/cenas/nova" element={<CenaNova />} />
+                <Route path="/app/estudio/assets" element={<Suspense fallback={carregando}><EstudioAssets /></Suspense>} />
+                <Route path="/app/estudio/movimentos" element={<Suspense fallback={carregando}><EstudioMovimentos /></Suspense>} />
                 <Route path="/app/contas/:id/historico" element={<ContaHistorico />} />
                 <Route path="/app/contas/:id/guia" element={<ContaGuia />} />
                 <Route path="/app/contas/:id/studio" element={<ContaStudio />} />
@@ -199,9 +240,13 @@ export default function App() {
                 <Route path="/app/assistente-ia/regras/:tipo" element={<RegraDetalhe />} />
                 <Route path="/app/propostas" element={<Propostas />} />
                 {/* 010-cenas */}
-                <Route path="/app/perfis/:id/cenas/nova" element={<CenaNova />} />
+                <Route path="/app/perfis/:id/cenas/nova" element={<CenaNovaDoPerfilRedirect />} />
                 <Route path="/app/cenas/:id" element={<CenaDetalhe />} />
                 <Route path="/app/cenas/:id/historico" element={<CenaHistorico />} />
+                {/* 012-produtos-shop */}
+                <Route path="/app/produtos/:id" element={<ProdutoPage />} />
+                {/* 025-cadastro-padronizado */}
+                <Route path="/app/vozes/:id" element={<VozDetalhe />} />
                 <Route
                   path="/app/usuarios"
                   element={

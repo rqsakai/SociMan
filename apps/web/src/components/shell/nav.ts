@@ -1,4 +1,4 @@
-import { Bot, CalendarDays, ChartColumn, ChartLine, CircleUser, Clapperboard, Film, FolderInput, House, Inbox, LayoutGrid, Lightbulb, Radar, Scissors, Send, Settings, ShieldCheck, ShoppingBag, Sparkles, Tv, Users, WandSparkles, type LucideIcon } from "lucide-react";
+import { Bot, CalendarDays, ChartColumn, ChartLine, CircleUser, Clapperboard, Film, FolderInput, House, Image, Inbox, LayoutGrid, Lightbulb, Mic, Move, Package, Radar, Scissors, Send, Settings, ShieldCheck, ShoppingBag, Sparkles, Trees, Tv, UserRound, Users, Wand2, WandSparkles, type LucideIcon } from "lucide-react";
 
 // Itens do menu lateral (spec 005, US1; agrupados na 024). `ownerOnly` some para o membro.
 // `end`: só fica ativo na rota exata (senão "Início" ficaria ativo em /app/*).
@@ -10,11 +10,13 @@ export interface NavItem {
   end?: boolean;
   // 009-mcp: contador ao lado do rótulo (o Sidebar busca o número).
   contador?: "propostas";
+  // 029: outras rotas que marcam este item (o detalhe de cada tipo fica fora de /app/estudio)
+  prefixos?: string[];
 }
 
 // Grupo recolhível do menu (spec 024, FR-001..005). O Sidebar lembra aberto/fechado por `id`.
 export interface NavGroup {
-  id: "cortes" | "analytics" | "config";
+  id: "estudio" | "cortes" | "analytics" | "config";
   label: string;
   icon: LucideIcon;
   itens: NavItem[];
@@ -30,6 +32,23 @@ export function isNavGroup(entry: NavEntry): entry is NavGroup {
 export const navTree: NavEntry[] = [
   { label: "Início", to: "/app", icon: House, end: true },
   { label: "Perfis", to: "/app/perfis", icon: LayoutGrid },
+  // 029-ai-studio: a biblioteca da agência (itens de todos os perfis e sem perfil). O detalhe do
+  // asset casa com "Assets" pela rota; o de avatar e o de cenário marcam o item certo pelo
+  // `usePageMeta({ ativo })` da página.
+  {
+    id: "estudio",
+    label: "AI Studio",
+    icon: Wand2,
+    itens: [
+      { label: "Avatares", to: "/app/estudio/avatares", icon: UserRound },
+      { label: "Cenários", to: "/app/estudio/cenarios", icon: Trees },
+      { label: "Vozes", to: "/app/estudio/vozes", icon: Mic, prefixos: ["/app/vozes"] },
+      { label: "Produtos", to: "/app/estudio/produtos", icon: Package, prefixos: ["/app/produtos"] },
+      { label: "Cenas", to: "/app/estudio/cenas", icon: Clapperboard, prefixos: ["/app/cenas"] },
+      { label: "Assets", to: "/app/estudio/assets", icon: Image, prefixos: ["/app/assets"] },
+      { label: "Movimentos", to: "/app/estudio/movimentos", icon: Move },
+    ],
+  },
   // 006-cortes-openshorts
   {
     id: "cortes",
@@ -84,10 +103,17 @@ export const navTree: NavEntry[] = [
 // A lista plana (breadcrumb do Topbar).
 export const navItems: NavItem[] = navTree.flatMap((entry) => (isNavGroup(entry) ? entry.itens : [entry]));
 
-// Trilha padrão quando a página não chama usePageMeta: o item do menu cujo
-// caminho é o prefixo mais longo da URL atual.
-export function navItemFor(pathname: string): NavItem | undefined {
-  return [...navItems]
+const casa = (pathname: string, to: string) => pathname === to || pathname.startsWith(`${to}/`);
+
+// Trilha padrão quando a página não chama usePageMeta, e o item ativo do menu: o item cujo caminho
+// (ou um dos `prefixos`) é o prefixo mais longo da URL atual. `ativo` (do usePageMeta) ganha de tudo.
+export function navItemFor(pathname: string, ativo?: string): NavItem | undefined {
+  if (ativo) {
+    const escolhido = navItems.find((item) => item.to === ativo);
+    if (escolhido) return escolhido;
+  }
+  const candidatos = navItems.flatMap((item) => [item.to, ...(item.prefixos ?? [])].map((to) => ({ item, to })));
+  return candidatos
     .sort((a, b) => b.to.length - a.to.length)
-    .find((item) => (item.end ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`)));
+    .find(({ item, to }) => (item.end && to === item.to ? pathname === to : casa(pathname, to)))?.item;
 }

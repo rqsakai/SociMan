@@ -13,6 +13,10 @@ Spec 017:
   delas, o save é recusado com 400 `ia_proibida` (`details.palavras`, `details.campos`). Campo
   editado por um humano passa (desfecho `editada`), mesmo com a palavra;
 - alvo `guia` (o save do guia a partir do "montar guia", `guia.montar`).
+
+Spec 029 (C1): nos itens da biblioteca (asset e cena) a chamada casa só pelo alvo, sem exigir o
+mesmo perfil: o perfil base pode ter sido trocado só naquela geração (ou ser nenhum). Perfil,
+kit, guia e postagem continuam conferindo o perfil, que faz parte do alvo.
 """
 
 import logging
@@ -60,7 +64,7 @@ class _Alvo:
     """O que a chamada precisa casar: o perfil e a entidade salva (ou o conteúdo + conta)."""
 
     entidade: str  # asset | perfil | kit | postagem | guia | cena
-    perfil_id: uuid.UUID
+    perfil_id: uuid.UUID | None
     entity_id: uuid.UUID
     tipo_asset: str | None = None
     conteudo_id: uuid.UUID | None = None  # spec 014 (na origem corte, = o id do corte)
@@ -86,8 +90,13 @@ def _alvo(entity_type: str, entidade: Any, perfil_id: uuid.UUID | None,
     return _Alvo(entity_type, entidade.perfil_id, entidade.id, tipo_asset=tipo_asset)
 
 
+_BIBLIOTECA = ("asset", "cena")
+
+
 def _casa_alvo(chamada: Any, tipo: TipoCampo, alvo: _Alvo) -> bool:
-    if tipo.entidade != alvo.entidade or chamada.perfil_id != alvo.perfil_id:
+    if tipo.entidade != alvo.entidade:
+        return False
+    if alvo.entidade not in _BIBLIOTECA and chamada.perfil_id != alvo.perfil_id:
         return False
     if tipo.tipos_asset is not None and alvo.tipo_asset not in tipo.tipos_asset:
         return False

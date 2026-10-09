@@ -156,3 +156,12 @@ Exemplo (cena nova no perfil; os ids vêm de `assets_list`):
 Para propor mudança numa cena existente, use `"alvoTipo": "cena"` e mande só os campos que mudam. Cena
 `usada` recusa (409 `cena_usada`); asset de outro perfil ou arquivado recusa (422 `proposta_invalida`).
 A proposta conta no limite diário de escritas do cliente.
+
+## Biblioteca da agência (desde a spec 029)
+Desde a 029, avatares, cenários, assets, cenas, produtos e vozes são **da agência**, com um perfil base opcional. As tools antigas por perfil (`assets_list`, `cenas_list`, `produtos_listar`, `vozes_listar`) continuam, mas só trazem os itens **com aquele perfil base**: um cenário sem perfil ou de outro perfil, usável em qualquer vídeo, não aparece nelas.
+
+Para os agentes que montam vídeo (shop-roteirista, shop-diretor), prefira as tools da agência:
+- `assets_listar_agencia`, `assets_imagens_agencia`, `cenas_listar_agencia`, `produtos_listar_agencia` (por padrão só os aprovados) e `vozes_listar_agencia`, com o filtro `perfilId`: ausente = tudo; `sem` = só os sem perfil; um id = aquele perfil base;
+- `estudio_resumo` dá as contagens de cada tipo.
+
+Criar e gerar continuam fora do alcance dos agentes: criar produto ou voz, pedir geração e enviar áudio são proibidos; os outros cadastros ficam só na interface.

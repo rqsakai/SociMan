@@ -30,21 +30,19 @@ import { OpcoesGeracao } from "./OpcoesGeracao";
 // não escolhidas e o histórico. As abertas (na fila, gerando, em revisão, falhou) já mostram o
 // andamento e as opções; as decididas abrem com "Ver opções".
 export function ListaGeracoes({
-  perfilId,
   alvoTipo,
   alvoId,
   alvoVersion,
   disabled,
   vazio = "Nenhuma geração ainda.",
 }: {
-  perfilId: string;
   alvoTipo: GeracaoAlvo;
   alvoId: string;
   alvoVersion?: number;
   disabled?: boolean;
   vazio?: string;
 }) {
-  const lista = useGeracoesDoAlvo(perfilId, alvoTipo, alvoId);
+  const lista = useGeracoesDoAlvo(alvoTipo, alvoId);
   const itens = lista.data?.pages.flatMap((p) => p.itens) ?? [];
 
   if (lista.isPending) {
@@ -91,7 +89,7 @@ function ItemGeracao({ resumo, alvoVersion, disabled }: { resumo: GeracaoResumo;
   // O detalhe (polling de 2 s) viu outro estado: a lista também precisa saber (ordem, "abertas").
   const statusDetalhe = detalhe.data?.status;
   useEffect(() => {
-    if (statusDetalhe && statusDetalhe !== resumo.status) void qc.invalidateQueries({ queryKey: geracoesKey(resumo.perfilId) });
+    if (statusDetalhe && statusDetalhe !== resumo.status) void qc.invalidateQueries({ queryKey: geracoesKey });
   }, [statusDetalhe, resumo.status, resumo.perfilId, qc]);
 
   const veioMenos = g.status === "revisao" && g.nCandidatos < g.nOpcoes;

@@ -89,8 +89,9 @@ test("US1: pede a cena, vê o andamento e usa a opção 2", async ({ page, reque
 
   const geracaoId = await item.getAttribute("data-geracao-id");
   const det = await request.get(`/api/assets/${cenarioId}`, { headers: auth });
-  const asset = ((await det.json()) as { asset: { files: { notes: string; role: string }[] } }).asset;
-  expect(asset.files.some((f) => f.role === "referencia" && f.notes === "Gerado (opção 2)")).toBe(true);
+  const asset = ((await det.json()) as { asset: { files: { slot: string | null; role: string }[] } }).asset;
+  // Spec 025: a cena escolhida vira o slot `cena` do kit padrão do cenário.
+  expect(asset.files.some((f) => f.role === "kit" && f.slot === "cena")).toBe(true);
   const versoes = await request.get(`/api/assets/${cenarioId}/versions`, { headers: auth });
   const itens = ((await versoes.json()) as { items: { details: Record<string, unknown> }[] }).items;
   expect(itens[0].details.geracao_id).toBe(geracaoId);

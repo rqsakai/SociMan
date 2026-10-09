@@ -39,6 +39,7 @@ from sociman_api.auth.models import AuditMixin
 from sociman_api.conteudos import models as _conteudos_models  # noqa: F401 — FK conteudos
 from sociman_api.db import Base
 from sociman_api.perfis.models import _Versioned
+from sociman_api.produtos import models as _produtos_models  # noqa: F401 — FKs (spec 012)
 
 ESTILO_PADRAO = "vertical 9:16, natural soft light, realistic, warm retro color grading"
 NEGATIVE_PADRAO = "text, subtitles, watermark, logo changes, extra fingers, distorted product"
@@ -83,14 +84,15 @@ class CenaMovimento(enum.StrEnum):
 CAMPOS_EDITAVEIS = (
     "nome", "avatar_id", "avatar_arquivo_id", "cenario_id", "cenario_arquivo_id", "plano",
     "movimento", "camera", "acao", "fala", "texto_tela", "estilo", "audio", "duracao_s", "modo",
-    "quadro_inicial", "quadro_final", "produto_nome", "produto_imagem_id", "negative", "tags",
-    "notas",
+    "quadro_inicial", "quadro_final", "produto_nome", "produto_imagem_id", "produto_id",
+    "produto_variante_id", "negative", "tags", "notas",
 )
 # Editar um destes numa cena `pronta` a devolve a `rascunho`; numa `usada`, 409 `cena_usada`.
 CAMPOS_PROMPT = frozenset({
     "avatar_id", "avatar_arquivo_id", "cenario_id", "cenario_arquivo_id", "plano", "movimento",
     "camera", "acao", "fala", "estilo", "audio", "duracao_s", "modo", "quadro_inicial",
-    "quadro_final", "produto_nome", "produto_imagem_id", "negative",
+    "quadro_final", "produto_nome", "produto_imagem_id", "produto_id", "produto_variante_id",
+    "negative",
 })
 
 
@@ -110,10 +112,10 @@ class Cena(_Versioned, AuditMixin, Base):
         "avatar_version_congelada", "cenario_version_congelada", "tomada_escolhida_id",
         "archived", "perfil_id", "duplicada_de",
     )
-    __immutable_fields__ = ("perfil_id", "duplicada_de")
+    __immutable_fields__ = ("duplicada_de",)  # 029: o perfil base é editável
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    perfil_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("perfis.id"), nullable=False)
+    perfil_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("perfis.id"))  # 029: opcional
     nome: Mapped[str] = mapped_column(Text, nullable=False)
     avatar_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("assets.id"))
     avatar_arquivo_id: Mapped[uuid.UUID | None] = mapped_column(Uuid,
@@ -139,6 +141,10 @@ class Cena(_Versioned, AuditMixin, Base):
     quadro_final: Mapped[str | None] = mapped_column(Text)
     produto_nome: Mapped[str | None] = mapped_column(Text)
     produto_imagem_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("assets.id"))
+    # Spec 012 (R13): o produto do catálogo, no lugar da referência leve (`ck_cenas_produto_modo`).
+    produto_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("produtos.id"))
+    produto_variante_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("produto_variantes.id"))
     negative: Mapped[str | None] = mapped_column(Text)
     tags: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False, default=list,
                                             server_default=text("'{}'"))

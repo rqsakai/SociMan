@@ -25,6 +25,7 @@ from pydantic import BaseModel
 from sociman_api.ia import guia as guia_mod
 from sociman_api.ia.tipos import CAMPOS_CENA_IA, LIMITES_CENA, TipoCampo
 from sociman_api.postagem import textos  # normalizar_hashtags e os limites da postagem
+from sociman_api.produtos import ficha as ficha_produto  # spec 012 (puro)
 
 EXPLICACAO_MAX = 400
 AVISOS_MAX = 5
@@ -133,12 +134,45 @@ class PropostaAnalise(BaseModel):
     avisos: list[str]
 
 
+# ---- spec 025 (R4): a checagem de identidade do kit do avatar ----
+
+SLOTS_NOTA = ("rosto_frontal", "rosto_34_esq", "rosto_34_dir", "corpo_base")
+
+
+class NotaSlot(BaseModel):
+    slot: Literal["rosto_frontal", "rosto_34_esq", "rosto_34_dir", "corpo_base"]
+    nota: int
+    observacao: str
+
+
+class PropostaIdentidade(BaseModel):
+    notas: list[NotaSlot]
+    descricao_prompt: str
+    explicacao: str
+    avisos: list[str]
+
+
+def _problemas_identidade(p: PropostaIdentidade) -> list[str]:
+    erros = []
+    slots = [n.slot for n in p.notas]
+    if sorted(slots) != sorted(SLOTS_NOTA):
+        erros.append(f"uma nota para cada slot: {', '.join(SLOTS_NOTA)}")
+    erros.extend(f"{n.slot}: a nota vai de 0 a 10" for n in p.notas if not 0 <= n.nota <= 10)
+    palavras = len(p.descricao_prompt.split())
+    if not 40 <= palavras <= 80:
+        erros.append(f"descricao_prompt com {palavras} palavras; o pedido é de 40 a 80")
+    if len(p.descricao_prompt) > 2000:
+        erros.append("descricao_prompt passou de 2000 caracteres")
+    return erros
+
+
 SCHEMAS: dict[str, type[BaseModel]] = {
     "texto": PropostaTexto, "lista": PropostaLista, "sugestoes": PropostaSugestoes,
     "textos_postagem": PropostaTextosPostagem, "guia": PropostaGuia,
     "variacoes": PropostaVariacoes, "campos_cena": PropostaCamposCena,
     "taxonomia": PropostaTaxonomia, "classificacao": PropostaClassificacao,
-    "analise": PropostaAnalise,
+    "analise": PropostaAnalise, "ficha_produto": ficha_produto.FichaSaida,
+    "identidade": PropostaIdentidade,
 }
 VARIACOES = 3
 
@@ -255,6 +289,10 @@ def problemas(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
     elif isinstance(parsed, PropostaAnalise):
         if not any(h.texto.strip() for h in parsed.hipoteses):
             erros.append("nenhuma hipótese veio preenchida")
+    elif isinstance(parsed, ficha_produto.FichaSaida):  # spec 012
+        erros.extend(ficha_produto.validar_limites(parsed))
+    elif isinstance(parsed, PropostaIdentidade):  # spec 025
+        erros.extend(_problemas_identidade(parsed))
     elif isinstance(parsed, PropostaCamposCena):
         if not parsed.acao.strip():
             erros.append("a ação veio vazia")
@@ -292,6 +330,8 @@ def _textos(parsed: BaseModel) -> list[str]:
         return [t for v in parsed.variacoes for t in (v.titulo, v.descricao, *v.hashtags)]
     if isinstance(parsed, PropostaCamposCena):
         return list(_campos_cena(parsed).values())
+    if isinstance(parsed, PropostaIdentidade):  # spec 025: as proibidas do perfil (so_proibidas)
+        return [parsed.descricao_prompt]
     return []
 
 
@@ -529,6 +569,21 @@ def finalizar(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
     elif isinstance(parsed, PropostaTaxonomia | PropostaClassificacao | PropostaAnalise):
         out.proposta, avisos = _ajustar_aprendizado(tipo, parsed)  # spec 023
         out.avisos.extend(avisos)
+    elif isinstance(parsed, ficha_produto.FichaSaida):  # spec 012: nada vai fora dos limites
+        erros = ficha_produto.validar_limites(parsed)
+        if erros:
+            raise Invalida("; ".join(erros))
+        out.proposta = {"ficha": {**ficha_produto.campos_do_produto(parsed),
+                                  "cores": [c.model_dump() for c in parsed.cores]}}
+    elif isinstance(parsed, PropostaIdentidade):  # spec 025: notas sempre; a descrição sem trim
+        erros = [e for e in _problemas_identidade(parsed) if not e.startswith("descricao_prompt com")]
+        if erros:
+            raise Invalida("; ".join(erros))
+        if not 40 <= len(parsed.descricao_prompt.split()) <= 80:
+            out.avisos.append("A descrição saiu fora de 40 a 80 palavras; confira antes de usar.")
+        out.proposta = {"identidade": {
+            "notas": {n.slot: {"nota": n.nota, "observacao": n.observacao} for n in parsed.notas},
+            "descricao_prompt": parsed.descricao_prompt}}
     else:  # pragma: no cover
         raise TypeError(type(parsed).__name__)
     _avisos_do_guia(tipo, parsed, out, efetivo)

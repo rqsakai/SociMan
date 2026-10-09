@@ -69,6 +69,8 @@ def _requisicao(op: Operacao, args: dict[str, Any]) -> tuple[str, dict[str, Any]
     for nome in op.path_params:
         caminho = caminho.replace("{" + nome + "}", quote(str(args[nome]), safe=""))
     query = {k: args[k] for k in op.query_params if k in args and args[k] is not None}
+    for nome, valor in op.tool.padroes:  # spec 012: o padrão do mapa quando o agente não manda
+        query.setdefault(nome, valor)
     if op.limite_param and op.limite_param not in query:
         query[op.limite_param] = op.definicao["inputSchema"]["properties"][op.limite_param][
             "default"]

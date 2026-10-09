@@ -3,6 +3,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { PerfilBaseField } from "@/components/estudio/PerfilBaseField";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -22,21 +23,27 @@ import {
   fileRule,
   SINGLE_FILE_TIPOS,
   tipoLabel,
+  TIPOS,
   uploadSingleAsset,
   type AssetTipo,
 } from "../../lib/assets";
 import { errorText } from "../../lib/perfis";
 
 type NamedTipo = "avatar" | "cenario";
+const ehNomeado = (t: AssetTipo): t is NamedTipo => t === "avatar" || t === "cenario";
 
-// "Novo asset" (FR-001): Avatar e Cenário pedem o nome e abrem o detalhe; Fundo, Sticker, Marca
-// d'água e Imagem abrem o seletor de arquivos (vários de uma vez, um asset por arquivo).
+// "Novo asset" (007 FR-001; 029 T025): Avatar e Cenário pedem o nome e o perfil base e abrem o
+// detalhe; Fundo, Sticker, Marca d'água e Imagem abrem o seletor de arquivos (vários de uma vez, um
+// asset por arquivo) e nascem com o `perfilId` dado (o filtro da lista; null = sem perfil). Com um
+// tipo nomeado só (`tipos` = ["avatar"]), vira o botão "Novo avatar".
 export function NovoAssetMenu({
   perfilId,
+  tipos = TIPOS,
   disabled,
   onCreated,
 }: {
-  perfilId: string;
+  perfilId: string | null;
+  tipos?: readonly AssetTipo[];
   disabled?: boolean;
   onCreated: () => Promise<void>;
 }) {
@@ -46,6 +53,8 @@ export function NovoAssetMenu({
   const [fileTipo, setFileTipo] = useState<AssetTipo>("fundo");
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [failures, setFailures] = useState<{ name: string; message: string }[]>([]);
+  const nomeados = tipos.filter(ehNomeado);
+  const arquivos = SINGLE_FILE_TIPOS.filter((t) => tipos.includes(t));
 
   function pickFiles(tipo: AssetTipo) {
     setFileTipo(tipo);
@@ -81,28 +90,39 @@ export function NovoAssetMenu({
   }
 
   const busy = progress !== null;
+  const unico = nomeados.length === 1 && arquivos.length === 0 ? nomeados[0]! : null;
   return (
     <div className="space-y-2">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button type="button" variant="secondary" size="sm" disabled={disabled || busy} aria-busy={busy}>
-            {progress ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Plus aria-hidden="true" />}
-            {progress ? `Enviando ${Math.min(progress.done + 1, progress.total)} de ${progress.total}…` : "Novo asset"}
-            <ChevronDown aria-hidden="true" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={() => setNamed("avatar")}>{tipoLabel.avatar}</DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setNamed("cenario")}>{tipoLabel.cenario}</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Enviar arquivos</DropdownMenuLabel>
-          {SINGLE_FILE_TIPOS.map((tipo) => (
-            <DropdownMenuItem key={tipo} onSelect={() => pickFiles(tipo)}>
-              {tipoLabel[tipo]}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {unico ? (
+        <Button type="button" variant="secondary" size="sm" disabled={disabled} onClick={() => setNamed(unico)}>
+          <Plus aria-hidden="true" />
+          {unico === "avatar" ? "Novo avatar" : "Novo cenário"}
+        </Button>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="secondary" size="sm" disabled={disabled || busy} aria-busy={busy}>
+              {progress ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Plus aria-hidden="true" />}
+              {progress ? `Enviando ${Math.min(progress.done + 1, progress.total)} de ${progress.total}…` : "Novo asset"}
+              <ChevronDown aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {nomeados.map((t) => (
+              <DropdownMenuItem key={t} onSelect={() => setNamed(t)}>
+                {tipoLabel[t]}
+              </DropdownMenuItem>
+            ))}
+            {nomeados.length > 0 && arquivos.length > 0 && <DropdownMenuSeparator />}
+            {arquivos.length > 0 && <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">Enviar arquivos</DropdownMenuLabel>}
+            {arquivos.map((tipo) => (
+              <DropdownMenuItem key={tipo} onSelect={() => pickFiles(tipo)}>
+                {tipoLabel[tipo]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <input
         ref={inputRef}
         type="file"
@@ -140,21 +160,30 @@ export function NovoAssetMenu({
   );
 }
 
-function NovoAssetDialog({
+// Criar avatar ou cenário: o nome e o perfil base (o padrão vem de quem abre). Também usado pela
+// criação no lugar da cena (029 FR-016), que fica na cena em vez de abrir o detalhe.
+export function NovoAssetDialog({
   perfilId,
   tipo,
   onClose,
   onCreated,
 }: {
-  perfilId: string;
+  perfilId: string | null;
   tipo: NamedTipo | null;
   onClose: () => void;
-  onCreated: (id: string) => Promise<void>;
+  onCreated: (id: string) => Promise<void> | void;
 }) {
   const [name, setName] = useState("");
+  const [perfilBase, setPerfilBase] = useState<string | null>(perfilId);
   const [nameError, setNameError] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
+  const [aberto, setAberto] = useState<NamedTipo | null>(null);
+  // ao abrir, o perfil base volta ao padrão de quem abriu
+  if (tipo !== aberto) {
+    setAberto(tipo);
+    if (tipo) setPerfilBase(perfilId);
+  }
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -165,7 +194,7 @@ function NovoAssetDialog({
     setNameError(null);
     setBusy(true);
     try {
-      const { asset } = await api.assets.create(perfilId, { tipo, name: trimmed });
+      const { asset } = await api.assets.criarAgencia({ tipo, name: trimmed, perfilId: perfilBase });
       toast.success(`${tipoLabel[tipo]} "${asset.name}" criado.`);
       setName("");
       await onCreated(asset.id);
@@ -180,7 +209,7 @@ function NovoAssetDialog({
     <Dialog
       open={tipo !== null}
       onOpenChange={(open) => {
-        if (!open) {
+        if (!open && !busy) {
           setError(null);
           setNameError(null);
           onClose();
@@ -193,8 +222,8 @@ function NovoAssetDialog({
             <DialogTitle>{tipo === "cenario" ? "Novo cenário" : "Novo avatar"}</DialogTitle>
             <DialogDescription>
               {tipo === "cenario"
-                ? "Depois de criar, preencha o prompt do ambiente e envie as imagens de referência."
-                : "Depois de criar, preencha a descrição para prompts e envie os looks e as poses."}
+                ? "Depois de criar, preencha o prompt do ambiente e gere a cena padrão."
+                : "Depois de criar, monte o kit padrão: rosto de origem, rosto frontal, rostos 3/4 e corpo-base."}
             </DialogDescription>
           </DialogHeader>
           <Field label="Nome" error={nameError ?? undefined}>
@@ -211,6 +240,7 @@ function NovoAssetDialog({
               />
             )}
           </Field>
+          <PerfilBaseField value={perfilBase} onChange={setPerfilBase} hint="O guia e as palavras proibidas deste perfil entram nas gerações." />
           {error !== null && <ApiErrorAlert error={error} />}
           <DialogFooter>
             <Button type="submit" disabled={busy} aria-busy={busy}>

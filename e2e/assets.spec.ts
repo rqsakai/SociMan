@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type APIRequestContext, type Locator, type Page } from "@playwright/test";
 import { BASE_URL, OWNER } from "./fixtures";
-import { apiToken, createPerfilViaApi, login, pngAlphaBuffer, pngBuffer } from "./helpers";
+import { apiToken, createPerfilViaApi, login, nav, pngAlphaBuffer, pngBuffer } from "./helpers";
 
-// Biblioteca de assets do perfil (spec 007). Cada teste cria o próprio perfil pela API.
+// Biblioteca de assets (spec 007), aberta pelo AI Studio (spec 029): avatares, cenários e os assets
+// de arquivo único têm cada um a sua página. Cada teste cria o próprio perfil pela API e filtra a
+// lista por ele (a biblioteca é da agência inteira).
 
 function tab(page: Page, name: string): Locator {
   return page.getByRole("tab", { name, exact: true });
@@ -18,17 +20,27 @@ function uploadForm(page: Page, submit: string): Locator {
   return page.locator("form").filter({ has: page.getByRole("button", { name: submit, exact: true }) });
 }
 
-async function openAssetsTab(page: Page, perfilId: string): Promise<void> {
-  await page.goto(`/app/perfis/${perfilId}?aba=assets`);
-  await expect(page.getByText("Biblioteca de assets")).toBeVisible();
+type PaginaEstudio = "avatares" | "cenarios" | "assets";
+const TITULO: Record<PaginaEstudio, string> = { avatares: "Avatares", cenarios: "Cenários", assets: "Assets" };
+
+// AI Studio › <tipo>, com o filtro "Perfil base" no perfil do teste.
+async function openEstudio(page: Page, pagina: PaginaEstudio, perfilId: string): Promise<void> {
+  await page.goto(`/app/estudio/${pagina}?perfil=${perfilId}`);
+  await expect(page.getByRole("heading", { level: 1, name: TITULO[pagina] })).toBeVisible();
+  await expect(page.getByText("Biblioteca da agência")).toBeVisible();
 }
 
-// "Novo asset" → Avatar/Cenário: nome e "Criar"; cai no detalhe.
-async function createNamedAsset(page: Page, tipo: "Avatar" | "Cenário", name: string): Promise<void> {
-  await page.getByRole("button", { name: "Novo asset" }).click();
-  await page.getByRole("menuitem", { name: tipo, exact: true }).click();
+// A grade da página (o rótulo é o nome do tipo).
+function grade(page: Page, pagina: PaginaEstudio): Locator {
+  return page.getByRole("list", { name: TITULO[pagina], exact: true });
+}
+
+// "Novo avatar"/"Novo cenário": nome, perfil base (o do filtro) e "Criar"; cai no detalhe.
+async function createNamedAsset(page: Page, tipo: "Avatar" | "Cenário", name: string, perfilId: string): Promise<void> {
+  await page.getByRole("button", { name: tipo === "Avatar" ? "Novo avatar" : "Novo cenário", exact: true }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Nome").fill(name);
+  await expect(dialog.getByTestId("perfil-base")).toHaveValue(perfilId);
   await dialog.getByRole("button", { name: "Criar" }).click();
   await expect(page).toHaveURL(/\/app\/assets\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
@@ -73,10 +85,14 @@ test("avatar com looks e poses, reordenação e cópia da descrição", async ({
 
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  await openAssetsTab(page, perfilId);
-  await expect(page.getByText('Nenhum asset ainda. Use "Novo asset" para criar o primeiro.')).toBeVisible();
+  // entra pelo menu (AI Studio › Avatares) e filtra pelo perfil base
+  await nav(page, "Avatares");
+  await expect(page).toHaveURL(/\/app\/estudio\/avatares$/);
+  await page.getByTestId("filtro-perfil-base").selectOption(perfilId);
+  await expect(page).toHaveURL(new RegExp(`perfil=${perfilId}`));
+  await expect(page.getByText(/Nenhum item com o perfil base .+ ainda\./)).toBeVisible();  // 029: só o filtro de perfil
 
-  await createNamedAsset(page, "Avatar", "Achadinhos");
+  await createNamedAsset(page, "Avatar", "Achadinhos", perfilId);
   await page.getByLabel("Tags").fill("persona, tiktok-shop");
   await page.getByLabel("Descrição para prompts").fill(DESCRICAO);
   await page.getByLabel("Tom de voz").fill("Animado, próximo, 'amiga que achou uma pechincha'. Português do Brasil.");
@@ -162,12 +178,12 @@ test("avatar com looks e poses, reordenação e cópia da descrição", async ({
   await expect(page.getByText("Reverter").first()).toBeVisible();
 
   // Avatar sem imagem: iniciais "TE" no card (primeira e última palavra, como no perfil)
-  await openAssetsTab(page, perfilId);
-  await createNamedAsset(page, "Avatar", "Teste Estrela");
-  await openAssetsTab(page, perfilId);
-  const grade = page.getByRole("list", { name: "Assets do perfil" });
-  await expect(grade.getByRole("link", { name: "Teste Estrela (Avatar)" }).getByTestId("asset-initials")).toHaveText("TE");
-  await expect(grade.getByRole("link", { name: "Achadinhos (Avatar)" }).locator("img")).toBeVisible();
+  await openEstudio(page, "avatares", perfilId);
+  await createNamedAsset(page, "Avatar", "Teste Estrela", perfilId);
+  await openEstudio(page, "avatares", perfilId);
+  const avatares = grade(page, "avatares");
+  await expect(avatares.getByRole("link", { name: "Teste Estrela (Avatar)" }).getByTestId("asset-initials")).toHaveText("TE");
+  await expect(avatares.getByRole("link", { name: "Achadinhos (Avatar)" }).locator("img")).toBeVisible();
   await page.screenshot({ path: ".playwright-mcp/sociman/007-biblioteca.png", fullPage: true });
 });
 
@@ -184,8 +200,8 @@ test("cenário como fundo do kit, arquivar bloqueado pelo kit, restaurar e link 
 
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  await openAssetsTab(page, perfilId);
-  await createNamedAsset(page, "Cenário", "Cozinha retrô");
+  await openEstudio(page, "cenarios", perfilId);
+  await createNamedAsset(page, "Cenário", "Cozinha retrô", perfilId);
   await page.getByLabel("Tags").fill("cozinha");
   await page.getByLabel("Prompt do ambiente").fill("1950s kitchen with mint-green countertops, wooden cabinets, copper pots hanging.");
   await page.getByRole("button", { name: "Salvar", exact: true }).click();
@@ -211,7 +227,7 @@ test("cenário como fundo do kit, arquivar bloqueado pelo kit, restaurar e link 
 
   // "Abrir biblioteca", busca "cozinha", escolhe a referência do cenário
   await card.getByRole("button", { name: "Abrir biblioteca" }).click();
-  const biblioteca = page.getByRole("dialog", { name: "Biblioteca do perfil" });
+  const biblioteca = page.getByRole("dialog", { name: "Biblioteca da agência" });
   await expect(biblioteca.getByRole("button", { name: "Escolher fundo-novo" })).toBeVisible();
   await biblioteca.getByLabel("Buscar na biblioteca").fill("cozinha");
   await expect(biblioteca.getByRole("button", { name: "Escolher fundo-novo" })).toBeHidden();
@@ -234,11 +250,11 @@ test("cenário como fundo do kit, arquivar bloqueado pelo kit, restaurar e link 
   const { kit } = (await kitRes.json()) as { kit: { endCard: { fundo_imagem_id: string | null } } };
   expect(kit.endCard.fundo_imagem_id).toBe(cozinha.image.id);
 
-  // O "Fundo" enviado pelo seletor está na biblioteca
-  await openAssetsTab(page, perfilId);
-  const grade = page.getByRole("list", { name: "Assets do perfil" });
-  await expect(grade.getByRole("link", { name: "fundo-novo (Fundo)" })).toBeVisible();
-  await expect(grade.getByRole("link", { name: "Cozinha retrô (Cenário)" }).getByText("Em uso")).toBeVisible();
+  // O "Fundo" enviado pelo seletor está na biblioteca (Assets); o cenário, em Cenários, "Em uso"
+  await openEstudio(page, "assets", perfilId);
+  await expect(grade(page, "assets").getByRole("link", { name: "fundo-novo (Fundo)" })).toBeVisible();
+  await openEstudio(page, "cenarios", perfilId);
+  await expect(grade(page, "cenarios").getByRole("link", { name: "Cozinha retrô (Cenário)" }).getByText("Em uso")).toBeVisible();
 
   // Arquivar o cenário em uso no card final: recusado, com o uso
   await page.goto(cenarioUrl);
@@ -281,18 +297,19 @@ test("cenário como fundo do kit, arquivar bloqueado pelo kit, restaurar e link 
   await expect(page.getByText("Arquivado", { exact: true }).first()).toBeVisible();
 
   // Fora da biblioteca e do seletor; "Mostrar arquivados" traz de volta, com o selo
-  await openAssetsTab(page, perfilId);
-  await expect(grade.getByRole("link", { name: "fundo-novo (Fundo)" })).toBeVisible();
-  await expect(grade.getByRole("link", { name: "Cozinha retrô (Cenário)" })).toBeHidden();
+  await openEstudio(page, "assets", perfilId);
+  await expect(grade(page, "assets").getByRole("link", { name: "fundo-novo (Fundo)" })).toBeVisible();
+  await openEstudio(page, "cenarios", perfilId);
+  await expect(page.getByText(/Nenhum item com o perfil base .+ ainda\./)).toBeVisible();  // 029: só o filtro de perfil
   await page.getByLabel("Mostrar arquivados").click();
-  const arquivado = grade.getByRole("link", { name: "Cozinha retrô (Cenário)" });
+  const arquivado = grade(page, "cenarios").getByRole("link", { name: "Cozinha retrô (Cenário)" });
   await expect(arquivado.getByText("Arquivado")).toBeVisible();
   await arquivado.click();
   await page.getByRole("button", { name: "Restaurar", exact: true }).first().click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Restaurar" }).click();
   await expect(page.getByText("Asset restaurado.")).toBeVisible();
-  await openAssetsTab(page, perfilId);
-  await expect(grade.getByRole("link", { name: "Cozinha retrô (Cenário)" })).toBeVisible();
+  await openEstudio(page, "cenarios", perfilId);
+  await expect(grade(page, "cenarios").getByRole("link", { name: "Cozinha retrô (Cenário)" })).toBeVisible();
 });
 
 // US3 (T033): stickers com transparência, tags e filtros; sticker sem transparência recusado;
@@ -306,7 +323,7 @@ test("stickers com tags, filtro e busca, sticker opaco recusado e sticker na mar
 
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  await openAssetsTab(page, perfilId);
+  await openEstudio(page, "assets", perfilId);
 
   // Envio múltiplo: 3 PNG com alfa, um asset por arquivo
   await uploadSingleFiles(
@@ -315,8 +332,8 @@ test("stickers com tags, filtro e busca, sticker opaco recusado e sticker na mar
     ["joinha", "uau", "promo-10"].map((n) => ({ name: `${n}.png`, mimeType: "image/png", buffer: pngAlphaBuffer(256, 256) })),
   );
   await expect(page.getByText("3 arquivos enviados como Sticker.")).toBeVisible({ timeout: 20_000 });
-  const grade = page.getByRole("list", { name: "Assets do perfil" });
-  await expect(grade.getByRole("listitem")).toHaveCount(3);
+  const stickers = grade(page, "assets");
+  await expect(stickers.getByRole("listitem")).toHaveCount(3);
 
   // Tags: reação (joinha, uau) e promo (promo-10, e uau com as duas)
   const tags: Record<string, string[]> = { joinha: ["reação"], uau: ["reação", "promo"], "promo-10": ["promo"] };
@@ -336,26 +353,26 @@ test("stickers com tags, filtro e busca, sticker opaco recusado e sticker na mar
   await porTag.getByRole("button", { name: /#promo/ }).click();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("button", { name: "Mais filtros (1)" })).toBeVisible();
-  await expect(grade.getByRole("listitem")).toHaveCount(2);
-  await expect(grade.getByRole("link", { name: "promo-10 (Sticker)" })).toBeVisible();
-  await expect(grade.getByRole("link", { name: "uau (Sticker)" })).toBeVisible();
+  await expect(stickers.getByRole("listitem")).toHaveCount(2);
+  await expect(stickers.getByRole("link", { name: "promo-10 (Sticker)" })).toBeVisible();
+  await expect(stickers.getByRole("link", { name: "uau (Sticker)" })).toBeVisible();
   await page.screenshot({ path: ".playwright-mcp/sociman/007-filtro-tag.png", fullPage: true });
   await page.getByRole("button", { name: "Remover filtro: Tag" }).click();
-  await expect(grade.getByRole("listitem")).toHaveCount(3);
+  await expect(stickers.getByRole("listitem")).toHaveCount(3);
 
   // Busca pelo nome
   await page.getByLabel("Buscar por nome ou tag").fill("joinha");
-  await expect(grade.getByRole("listitem")).toHaveCount(1);
-  await expect(grade.getByRole("link", { name: "joinha (Sticker)" })).toBeVisible();
+  await expect(stickers.getByRole("listitem")).toHaveCount(1);
+  await expect(stickers.getByRole("link", { name: "joinha (Sticker)" })).toBeVisible();
   await page.getByLabel("Buscar por nome ou tag").fill("");
-  await expect(grade.getByRole("listitem")).toHaveCount(3);
+  await expect(stickers.getByRole("listitem")).toHaveCount(3);
 
   // Sticker sem transparência: JPG barrado no navegador, PNG opaco recusado pela API
   await uploadSingleFiles(page, "Sticker", [{ name: "foto.jpg", mimeType: "image/jpeg", buffer: Buffer.from("nao-e-jpg") }]);
   await expect(page.getByText("foto.jpg: O sticker precisa ter fundo transparente")).toBeVisible();
   await uploadSingleFiles(page, "Sticker", [{ name: "opaco.png", mimeType: "image/png", buffer: pngBuffer(256, 256) }]);
   await expect(page.getByText("opaco.png: O sticker precisa ter fundo transparente")).toBeVisible();
-  await expect(grade.getByRole("listitem")).toHaveCount(3);
+  await expect(stickers.getByRole("listitem")).toHaveCount(3);
 
   // Aba Marca → Marca d'água → Imagem própria: o seletor lista os stickers
   await page.goto(`/app/perfis/${perfilId}`);

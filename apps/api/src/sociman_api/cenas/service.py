@@ -1,8 +1,13 @@
-"""Cenas do perfil (spec 010, contracts/http-api.md, research R2–R5).
+"""Cenas da biblioteca da agência (spec 010, contracts/http-api.md, research R2–R5; spec 029).
 
-Toda mutação trava a linha da cena, confere a `version`, recusa perfil arquivado e grava **uma**
-versão em `entity_versions` na mesma transação (`history.record`). Nada é apagado: arquivar e
-restaurar; a reversão é só do dono humano (a rota usa `RequireHumanOwner`).
+Toda mutação trava a linha da cena, confere a `version` e grava **uma** versão em
+`entity_versions` na mesma transação (`history.record`). Nada é apagado: arquivar e restaurar; a
+reversão é só do dono humano (a rota usa `RequireHumanOwner`).
+
+Spec 029 (R6): a cena tem um **perfil base** opcional (`perfil_id`, editável e versionado), de
+onde vêm os padrões e as proibidas; sem ele, o padrão do código, nenhuma proibida e o aviso
+`sem_perfil_base`. Avatar, cenário e produto podem ser de qualquer perfil base. O perfil base
+arquivado não trava a cena (só a criação pela rota antiga por perfil o recusa).
 
 Status (Q3): `rascunho` monta o prompt ao vivo; `pronta` congela o texto e as versões do avatar e
 do cenário; `usada` vem do vínculo com um conteúdo (`usos.py`). Editar um campo de
@@ -40,6 +45,7 @@ from sociman_api.conteudos.models import Conteudo
 from sociman_api.errors import ApiError
 from sociman_api.ia import aplicacao
 from sociman_api.ia import guia as guia_mod
+from sociman_api.perfis import base as perfil_base
 from sociman_api.perfis.models import Image, Perfil
 from sociman_api.perfis.schemas import Autor, VersionsList
 from sociman_api.perfis.service_perfis import (
@@ -48,6 +54,7 @@ from sociman_api.perfis.service_perfis import (
     target_state,
     versions_out,
 )
+from sociman_api.produtos.models import Produto, ProdutoStatus, ProdutoVariante
 
 ENTITY = "cena"
 LABEL = "Esta cena"
@@ -56,11 +63,12 @@ CENA_USADA = "Esta cena já foi usada num vídeo; duplique para variar o prompt"
 DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
 _UUIDS = ("avatar_id", "avatar_arquivo_id", "cenario_id", "cenario_arquivo_id",
-          "produto_imagem_id")
+          "produto_imagem_id", "produto_id", "produto_variante_id")
 _ENUMS = {"plano": CenaPlano, "movimento": CenaMovimento, "modo": CenaModo}
 _CAMEL = {"avatar_id": "avatarId", "avatar_arquivo_id": "avatarArquivoId",
           "cenario_id": "cenarioId", "cenario_arquivo_id": "cenarioArquivoId",
           "produto_imagem_id": "produtoImagemId", "produto_nome": "produtoNome",
+          "produto_id": "produtoId", "produto_variante_id": "produtoVarianteId",
           "quadro_inicial": "quadroInicial", "quadro_final": "quadroFinal",
           "duracao_s": "duracaoS", "texto_tela": "textoTela"}
 _ACENTOS = ("áàâãäéèêëíìîïóòôõöúùûüç", "aaaaaeeeeiiiiooooouuuuc")
@@ -98,7 +106,6 @@ def perfil_ativo(db: Session, perfil_id: uuid.UUID) -> Perfil:
 def _editavel(db: Session, cena_id: uuid.UUID, version: int) -> Cena:
     cena = get_cena_or_404(db, cena_id, lock=True)
     history.check_version(cena, version, LABEL)
-    perfil_ativo(db, cena.perfil_id)
     if cena.archived:
         raise ApiError(409, "arquivada", "Restaure a cena antes de alterar")
     return cena
@@ -108,8 +115,13 @@ def assets_da(db: Session, cena: Any) -> ingredientes.Assets:
     """`cena` pode ser a linha ou qualquer objeto com os três ids."""
     def _get(asset_id: uuid.UUID | None) -> Asset | None:
         return db.get(Asset, asset_id) if asset_id is not None else None
-    return ingredientes.Assets(avatar=_get(cena.avatar_id), cenario=_get(cena.cenario_id),
-                               produto=_get(cena.produto_imagem_id))
+    produto_id = getattr(cena, "produto_id", None)
+    variante_id = getattr(cena, "produto_variante_id", None)
+    return ingredientes.Assets(
+        avatar=_get(cena.avatar_id), cenario=_get(cena.cenario_id),
+        produto=_get(cena.produto_imagem_id),
+        catalogo=db.get(Produto, produto_id) if produto_id is not None else None,
+        variante=db.get(ProdutoVariante, variante_id) if variante_id is not None else None)
 
 
 _TIPOS = {"avatar_id": (AssetTipo.avatar, "um avatar"),
@@ -117,17 +129,18 @@ _TIPOS = {"avatar_id": (AssetTipo.avatar, "um avatar"),
           "produto_imagem_id": (AssetTipo.imagem, "uma imagem")}
 
 
-def validar_refs(db: Session, perfil_id: uuid.UUID, valores: dict[str, Any],
+def validar_refs(db: Session, perfil_id: uuid.UUID | None, valores: dict[str, Any],
                  novos: set[str], erro=invalida) -> None:
-    """Assets do perfil e do tipo certo; o arquivo do avatar/cenário é desse asset. Asset ou
-    arquivo arquivado só é recusado quando a referência é nova (`novos`)."""
+    """Assets do tipo certo; o arquivo do avatar/cenário é desse asset. Asset ou arquivo
+    arquivado só é recusado quando a referência é nova (`novos`). Spec 029 (R6): os itens podem
+    ser de qualquer perfil base; `perfil_id` (o da cena) não restringe mais."""
     for campo, (tipo, rotulo) in _TIPOS.items():
         asset_id = valores.get(campo)
         if asset_id is None:
             continue
         asset = db.get(Asset, asset_id)
-        if asset is None or asset.perfil_id != perfil_id or asset.tipo != tipo:
-            raise erro(campo, f"escolha {rotulo} da biblioteca deste perfil")
+        if asset is None or asset.tipo != tipo:
+            raise erro(campo, f"escolha {rotulo} da biblioteca")
         if campo in novos and asset.archived:
             raise erro(campo, "o asset está arquivado")
     for campo, dono, papeis in (("avatar_arquivo_id", "avatar_id",
@@ -144,6 +157,33 @@ def validar_refs(db: Session, perfil_id: uuid.UUID, valores: dict[str, Any],
             raise erro(campo, "o arquivo está arquivado")
     if valores.get("produto_imagem_id") is not None and not (valores.get("produto_nome") or ""):
         raise erro("produto_nome", "informe o nome do produto da foto")
+    _validar_catalogo(db, valores, novos, erro)
+
+
+def _validar_catalogo(db: Session, valores: dict[str, Any], novos: set[str], erro) -> None:
+    """Spec 012 (R13): o produto do catálogo (029: de qualquer perfil base), **ao ligar**, está
+    aprovado e não arquivado; a variante é ativa, desse produto e tem recorte. Ou a referência
+    leve, ou o catálogo (`ck_cenas_produto_modo`)."""
+    produto_id, variante_id = valores.get("produto_id"), valores.get("produto_variante_id")
+    if produto_id is None:
+        if variante_id is not None:
+            raise erro("produto_id", "escolha o produto da variante")
+        return
+    if valores.get("produto_nome") or valores.get("produto_imagem_id") is not None:
+        raise erro("produto_id", "use o produto do catálogo ou o nome e a foto, não os dois")
+    produto = db.get(Produto, produto_id)
+    if produto is None:
+        raise erro("produto_id", "escolha um produto do catálogo")
+    if "produto_id" in novos and (produto.status != ProdutoStatus.aprovado or produto.archived):
+        raise erro("produto_id", "só produtos aprovados")
+    if variante_id is None:
+        return
+    variante = produto.variante(variante_id)
+    if variante is None:
+        raise erro("produto_variante_id", "escolha uma variante deste produto")
+    if novos & {"produto_id", "produto_variante_id"} and (
+            variante.archived or variante.recorte_image_id is None):
+        raise erro("produto_variante_id", "a variante está arquivada ou sem recorte")
 
 
 # ---- prompt, avisos e saída ----
@@ -162,6 +202,8 @@ def entrada(cena: Any, assets: ingredientes.Assets, estilo_padrao: str,
         estilo=cena.estilo, audio=cena.audio, modo=cena.modo,
         quadro_inicial=cena.quadro_inicial, quadro_final=cena.quadro_final,
         produto_nome=cena.produto_nome, produto_com_foto=assets.produto is not None,
+        produto_prompt=assets.catalogo.descricao_prompt if assets.catalogo else None,
+        produto_cor=assets.variante.cor_en if assets.variante else None,
         negative=cena.negative)
 
 
@@ -200,7 +242,10 @@ def _mudancas(db: Session, cena: Cena,
     return out
 
 
-def proibidas_do_perfil(db: Session, perfil_id: uuid.UUID) -> tuple[str, ...]:
+def proibidas_do_perfil(db: Session, perfil_id: uuid.UUID | None) -> tuple[str, ...]:
+    """As proibidas do guia do perfil; sem perfil base (029), nenhuma."""
+    if perfil_id is None:
+        return ()
     vigor = guia_mod.em_vigor(db, perfil_id, None)
     return guia_mod.fundir(vigor.perfil, None).proibidas
 
@@ -214,7 +259,10 @@ def avisos(db: Session, cena: Cena, assets: ingredientes.Assets) -> list[schemas
         texto_tela=cena.texto_tela, produto_nome=cena.produto_nome,
         produto_com_foto=assets.produto is not None,
         proibidas=proibidas_do_perfil(db, cena.perfil_id),
-        mudancas=_mudancas(db, cena, assets), arquivados=arquivados))
+        mudancas=_mudancas(db, cena, assets), arquivados=arquivados,
+        catalogo_fora=assets.catalogo is not None and (
+            assets.catalogo.status != ProdutoStatus.aprovado or assets.catalogo.archived),
+        sem_perfil_base=cena.perfil_id is None))
     return [schemas.Aviso(codigo=a.codigo, mensagem=a.mensagem, campo=a.campo,
                           detalhe=a.detalhe) for a in lista]
 
@@ -230,6 +278,21 @@ def prompt_out(db: Session, cena: Cena, assets: ingredientes.Assets) -> schemas.
         texto=m.texto, negative=m.negative,
         partes=[schemas.ParteOut(parte=p.parte, texto=p.texto) for p in m.partes],
         congelado=False, avatar_version=m.avatar_version, cenario_version=m.cenario_version)
+
+
+def produto_ref(db: Session, assets: ingredientes.Assets) -> schemas.ProdutoRef | None:
+    p = assets.catalogo
+    if p is None:
+        return None
+    v = assets.variante
+    thumb = None
+    if v is not None and v.recorte_image_id is not None:
+        image = db.get(Image, v.recorte_image_id)
+        thumb = ingredientes.thumb_url(image) if image is not None else None
+    return schemas.ProdutoRef(
+        id=p.id, nome_comercial=p.nome_comercial, nome=p.name, status=p.status.value,
+        estado=p.estado, variante=schemas.VarianteRef(id=v.id, cor_pt=v.cor_pt, cor_en=v.cor_en,
+                                                      thumb_url=thumb) if v else None)
 
 
 def _ref(asset: Asset | None) -> schemas.AssetRef | None:
@@ -290,18 +353,27 @@ def _thumb(db: Session, cena: Cena, assets: ingredientes.Assets,
     return ingredientes.thumb_url(image) if image is not None else None
 
 
+def nomes_perfis(db: Session, ids: Sequence[uuid.UUID | None]) -> dict[uuid.UUID, str]:
+    wanted = {i for i in ids if i is not None}
+    if not wanted:
+        return {}
+    return dict(db.execute(select(Perfil.id, Perfil.name).where(Perfil.id.in_(wanted))).all())
+
+
 def resumos_out(db: Session, cenas: Sequence[Cena]) -> list[schemas.CenaResumo]:
     ids = [c.id for c in cenas]
     tomadas, usos = _contagens(db, ids)
+    nomes = nomes_perfis(db, [c.perfil_id for c in cenas])
     escolhidas = {t.id: t for t in db.scalars(select(CenaTomada).where(CenaTomada.id.in_(
         [c.tomada_escolhida_id for c in cenas if c.tomada_escolhida_id])))} if cenas else {}
     out = []
     for c in cenas:
         assets = assets_da(db, c)
         out.append(schemas.CenaResumo(
-            id=c.id, perfil_id=c.perfil_id, nome=c.nome, status=c.status,
+            id=c.id, perfil_id=c.perfil_id, perfil_nome=nomes.get(c.perfil_id), nome=c.nome,
+            status=c.status,
             duracao_s=c.duracao_s, modo=c.modo, avatar=_ref(assets.avatar),
-            cenario=_ref(assets.cenario), produto_nome=c.produto_nome,
+            cenario=_ref(assets.cenario), produto_nome=c.produto_nome, produto_id=c.produto_id,
             thumb_url=_thumb(db, c, assets, escolhidas.get(c.tomada_escolhida_id)),
             tags=list(c.tags), arquivada=c.archived, tomadas=tomadas.get(c.id, 0),
             usos=usos.get(c.id, 0), updated_at=c.updated_at))
@@ -328,9 +400,11 @@ def cena_out(db: Session, cena: Cena, actor: Actor | None = None) -> schemas.Cen
     com_video = actor is None or actor.kind != "mcp_client"
     return schemas.Cena(
         **{f: getattr(cena, f) for f in CAMPOS_EDITAVEIS}, id=cena.id, perfil_id=cena.perfil_id,
-        status=cena.status, version=cena.version, arquivada=cena.archived,
+        perfil_nome=nomes_perfis(db, [cena.perfil_id]).get(cena.perfil_id), status=cena.status,
+        version=cena.version, arquivada=cena.archived,
         avatar=_ref(assets.avatar), cenario=_ref(assets.cenario),
-        produto_imagem=_ref(assets.produto), prompt=prompt_out(db, cena, assets),
+        produto_imagem=_ref(assets.produto), produto=produto_ref(db, assets),
+        prompt=prompt_out(db, cena, assets),
         ingredientes=ingredientes.listar(db, assets, cena.avatar_arquivo_id,
                                          cena.cenario_arquivo_id),
         avisos=avisos(db, cena, assets),
@@ -376,13 +450,17 @@ def _termo(q: str) -> str:
     return termo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-def listar(db: Session, perfil_id: uuid.UUID, *, q: str | None = None,
+def listar(db: Session, perfil: perfil_base.Filtro, *, q: str | None = None,
            status: Sequence[CenaStatus] = (), avatar_id: uuid.UUID | None = None,
            cenario_id: uuid.UUID | None = None, produto_imagem_id: uuid.UUID | None = None,
-           tags: Sequence[str] = (), arquivadas: str = "false", cursor: str | None = None,
+           produto_id: uuid.UUID | None = None, tags: Sequence[str] = (),
+           arquivadas: str = "false", cursor: str | None = None,
            limit: int = DEFAULT_LIMIT) -> schemas.CenasList:
-    get_perfil_or_404(db, perfil_id)
-    stmt = select(Cena).where(Cena.perfil_id == perfil_id)
+    """As cenas da agência; `perfil` é o filtro de perfil base (029: `None` = todas, `sem` ou
+    um id, que precisa existir; a rota antiga por perfil passa o id do caminho)."""
+    if isinstance(perfil, uuid.UUID):
+        perfil_base.perfil_existente(db, perfil)
+    stmt = perfil_base.aplicar_filtro(select(Cena), Cena.perfil_id, perfil)
     if arquivadas == "false":
         stmt = stmt.where(Cena.archived_at.is_(None))
     elif arquivadas == "true":
@@ -395,6 +473,8 @@ def listar(db: Session, perfil_id: uuid.UUID, *, q: str | None = None,
         stmt = stmt.where(Cena.cenario_id == cenario_id)
     if produto_imagem_id is not None:
         stmt = stmt.where(Cena.produto_imagem_id == produto_imagem_id)
+    if produto_id is not None:  # spec 012
+        stmt = stmt.where(Cena.produto_id == produto_id)
     wanted = [t.strip().lower() for t in tags if t.strip()]
     if wanted:
         stmt = stmt.where(Cena.tags.contains(wanted))
@@ -434,7 +514,8 @@ def _record(db: Session, actor: Actor, cena: Cena, action: str, before: dict[str
 
 
 def _aplicar_proposta(db: Session, actor: Actor, proposta_id: uuid.UUID | None,
-                      cena: Cena, perfil_id: uuid.UUID, nova: bool) -> dict[str, Any] | None:
+                      cena: Cena, perfil_id: uuid.UUID | None,
+                      nova: bool) -> dict[str, Any] | None:
     """Spec 009 (proposta de cena): marca `aplicada` na mesma transação."""
     if proposta_id is None:
         return None
@@ -447,9 +528,15 @@ def _aplicar_proposta(db: Session, actor: Actor, proposta_id: uuid.UUID | None,
     return {"proposta": {"id": str(proposta_id)}}
 
 
-def criar(db: Session, actor: Actor, perfil_id: uuid.UUID, body: schemas.CenaIn) -> Cena:
-    perfil_ativo(db, perfil_id)
-    valores = body.model_dump(exclude={"proposta_id", "ia"})
+def criar(db: Session, actor: Actor, perfil_id: uuid.UUID | None, body: schemas.CenaIn,
+          exige_ativo: bool = True) -> Cena:
+    """`perfil_id` é o perfil base (029: opcional). A rota antiga por perfil (`exige_ativo`)
+    recusa o perfil arquivado, como antes; a da agência só confere que ele existe."""
+    if exige_ativo and perfil_id is not None:
+        perfil_ativo(db, perfil_id)
+    else:
+        perfil_base.perfil_existente(db, perfil_id)
+    valores = body.model_dump(exclude={"proposta_id", "ia", "perfil_id"})
     validar_refs(db, perfil_id, valores, novos=set(_UUIDS))
     cena = Cena(id=uuid.uuid4(), perfil_id=perfil_id, created_by=actor.user_id,
                 updated_by=actor.user_id, **valores)
@@ -484,7 +571,14 @@ def mudancas_de(cena: Cena, changes: dict[str, Any]) -> dict[str, Any]:
 def editar(db: Session, actor: Actor, cena_id: uuid.UUID, body: schemas.CenaPatch) -> Cena:
     cena = _editavel(db, cena_id, body.version)
     changes = mudancas_de(cena, body.model_dump(exclude_unset=True,
-                                                exclude={"version", "proposta_id", "ia"}))
+                                                exclude={"version", "proposta_id", "ia",
+                                                         "perfil_id"}))
+    # 029: o perfil base (pode ser arquivado; nulo = nenhum). Não mexe no prompt congelado: o
+    # "Remontar" usa os padrões do novo perfil base.
+    novo_perfil = cena.perfil_id
+    if "perfil_id" in body.model_fields_set:
+        novo_perfil = body.perfil_id
+        perfil_base.perfil_existente(db, novo_perfil)
     prompt_mudou = bool(CAMPOS_PROMPT & changes.keys())
     if prompt_mudou and cena.status == CenaStatus.usada:
         raise _usada()
@@ -497,6 +591,7 @@ def editar(db: Session, actor: Actor, cena_id: uuid.UUID, body: schemas.CenaPatc
     before = history.snapshot(cena)
     for campo, valor in changes.items():
         setattr(cena, campo, valor)
+    cena.perfil_id = novo_perfil
     details: dict[str, Any] = {}
     if prompt_mudou and cena.status == CenaStatus.pronta:
         cena.status = CenaStatus.rascunho
@@ -579,7 +674,6 @@ def remontar(db: Session, actor: Actor, cena_id: uuid.UUID, version: int) -> Cen
 
 def duplicar(db: Session, actor: Actor, cena_id: uuid.UUID) -> Cena:
     origem = get_cena_or_404(db, cena_id)
-    perfil_ativo(db, origem.perfil_id)
     valores = {f: getattr(origem, f) for f in CAMPOS_EDITAVEIS}
     valores["tags"] = list(origem.tags)
     sufixo = " (cópia)"
@@ -596,7 +690,6 @@ def duplicar(db: Session, actor: Actor, cena_id: uuid.UUID) -> Cena:
 def arquivar(db: Session, actor: Actor, cena_id: uuid.UUID, version: int) -> Cena:
     cena = get_cena_or_404(db, cena_id, lock=True)
     history.check_version(cena, version, LABEL)
-    perfil_ativo(db, cena.perfil_id)
     if cena.archived:
         raise ApiError(409, "arquivada", "Esta cena já está arquivada")
     before = history.snapshot(cena)
@@ -609,7 +702,6 @@ def arquivar(db: Session, actor: Actor, cena_id: uuid.UUID, version: int) -> Cen
 def restaurar(db: Session, actor: Actor, cena_id: uuid.UUID, version: int) -> Cena:
     cena = get_cena_or_404(db, cena_id, lock=True)
     history.check_version(cena, version, LABEL)
-    perfil_ativo(db, cena.perfil_id)
     if not cena.archived:
         raise ApiError(409, "conflict", "Esta cena não está arquivada")
     before = history.snapshot(cena)
@@ -642,13 +734,14 @@ def reverter(db: Session, actor: Actor, cena_id: uuid.UUID, version: int,
     como `pronta` (research R5)."""
     cena = get_cena_or_404(db, cena_id, lock=True)
     history.check_version(cena, version, LABEL)
-    perfil_ativo(db, cena.perfil_id)
     if cena.status == CenaStatus.usada:
         raise _usada()
     state = target_state(db, ENTITY, cena, to_version)
     before = history.snapshot(cena)
     for campo in CAMPOS_EDITAVEIS:
         setattr(cena, campo, _de_snapshot(campo, state[campo]))
+    if "perfil_id" in state:  # 029: o perfil base volta (mesmo arquivado)
+        cena.perfil_id = uuid.UUID(state["perfil_id"]) if state["perfil_id"] else None
     status = CenaStatus(state["status"])
     if status == CenaStatus.usada and not tem_uso_ativo(db, cena.id):
         status = CenaStatus.pronta

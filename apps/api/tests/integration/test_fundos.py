@@ -142,13 +142,20 @@ def test_kit_com_fundo_imagem(client, h, perfil):
     assert r.status_code == 400
     assert r.json()["error"]["message"] == "hook.fundo_imagem_id: escolha a imagem de fundo"
 
-    # Imagem de outro perfil.
+    # Imagem que não existe.
+    card = kit["endCard"] | {"ligado": True, "fundo_tipo": "imagem",
+                             "fundo_imagem_id": str(uuid.uuid4())}
+    r = _put(client, h, perfil, kit, endCard=card)
+    assert r.status_code == 400
+    assert r.json()["error"]["details"] == {"field": "endCard.fundo_imagem_id"}
+
+    # Spec 029 (FR-013): a imagem de outro perfil vale (biblioteca da agência).
     outro = _upload(client, h, _perfil(client, h, "outro"))
     card = kit["endCard"] | {"ligado": True, "fundo_tipo": "imagem",
                              "fundo_imagem_id": outro["id"]}
     r = _put(client, h, perfil, kit, endCard=card)
-    assert r.status_code == 400
-    assert r.json()["error"]["details"] == {"field": "endCard.fundo_imagem_id"}
+    assert r.status_code == 200, r.text
+    kit = r.json()["kit"]
 
     hook = kit["hook"] | {"fundo_tipo": "imagem", "fundo_imagem_id": fundo["id"]}
     card = kit["endCard"] | {"ligado": True, "fundo_tipo": "imagem",

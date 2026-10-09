@@ -26,18 +26,27 @@ const toggle = <T,>(list: T[], item: T) => (list.includes(item) ? list.filter((x
 // Filtros da biblioteca (FR-005, R8) na barra única da spec 024: busca por nome ou tag (debounce da
 // barra), "Mostrar arquivados" à vista e, em "Mais filtros", os chips de tipo (OU) e de tag com
 // contagem (E). Cada tipo ou tag escolhido vira uma etiqueta removível.
+// Spec 029: `tipos` limita os chips de tipo aos da página do AI Studio (vazio = sem chips), e o
+// filtro "Perfil base" entra por `principaisExtra`/`ativosExtra`.
 export function AssetFilters({
   value,
   tags,
+  tipos = TIPOS,
   onChange,
   onLimpar,
+  principaisExtra,
+  ativosExtra = [],
 }: {
   value: AssetListFilters;
   tags: TagCount[];
+  tipos?: readonly AssetTipo[];
   onChange: (patch: Partial<AssetListFilters>) => void;
   onLimpar: () => void;
+  principaisExtra?: ReactNode;
+  ativosExtra?: FiltroAtivo[];
 }) {
   const ativos: FiltroAtivo[] = [
+    ...ativosExtra,
     ...value.tipo.map((tipo) => ({
       chave: `tipo:${tipo}`,
       rotulo: "Tipo",
@@ -61,27 +70,32 @@ export function AssetFilters({
     <FilterBar
       busca={{ valor: value.q, onChange: (q) => onChange({ q }), rotulo: "Buscar por nome ou tag" }}
       principais={
-        <div className="flex h-9 items-center gap-2">
-          <Switch
-            id="assets-arquivados"
-            checked={value.archived === "all"}
-            onCheckedChange={(on) => onChange({ archived: on ? "all" : "false" })}
-          />
-          <Label htmlFor="assets-arquivados">Mostrar arquivados</Label>
-        </div>
+        <>
+          {principaisExtra}
+          <div className="flex h-9 items-center gap-2">
+            <Switch
+              id="assets-arquivados"
+              checked={value.archived === "all"}
+              onCheckedChange={(on) => onChange({ archived: on ? "all" : "false" })}
+            />
+            <Label htmlFor="assets-arquivados">Mostrar arquivados</Label>
+          </div>
+        </>
       }
       mais={
         <>
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Tipo</p>
-            <div role="group" aria-label="Filtrar por tipo" className="flex flex-wrap gap-1.5">
-              {TIPOS.map((tipo: AssetTipo) => (
-                <Chip key={tipo} pressed={value.tipo.includes(tipo)} onClick={() => onChange({ tipo: toggle(value.tipo, tipo) })}>
-                  {tipoLabel[tipo]}
-                </Chip>
-              ))}
+          {tipos.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Tipo</p>
+              <div role="group" aria-label="Filtrar por tipo" className="flex flex-wrap gap-1.5">
+                {tipos.map((tipo: AssetTipo) => (
+                  <Chip key={tipo} pressed={value.tipo.includes(tipo)} onClick={() => onChange({ tipo: toggle(value.tipo, tipo) })}>
+                    {tipoLabel[tipo]}
+                  </Chip>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           {tags.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Tag</p>

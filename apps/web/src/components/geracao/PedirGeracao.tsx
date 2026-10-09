@@ -12,11 +12,13 @@ import type { AssetTipo } from "../../lib/assets";
 import { useCriarGeracao, type Geracao, type GeracaoAlvo } from "../../lib/geracoes";
 import { integracoesQuery } from "../../lib/integracoes";
 import { LibraryImageDialog } from "../assets/LibraryImageDialog";
+import { PerfilBaseGeracao } from "../estudio/PerfilBaseField";
 
 const INSTRUCAO_MAX = 2000;
 
 // Pedido de geração (spec 021, T027): instrução, foto de referência opcional escolhida da
 // biblioteca do perfil e número de opções (1..nMax do passo). Reutilizável pela 025 e pela 012.
+// Spec 029: `perfilId` é o perfil base do item (pode ser null), o padrão do "Perfil base desta geração".
 export function PedirGeracao({
   perfilId,
   alvoTipo,
@@ -28,9 +30,11 @@ export function PedirGeracao({
   disabled,
   instrucaoLabel = "Instrução",
   instrucaoHint,
+  instrucaoOpcional = false,
+  instrucaoPlaceholder,
   onCriada,
 }: {
-  perfilId: string;
+  perfilId: string | null;
   alvoTipo: GeracaoAlvo;
   alvoId: string;
   passo: string;
@@ -41,20 +45,24 @@ export function PedirGeracao({
   disabled?: boolean;
   instrucaoLabel?: string;
   instrucaoHint?: string;
+  // spec 025: no `cenario.cena`, vazio usa o prompt do ambiente do cenário
+  instrucaoOpcional?: boolean;
+  instrucaoPlaceholder?: string;
   onCriada?: (g: Geracao) => void;
 }) {
   const [instrucao, setInstrucao] = useState("");
   const [referencia, setReferencia] = useState<{ image: ImageRef; nome: string } | null>(null);
   const [nOpcoes, setNOpcoes] = useState(Math.min(nPadrao, nMax));
   const [campoErro, setCampoErro] = useState<string | null>(null);
-  const criar = useCriarGeracao(perfilId);
+  const criar = useCriarGeracao();
+  const [perfilBase, setPerfilBase] = useState<string | null>(perfilId);
   const integracoes = useQuery(integracoesQuery);
   const gerador = integracoes.data?.geracao;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     const texto = instrucao.trim();
-    if (texto.length < 1 || texto.length > INSTRUCAO_MAX) {
+    if ((!instrucaoOpcional && texto.length < 1) || texto.length > INSTRUCAO_MAX) {
       setCampoErro(`Descreva o que gerar (até ${INSTRUCAO_MAX.toLocaleString("pt-BR")} caracteres)`);
       return;
     }
@@ -64,6 +72,7 @@ export function PedirGeracao({
         alvoTipo,
         alvoId,
         passo,
+        perfilBaseId: perfilBase,
         instrucao: texto,
         referencias: referencia ? [referencia.image.id] : [],
         nOpcoes,
@@ -86,6 +95,7 @@ export function PedirGeracao({
           <AlertDescription>O pedido entra na fila e começa quando o gerador voltar.</AlertDescription>
         </Alert>
       )}
+      <PerfilBaseGeracao value={perfilBase} onChange={setPerfilBase} disabled={disabled} />
       <Field label={instrucaoLabel} hint={instrucaoHint} error={campoErro ?? undefined}>
         {({ id, describedBy, invalid }) => (
           <Textarea
@@ -93,6 +103,7 @@ export function PedirGeracao({
             rows={3}
             value={instrucao}
             maxLength={INSTRUCAO_MAX}
+            placeholder={instrucaoPlaceholder}
             disabled={disabled}
             aria-invalid={invalid}
             aria-describedby={describedBy}

@@ -7,21 +7,29 @@
  * - ação (obrigatória, em inglês), fala (pt-BR), texto na tela (guia de edição, fora do prompt);
  * - iluminação e estilo, áudio e negative (vazios = padrão do perfil);
  * - duração 4/6/8 s e modo do Flow (quadros inicial e final só no modo "Frames to Video");
- * - produto: nome curto e foto opcional da biblioteca (asset tipo imagem).
+ * - produto: do catálogo (spec 012: aprovado, com a variante) ou a referência leve da 010 (nome curto
+ *   e foto opcional da biblioteca, asset tipo imagem). Escolher do catálogo limpa a referência leve.
+ *
+ * Spec 029: os seletores listam a biblioteca da agência (qualquer perfil base, ou sem perfil), com o
+ * perfil base ao lado do nome, e têm "+ Novo avatar", "+ Novo cenário" e "+ Novo produto": o
+ * `onNovo` avisa a página, que abre o diálogo FORA do `<form>` da cena (um form dentro de outro
+ * dispararia o submit da cena) e devolve o item escolhido pelo `onChange`.
  *
  * `bloquearPrompt` (cena usada) deixa só nome, tags e notas editáveis. `iaCampo` decora os 4 campos
  * de texto com o "Melhorar com IA" (spec 008).
  */
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { LibraryImageDialog } from "@/components/assets/LibraryImageDialog";
 import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { SeletorProduto } from "./SeletorProduto";
 import { api } from "@/lib/api";
 import { activeFiles, assetKey, parseTags, roleLabel } from "@/lib/assets";
+import { perfilNomeDe, TETO_TEXTO, useAssetsOpcoes, usePerfisTodos } from "@/lib/estudio";
 import {
   contarPalavras,
   DURACOES,
@@ -33,6 +41,7 @@ import {
   type CenaAssetRef,
   type CenaCampos,
   type CenaModo,
+  type CenaProdutoRef,
   type CenaMovimento,
   type CenaPlano,
   type Duracao,
@@ -40,10 +49,13 @@ import {
 
 export type CampoIa = "acao" | "camera" | "estilo" | "audio";
 
+export type NovoTipo = "avatar" | "cenario" | "produto";
+
 export interface CenaFormRefs {
   avatar?: CenaAssetRef | null;
   cenario?: CenaAssetRef | null;
   produtoImagem?: CenaAssetRef | null;
+  produto?: CenaProdutoRef | null;
 }
 
 const vazio = (v: string) => (v === "" ? null : v);
@@ -57,8 +69,10 @@ export function CenaForm({
   bloquearPrompt = false,
   disabled = false,
   iaCampo,
+  onNovo,
 }: {
-  perfilId: string;
+  // o perfil base da cena (029: opcional); a biblioteca da foto leve começa filtrada por ele
+  perfilId: string | null;
   valores: CenaCampos;
   onChange: (patch: Partial<CenaCampos>) => void;
   refs?: CenaFormRefs;
@@ -66,30 +80,34 @@ export function CenaForm({
   bloquearPrompt?: boolean;
   disabled?: boolean;
   iaCampo?: (campo: CampoIa, render: (botao: ReactNode) => ReactNode) => ReactNode;
+  onNovo?: (tipo: NovoTipo) => void;
 }) {
   const v = valores;
   const travado = disabled || bloquearPrompt;
   const decorar = (campo: CampoIa, render: (botao: ReactNode) => ReactNode) => (iaCampo ? iaCampo(campo, render) : render(null));
 
-  const avatares = useQuery({
-    queryKey: ["assets", perfilId, "cena-opcoes", "avatar"],
-    queryFn: () => api.assets.list(perfilId, { tipo: ["avatar"], archived: "false", limit: 100 }),
-  });
-  const cenarios = useQuery({
-    queryKey: ["assets", perfilId, "cena-opcoes", "cenario"],
-    queryFn: () => api.assets.list(perfilId, { tipo: ["cenario"], archived: "false", limit: 100 }),
-  });
+  const perfis = usePerfisTodos();
+  // a agência inteira (todas as páginas até o teto), os do perfil base da cena primeiro
+  const avatares = useAssetsOpcoes("avatar", perfilId);
+  const cenarios = useAssetsOpcoes("cenario", perfilId);
+  const botaoNovo = (tipo: NovoTipo, rotulo: string) =>
+    onNovo && !travado ? (
+      <Button type="button" variant="ghost" size="xs" onClick={() => onNovo(tipo)}>
+        <Plus aria-hidden="true" />
+        {rotulo}
+      </Button>
+    ) : undefined;
   const avatar = useQuery({ queryKey: assetKey(v.avatarId ?? ""), queryFn: () => api.assets.get(v.avatarId!), enabled: Boolean(v.avatarId) });
   const cenario = useQuery({ queryKey: assetKey(v.cenarioId ?? ""), queryFn: () => api.assets.get(v.cenarioId!), enabled: Boolean(v.cenarioId) });
 
   // Opções: os ativos da biblioteca, mais o referenciado (que pode estar arquivado).
-  const opcoes = (itens: { id: string; name: string }[] | undefined, atual: CenaAssetRef | null | undefined) => {
-    const lista = (itens ?? []).map((a) => ({ id: a.id, nome: a.name, arquivada: false }));
+  const opcoes = (itens: { id: string; name: string; perfilId?: string | null; perfilNome?: string | null }[] | undefined, atual: CenaAssetRef | null | undefined) => {
+    const lista = (itens ?? []).map((a) => ({ id: a.id, nome: `${a.name} · ${perfilNomeDe(a, perfis.data)}`, arquivada: false }));
     if (atual && !lista.some((a) => a.id === atual.id)) lista.unshift(atual);
     return lista;
   };
-  const avatarOpcoes = opcoes(avatares.data?.items, refs?.avatar);
-  const cenarioOpcoes = opcoes(cenarios.data?.items, refs?.cenario);
+  const avatarOpcoes = opcoes(avatares.itens, refs?.avatar);
+  const cenarioOpcoes = opcoes(cenarios.itens, refs?.cenario);
   const avatarArquivos = avatar.data ? [...activeFiles(avatar.data.asset, "referencia"), ...activeFiles(avatar.data.asset, "pose")] : [];
   const cenarioArquivos = cenario.data ? activeFiles(cenario.data.asset, "referencia") : [];
 
@@ -124,7 +142,11 @@ export function CenaForm({
       <fieldset className="space-y-4" disabled={travado}>
         <legend className="text-sm font-semibold">Quem e onde</legend>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Avatar" hint="Opcional: sem avatar, o prompt começa pela ação.">
+          <Field
+            label="Avatar"
+            hint={avatares.truncado ? TETO_TEXTO : "Opcional: sem avatar, o prompt começa pela ação."}
+            action={botaoNovo("avatar", "Novo avatar")}
+          >
             {({ id, describedBy }) => (
               <NativeSelect
                 id={id}
@@ -154,7 +176,11 @@ export function CenaForm({
               </NativeSelect>
             )}
           </Field>
-          <Field label="Cenário" hint="Opcional: o prompt do ambiente entra como está no asset.">
+          <Field
+            label="Cenário"
+            hint={cenarios.truncado ? TETO_TEXTO : "Opcional: o prompt do ambiente entra como está no asset."}
+            action={botaoNovo("cenario", "Novo cenário")}
+          >
             {({ id, describedBy }) => (
               <NativeSelect
                 id={id}
@@ -346,45 +372,59 @@ export function CenaForm({
 
       <fieldset className="space-y-4" disabled={travado}>
         <legend className="text-sm font-semibold">Produto em cena</legend>
-        <Field label="Produto" hint="Nome curto (o catálogo de produtos vem depois).">
-          {({ id, describedBy }) => (
-            <Input
-              id={id}
-              maxLength={LIM.produtoNome}
-              aria-describedby={describedBy}
-              value={v.produtoNome ?? ""}
-              onChange={(e) => onChange({ produtoNome: vazio(e.target.value) })}
-            />
-          )}
-        </Field>
-        <div className="flex flex-wrap items-center gap-3" role="group" aria-label="Foto do produto">
-          {foto ? (
-            <span className="flex min-w-0 items-center gap-2 text-sm">
-              {foto.thumb && <img src={foto.thumb} alt="" className="size-10 rounded border object-cover" />}
-              <span className="truncate" data-testid="produto-foto">
-                Foto: {foto.nome}
-              </span>
-              {!travado && (
-                <Button type="button" size="sm" variant="ghost" aria-label="Tirar a foto do produto" onClick={() => onChange({ produtoImagemId: null })}>
-                  <X aria-hidden="true" />
-                </Button>
+        <SeletorProduto
+          perfilBase={perfilId}
+          valor={{ produtoId: v.produtoId, produtoVarianteId: v.produtoVarianteId }}
+          atual={refs?.produto}
+          disabled={travado}
+          onNovo={onNovo && !travado ? () => onNovo("produto") : undefined}
+          onChange={(e) =>
+            onChange(e.produtoId ? { ...e, produtoNome: null, produtoImagemId: null } : { produtoId: null, produtoVarianteId: null })
+          }
+        />
+        {!v.produtoId && (
+          <>
+            <Field label="Produto" hint="Referência leve: nome curto, sem a ficha. Para usar a ficha e o recorte, escolha um produto do catálogo.">
+              {({ id, describedBy }) => (
+                <Input
+                  id={id}
+                  maxLength={LIM.produtoNome}
+                  aria-describedby={describedBy}
+                  value={v.produtoNome ?? ""}
+                  onChange={(e) => onChange({ produtoNome: vazio(e.target.value) })}
+                />
               )}
-            </span>
-          ) : (
-            <span className="text-sm text-muted-foreground">Sem foto do produto.</span>
-          )}
-          {!travado && (
-            <LibraryImageDialog
-              perfilId={perfilId}
-              tipos={["imagem"]}
-              value={null}
-              onPick={(image, item) => {
-                setFoto({ id: item.assetId, nome: item.label ? `${item.assetName}: ${item.label}` : item.assetName, thumb: image.urls.thumb });
-                onChange({ produtoImagemId: item.assetId, produtoNome: v.produtoNome ?? item.assetName.slice(0, LIM.produtoNome) });
-              }}
-            />
-          )}
-        </div>
+            </Field>
+            <div className="flex flex-wrap items-center gap-3" role="group" aria-label="Foto do produto">
+              {foto ? (
+                <span className="flex min-w-0 items-center gap-2 text-sm">
+                  {foto.thumb && <img src={foto.thumb} alt="" className="size-10 rounded border object-cover" />}
+                  <span className="truncate" data-testid="produto-foto">
+                    Foto: {foto.nome}
+                  </span>
+                  {!travado && (
+                    <Button type="button" size="sm" variant="ghost" aria-label="Tirar a foto do produto" onClick={() => onChange({ produtoImagemId: null })}>
+                      <X aria-hidden="true" />
+                    </Button>
+                  )}
+                </span>
+              ) : (
+                <span className="text-sm text-muted-foreground">Sem foto do produto.</span>
+              )}
+              {!travado && (
+                <LibraryImageDialog
+                  perfilId={perfilId}
+                  tipos={["imagem"]}
+                  value={null}
+                  onPick={(image, item) => {
+                    setFoto({ id: item.assetId, nome: item.label ? `${item.assetName}: ${item.label}` : item.assetName, thumb: image.urls.thumb });
+                    onChange({ produtoImagemId: item.assetId, produtoNome: v.produtoNome ?? item.assetName.slice(0, LIM.produtoNome) });
+                  }}
+                />
+              )}
+            </div>
+          </>
+        )}
       </fieldset>
 
       <fieldset className="space-y-4" disabled={disabled}>

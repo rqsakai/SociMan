@@ -26,7 +26,8 @@ import type { CampoIa } from "./CenaForm";
 export type IaCenaDecorador = (campo: CampoIa, render: (botao: ReactNode) => ReactNode) => ReactNode;
 
 export interface IaCtx {
-  perfilId: string;
+  // o perfil base da cena (029: null = nenhum; a chamada vai sem guia)
+  perfilId: string | null;
   cena: Cena | null;
   valores: CenaCampos;
   // Cena salva: grava só os campos (PATCH com `ia`). Cena nova: preenche e guarda a marca para o POST.
@@ -56,6 +57,7 @@ export function iaCenaDecorador(ctx: IaCtx): IaCenaDecorador {
     <IaAssist
       tipo={`cena.${campo}` as TipoCampoId}
       perfilId={ctx.perfilId}
+      perfilBaseId={ctx.perfilId}
       alvo={alvo}
       value={ctx.valores[campo] ?? ""}
       campo={rotulo[campo]}
@@ -97,7 +99,8 @@ export function AjustarCenaIa({ ctx }: { ctx: IaCtx }) {
     try {
       const { chamada } = await api.ia.gerar({
         tipoCampo: "cena.ajustar" as TipoCampoId,
-        perfilId: ctx.perfilId,
+        ...(ctx.perfilId ? { perfilId: ctx.perfilId } : {}),
+        perfilBaseId: ctx.perfilId,
         alvo: { entityType: "cena", entityId: ctx.cena?.id ?? null },
         valorAtual: { cena: { acao: v.acao, camera: v.camera, estilo: v.estilo, audio: v.audio } },
         instrucao: instrucao.trim(),

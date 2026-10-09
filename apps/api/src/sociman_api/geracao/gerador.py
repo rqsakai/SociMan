@@ -179,7 +179,8 @@ class Executor:
                        pngs: list[bytes]) -> bool:
         kind = passo.image_kind or "imagem"
         infos = [imaging.validate_image(p, kind, max_bytes=20 * 1024 * 1024) for p in pngs]
-        keys = [f"perfis/{job.perfil_id}/{uuid.uuid4()}.{i.ext}" for i in infos]
+        # Sem perfil base (spec 029), a imagem é da agência (`agencia/imagens/`).
+        keys = [imaging.object_key(job.perfil_id, i.ext) for i in infos]
         for key, png, info in zip(keys, pngs, infos, strict=True):
             storage.put(key, png, info.content_type)  # HD conferido dentro (503/507)
 
@@ -310,6 +311,8 @@ class Executor:
                             "similaridade": c.get("similaridade"),
                             "transcricao": c.get("transcricao"),
                             "teste_audio_id": str(t.id) if t else None}
+                if lote.get("analise"):  # spec 025: a análise da gravação (a voz guarda)
+                    metricas["analise"] = lote["analise"]
                 cand = GeracaoCandidato(geracao_id=job.id, numero=numero, audio_id=a.id,
                                         metricas=metricas)
                 db.add(cand)
@@ -359,7 +362,8 @@ class Executor:
 
             def aplicar(db: Session, g: Geracao, cand: GeracaoCandidato) -> None:
                 aplicador.aplicar(db, actor, g, cand)
-                if chamada_id is not None:
+                # Spec 025 (R4): com palavra proibida, a descrição não foi aplicada (sem_acao).
+                if chamada_id is not None and not (cand.metricas or {}).get("proibidas"):
                     motor_claude.marcar_aplicada(db, chamada_id, job.created_by)
             fila.para_escolhido_auto(job, cands[0].id, aplicar)
             return
@@ -581,6 +585,31 @@ class LinhaClaude:
                 self.stop.wait(espera)
 
 
+class LinhaVozes:
+    """Spec 025 (R12): importa e remove vozes no shop-tts, a cada `GERADOR_VOZES_SYNC_S`."""
+
+    def __init__(self, clientes: Clientes, stop: threading.Event):
+        from sociman_api.geracao.vozes_sync import Sync
+
+        self.c = clientes
+        self.stop = stop
+        self.sync = Sync()
+
+    def volta(self) -> int:
+        if not get_settings().shop_tts_url.strip():
+            return 0
+        with _session() as db:
+            return self.sync.volta(db, self.c.tts)
+
+    def run(self) -> None:
+        while not self.stop.is_set():
+            try:
+                self.volta()
+            except Exception:
+                log.exception("falha na linha de vozes do gerador")
+            self.stop.wait(get_settings().gerador_vozes_sync_s)
+
+
 # ---- estado para as integrações ----
 
 SONDA_S = 30.0  # o ComfyUI, o shop-tts e a GPU são sondados no máximo a cada 30 s
@@ -648,6 +677,7 @@ def _registrar_modelos() -> None:
     from sociman_api.assets import models as _assets  # noqa: F401
     from sociman_api.geracao import models as _geracao  # noqa: F401
     from sociman_api.ia import models as _ia  # noqa: F401
+    from sociman_api.produtos import aplicadores as _produtos  # noqa: F401 — spec 012
 
     base()
 
@@ -685,6 +715,9 @@ def run(stop: threading.Event, clientes: Clientes | None = None,
         gpu_linha, claude_linha = LinhaGpu(clientes, stop), LinhaClaude(clientes, stop)
         t = threading.Thread(target=claude_linha.run, name="linha-claude", daemon=True)
         t.start()
+        vozes = threading.Thread(target=LinhaVozes(clientes, stop).run, name="linha-vozes",
+                                 daemon=True)
+        vozes.start()  # spec 025
         log.info("gerador pronto (lock ok): ComfyUI em %s; shop-tts em %s; memória %s",
                  clientes.comfy.base_url, clientes.tts.base_url,
                  "configurada" if clientes.memoria else "NÃO configurada (sem jobs comfyui)")

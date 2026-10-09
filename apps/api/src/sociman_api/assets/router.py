@@ -1,17 +1,21 @@
 """Rotas de um asset (contracts/http-api.md da 007, "Asset"): dono e membro (`RequireUser`),
-menos a reversão (`RequireOwner`). Não existe rota DELETE (FR-007, SC-004)."""
+menos a reversão (`RequireOwner`). Não existe rota DELETE (FR-007, SC-004).
+
+Spec 029: a lista, o cadastro e o atalho da biblioteca da agência (`/api/assets`), com o perfil
+base opcional; o PATCH muda o perfil base (`perfilId`)."""
 
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, Query, UploadFile
 
-from sociman_api.assets import schemas
+from sociman_api.assets import busca, schemas
 from sociman_api.assets import service as svc
-from sociman_api.assets.models import FileRole
+from sociman_api.assets.models import AssetTipo, FileRole
 from sociman_api.auth.deps import RequireOwner, RequireUser
 from sociman_api.db import DbSession
 from sociman_api.errors import ErrorEnvelope
+from sociman_api.estudio.filtros import PerfilFiltro, filtro, form_perfil
 from sociman_api.perfis.schemas import RevertIn, VersionIn, VersionsList
 
 router = APIRouter(prefix="/api/assets")
@@ -34,10 +38,74 @@ def _blank(value: str | None) -> str | None:
     return value or None
 
 
+# ---- biblioteca da agência (spec 029) ----
+
+@router.get("", operation_id="assets_listar_agencia", response_model=schemas.AssetsList,
+            responses=_errors(400, 401, 403))
+def listar_agencia(
+    actor: RequireUser, db: Db, perfil_id: PerfilFiltro = None,
+    tipo: Annotated[list[AssetTipo] | None, Query(description="Tipos (OU)")] = None,
+    tag: Annotated[list[str] | None, Query(description="Tags (E)")] = None,
+    q: Annotated[str | None, Query(max_length=100, description="Nome contém ou tag igual")]
+    = None,
+    archived: Annotated[schemas.ArchivedFilter, Query()] = "false",
+    limit: Annotated[int, Query(ge=1, le=busca.MAX_LIMIT)] = busca.DEFAULT_LIMIT,
+    cursor: Annotated[str | None, Query(max_length=200)] = None,
+) -> schemas.AssetsList:
+    return busca.listar(db, filtro(db, perfil_id), tipos=tipo or (), tags=tag or (), q=q,
+                        archived=archived, limit=limit, cursor=cursor, tags_por_tipo=True)
+
+
+@router.post("", operation_id="assets_criar_agencia", status_code=201,
+             response_model=schemas.AssetOut, responses=_errors(400, 401, 403, 409))
+def criar_agencia(body: schemas.AssetCreateAgencia, actor: RequireUser,
+                  db: Db) -> schemas.AssetOut:
+    svc.perfil_base_novo(db, body.perfil_id)
+    return _out(db, svc.create_asset(db, actor, body.perfil_id, body))
+
+
+@router.post("/arquivo", operation_id="assets_criar_arquivo_agencia", status_code=201,
+             response_model=schemas.AssetFileOut,
+             responses=_errors(400, 401, 403, 409, 503, 507))
+def criar_arquivo_agencia(
+    file: Upload, actor: RequireUser, db: Db,
+    tipo: Annotated[AssetTipo, Form(description="fundo, sticker, marca_dagua ou imagem")],
+    name: Annotated[str | None, Form(max_length=200)] = None,
+    tags: Annotated[str | None, Form(max_length=1000, description="Separadas por vírgula")]
+    = None,
+    perfil_id: Annotated[str | None, Form(alias="perfilId", max_length=40,
+                                          description="Perfil base; vazio = sem perfil")]
+    = None,
+) -> schemas.AssetFileOut:
+    pid = form_perfil(perfil_id)
+    svc.perfil_base_novo(db, pid)
+    name_, tag_list = schemas.nome_e_tags(name, tags, file.filename, svc.default_name)
+    asset, f = svc.upload_asset(db, actor, pid, file.file, tipo, name_, tag_list)
+    out = svc.asset_out(db, asset)
+    return schemas.AssetFileOut(asset=out, file=svc.file_out(out, f.id))
+
+
+@router.get("/imagens", operation_id="assets_imagens_agencia",
+            response_model=schemas.LibraryImagesList, responses=_errors(400, 401, 403))
+def imagens_agencia(
+    actor: RequireUser, db: Db,
+    tipo: Annotated[list[AssetTipo], Query(description="Tipos (OU), obrigatório")],
+    perfil_id: PerfilFiltro = None,
+    q: Annotated[str | None, Query(max_length=100)] = None,
+    limit: Annotated[int, Query(ge=1, le=busca.MAX_LIMIT)] = 60,
+) -> schemas.LibraryImagesList:
+    """Os seletores de imagem (kit, foto leve do produto, prova): a biblioteca da agência."""
+    return schemas.LibraryImagesList(items=svc.library_images_agencia(
+        db, filtro(db, perfil_id), tipo, q, limit))
+
+
+# ---- um asset ----
+
+
 @router.get("/{asset_id}", operation_id="assets_get", response_model=schemas.AssetDetail,
             responses=_errors(401, 403, 404))
 def get(asset_id: UUID, actor: RequireUser, db: Db) -> schemas.AssetDetail:
-    return svc.get_asset(db, asset_id)
+    return svc.get_asset(db, asset_id, actor)
 
 
 @router.patch("/{asset_id}", operation_id="assets_update", response_model=schemas.AssetOut,
@@ -56,7 +124,17 @@ def upload_file(
     look: OptText = None, uso: OptText = None, label: OptText = None,
     quando_usar: Annotated[str | None, Form(alias="quandoUsar", max_length=600)] = None,
     notes: OptText = None,
+    slot: Annotated[str | None, Form(max_length=40, description="Spec 025: slot do kit")] = None,
+    origem: Annotated[str | None, Form(max_length=20,
+                                       description="Spec 025: upload ou pessoa_real")] = None,
 ) -> schemas.AssetFileOut:
+    if role == FileRole.kit:  # spec 025: um slot do kit padrão
+        asset = svc._editavel(db, asset_id, None)
+        asset, f, avisos, checagem = svc.upload_slot(db, actor, asset, file.file, slot, origem)
+        out = svc.asset_out(db, asset)
+        return schemas.AssetFileOut(
+            asset=out, file=svc.file_out(out, f.id),
+            avisos=[{"itens": avisos}] if avisos else [], checagem_geracao_id=checagem)
     raw = {"look": look, "uso": uso, "label": label, "quando_usar": quando_usar,
            "notes": notes}
     limits = {"look": 60, "uso": 200, "label": 60, "quando_usar": 300, "notes": 500}

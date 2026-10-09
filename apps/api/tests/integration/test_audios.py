@@ -98,7 +98,7 @@ def test_sem_rota_de_alteracao():
             assert set(ops) <= {"get", "post"}, (path, set(ops))
     ops = {op["operationId"] for p, v in app.openapi()["paths"].items() if "/audios" in p
            for op in v.values()}
-    assert ops == {"audios_enviar", "audios_detalhe"}
+    assert ops == {"audios_enviar", "audios_enviar_agencia", "audios_detalhe"}  # spec 029
 
 
 def test_membro_envia_e_mcp_nao(client, owner, member):

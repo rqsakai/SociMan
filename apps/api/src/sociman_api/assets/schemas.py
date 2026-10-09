@@ -11,8 +11,9 @@ from uuid import UUID
 
 from pydantic import AfterValidator, ConfigDict, Field, StringConstraints
 
+from sociman_api.assets import schemas_padrao as padrao_schemas
 from sociman_api.assets import tipos
-from sociman_api.assets.models import AssetTipo, FileRole
+from sociman_api.assets.models import AssetOrigem, AssetTipo, FileRole, KitStatus
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.errors import ApiError
 from sociman_api.ia.aplicacao import IaAplicacoes
@@ -51,6 +52,18 @@ def normalize_tags(values: list[str]) -> list[str]:
 
 
 Tags = Annotated[list[str], AfterValidator(normalize_tags)]
+
+
+def nome_e_tags(name: str | None, tags: str | None, filename: str | None,
+                default_name) -> tuple[str, list[str]]:
+    """O nome e as tags do atalho de envio (multipart): vazio = nome do arquivo."""
+    name_ = (name or "").strip() or default_name(filename)
+    if len(name_) > 80:
+        raise invalid("name", "até 80 caracteres")
+    try:
+        return name_, normalize_tags([t for t in (tags or "").split(",") if t.strip()])
+    except ValueError as exc:
+        raise invalid("tags", str(exc)) from exc
 
 
 def invalid(field: str, message: str) -> ApiError:
@@ -92,6 +105,12 @@ class AssetCreate(CamelModel):
     image_rules: ImageRules | None = None
 
 
+class AssetCreateAgencia(AssetCreate):
+    """Spec 029: o cadastro da biblioteca da agência, com o perfil base opcional."""
+
+    perfil_id: UUID | None = None
+
+
 class AssetPatch(CamelModel):
     # extra="forbid": o tipo é imutável; mandá-lo dá 400, não é ignorado.
     model_config = ConfigDict(extra="forbid")
@@ -104,6 +123,8 @@ class AssetPatch(CamelModel):
     voice_tone: VoiceTone | None = None
     image_rules: ImageRules | None = None
     primary_file_id: UUID | None = None
+    voz_id: UUID | None = None  # spec 025: a voz padrão do avatar (null limpa)
+    perfil_id: UUID | None = None  # spec 029: o perfil base (null = sem perfil)
     # Spec 008: campos aplicados de uma chamada da IA (marca "com ajuda da IA" na versão).
     ia: IaAplicacoes | None = None
 
@@ -146,11 +167,16 @@ class AssetFile(CamelModel):
     download_url: str  # o mesmo com ?download=1
     created_at: datetime
     created_by: UserRef | None
+    # Spec 025: o slot do kit, a geração de origem e se foi gerado ou enviado.
+    slot: str | None = None
+    geracao_id: UUID | None = None
+    origem_arquivo: Literal["enviado", "gerado"] = "enviado"
 
 
 class AssetSummary(CamelModel):
     id: UUID
-    perfil_id: UUID
+    perfil_id: UUID | None  # spec 029: o perfil base (null = sem perfil)
+    perfil_nome: str | None = None
     tipo: AssetTipo
     name: str
     tags: list[str]
@@ -160,6 +186,7 @@ class AssetSummary(CamelModel):
     archived: bool
     version: int
     updated_at: datetime
+    kit_status: KitStatus | None = None  # spec 025 (null = sem kit padrão)
 
 
 class Asset(AssetSummary):
@@ -172,6 +199,14 @@ class Asset(AssetSummary):
     created_at: datetime
     created_by: UserRef | None
     updated_by: UserRef | None
+    # Spec 025: o cadastro padronizado (nulos fora do avatar/cenário).
+    origem: AssetOrigem | None = None
+    consentimento: padrao_schemas.ConsentimentoPessoa | None = None
+    voz_id: UUID | None = None
+    voz_padrao: padrao_schemas.VozPadrao | None = None
+    identidade: padrao_schemas.Identidade | None = None
+    kit: padrao_schemas.KitPadrao | None = None
+    revogado: bool = False
 
 
 class Uso(CamelModel):
@@ -181,6 +216,8 @@ class Uso(CamelModel):
     file_id: UUID
     bloqueia: bool
     href: str | None
+    perfil_id: UUID | None = None  # spec 029: o perfil onde está o uso (FR-015)
+    perfil_nome: str | None = None
 
 
 class TagCount(CamelModel):
@@ -196,6 +233,8 @@ class LibraryImage(CamelModel):
     file_id: UUID
     label: str | None
     has_alpha: bool
+    perfil_id: UUID | None = None  # spec 029: o perfil base do asset
+    perfil_nome: str | None = None
 
 
 class AssetOut(CamelModel):
@@ -210,6 +249,9 @@ class AssetDetail(CamelModel):
 class AssetFileOut(CamelModel):
     asset: Asset
     file: AssetFile
+    # Spec 025: a troca de slot avisa os derivados e diz se pediu a checagem.
+    avisos: list[padrao_schemas.AvisoDerivados] = Field(default_factory=list)
+    checagem_geracao_id: UUID | None = None
 
 
 class AssetsList(CamelModel):
@@ -223,3 +265,12 @@ class LibraryImagesList(CamelModel):
 
 
 ArchivedFilter = Literal["false", "true", "all"]
+
+
+class RevogacaoAssetOut(CamelModel):
+    """Spec 025: o avatar revogado, o que foi apagado e as cenas que usam o avatar (só lista)."""
+
+    asset: Asset
+    apagados: padrao_schemas.PreviaRevogacao
+    cenas_afetadas: list[dict[str, Any]]
+

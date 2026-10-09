@@ -99,6 +99,9 @@ def _operacao(nome: str, metodo: str, caminho: str, op: dict[str, Any],
         schema = _defs(copy.deepcopy(p.get("schema", {})), componentes, defs)
         if p.get("description") and "description" not in schema:
             schema["description"] = p["description"]
+        padrao = dict(tool.padroes).get(p["name"])
+        if p["in"] == "query" and padrao is not None:
+            schema["default"] = padrao
         if p["in"] == "query" and p["name"] in _PARAM_LIMITE and tool.limite_padrao:
             limite_param = p["name"]
             teto = schema.get("maximum")

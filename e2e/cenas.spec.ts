@@ -13,6 +13,7 @@ import {
   interruptorMcp,
   login,
   logout,
+  nav,
   pngBuffer,
   syntheticMp4,
 } from "./helpers";
@@ -120,14 +121,20 @@ test("US1 e US2: montar a cena, copiar o prompt, pronta, mudou/remontar, rascunh
 
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  await page.goto(`/app/perfis/${perfilId}?aba=cenas`);
+  // spec 029: AI Studio › Cenas, filtrada pelo perfil; a cena nova nasce com ele como perfil base
+  await nav(page, "Cenas");
+  await expect(page).toHaveURL(/\/app\/estudio\/cenas$/);
+  await page.getByTestId("filtro-perfil-base").selectOption(perfilId);
+  await expect(page).toHaveURL(new RegExp(`perfil=${perfilId}`));
   await page.getByRole("link", { name: "Nova cena" }).click();
-  await expect(page).toHaveURL(/\/cenas\/nova$/);
+  await expect(page).toHaveURL(new RegExp(`/app/estudio/cenas/nova\\?perfil=${perfilId}$`));
+  await expect(page.getByTestId("perfil-base")).toHaveValue(perfilId);
 
   await page.getByLabel("Nome da cena").fill("Achadinhos abre a panela");
-  await page.getByLabel("Avatar", { exact: true }).selectOption({ label: "Achadinhos" });
+  // as opções dos seletores são "Nome · Perfil" (a biblioteca é da agência)
+  await page.getByLabel("Avatar", { exact: true }).selectOption({ label: `Achadinhos · Cenas ${sfx}` });
   await page.getByLabel("Look ou pose").selectOption({ label: "Referência: Cozinha, corpo inteiro" });
-  await page.getByLabel("Cenário", { exact: true }).selectOption({ label: "Cozinha retrô" });
+  await page.getByLabel("Cenário", { exact: true }).selectOption({ label: `Cozinha retrô · Cenas ${sfx}` });
   await page.getByLabel("Plano").selectOption("medio");
   await page.getByLabel("Movimento").selectOption("parada");
   await page.getByLabel("Ação", { exact: true }).fill(ACAO);
@@ -201,17 +208,18 @@ test("US1 e US2: montar a cena, copiar o prompt, pronta, mudou/remontar, rascunh
   await page.getByRole("alertdialog").getByRole("button", { name: "Arquivar" }).click();
   await expect(page.getByText("Arquivada", { exact: true }).first()).toBeVisible();
 
-  // Aba: a original pronta de novo; filtro por status e a arquivada fora da lista
+  // Lista (AI Studio › Cenas do perfil): a original pronta de novo; filtro por status e a arquivada fora
   await prontaApi(request, auth, cenaId);
-  await page.goto(`/app/perfis/${perfilId}?aba=cenas`);
-  const tabela = page.getByRole("table", { name: "Cenas do perfil" });
+  await page.goto(`/app/estudio/cenas?perfil=${perfilId}`);
+  const tabela = page.getByRole("table", { name: "Cenas", exact: true });
   await expect(tabela.getByRole("link", { name: "Achadinhos abre a panela", exact: true })).toBeVisible();
   await expect(tabela.getByRole("link", { name: /\(cópia\)/ })).toHaveCount(0);
   // spec 024: os filtros valem ao escolher (sem "Filtrar"), viram etiquetas e ficam na URL
   await page.getByLabel("Status", { exact: true }).selectOption("rascunho");
   await expect(tabela.getByText("Nenhuma cena com esses filtros", { exact: false }).or(page.getByText("Nenhuma cena com esses filtros", { exact: false }))).toBeVisible();
   await page.getByLabel("Status", { exact: true }).selectOption("pronta");
-  await page.getByLabel("Avatar", { exact: true }).selectOption({ label: "Achadinhos" });
+  // o filtro de avatar lista os da agência inteira (vários "Achadinhos"): escolhe pelo id
+  await page.getByLabel("Avatar", { exact: true }).selectOption(avatarId);
   await expect(page).toHaveURL(/status=pronta/);
   await expect(page.getByRole("button", { name: "Remover filtro: Avatar" })).toBeVisible();
   await expect(tabela.getByRole("link", { name: "Achadinhos abre a panela", exact: true })).toBeVisible();
@@ -224,8 +232,8 @@ test("US1 e US2: montar a cena, copiar o prompt, pronta, mudou/remontar, rascunh
   await page.goto(`/app/cenas/${cenaId}`);
   await expect(status(page)).toHaveText("Pronta");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await page.goto(`/app/perfis/${perfilId}?aba=cenas`);
-  await expect(page.getByRole("table", { name: "Cenas do perfil" })).toBeVisible();
+  await page.goto(`/app/estudio/cenas?perfil=${perfilId}`);
+  await expect(page.getByRole("table", { name: "Cenas", exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.setViewportSize({ width: 1280, height: 900 });
 
@@ -380,7 +388,7 @@ test("US5: proposta de cena do agente → Aceitar → Salvar → cena em rascunh
   const linha = page.getByRole("row").filter({ hasText: "Abertura com a Achadinhos" });
   await expect(linha.getByText(`Agente: Diretor ${sfx}`)).toBeVisible();
   await linha.getByRole("link", { name: "Aceitar" }).click();
-  await expect(page).toHaveURL(/\/cenas\/nova\?proposta=/);
+  await expect(page).toHaveURL(/\/app\/estudio\/cenas\/nova\?(.*&)?proposta=/);
   await expect(page.getByRole("region", { name: "Proposta do agente" })).toContainText(`Diretor ${sfx}`);
   await expect(page.getByLabel("Nome da cena")).toHaveValue(nome);
   await expect(page.getByLabel("Ação", { exact: true })).toHaveValue(ACAO);
@@ -388,8 +396,8 @@ test("US5: proposta de cena do agente → Aceitar → Salvar → cena em rascunh
   await expect(page).toHaveURL(/\/app\/cenas\/[0-9a-f-]{36}$/);
   await expect(status(page)).toHaveText("Rascunho");
 
-  await page.goto(`/app/perfis/${perfilId}?aba=cenas`);
-  await expect(page.getByRole("table", { name: "Cenas do perfil" }).getByRole("link", { name: nome })).toBeVisible();
+  await page.goto(`/app/estudio/cenas?perfil=${perfilId}`);
+  await expect(page.getByRole("table", { name: "Cenas", exact: true }).getByRole("link", { name: nome })).toBeVisible();
   await page.goto("/app/propostas");
   await page.getByLabel("Situação", { exact: true }).selectOption("aplicada");
   await expect(page.getByRole("row").filter({ hasText: "Abertura com a Achadinhos" }).getByText("Aplicada")).toBeVisible();

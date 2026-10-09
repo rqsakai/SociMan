@@ -118,9 +118,9 @@ def test_escopos():
     # spec 022: +1 leitura (analytics_publico)
     # spec 023: +7 leituras do aprendizado (temas, classificações, análise, recomendações,
     # preferências e os dois diagnósticos)
-    # spec 026: +1 leitura (coleta_estado) + 4 leituras do mercado (produtos, detalhe, série,
-    # resumo); as demais `mercado_*` entram com as rotas da US4/US5
-    assert len(leitura) == 96 and len(propostas) == 101 and leitura < propostas
+    # spec 012: +3 leituras de produto; spec 025: +3 de vozes; spec 029: +6 da agência;
+    # spec 026: +1 leitura (coleta_estado) + 15 do mercado
+    assert len(leitura) == 108 and len(propostas) == 113 and leitura < propostas
     exportado = ferramentas.exportar_json(app)
     assert {d["name"] for d in exportado["leitura"]} == leitura
     assert {d["name"] for d in exportado["propostas"]} == propostas - leitura

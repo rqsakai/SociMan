@@ -16,7 +16,6 @@ from integration.cenas_helpers import (  # noqa: F401 — fixtures
     base,
     criar_cena,
     get,
-    montar_perfil,
     owner,
     patch,
 )
@@ -100,10 +99,9 @@ def test_cena_nova_com_contexto(client, base, anthropic_fake):
     # sem contexto, uma cena nova é recusada
     erro = gerar(client, h, pid, "cena.acao", {"entityType": "cena"}, status=400)
     assert erro["error"]["code"] == "invalid_ia"
-    # contexto com asset de outro perfil
-    outro = montar_perfil(client, h, "outro", proibida=None)
+    # contexto com asset do tipo errado (029: o de outro perfil base passa)
     erro = gerar(client, h, pid, "cena.acao", {"entityType": "cena"}, status=422,
-                 cenaContexto=ctx | {"avatarId": outro["avatar"]["id"], "avatarArquivoId": None})
+                 cenaContexto=ctx | {"avatarId": base["cenario"]["id"], "avatarArquivoId": None})
     assert erro["error"]["code"] == "cena_invalida"
     # a chamada da cena nova é aplicada ao criar
     r = client.post(f"/api/perfis/{pid}/cenas", headers=h, json={

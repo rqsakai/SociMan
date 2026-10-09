@@ -5,7 +5,7 @@ O envio da tomada não é `UploadFile`: como o vídeo próprio da 014, o HD e o 
 conferidos antes e o multipart (`file`) é lido em streaming; o schema vai por `openapi_extra`.
 """
 
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
@@ -14,9 +14,11 @@ from starlette.concurrency import run_in_threadpool
 from sociman_api.auth.deps import RequireHumanOwner, RequireUser
 from sociman_api.cenas import schemas, tomadas, usos
 from sociman_api.cenas import service as svc
+from sociman_api.cenas.models import CenaStatus
 from sociman_api.cortes import service as cortes_service
 from sociman_api.db import DbSession
 from sociman_api.errors import ErrorEnvelope
+from sociman_api.perfis import base as perfil_base
 from sociman_api.perfis.schemas import RevertIn, VersionsList
 
 router = APIRouter(prefix="/api")
@@ -39,6 +41,44 @@ _ARQUIVO_BODY = {
 
 def _errors(*statuses: int) -> dict[int | str, dict]:
     return {status: {"model": ErrorEnvelope} for status in statuses}
+
+
+# ---- lista e criação da agência (spec 029) ----
+
+@router.get("/cenas", operation_id="cenas_listar_agencia", response_model=schemas.CenasList,
+            responses=_errors(400, 401, 403))
+def listar_agencia(
+    actor: RequireUser, db: DbSession,
+    perfil_id: Annotated[str | None, Query(
+        alias="perfilId", max_length=40,
+        description="Perfil base: ausente = todas; `sem` = sem perfil base; ou um id")] = None,
+    q: Annotated[str | None, Query(max_length=100,
+                                   description="Nome, ação, fala ou produto (sem acento)")]
+    = None,
+    status: Annotated[list[CenaStatus] | None, Query(description="Status (OU)")] = None,
+    avatar_id: Annotated[UUID | None, Query(alias="avatarId")] = None,
+    cenario_id: Annotated[UUID | None, Query(alias="cenarioId")] = None,
+    produto_imagem_id: Annotated[UUID | None, Query(alias="produtoImagemId")] = None,
+    produto_id: Annotated[UUID | None, Query(alias="produtoId")] = None,
+    tag: Annotated[list[str] | None, Query(description="Tags (E)")] = None,
+    arquivadas: Annotated[Literal["false", "true", "all"], Query()] = "false",
+    cursor: Annotated[str | None, Query(max_length=200)] = None,
+    limit: Annotated[int, Query(ge=1, le=svc.MAX_LIMIT)] = svc.DEFAULT_LIMIT,
+) -> schemas.CenasList:
+    """As cenas da biblioteca da agência, de qualquer perfil base, com o nome dele."""
+    return svc.listar(db, perfil_base.filtro_perfil(perfil_id), q=q, status=status or (),
+                      avatar_id=avatar_id, cenario_id=cenario_id,
+                      produto_imagem_id=produto_imagem_id, produto_id=produto_id,
+                      tags=tag or (), arquivadas=arquivadas, cursor=cursor, limit=limit)
+
+
+@router.post("/cenas", operation_id="cenas_criar_agencia", status_code=201,
+             response_model=schemas.Cena, responses=_errors(400, 401, 403, 404, 409, 422))
+def criar_agencia(body: schemas.CenaAgenciaIn, actor: RequireUser,
+                  db: DbSession) -> schemas.Cena:
+    """Cena nova com o perfil base opcional (`perfilId`; pode estar arquivado)."""
+    cena = svc.criar(db, actor, body.perfil_id, body, exige_ativo=False)
+    return svc.cena_out(db, cena, actor)
 
 
 # ---- tomadas por id (antes de /cenas/{id}…) ----

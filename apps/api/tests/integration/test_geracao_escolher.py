@@ -4,6 +4,7 @@ falso; a opção vira arquivo do cenário com a versão do alvo apontando a gera
 # ruff: noqa: F811 — fixtures importadas de `geracao_helpers`
 
 import threading
+import uuid
 
 from integration.geracao_helpers import (  # noqa: F401 (fixtures)
     _buckets,
@@ -46,7 +47,11 @@ def test_ciclo_completo_escolhe_a_opcao_2(client, owner, motores):
     assert out["alvo"]["version"] == alvo["version"] + 1
     depois = asset(client, h, b["cenario"]["id"])
     novo = [f for f in depois["files"] if f["image"]["id"] == op2["imagem"]["imageId"]]
-    assert novo and novo[0]["role"] == "referencia" and novo[0]["notes"] == "Gerado (opção 2)"
+    # Spec 025 (T041): o `cenario.cena` grava o slot `cena` do kit (o piloto da 021 gravava
+    # uma `referencia`), e o cenário fica com o kit completo.
+    assert novo and novo[0]["role"] == "kit" and novo[0]["slot"] == "cena"
+    assert novo[0]["geracaoId"] == g["id"] and novo[0]["origemArquivo"] == "gerado"
+    assert depois["kitStatus"] == "completo"
     versoes = client.get(f"/api/assets/{b['cenario']['id']}/versions", headers=h).json()
     assert versoes["items"][0]["details"]["geracao_id"] == g["id"]
     assert versoes["items"][0]["actor"]["id"] == str(owner[0].id)
@@ -104,7 +109,7 @@ def test_duas_escolhas_simultaneas_uma_so(client, owner, motores):
         t.join()
     assert sorted(respostas) == [200, 409]
     depois = asset(client, h, b["cenario"]["id"])
-    gerados = [f for f in depois["files"] if f["notes"].startswith("Gerado")]
+    gerados = [f for f in depois["files"] if f["slot"] == "cena"]  # spec 025: o slot `cena`
     assert len(gerados) == 1
 
 
@@ -128,9 +133,9 @@ def test_alvo_arquivado_e_alvo_incompativel(client, owner, motores):
     # produto no POST genérico → alvo_incompativel; passo sem aplicador → passo_indisponivel
     erro = pedir(client, h, b, status=409, alvoTipo="produto", passo="produto.flat")
     assert erro["error"]["code"] == "alvo_incompativel"
+    # Spec 025: todo passo tem aplicador; o passo de avatar num cenário é incompatível.
     erro = pedir(client, h, b, status=409, passo="avatar.look")
-    assert erro["error"]["code"] == "passo_indisponivel"
-    assert "avatar" in erro["error"]["message"]
+    assert erro["error"]["code"] == "alvo_incompativel"
     # foto (não cenário) como alvo do cenario.cena → alvo_incompativel
     erro = pedir(client, h, b, status=409, alvoId=b["foto"]["id"])
     assert erro["error"]["code"] == "alvo_incompativel"
@@ -140,15 +145,20 @@ def test_referencias_e_entrada(client, owner, make_user, login, motores):
     h = owner[1]
     b = montar(client, h)
     outro = montar(client, h, slug="outro")
-    erro = pedir(client, h, b, status=400, referencias=[outro["foto_image_id"]])
+    erro = pedir(client, h, b, status=400, referencias=[str(uuid.uuid4())])
     assert erro["error"]["code"] == "entrada_invalida"
     assert erro["error"]["details"]["field"] == "referencias"
+    # Spec 029 (R8): a foto pode ser de um item de outro perfil base da biblioteca.
+    cruzada = pedir(client, h, b, referencias=[outro["foto_image_id"]], nOpcoes=1)
+    acao(client, h, cruzada, "cancelar")
     erro = pedir(client, h, b, status=400, nOpcoes=3)
     assert erro["error"]["details"]["field"] == "nOpcoes"
     erro = pedir(client, h, b, status=400, extras={"quandoUsar": "x"})
     assert erro["error"]["details"]["field"] == "extras.quandoUsar"
-    erro = pedir(client, h, b, status=400, instrucao="   ")
-    assert erro["error"]["details"]["field"] == "instrucao"
+    # Spec 025: sem instrução, a cena usa o prompt do cenário.
+    vazia = pedir(client, h, b, instrucao="   ")
+    assert vazia["instrucao"] == "bright bedroom"
+    acao(client, h, vazia, "cancelar")
     # Com a foto de referência, o bloco é o keyframe (Qwen Edit) com o MANTER.
     g = pedir(client, h, b, referencias=[b["foto_image_id"]], nOpcoes=1)
     assert len(g["referencias"]) == 1

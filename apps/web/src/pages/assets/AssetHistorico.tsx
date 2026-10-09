@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { VersionHistory } from "../../components/VersionHistory";
 import { api } from "../../lib/api";
-import { assetFieldLabel, assetKey, assetsKey, assetVersionsKey, formatAssetValue } from "../../lib/assets";
-import { perfilKey } from "../../lib/perfis";
+import { assetFieldLabel, assetKey, assetVersionsKey, formatAssetValue } from "../../lib/assets";
+import { metaDetalhe, tipoEstudioDoAsset } from "../../lib/estudio";
 
 // /app/assets/:id/historico: histórico do asset com antes/depois, inclusive a lista de arquivos
 // (princípio VII). Reverter só aparece para o dono (VersionHistory) e cria uma versão nova; os
@@ -19,23 +19,18 @@ export default function AssetHistorico() {
   const detail = useQuery({ queryKey: assetKey(id), queryFn: () => api.assets.get(id) });
   const versions = useQuery({ queryKey: assetVersionsKey(id), queryFn: () => api.assets.versions(id) });
   const asset = detail.data?.asset;
-  const perfilId = asset?.perfilId ?? "";
-  const perfil = useQuery({ queryKey: perfilKey(perfilId), queryFn: () => api.perfis.get(perfilId), enabled: perfilId !== "" });
-  const perfilName = perfil.data?.perfil.name;
+  const meta = metaDetalhe(tipoEstudioDoAsset(asset?.tipo ?? "imagem"), asset?.perfilId);
   usePageMeta({
     title: "Histórico",
-    breadcrumbs: [
-      { label: "Perfis", to: "/app/perfis" },
-      ...(perfilName ? [{ label: perfilName, to: `/app/perfis/${perfilId}?aba=assets` }] : []),
-      ...(asset ? [{ label: asset.name, to: `/app/assets/${id}` }] : []),
-    ],
+    ativo: meta.ativo,
+    breadcrumbs: [...meta.breadcrumbs, ...(asset ? [{ label: asset.name, to: `/app/assets/${id}` }] : [])],
   });
 
   async function reload() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: assetKey(id) }),
       queryClient.invalidateQueries({ queryKey: assetVersionsKey(id) }),
-      ...(perfilId ? [queryClient.invalidateQueries({ queryKey: assetsKey(perfilId) })] : []),
+      queryClient.invalidateQueries({ queryKey: ["assets"] }),
     ]);
   }
 

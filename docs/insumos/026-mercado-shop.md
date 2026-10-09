@@ -54,6 +54,8 @@ Partner Center (Brasil não confirmado, sem dado de concorrente): fica como **so
     busca por assunto.
 12. **Vínculo com a 012 agora:** `produtos.mercado_produto_id` (nulo) e a ação humana "Adotar do mercado",
     que copia ficha e fotos para o catálogo do perfil.
+    **Nota (029, 2026-10-09):** com a biblioteca da agência, "Adotar" cria o produto com o perfil base escolhido
+    (ou nenhum); o catálogo deixa de ser "do perfil".
 
 ## Cartão mínimo do produto (exemplo real do dono)
 | Campo | Origem |

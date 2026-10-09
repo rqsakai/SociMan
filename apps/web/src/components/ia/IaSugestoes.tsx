@@ -69,7 +69,7 @@ const IA_MAX = 10;
 
 export interface IaSugestoesProps {
   tipo: TipoCampoId;
-  perfilId: string;
+  perfilId: string | null;
   alvo: IaAlvo;
   // A lista do formulário agora (salva ou não).
   value: string[];
@@ -130,7 +130,7 @@ export function IaSugestoes({ tipo, perfilId, alvo, value, onSave, disabled, onR
       const pendentes = s.itens.filter((i) => !i.aplicado);
       const { chamada } = await api.ia.gerar({
         tipoCampo: tipo,
-        perfilId,
+        ...(perfilId ? { perfilId } : {}),
         alvo,
         valorAtual: { itens: value },
         instrucao: s.instrucao.trim(),
@@ -376,7 +376,7 @@ function GuiaUsado({ chamada }: { chamada: IaChamada }) {
   return (
     <p className="text-xs text-muted-foreground">
       Guia usado:{" "}
-      {vp != null && (
+      {vp != null && chamada.perfil && (
         <Link to={guiaPerfilPath(chamada.perfil.id)} className="underline-offset-4 hover:underline">
           perfil v{vp}
         </Link>

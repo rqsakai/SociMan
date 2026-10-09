@@ -17,7 +17,6 @@ from integration.cenas_helpers import (  # noqa: F401 — fixtures
     criar_cena,
     get,
     member,
-    montar_perfil,
     owner,
     patch,
 )
@@ -56,13 +55,12 @@ def test_avisos_no_get(client, base):
     assert {"fala_longa", "duracao_modo", "produto_sem_foto", "proibida"} <= codigos
 
 
-def test_assets_de_outro_perfil_ou_arquivo_errado(client, base):
+def test_assets_do_tipo_errado_ou_arquivo_errado(client, base):
+    """029: o asset de outro perfil base é aceito (test_cena_cruzada.py); o tipo continua."""
     h = base["h"]
-    outro = montar_perfil(client, h, "outro", proibida=None)
-    for campo, valor in (("avatarId", outro["avatar"]["id"]), ("cenarioId",
-                                                               outro["cenario"]["id"]),
-                         ("produtoImagemId", outro["produto"]["id"]),
-                         ("avatarId", base["cenario"]["id"])):
+    for campo, valor in (("avatarId", base["cenario"]["id"]),
+                         ("cenarioId", base["avatar"]["id"]),
+                         ("produtoImagemId", base["avatar"]["id"])):
         r = client.post(f"/api/perfis/{base['perfil']['id']}/cenas", headers=h,
                         json=corpo_cena(base, **{campo: valor, "avatarArquivoId": None}))
         assert r.status_code == 422, (campo, r.text)
@@ -157,7 +155,7 @@ def test_usos_do_asset_nao_bloqueiam(client, base):
     r = client.get(f"/api/assets/{base['avatar']['id']}", headers=h)
     usos = [u for u in r.json()["usos"] if u["origem"] == "cena"]
     assert [u["rotulo"] for u in usos] == ["2 cenas"]
-    assert usos[0]["bloqueia"] is False and "aba=cenas" in usos[0]["href"]
+    assert usos[0]["bloqueia"] is False and "/app/estudio/cenas?perfil=" in usos[0]["href"]
     produto = client.get(f"/api/assets/{base['produto']['id']}", headers=h).json()
     assert any(u["origem"] == "cena" for u in produto["usos"])
     asset = r.json()["asset"]

@@ -124,3 +124,13 @@ def test_poster_url_usa_tamanho_da_previa():
     from sociman_api import imaging
 
     assert "/rs:fit:540:960/" in imaging.poster_url("perfis/x/poster.jpg")
+
+
+# ---- spec 012 (T006): fotos de produto ----
+
+def test_produto_minimo_512_e_formatos():
+    assert imaging.validate_image(_img("PNG", (512, 512)), "produto").width == 512
+    assert imaging.validate_image(_img("JPEG", (800, 600)), "produto").ext == "jpg"
+    assert imaging.validate_image(_img("WEBP", (512, 900)), "produto").ext == "webp"
+    assert "pequena" in _message(_img("PNG", (511, 511)), "produto")
+    assert _message(_img("GIF", (600, 600)), "produto")

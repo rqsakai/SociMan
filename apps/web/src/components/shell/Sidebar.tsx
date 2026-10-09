@@ -12,7 +12,7 @@
  */
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, Clapperboard, Plus } from "lucide-react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
@@ -20,6 +20,7 @@ import { useAnotacoesResumo } from "@/lib/anotacoes";
 import { useAuth } from "@/lib/authStore";
 import { cn } from "@/lib/utils";
 import { isNavGroup, navItemFor, navTree, type NavEntry, type NavGroup, type NavItem } from "./nav";
+import { useCurrentPageMeta } from "./page-meta";
 
 function Brand() {
   return (
@@ -33,8 +34,8 @@ function Brand() {
 type GruposAbertos = Record<NavGroup["id"], boolean>;
 
 const GRUPOS_KEY = "sociman:menu:grupos";
-// Primeira visita (ou sem localStorage): Cortes e Analytics abertos, Configurações fechado.
-const GRUPOS_PADRAO: GruposAbertos = { cortes: true, analytics: true, config: false };
+// Primeira visita (ou sem localStorage): AI Studio, Cortes e Analytics abertos, Configurações fechado.
+const GRUPOS_PADRAO: GruposAbertos = { estudio: true, cortes: true, analytics: true, config: false };
 
 function lerGrupos(): GruposAbertos {
   try {
@@ -60,40 +61,40 @@ function gravarGrupos(grupos: GruposAbertos): void {
 }
 
 // Grupo que contém o item ativo da rota (o mesmo critério do breadcrumb).
-function grupoDaRota(pathname: string): NavGroup["id"] | undefined {
-  const item = navItemFor(pathname);
+function grupoDaRota(pathname: string, ativo?: string): NavGroup["id"] | undefined {
+  const item = navItemFor(pathname, ativo);
   return navTree.find((entry): entry is NavGroup => isNavGroup(entry) && !!item && entry.itens.includes(item))?.id;
 }
 
 // Abre o grupo da rota por cima do estado lembrado.
-function comGrupoDaRota(grupos: GruposAbertos, pathname: string): GruposAbertos {
-  const ativo = grupoDaRota(pathname);
+function comGrupoDaRota(grupos: GruposAbertos, pathname: string, itemAtivo?: string): GruposAbertos {
+  const ativo = grupoDaRota(pathname, itemAtivo);
   return ativo && !grupos[ativo] ? { ...grupos, [ativo]: true } : grupos;
 }
 
+// Um item só fica ativo por vez: o do `navItemFor` (prefixo mais longo, com os `prefixos` da 029,
+// ou o `ativo` que a página declarou). `aria-current="page"` como o NavLink fazia.
 function NavItemLink({
-  item: { label, to, icon: Icon, end, contador },
+  item: { label, to, icon: Icon, contador },
+  ativo,
   contadores,
   onNavigate,
 }: {
   item: NavItem;
+  ativo: boolean;
   contadores: Record<NonNullable<NavItem["contador"]>, number>;
   onNavigate?: () => void;
 }) {
   return (
-    <NavLink
+    <Link
       to={to}
-      end={end}
       onClick={onNavigate}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm transition-colors",
-          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sidebar-ring",
-          isActive
-            ? "tone-primary font-medium"
-            : "text-sidebar-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-        )
-      }
+      aria-current={ativo ? "page" : undefined}
+      className={cn(
+        "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm transition-colors",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sidebar-ring",
+        ativo ? "tone-primary font-medium" : "text-sidebar-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+      )}
     >
       <Icon className="size-4.5 shrink-0" aria-hidden="true" />
       {label}
@@ -102,7 +103,7 @@ function NavItemLink({
           {contadores[contador]}
         </span>
       )}
-    </NavLink>
+    </Link>
   );
 }
 
@@ -118,11 +119,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const propostas = useAnotacoesResumo();
   const contadores = { propostas: propostas.data?.abertas ?? 0 };
 
+  const metaAtivo = useCurrentPageMeta()?.ativo;
+  const itemAtivo = navItemFor(pathname, metaAtivo)?.to;
   const idBase = useId();
-  const [grupos, setGrupos] = useState(() => comGrupoDaRota(lerGrupos(), pathname));
+  const [grupos, setGrupos] = useState(() => comGrupoDaRota(lerGrupos(), pathname, metaAtivo));
   useEffect(() => {
-    setGrupos((atual) => comGrupoDaRota(atual, pathname));
-  }, [pathname]);
+    setGrupos((atual) => comGrupoDaRota(atual, pathname, metaAtivo));
+  }, [pathname, metaAtivo]);
   // Com os grupos abertos o menu passa da altura da tela: mantém o item atual à vista.
   const navRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -170,7 +173,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     <ul className="mt-1 ml-4 space-y-1 border-l border-sidebar-border pl-2">
                       {entry.itens.map((item) => (
                         <li key={item.to}>
-                          <NavItemLink item={item} contadores={contadores} onNavigate={onNavigate} />
+                          <NavItemLink item={item} ativo={item.to === itemAtivo} contadores={contadores} onNavigate={onNavigate} />
                         </li>
                       ))}
                     </ul>
@@ -179,7 +182,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               </li>
             ) : (
               <li key={entry.to}>
-                <NavItemLink item={entry} contadores={contadores} onNavigate={onNavigate} />
+                <NavItemLink item={entry} ativo={entry.to === itemAtivo} contadores={contadores} onNavigate={onNavigate} />
               </li>
             ),
           )}
@@ -208,7 +211,7 @@ export function MobileSidebar({ open, onOpenChange }: { open: boolean; onOpenCha
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="left"
-        className="w-72 max-w-[85vw] border-none bg-sidebar-gradient p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
+        className="w-72 max-w-[85vw] overflow-y-auto border-none bg-sidebar-gradient p-0 text-sidebar-foreground [&>button]:text-sidebar-foreground"
       >
         <SheetTitle className="sr-only">Menu</SheetTitle>
         <SheetDescription className="sr-only">Navegação do SociMan</SheetDescription>

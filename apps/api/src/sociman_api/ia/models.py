@@ -158,7 +158,7 @@ class IaChamada(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     tipo_campo: Mapped[str] = mapped_column(Text, nullable=False)
-    perfil_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("perfis.id"), nullable=False)
+    perfil_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("perfis.id"))  # 029: opcional
     # asset|perfil|kit|postagem|corte|conteudo|guia (017: `guia` no montar, id = linha do guia)
     entity_type: Mapped[str] = mapped_column(Text, nullable=False)
     entity_id: Mapped[uuid.UUID | None] = mapped_column(Uuid)  # null no kit nunca salvo

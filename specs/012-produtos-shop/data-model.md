@@ -1,8 +1,8 @@
 # Modelo de dados: 012-produtos-shop
 
 Tudo fica no PostgreSQL (NVMe), na migration **`0022_produtos_shop`** com `down_revision =
-"0021_cadastro_padronizado"` (**provisório**, research R19: depende da ordem real de merge da 021
-`0020_geracao_local` e da 025 `0021_cadastro_padronizado`; o gate da 1ª tarefa confere `alembic heads`).
+"0021_geracao_interrupcoes"` (research R19; conferido no gate em 2026-10-08: a 012 entra antes da 025, que
+passa a ser a `0023`).
 Os arquivos ficam no MinIO do HD, bucket `sociman`, registrados em `images` (003). As tabelas novas usam o
 `AuditMixin` da 001 e o `_Versioned` da 003 (`version`, `archived_at`, `archived_by`). O histórico é o
 `entity_versions`, com o novo `entity_type` **`produto`**.
@@ -166,7 +166,9 @@ Toda transição humana é `history.record` (`updated`); as do gancho gravam ver
    índices e CHECKs;
 3. `ALTER TABLE cenas ADD COLUMN produto_id …, ADD COLUMN produto_variante_id …`, CHECKs e índice;
 4. **Downgrade:** recusa se existir linha em `produtos`, cena com `produto_id`, imagem `kind = produto` ou
-   anotação com `alvo_tipo = produto`; senão remove colunas, CHECKs, tabelas e tipos e recria os dois
-   enums sem o valor `produto` (como a `0004`). Nada de objeto do MinIO é tocado.
+   anotação com `alvo_tipo = produto`; senão remove colunas, CHECKs, tabelas e tipos. Os valores
+   `produto` de `image_kind` e `anotacao_alvo` ficam (como na `0015`: recriar o tipo esbarra nos CHECKs
+   que comparam o alvo com literais; decisão da implementação, 2026-10-08). Nada de objeto do MinIO é
+   tocado.
 
 `test_migration_0022` cobre upgrade, downgrade vazio e recusa do downgrade com dados.

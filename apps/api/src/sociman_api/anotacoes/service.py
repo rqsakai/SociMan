@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import func, select, tuple_
+from sqlalchemy import and_, func, or_, select, tuple_
 from sqlalchemy.orm import Session
 
 from sociman_api import history
@@ -36,9 +36,11 @@ from sociman_api.cenas.schemas import CamposCena
 from sociman_api.conteudos.models import Conteudo
 from sociman_api.cortes.models import Corte
 from sociman_api.errors import ApiError
+from sociman_api.perfis import base as perfil_base
 from sociman_api.perfis.models import Conta, Perfil
 from sociman_api.perfis.schemas import Autor, UserRef
 from sociman_api.postagem.models import Postagem
+from sociman_api.produtos.models import Produto
 
 ENTITY = "anotacao"
 LABEL = "Esta anotação"
@@ -51,11 +53,13 @@ _MODELOS: dict[AnotacaoAlvo, Any] = {
     AnotacaoAlvo.video_fonte: VideoFonte, AnotacaoAlvo.corte: Corte,
     AnotacaoAlvo.conteudo: Conteudo, AnotacaoAlvo.destino: Postagem,
     AnotacaoAlvo.cena: Cena,  # spec 010
+    AnotacaoAlvo.produto: Produto,  # spec 012
 }
 _NOMES = {AnotacaoAlvo.perfil: "Perfil", AnotacaoAlvo.conta: "Conta",
           AnotacaoAlvo.canal: "Canal-fonte", AnotacaoAlvo.video_fonte: "Vídeo-fonte",
           AnotacaoAlvo.corte: "Corte", AnotacaoAlvo.conteudo: "Conteúdo",
-          AnotacaoAlvo.destino: "Destino", AnotacaoAlvo.cena: "Cena"}
+          AnotacaoAlvo.destino: "Destino", AnotacaoAlvo.cena: "Cena",
+          AnotacaoAlvo.produto: "Produto"}
 
 
 @dataclass(frozen=True)
@@ -103,6 +107,9 @@ def _alvo(db: Session, tipo: AnotacaoAlvo, alvo_id: uuid.UUID) -> _Alvo | None:
             return _Alvo(obj.perfil_id, titulo, f"/app/conteudos/{obj.id}", arquivado)
         case AnotacaoAlvo.cena:  # spec 010
             return _Alvo(obj.perfil_id, titulo, f"/app/cenas/{obj.id}", arquivado)
+        case AnotacaoAlvo.produto:  # spec 012
+            return _Alvo(obj.perfil_id, obj.nome_comercial or titulo,
+                         f"/app/produtos/{obj.id}", arquivado)
         case AnotacaoAlvo.destino:
             conteudo = db.get(Conteudo, obj.conteudo_id)
             if titulo == _NOMES[tipo] and conteudo is not None:
@@ -145,7 +152,7 @@ def anotacoes_out(db: Session, anotacoes: list[Anotacao]) -> list[schemas.Anotac
             id=a.id,
             alvo=schemas.AlvoRef(tipo=a.alvo_tipo, id=a.alvo_id, titulo=alvo.titulo,
                                  link=alvo.link, arquivado=alvo.arquivado),
-            perfil_id=a.perfil_id, tipo=a.tipo, texto=a.texto,
+            perfil_id=alvo.perfil_id, tipo=a.tipo, texto=a.texto,
             campos=_campos_out(a),
             situacao=a.situacao, autor=autor,
             resolvida_por=(UserRef(id=a.resolvida_por, name=users.get(a.resolvida_por, ""))
@@ -208,8 +215,28 @@ def _termo(q: str) -> str:
     return termo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
+# Spec 029: cena e produto são da agência; o perfil deles é o perfil base **atual** do item
+# (pode mudar depois da anotação), e não o gravado na criação.
+_PERFIL_BASE = ((AnotacaoAlvo.cena, Cena), (AnotacaoAlvo.produto, Produto))
+
+
+def filtro_perfil(filtro: perfil_base.Filtro):
+    """A condição do filtro de perfil (`None` = todos; `sem`; um uuid) sobre as anotações."""
+    if filtro is None:
+        return None
+
+    def casa(coluna):
+        return coluna.is_(None) if filtro == perfil_base.SEM else coluna == filtro
+
+    fixos = [t for t, _m in _PERFIL_BASE]
+    return or_(and_(Anotacao.alvo_tipo.not_in(fixos), casa(Anotacao.perfil_id)),
+               *(and_(Anotacao.alvo_tipo == tipo,
+                      Anotacao.alvo_id.in_(select(modelo.id).where(casa(modelo.perfil_id))))
+                 for tipo, modelo in _PERFIL_BASE))
+
+
 def listar(db: Session, alvo_tipo: AnotacaoAlvo | None, alvo_id: uuid.UUID | None,
-           perfil_id: uuid.UUID | None, situacao: AnotacaoSituacao | None,
+           perfil_id: perfil_base.Filtro, situacao: AnotacaoSituacao | None,
            tipo: AnotacaoTipo | None, autor_cliente_id: uuid.UUID | None, cursor: str | None,
            limit: int, q: str | None = None) -> schemas.AnotacoesPage:
     stmt = select(Anotacao)
@@ -218,7 +245,7 @@ def listar(db: Session, alvo_tipo: AnotacaoAlvo | None, alvo_id: uuid.UUID | Non
     if alvo_id is not None:
         stmt = stmt.where(Anotacao.alvo_id == alvo_id)
     if perfil_id is not None:
-        stmt = stmt.where(Anotacao.perfil_id == perfil_id)
+        stmt = stmt.where(filtro_perfil(perfil_id))
     if situacao is not None:
         stmt = stmt.where(Anotacao.situacao == situacao)
     if tipo is not None:
@@ -236,11 +263,11 @@ def listar(db: Session, alvo_tipo: AnotacaoAlvo | None, alvo_id: uuid.UUID | Non
     return schemas.AnotacoesPage(anotacoes=anotacoes_out(db, page), next_cursor=next_cursor)
 
 
-def resumo(db: Session, perfil_id: uuid.UUID | None) -> schemas.AnotacoesResumo:
+def resumo(db: Session, perfil_id: perfil_base.Filtro) -> schemas.AnotacoesResumo:
     stmt = select(func.count()).select_from(Anotacao).where(
         Anotacao.situacao == AnotacaoSituacao.aberta)
     if perfil_id is not None:
-        stmt = stmt.where(Anotacao.perfil_id == perfil_id)
+        stmt = stmt.where(filtro_perfil(perfil_id))
     return schemas.AnotacoesResumo(abertas=db.scalar(stmt) or 0)
 
 
@@ -335,8 +362,8 @@ def criar(db: Session, actor: Actor, body: schemas.CreateAnotacaoIn) -> Anotacao
 
 def _validar_cena(db: Session, alvo_tipo: AnotacaoAlvo, alvo_id: uuid.UUID, alvo: _Alvo,
                   campos: dict[str, Any]) -> None:
-    """Spec 010: a cena alvo não pode estar `usada`; os assets propostos são do perfil e não
-    estão arquivados (422 `proposta_invalida`)."""
+    """Spec 010: a cena alvo não pode estar `usada`; os assets propostos são do tipo certo e não
+    estão arquivados (422 `proposta_invalida`; 029: de qualquer perfil base)."""
     from sociman_api.cenas import service as cenas  # import tardio (ciclo)
     from sociman_api.cenas.models import CAMPOS_EDITAVEIS
 

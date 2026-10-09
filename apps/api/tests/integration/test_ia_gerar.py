@@ -102,7 +102,9 @@ def _versoes(db) -> int:
     return db.scalar(select(func.count()).select_from(EntityVersion))
 
 
-TIPOS_US1 = [t for t in TIPOS if TIPOS[t].entidade in ("asset", "perfil", "kit")]
+# Spec 025: o `avatar.identidade` é da entidade asset, mas sai do kit padrão (o `gerar` recusa).
+TIPOS_US1 = [t for t in TIPOS if TIPOS[t].entidade in ("asset", "perfil", "kit")
+             and TIPOS[t].formato != "identidade"]
 
 
 @pytest.mark.parametrize("tipo", TIPOS_US1)
@@ -222,8 +224,10 @@ def test_sugestoes_removem_repetidas_e_guardam_a_selecao(client, db, cena, fake)
 def test_alvo_de_outro_perfil_tipo_incompativel_e_valor_grande(client, cena, fake):
     h = cena["h"]
     outro = _perfil(client, h, "outro")
+    # Spec 029: o asset vale por si; sem `perfilBaseId`, o perfil base é o do item.
     r = _gerar(client, h, "avatar.tom_de_voz", outro, _alvo(cena, "avatar.tom_de_voz"))
-    assert r.status_code == 400 and r.json()["error"]["code"] == "invalid_ia"
+    assert r.status_code == 200, r.text
+    assert r.json()["chamada"]["perfilId"] == cena["perfil"]["id"]
     r = _gerar(client, h, "avatar.tom_de_voz", cena["perfil"],
                {"entityType": "asset", "entityId": cena["cenario"]["id"]})
     assert r.status_code == 400 and "cenario" in r.json()["error"]["message"]

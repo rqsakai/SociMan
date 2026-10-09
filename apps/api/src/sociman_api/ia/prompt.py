@@ -11,7 +11,8 @@ Ordem, da mais estável para a mais variável (cache de prompt):
 5. **`<desempenho versao_perfil="N" versao_conta="M">`** (spec 023, `ia/3`): só nos tipos
    `postagem.*` e no `guia.testar`, com o uso ligado no perfil: temas a ampliar, padrões, hashtags
    a evitar e até 3 exemplos de posts que renderam;
-6. **perfil** (com `cache_control`, o único ponto de cache);
+6. **perfil** (com `cache_control`, o único ponto de cache). Sem perfil base (spec 029), não vão
+   os guias nem o perfil, e o `cache_control` fica no último bloco;
 7. `user`: persona, entidade, `<valor_atual>`, `<propostas_anteriores>`, `<ja_aceitos>`,
    `<rejeitados>`, `<dados_terceiros>` e, por último, `<instrucao>`.
 
@@ -82,10 +83,12 @@ def _bloco(tag: str, conteudo: str, **attrs: str) -> str:
     return f"<{tag}{extra}>\n{_limpar(conteudo)}\n</{tag}>"
 
 
-def _idioma(tipo: TipoCampo, perfil: PerfilBloco) -> str:
+def _idioma(tipo: TipoCampo, perfil: PerfilBloco | None) -> str:
     if tipo.idioma == "en":
         return ("Escreva o campo em inglês (en), mesmo que a instrução ou o valor atual estejam "
                 "em português: traduza o pedido, não copie o texto em português.")
+    if perfil is None:  # spec 029: item sem perfil base
+        return "Escreva o campo em português do Brasil (pt-BR)."
     return f"Escreva o campo no idioma do perfil ({perfil.idioma})."
 
 
@@ -229,8 +232,9 @@ def montar_system(tipo: TipoCampo, regras: str, contexto: Contexto,
         if v_conta is not None:
             attrs["versao_conta"] = str(v_conta)
         blocos.append({"type": "text", "text": _desempenho(texto, attrs)})
-    blocos.append({"type": "text", "text": _bloco("perfil", _perfil(contexto.perfil)),
-                   "cache_control": {"type": "ephemeral"}})
+    if contexto.perfil is not None:
+        blocos.append({"type": "text", "text": _bloco("perfil", _perfil(contexto.perfil))})
+    blocos[-1]["cache_control"] = {"type": "ephemeral"}  # sem perfil base: no último bloco
     return blocos
 
 

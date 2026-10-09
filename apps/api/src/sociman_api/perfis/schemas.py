@@ -37,7 +37,8 @@ HttpUrl = Annotated[
 Notes = Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]
 IntervaloMin = Annotated[int, Field(ge=0, le=1440)]  # minutos (spec 014, Q3 = C)
 VersionNumber = Annotated[int, Field(ge=1)]
-Action = Literal["created", "updated", "archived", "restored", "reverted"]
+Action = Literal["created", "updated", "archived", "restored", "reverted",
+                 "kit_escolhido", "identidade", "consentimento", "revoked"]  # spec 025
 
 
 # ---- saídas ----

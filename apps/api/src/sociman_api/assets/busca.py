@@ -3,7 +3,9 @@
 - `tipo`: vários valores (OU); `tag`: vários valores (E, `tags @> ARRAY[…]`);
 - `q`: nome contém (sem diferenciar maiúsculas) ou tag igual a `lower(q)`;
 - `archived`: `false` (padrão), `true` ou `all`;
-- ordem `updated_at desc, id`, com cursor opaco `base64url("updated_at|id")`.
+- ordem `updated_at desc, id`, com cursor opaco `base64url("updated_at|id")`;
+- spec 029: o perfil base é um filtro (`perfis.base.Filtro`: todos, `sem` ou um perfil), e a
+  lista da agência usa o índice `ix_assets_lista_agencia`.
 """
 
 import base64
@@ -19,6 +21,7 @@ from sociman_api.assets import schemas
 from sociman_api.assets.models import Asset, AssetTipo
 from sociman_api.assets.service import escape_like, summaries_out
 from sociman_api.errors import ApiError
+from sociman_api.perfis import base as perfil_base
 from sociman_api.perfis.service_perfis import get_perfil_or_404
 
 DEFAULT_LIMIT = 48
@@ -39,9 +42,9 @@ def decode_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
         raise ApiError(400, "validation_error", "cursor: inválido") from None
 
 
-def _filtered(stmt: Select, perfil_id: uuid.UUID, tipos: Sequence[AssetTipo],
+def _filtered(stmt: Select, filtro: perfil_base.Filtro, tipos: Sequence[AssetTipo],
               tags: Sequence[str], q: str | None, archived: str) -> Select:
-    stmt = stmt.where(Asset.perfil_id == perfil_id)
+    stmt = perfil_base.aplicar_filtro(stmt, Asset.perfil_id, filtro)
     if archived == "false":
         stmt = stmt.where(Asset.archived_at.is_(None))
     elif archived == "true":
@@ -60,22 +63,40 @@ def _filtered(stmt: Select, perfil_id: uuid.UUID, tipos: Sequence[AssetTipo],
     return stmt
 
 
-def tag_counts(db: Session, perfil_id: uuid.UUID, archived: str) -> list[schemas.TagCount]:
-    """Todas as tags do perfil (no filtro de arquivados), com contagem, para os chips."""
+def tag_counts(db: Session, filtro: perfil_base.Filtro, archived: str,
+               tipos: Sequence[AssetTipo] = ()) -> list[schemas.TagCount]:
+    """Todas as tags do filtro de perfil base (e de arquivados e tipos), com contagem, para os
+    chips."""
     where = {"false": "AND archived_at IS NULL", "true": "AND archived_at IS NOT NULL",
              "all": ""}[archived]
+    params: dict = {}
+    if filtro == perfil_base.SEM:
+        where += " AND perfil_id IS NULL"
+    elif filtro is not None:
+        where += " AND perfil_id = :p"
+        params["p"] = filtro
+    if tipos:
+        where += " AND tipo::text = ANY(:tipos)"
+        params["tipos"] = [t.value for t in tipos]
     rows = db.execute(text(
         "SELECT tag, count(*) AS n FROM assets, unnest(tags) AS tag "
-        f"WHERE perfil_id = :p {where} GROUP BY tag ORDER BY n DESC, tag"
-    ), {"p": perfil_id})
+        f"WHERE true {where} GROUP BY tag ORDER BY n DESC, tag"
+    ), params)
     return [schemas.TagCount(tag=tag, count=n) for tag, n in rows]
 
 
-def list_assets(db: Session, perfil_id: uuid.UUID, *, tipos: Sequence[AssetTipo] = (),
-                tags: Sequence[str] = (), q: str | None = None, archived: str = "false",
-                limit: int = DEFAULT_LIMIT, cursor: str | None = None) -> schemas.AssetsList:
+def list_assets(db: Session, perfil_id: uuid.UUID, **kw) -> schemas.AssetsList:
+    """A lista por perfil (007, obsoleta na 029): a da agência com aquele perfil base."""
     get_perfil_or_404(db, perfil_id)
-    stmt = _filtered(select(Asset), perfil_id, tipos, tags, q, archived)
+    return listar(db, perfil_id, **kw)
+
+
+def listar(db: Session, filtro: perfil_base.Filtro, *, tipos: Sequence[AssetTipo] = (),
+           tags: Sequence[str] = (), q: str | None = None, archived: str = "false",
+           limit: int = DEFAULT_LIMIT, cursor: str | None = None,
+           tags_por_tipo: bool = False) -> schemas.AssetsList:
+    """A lista da agência (spec 029): `filtro` None = todos; `sem`; ou um perfil base."""
+    stmt = _filtered(select(Asset), filtro, tipos, tags, q, archived)
     if cursor:
         ts, last_id = decode_cursor(cursor)
         stmt = stmt.where(or_(Asset.updated_at < ts,
@@ -83,5 +104,6 @@ def list_assets(db: Session, perfil_id: uuid.UUID, *, tipos: Sequence[AssetTipo]
     rows = list(db.scalars(stmt.order_by(Asset.updated_at.desc(), Asset.id).limit(limit + 1)))
     page, more = rows[:limit], len(rows) > limit
     next_cursor = encode_cursor(page[-1].updated_at, page[-1].id) if more else None
-    return schemas.AssetsList(items=summaries_out(db, perfil_id, page), next_cursor=next_cursor,
-                              tags=tag_counts(db, perfil_id, archived))
+    return schemas.AssetsList(items=summaries_out(db, page), next_cursor=next_cursor,
+                              tags=tag_counts(db, filtro, archived,
+                                              tipos if tags_por_tipo else ()))

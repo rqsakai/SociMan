@@ -167,8 +167,22 @@ server {
   # ------------------------------------------ arquivos da biblioteca (spec 007, R3)
   # A API recusa > 20 MB com "Arquivo maior que 20 MB"; o edge deixa folga (21m) para o
   # multipart e para a mensagem vir da API, não um 413 daqui. Buffering normal.
-  location ~ ^/api/(perfis/[^/]+/assets/arquivo|assets/[^/]+/arquivos)$ {
+  location ~ ^/api/(perfis/[^/]+/assets/arquivo|assets/arquivo|assets/[^/]+/arquivos)$ {  # 029: + assets/arquivo da agência
     client_max_body_size 21m;
+    limit_req zone=edge_api burst=40 nodelay;
+    proxy_pass http://$api_upstream;
+    proxy_set_header X-Sociman-Via "";   # spec 009 (R9): só a ponte em processo marca a via
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+
+  # --------------------------------------------- produtos do Shop (spec 012, R12)
+  # Até 6 fotos de 20 MB num multipart (criar o produto) ou 1 foto (nova variante). A API recusa
+  # cada foto > 20 MB com `invalid_image`; o edge deixa folga (130m) para o multipart.
+  location ~ ^/api/(perfis/[^/]+/produtos|produtos|produtos/[^/]+/variantes)$ {  # 029: + POST /api/produtos da agência
+    client_max_body_size 130m;
     limit_req zone=edge_api burst=40 nodelay;
     proxy_pass http://$api_upstream;
     proxy_set_header X-Sociman-Via "";   # spec 009 (R9): só a ponte em processo marca a via
@@ -181,7 +195,7 @@ server {
   # ------------------------------------------------ áudios do perfil (spec 021, R11)
   # A API recusa > 25 MB com `arquivo_grande`; o edge deixa folga (26m) para o multipart e para
   # a mensagem vir da API, não um 413 daqui. Sem buffer no edge.
-  location ~ ^/api/perfis/[^/]+/audios$ {
+  location ~ ^/api/(perfis/[^/]+/)?audios$ {  # 029: + POST /api/audios da agência
     client_max_body_size 26m;
     proxy_request_buffering off;
     limit_req zone=edge_api burst=40 nodelay;

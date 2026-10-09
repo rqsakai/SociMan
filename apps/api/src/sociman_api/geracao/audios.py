@@ -2,8 +2,9 @@
 
 O envio (até 25 MB) vai para `work/tmp` no HD, passa pelo `ffprobe` (wav, m4a com aac/alac, ogg
 ou mp3; exatamente 1 fluxo de áudio, sem vídeo; de 1 ms a 10 min) e é guardado como veio (a
-gravação original, sem conversão) no bucket `audios`, em `perfis/{id}/audios/{uuid}.{ext}`. Os
-candidatos do shop-tts (wav) passam pelo mesmo caminho. Imutável: não há rota de alteração.
+gravação original, sem conversão) no bucket `audios`, em `perfis/{id}/audios/{uuid}.{ext}` (sem
+perfil, spec 029: `agencia/audios/{uuid}.{ext}`; as chaves antigas nunca mudam). Os candidatos do
+shop-tts (wav) passam pelo mesmo caminho. Imutável: não há rota de alteração.
 """
 
 import hashlib
@@ -131,13 +132,19 @@ def _spool(stream: BinaryIO) -> tuple[Path, int, str]:
         raise
 
 
-def _gravar(db: Session, perfil_id: uuid.UUID, path: Path, size: int, sha256: str,
+def chave(perfil_id: uuid.UUID | None, audio_id: uuid.UUID, formato: str) -> str:
+    if perfil_id is None:
+        return f"agencia/audios/{audio_id}.{formato}"
+    return f"perfis/{perfil_id}/audios/{audio_id}.{formato}"
+
+
+def _gravar(db: Session, perfil_id: uuid.UUID | None, path: Path, size: int, sha256: str,
             created_by: uuid.UUID | None) -> Audio:
     if size == 0:
         raise _invalido(SEM_AUDIO)
     info = probe(path)
     audio_id = uuid.uuid4()
-    key = f"perfis/{perfil_id}/audios/{audio_id}.{info.formato}"
+    key = chave(perfil_id, audio_id, info.formato)
     # O objeto vai antes do commit; se a transação falhar, sobra um objeto sem referência.
     storage.put_file(key, path, CONTENT_TYPES[info.formato], bucket="audios")
     audio = Audio(id=audio_id, perfil_id=perfil_id, object_key=key, formato=info.formato,
@@ -148,9 +155,10 @@ def _gravar(db: Session, perfil_id: uuid.UUID, path: Path, size: int, sha256: st
     return audio
 
 
-def enviar(db: Session, perfil_id: uuid.UUID, stream: BinaryIO,
+def enviar(db: Session, perfil_id: uuid.UUID | None, stream: BinaryIO,
            created_by: uuid.UUID | None) -> Audio:
-    """`POST /api/perfis/{id}/audios`: HD conferido antes de ler, teto, ffprobe e bucket."""
+    """`POST /api/audios` (e a antiga por perfil): HD conferido antes de ler, teto, ffprobe e
+    bucket."""
     datadir.ensure_writable(MAX_BYTES)
     path, size, sha256 = _spool(stream)
     try:
@@ -159,7 +167,7 @@ def enviar(db: Session, perfil_id: uuid.UUID, stream: BinaryIO,
         path.unlink(missing_ok=True)
 
 
-def gravar_bytes(db: Session, perfil_id: uuid.UUID, data: bytes,
+def gravar_bytes(db: Session, perfil_id: uuid.UUID | None, data: bytes,
                  created_by: uuid.UUID | None) -> Audio:
     """Um áudio que o motor devolveu (candidato ou teste do shop-tts), pelo mesmo caminho."""
     datadir.ensure_writable(len(data))

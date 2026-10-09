@@ -1313,7 +1313,8 @@ def test_analytics_e_canais_so_importam_a_afinidade_do_aprendizado():
 GERACAO = SRC / "geracao"
 # Quem pode chamar o único delete do `storage.py` (exceções de eliminação da 4.3.0). A 025
 # acrescenta o módulo da revogação LGPD aqui, quando existir.
-DELETE_PERMITIDO = {SRC / "storage.py", GERACAO / "limpeza.py"}
+# Spec 025: a revogação LGPD é a exceção 2 da 4.3.0.
+DELETE_PERMITIDO = {SRC / "storage.py", GERACAO / "limpeza.py", SRC / "revogacao.py"}
 COMFYUI_ALLOWED_021 = {("GET", "/system_stats"), ("POST", "/upload/image"), ("POST", "/prompt"),
                        ("GET", "/history/"), ("GET", "/view"), ("GET", "/queue"),
                        ("POST", "/queue"), ("POST", "/interrupt"), ("POST", "/free")}
@@ -1353,7 +1354,8 @@ def test_rotas_da_021_neutras_humanas_e_sem_delete():
     paths = app.openapi()["paths"]
     ops = {(m, p): op for p, v in paths.items() for m, op in v.items()
            if op.get("operationId", "").startswith(("geracoes_", "audios_"))}
-    assert len(ops) == 10, sorted(op["operationId"] for op in ops.values())
+    # 029: + pedir, listar e áudio da agência
+    assert len(ops) == 13, sorted(op["operationId"] for op in ops.values())
     for (metodo, path), op in ops.items():
         texto = f"{path} {op['operationId']}".lower()
         assert "tiktok" not in texto and "youtube" not in texto, texto
@@ -1438,6 +1440,131 @@ def test_docker_sock_so_no_dockerctl():
     assert "ports" not in servicos["dockerctl"]
 
 
+# ---- spec 012 (produtos): sem rede social, sem delete, escritas de humano ----
+
+PRODUTOS = SRC / "produtos"
+
+
+def test_produtos_nao_importa_publicacao_nem_mcp_nem_delete():
+    fontes = sorted(PRODUTOS.rglob("*.py"))
+    assert (PRODUTOS / "service.py") in fontes and (PRODUTOS / "fluxo.py") in fontes  # vivo
+    for path in fontes:
+        mods = _imports(path)
+        ruins = [m for m in mods if m.startswith(("sociman_api.publicacao", "sociman_api.mcp",
+                                                  "httpx", "requests", "urllib"))]
+        assert not ruins, f"{path.name} importa {ruins}"
+        assert not _referencias(path, "apagar_por_excecao"), f"{path.name} apaga arquivo"
+        tree = ast.parse(path.read_text())
+        deletes = [n.lineno for n in ast.walk(tree) if isinstance(n, ast.Call)
+                   and getattr(n.func, "id", getattr(n.func, "attr", "")) == "delete"]
+        assert not deletes, f"{path.name} usa delete nas linhas {deletes}"
+
+
+def test_rotas_de_produto_neutras_humanas_e_sem_delete():
+    from sociman_api.auth.deps import require_human, require_human_owner, require_user
+    from sociman_api.produtos.router import router as produto_router
+    from sociman_api.produtos.router_perfil import router as perfil_router
+
+    def chamadas(dependant) -> set:
+        out = set()
+        for d in dependant.dependencies:
+            out.add(d.call)
+            out |= chamadas(d)
+        return out
+
+    rotas = [r for rt in (produto_router, perfil_router) for r in rt.routes
+             if hasattr(r, "dependant")]
+    assert len(rotas) == 20  # 029: a lista e o cadastro da agência
+    for r in rotas:
+        texto = f"{r.path} {r.operation_id}".lower()
+        assert r.operation_id.startswith("produtos_"), r.operation_id
+        assert "tiktok" not in texto and "youtube" not in texto, texto
+        assert "DELETE" not in r.methods, r.path
+        deps = chamadas(r.dependant)
+        if r.methods == {"GET"}:
+            assert require_user in deps and require_human not in deps, r.path
+        elif r.path.endswith("/revert"):
+            assert require_human_owner in deps, r.path
+        else:
+            assert require_human in deps, r.path
+
+
+# ---- spec 025 (cadastro padronizado): a exceção 2, sem rede social, escolha humana ----
+
+REVOGACAO = SRC / "revogacao.py"
+
+
+def test_so_a_revogacao_redige_o_historico_e_mexe_nas_geracoes():
+    """Exceção 2 da 4.3.0: só `revogacao.py` usa `redigir_versoes`, e nenhum outro módulo faz
+    UPDATE/DELETE em `entity_versions` nem zera a mídia de `geracao_candidatos`."""
+    for path in SRC.rglob("*.py"):
+        if path in (REVOGACAO, SRC / "history.py"):
+            continue
+        assert not _referencias(path, "redigir_versoes"), f"{path} redige o histórico"
+        texto = path.read_text()
+        assert "UPDATE entity_versions" not in texto and "DELETE FROM entity_versions" \
+            not in texto, path
+        if path.name != "limpeza.py":
+            assert "c.image_id = c.image_par_id = c.audio_id = None" not in texto, path
+    assert _referencias(REVOGACAO, "redigir_versoes")
+    assert _referencias(REVOGACAO, "apagar_por_excecao")
+
+
+def test_mcp_e_ia_nao_alcancam_a_revogacao():
+    for path in SRC.rglob("*.py"):
+        if path.parent.name in ("mcp", "ia"):
+            mods = _imports(path)
+            assert not any(m.startswith("sociman_api.revogacao") for m in mods), path
+
+
+def test_vozes_e_revogacao_sem_rede_social():
+    paths = [*sorted((SRC / "vozes").rglob("*.py")), REVOGACAO,
+             GERACAO / "aplicadores_avatar.py", GERACAO / "aplicadores_cenario.py",
+             GERACAO / "aplicadores_voz.py", GERACAO / "vozes_sync.py"]
+    for path in paths:
+        mods = _imports(path)
+        assert not any(m.startswith("sociman_api.publicacao") for m in mods), path
+    for path, metodos in app.openapi()["paths"].items():
+        for op in metodos.values():
+            oid = op.get("operationId", "")
+            if oid.startswith(("vozes_", "assets_consentimento_")):
+                texto = f"{path} {oid}".lower()
+                assert "tiktok" not in texto and "youtube" not in texto, texto
+
+
+def test_aplicadores_de_imagem_e_audio_da_025_so_pela_escolha_humana():
+    """Nenhum passo de imagem ou áudio da 025 é `sem_escolha` (o gerador só aplica esses)."""
+    from sociman_api.geracao import passos
+
+    for pid in ("avatar.rosto_origem", "avatar.rosto_frontal", "avatar.rostos_34",
+                "avatar.corpo_base", "avatar.look", "avatar.pose", "cenario.cena",
+                "cenario.variacao", "voz.gravacao", "voz.design"):
+        assert not passos.PASSOS[pid].sem_escolha, pid
+    assert passos.PASSOS["avatar.identidade"].sem_escolha  # só texto (FR-003)
+
+
+# ---- spec 029 (AI Studio): biblioteca da agência sem rede social nem escrita pelos agentes ----
+
+def _modulos_029() -> list[Path]:
+    return [SRC / "perfis" / "base.py", *sorted((SRC / "estudio").rglob("*.py"))]
+
+
+def test_modulos_da_029_sem_rede_social_nem_http():
+    for path in _modulos_029():
+        if not path.exists():
+            continue
+        mods = _imports(path)
+        assert not any(m.startswith("sociman_api.publicacao") for m in mods), path
+        assert not any(m == "httpx" or m.startswith("httpx.") for m in mods), path
+
+
+def test_rotas_da_agencia_sem_nome_de_rede():
+    for path, metodos in app.openapi()["paths"].items():
+        for op in metodos.values():
+            oid = op.get("operationId", "")
+            if oid.endswith("_agencia") or oid.startswith("estudio_"):
+                texto = f"{path} {oid}".lower()
+                assert "tiktok" not in texto and "youtube" not in texto, texto
 # ---- spec 026 (coleta de mercado): princípio IX, sem rede, sem perfil no lago, sem delete ----
 
 MERCADO = SRC / "mercado"

@@ -6,7 +6,8 @@ Provedores (`register`, aberto para a 025 e a 012):
 - `escolhido`: a imagem ou o áudio é de um candidato escolhido de qualquer geração;
 - `params`: o id aparece no `params` de uma geração não terminada ou terminada há menos de 90
   dias (referência de outra geração);
-- `biblioteca`: os provedores do "onde é usado" da 007 (tokens do kit, cortes e cenas da 010).
+- `biblioteca`: os provedores do "onde é usado" da 007 (tokens do kit, cortes e cenas da 010),
+  em todos os perfis (029).
 """
 
 import uuid
@@ -17,10 +18,9 @@ from sqlalchemy import Text, cast, exists, func, or_, select
 from sqlalchemy.orm import Session
 
 from sociman_api.assets.models import AssetFile
-from sociman_api.assets.usos import usos_do_perfil
+from sociman_api.assets.usos import usos_das_imagens
 from sociman_api.cenas import usos_assets as _cenas_usos  # noqa: F401 — registra o provedor
 from sociman_api.geracao.models import TERMINADOS, Geracao, GeracaoCandidato
-from sociman_api.perfis.models import Image
 
 JANELA = timedelta(days=90)
 
@@ -59,8 +59,7 @@ def _params(db: Session, image_id: uuid.UUID | None, audio_id: uuid.UUID | None)
 def _biblioteca(db: Session, image_id: uuid.UUID | None, audio_id: uuid.UUID | None) -> bool:
     if image_id is None:
         return False
-    img = db.get(Image, image_id)
-    return img is not None and bool(usos_do_perfil(db, img.perfil_id).get(image_id))
+    return bool(usos_das_imagens(db, {image_id}).get(image_id))
 
 
 register("asset_files", _asset_files)
@@ -76,3 +75,8 @@ def midia_em_uso(db: Session, *, image_id: uuid.UUID | None = None,
         if fn(db, image_id, audio_id):
             return nome
     return None
+
+
+# Spec 012: as imagens das variantes do produto (o provedor se registra ao importar).
+from sociman_api.produtos import uso as _produtos_uso  # noqa: F401
+from sociman_api.vozes import uso as _vozes_uso  # noqa: F401 — spec 025

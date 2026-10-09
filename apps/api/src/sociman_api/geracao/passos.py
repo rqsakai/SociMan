@@ -42,7 +42,7 @@ class Passo:
     sem_escolha: bool = False
     aplica_alvo: bool = True
     bloco: Bloco | None = None
-    image_kind: str | None = None  # `images.kind` dos candidatos; o de produto chega com a 012
+    image_kind: str | None = None  # `images.kind` dos candidatos
 
 
 _C, _T, _CL = GeracaoMotor.comfyui, GeracaoMotor.tts, GeracaoMotor.claude
@@ -61,8 +61,9 @@ _PASSOS: tuple[Passo, ...] = (
     Passo("voz.design", _T, _V, "audio", 3, 3),
     Passo("voz.teste", _T, _V, "audio", 1, 1, sem_escolha=True, aplica_alvo=False),
     Passo("produto.ficha", _CL, _P, "texto", 1, 1, sem_escolha=True),
-    Passo("produto.recorte", _C, _P, "imagem", 1, 1, sem_escolha=True, bloco="cutout"),
-    Passo("produto.flat", _C, _P, "imagem", 2, 2, bloco="keyframe"),
+    Passo("produto.recorte", _C, _P, "imagem", 1, 1, sem_escolha=True, bloco="cutout",
+          image_kind="produto"),
+    Passo("produto.flat", _C, _P, "imagem", 2, 2, bloco="keyframe", image_kind="produto"),
     Passo("cenario.cena", _C, _A, "imagem", 2, 2, bloco="cena", image_kind="fundo"),
     Passo("cenario.variacao", _C, _A, "imagem", 2, 2, bloco="keyframe", image_kind="fundo"),
 )

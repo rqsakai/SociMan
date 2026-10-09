@@ -8,10 +8,17 @@ import { apiToken, createPerfilViaApi, createVerifiedMember, login, nav as naveg
 // Spec 024 (FR-001–007): grupos recolhíveis, lembrados no aparelho, e o grupo da rota abre sozinho.
 
 const MOBILE = { width: 390, height: 844 };
-// Visíveis na primeira visita: Cortes e Analytics abertos, Configurações fechado.
+// Visíveis na primeira visita: AI Studio, Cortes e Analytics abertos, Configurações fechado.
 const OWNER_ITEMS = [
   "Início",
   "Perfis",
+  "Avatares",
+  "Cenários",
+  "Vozes",
+  "Produtos",
+  "Cenas",
+  "Assets",
+  "Movimentos",
   "Canais-fonte",
   "Descobrir",
   "Gerar cortes",
@@ -24,7 +31,7 @@ const OWNER_ITEMS = [
   "Minha conta",
 ];
 const CONFIG_ITEMS = ["Assistente de IA", "Usuários", "Segurança", "Publicação automática", "Agentes (MCP)"];
-const GROUPS = ["Cortes", "Analytics", "Configurações"];
+const GROUPS = ["AI Studio", "Cortes", "Analytics", "Configurações"];
 
 function mainNav(page: Page): Locator {
   return page.getByRole("navigation", { name: "Menu principal" });
@@ -69,6 +76,8 @@ test("dono vê o menu completo e o item ativo acompanha a navegação", async ({
 
   const routes: [string, RegExp][] = [
     ["Perfis", /\/app\/perfis$/],
+    ["Avatares", /\/app\/estudio\/avatares$/],
+    ["Assets", /\/app\/estudio\/assets$/],
     ["Usuários", /\/app\/usuarios$/],
     ["Segurança", /\/app\/seguranca$/],
     ["Minha conta", /\/app\/conta$/],

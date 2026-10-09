@@ -5,6 +5,11 @@ outras são **`RequireHuman`** (dono ou membro humano; outro ator → 403 `somen
 evento `publicacao_recusada`, FR-008). Nada é `RequireHumanOwner`: nada publica. Sem DELETE e
 sem revert (a geração não tem "reverter", exceção do princípio VII). No `mcp/mapa.py`, as
 escritas ficam em `PROIBIDAS` e as leituras em `FORA`.
+
+Spec 029 (R5): `POST /api/geracoes` (o alvo dá o item; `perfilBaseId` opcional) e
+`GET /api/geracoes?alvoTipo&alvoId` (as gerações do item, de qualquer perfil base). As rotas por
+perfil ficam `deprecated`, com o mesmo comportamento (o perfil do caminho é o padrão do
+`perfilBaseId`; a lista filtra pelo perfil base usado).
 """
 
 from typing import Annotated
@@ -26,15 +31,38 @@ def _errors(*statuses: int) -> dict[int | str, dict]:
     return {status: {"model": ErrorEnvelope} for status in statuses}
 
 
-@router.post("/perfis/{perfil_id}/geracoes", operation_id="geracoes_criar", status_code=201,
+@router.post("/geracoes", operation_id="geracoes_pedir_agencia", status_code=201,
              response_model=schemas.GeracaoDetalhe, responses=_errors(400, 401, 403, 404, 409, 503))
+def pedir_agencia(body: schemas.GeracaoIn, actor: RequireHuman,
+                  db: DbSession) -> schemas.GeracaoDetalhe:
+    return service.geracao_out(db, service.pedir(db, actor, body))
+
+
+@router.get("/geracoes", operation_id="geracoes_listar_agencia",
+            response_model=schemas.GeracoesPagina, responses=_errors(400, 401, 403))
+def listar_agencia(
+    actor: RequireUser, db: DbSession,
+    alvo_tipo: Annotated[GeracaoAlvo, Query(alias="alvoTipo")],
+    alvo_id: Annotated[UUID, Query(alias="alvoId")],
+    status: Annotated[list[GeracaoStatus] | None, Query()] = None,
+    passo: Annotated[str | None, Query(max_length=40)] = None,
+    cursor: Annotated[str | None, Query(max_length=200)] = None,
+    limite: Annotated[int, Query(ge=1, le=service.LIMITE_MAX)] = service.LIMITE_PADRAO,
+) -> schemas.GeracoesPagina:
+    return service.listar(db, None, alvo_tipo=alvo_tipo, alvo_id=alvo_id, status=status,
+                          passo=passo, cursor=cursor, limite=limite)
+
+
+@router.post("/perfis/{perfil_id}/geracoes", operation_id="geracoes_criar", status_code=201,
+             response_model=schemas.GeracaoDetalhe, deprecated=True,
+             responses=_errors(400, 401, 403, 404, 409, 503))
 def criar(perfil_id: UUID, body: schemas.GeracaoIn, actor: RequireHuman,
           db: DbSession) -> schemas.GeracaoDetalhe:
-    g = service.pedir(db, actor, perfil_id, body)
+    g = service.pedir(db, actor, body, perfil_caminho=perfil_id)
     return service.geracao_out(db, g)
 
 
-@router.get("/perfis/{perfil_id}/geracoes", operation_id="geracoes_listar",
+@router.get("/perfis/{perfil_id}/geracoes", operation_id="geracoes_listar", deprecated=True,
             response_model=schemas.GeracoesPagina, responses=_errors(400, 401, 403, 404))
 def listar(
     perfil_id: UUID, actor: RequireUser, db: DbSession,

@@ -10,11 +10,11 @@ Como uma entidade de domínio usa este módulo:
 
 import enum
 import uuid
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
-from datetime import date, datetime
-from typing import Any, Protocol
+from datetime import UTC, date, datetime
+from typing import Any, Literal, Protocol
 
 from sqlalchemy import (
     BigInteger,
@@ -36,7 +36,11 @@ from sqlalchemy.orm import Mapped, Session, mapped_column
 from sociman_api.db import Base
 from sociman_api.errors import ApiError
 
-ACTIONS = ("created", "updated", "archived", "restored", "reverted")
+ACTIONS = ("created", "updated", "archived", "restored", "reverted",
+           # Spec 025: o kit padrão, a checagem de identidade, o consentimento e a revogação.
+           "kit_escolhido", "identidade", "consentimento", "revoked")
+VERSAO_REDIGIDA = ("Esta versão foi redigida pela revogação do consentimento e não pode ser "
+                   "restaurada")
 
 
 class EntityVersion(Base):
@@ -185,13 +189,52 @@ def list_versions(db: Session, entity_type: str, entity_id: uuid.UUID) -> list[E
 def version_state(
     db: Session, entity_type: str, entity_id: uuid.UUID, n: int
 ) -> dict[str, Any] | None:
-    """O snapshot `after` da versão `n`, ou None se ela não existe."""
-    stmt = select(EntityVersion.after).where(
+    """O snapshot `after` da versão `n`, ou None se ela não existe. Uma versão redigida pela
+    revogação LGPD (spec 025, R10b) não volta: 409 `versao_redigida`, para qualquer entidade."""
+    stmt = select(EntityVersion.after, EntityVersion.details).where(
         EntityVersion.entity_type == entity_type,
         EntityVersion.entity_id == entity_id,
         EntityVersion.version == n,
     )
-    return db.scalar(stmt)
+    row = db.execute(stmt).first()
+    if row is None:
+        return None
+    if (row.details or {}).get("redigida"):
+        raise ApiError(409, "versao_redigida", VERSAO_REDIGIDA)
+    return row.after
+
+
+def _redigir(snap: dict[str, Any] | None, campos: Sequence[str]) -> dict[str, Any] | None:
+    if snap is None:
+        return None
+    out = dict(snap)
+    for campo in campos:
+        raiz, _, sub = campo.partition(".")
+        if raiz not in out:
+            continue
+        if not sub:
+            out[raiz] = None
+        elif isinstance(out[raiz], dict) and sub in out[raiz]:
+            out[raiz] = {**out[raiz], sub: None}
+    return out
+
+
+def redigir_versoes(db: Session, entity_type: str, entity_id: uuid.UUID, campos: Sequence[str],
+                    *, motivo: Literal["lgpd_revogacao"], actor: ActorLike) -> int:
+    """Exceção 2 da constitution 4.3.0 (spec 025, R10b): troca por `null`, em `before` e `after`
+    de **todas** as versões da entidade, os campos que descrevem a pessoa (`campo` ou
+    `campo.sub`). Ação, autor, data e `changed_fields` ficam; soma `details.redigida`. Só a
+    revogação (`sociman_api/revogacao.py`) chama (guarda AST). Devolve quantas versões mudaram."""
+    rows = list(db.scalars(select(EntityVersion).where(
+        EntityVersion.entity_type == entity_type, EntityVersion.entity_id == entity_id)))
+    marca = {"em": datetime.now(UTC).isoformat(), "por": str(actor.user_id) if actor.user_id
+             else None, "motivo": motivo}
+    for r in rows:
+        r.before = _redigir(r.before, campos)
+        r.after = _redigir(r.after, campos)
+        r.details = {**(r.details or {}), "redigida": marca}
+    db.flush()
+    return len(rows)
 
 
 def check_version(entity: Any, expected: int, label: str) -> None:

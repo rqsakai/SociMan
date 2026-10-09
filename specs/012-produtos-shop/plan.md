@@ -9,7 +9,7 @@
 O SociMan ganha o **catálogo de produtos do perfil**, padronizado para os modelos de imagem e vídeo:
 - **2 tabelas novas** (`produtos`, `produto_variantes`), o valor `produto` em `image_kind` e em
   `anotacao_alvo`, e 2 colunas em `cenas`, na migration `0022_produtos_shop` (`down_revision =
-  "0021_cadastro_padronizado"`, **provisório**: o gate confere a cadeia real, R19);
+  "0021_geracao_interrupcoes"`, conferido no gate em 2026-10-08: a 012 entra antes da 025, R19);
 - o cadastro roda sobre a **021-geracao-local**, com 3 aplicadores (`produtos/aplicadores.py`):
   - `produto.ficha`: motor `claude`, 1 chamada com as fotos originais, no registro da 008, aplicada direto;
   - `produto.recorte`: bloco `cutout`, 1 resultado, aplicado direto e revisado na folha;
@@ -180,7 +180,7 @@ apps/web/src/
 
 **Ordem sugerida para as tasks:**
 1. gate: 021 verde, com a 4.3.0 aplicada e `0020_geracao_local` no head; conferir a cadeia
-   `0021_cadastro_padronizado` (025) e ajustar o `down_revision`;
+   (head real `0021_geracao_interrupcoes`, a 025 vem depois);
 2. migration, modelos, enums e imagem `produto`;
 3. funções puras (estados, flat, ficha);
 4. aplicadores, fluxo e service;

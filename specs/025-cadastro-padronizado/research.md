@@ -367,7 +367,7 @@ outras", "Cancelar") é o componente da 021, reaproveitado.
   consentimento (sem → 400; MCP → 403); revogação (só dono; arquivos e linhas apagados, eventos de
   auditoria, revert e restore recusados, histórico sem `prompt`); vozes (análise, candidatos, escolha,
   sincronização pendente e feita, troca de referência mantendo a anterior, voz padrão, nome único);
-  reversão com slot (UNIQUE parcial); migration `0021` (upgrade, downgrade recusa com dado novo);
+  reversão com slot (UNIQUE parcial); migration `0023` (upgrade, downgrade recusa com dado novo);
 - princípio I: guarda de caminhos e `operationId` nas rotas novas (sem nome de rede); princípio VII:
   toda mutação cria versão com autor, e as duas exceções de apagamento têm teste próprio;
 - e2e `e2e/cadastro-padronizado.spec.ts` com o `openshorts-fake` (ComfyUI e shop-tts falsos da 021,
@@ -375,7 +375,7 @@ outras", "Cancelar") é o componente da 021, reaproveitado.
 
 ## R21. Migration
 
-**Decisão:** `0021_cadastro_padronizado`, `down_revision = "0020_geracao_local"` (provisório; o gate da
+**Decisão:** `0023_cadastro_padronizado`, `down_revision = "0022_produtos_shop"` (provisório; o gate da
 implementação confere a cadeia). Upgrade: tipos `asset_origem` e `asset_kit_status`; `ALTER TYPE
 asset_file_role ADD VALUE 'kit'`, `'variacao'` (fora da transação dos usos); colunas novas; tabela
 `vozes` e tipos `voz_origem`, `voz_status`; FK `assets.voz_id`; índices e CHECKs (data-model). Nenhum

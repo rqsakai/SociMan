@@ -21,8 +21,8 @@ IMAGE_KIND: dict[AssetTipo, ImageKind] = {
 }
 
 ROLES: dict[AssetTipo, tuple[FileRole, ...]] = {
-    AssetTipo.avatar: (FileRole.referencia, FileRole.pose),
-    AssetTipo.cenario: (FileRole.referencia,),
+    AssetTipo.avatar: (FileRole.referencia, FileRole.pose, FileRole.kit),  # kit: spec 025
+    AssetTipo.cenario: (FileRole.referencia, FileRole.kit, FileRole.variacao),
     AssetTipo.fundo: (FileRole.arquivo,),
     AssetTipo.sticker: (FileRole.arquivo,),
     AssetTipo.marca_dagua: (FileRole.arquivo,),
@@ -47,7 +47,7 @@ FIELD_TIPOS: dict[str, frozenset[AssetTipo]] = {
 FILE_FIELD_ROLES: dict[str, frozenset[FileRole]] = {
     "look": frozenset({FileRole.referencia}),
     "uso": frozenset({FileRole.referencia}),
-    "label": frozenset({FileRole.pose}),
+    "label": frozenset({FileRole.pose, FileRole.variacao}),  # variação: spec 025
     "quando_usar": frozenset({FileRole.pose}),
 }
 

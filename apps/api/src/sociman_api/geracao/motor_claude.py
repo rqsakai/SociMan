@@ -81,12 +81,23 @@ def chamar(db: Session, job: Job, client: IaClient | None) -> IaChamada:
     else:
         mensagem = aplicador.mensagem_claude(db, geracao)
         res = client.gerar(tipo, _system(tipo, regras.texto),
-                           lambda erro: mensagem if not erro else
-                           f"{mensagem}\n\n<erro_anterior>{erro}</erro_anterior>")
+                           lambda erro: com_erro_anterior(mensagem, erro))
         ia_service._preencher(row, res, ())
     db.add(row)
     db.flush()
     return row
+
+
+def com_erro_anterior(mensagem: str | list[dict[str, Any]],
+                      erro: str | None) -> str | list[dict[str, Any]]:
+    """A mensagem da 2ª tentativa: o erro da 1ª no fim, em tag de dado. A mensagem pode ser
+    texto ou blocos (a ficha do produto manda as fotos, spec 012)."""
+    if not erro:
+        return mensagem
+    nota = f"<erro_anterior>{erro}</erro_anterior>"
+    if isinstance(mensagem, list):
+        return [*mensagem, {"type": "text", "text": nota}]
+    return f"{mensagem}\n\n{nota}"
 
 
 def erro_da_chamada(row: IaChamada) -> MotorErro | None:

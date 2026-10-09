@@ -20,14 +20,12 @@ import { AvatarCampos, PROMPT_MAX, type PromptFields } from "../../components/as
 import { IaAssist } from "../../components/ia/IaAssist";
 import { LooksSection } from "../../components/assets/LooksSection";
 import { ListaGeracoes } from "../../components/geracao/ListaGeracoes";
-import { PedirGeracao } from "../../components/geracao/PedirGeracao";
 import { PosesGrid } from "../../components/assets/PosesGrid";
 import { UsosList, usosText } from "../../components/assets/UsosList";
 import { api } from "../../lib/api";
 import {
   activeFiles,
   assetKey,
-  assetsKey,
   assetVersionsKey,
   isSingleFile,
   parseTags,
@@ -36,36 +34,42 @@ import {
   type Asset,
 } from "../../lib/assets";
 import type { IaOnSave } from "../../lib/ia";
-import { perfilKey } from "../../lib/perfis";
+import { assetMudando, POLL_MS } from "../../lib/padrao";
+import { metaDetalhe, rotaEstudio, rotuloTipo, tipoEstudioDoAsset } from "../../lib/estudio";
+import { PerfilBaseEditavel } from "../../components/estudio/PerfilBaseEditavel";
+import { CenaVariacoes } from "./kit/CenaVariacoes";
+import { ConsentimentoCard } from "./kit/ConsentimentoCard";
+import { GerarLookPose } from "./kit/GerarLookPose";
+import { KitAvatar } from "./kit/KitAvatar";
+import { VozPadraoCard } from "./kit/VozPadraoCard";
 
 // /app/assets/:id: detalhe de um asset (spec 007, R9). Cabeçalho com miniatura (ou iniciais),
 // tipo, tags e Arquivar/Restaurar; dados e textos (avatar: descrição para prompts, tom de voz e
 // regras de imagem; cenário: prompt do ambiente); "Onde é usado"; e os arquivos: looks e poses do
 // avatar, referências do cenário ou o arquivo único dos demais tipos. Toda mutação manda a
 // `version` lida; o 409 de versão mostra "Recarregar".
+// Spec 025: no avatar, "Kit padrão", "Origem e consentimento", "Voz padrão", "Gerar look" e "Gerar
+// pose"; no cenário, "Cena" e "Variações". O detalhe recarrega a cada 2 s enquanto um passo do kit roda.
 export default function AssetDetalhe() {
   const { id = "" } = useParams();
   const queryClient = useQueryClient();
   const [error, setError] = useState<unknown>(null);
   const [archiving, setArchiving] = useState(false);
 
-  const detail = useQuery({ queryKey: assetKey(id), queryFn: () => api.assets.get(id) });
-  const perfilId = detail.data?.asset.perfilId ?? "";
-  const perfil = useQuery({ queryKey: perfilKey(perfilId), queryFn: () => api.perfis.get(perfilId), enabled: perfilId !== "" });
-  const perfilName = perfil.data?.perfil.name;
-  usePageMeta({
-    title: detail.data?.asset.name ?? "Asset",
-    breadcrumbs: [
-      { label: "Perfis", to: "/app/perfis" },
-      ...(perfilName ? [{ label: perfilName, to: `/app/perfis/${perfilId}?aba=assets` }] : []),
-    ],
+  const detail = useQuery({
+    queryKey: assetKey(id),
+    queryFn: () => api.assets.get(id),
+    refetchInterval: (q) => (assetMudando(q.state.data?.asset) ? POLL_MS : false),
   });
+  // Spec 029: o detalhe fica em /app/assets/:id, mas a trilha e o menu são os do AI Studio, pelo tipo.
+  const tipoEstudio = tipoEstudioDoAsset(detail.data?.asset.tipo ?? "imagem");
+  usePageMeta({ title: detail.data?.asset.name ?? "Asset", ...metaDetalhe(tipoEstudio, detail.data?.asset.perfilId) });
 
   async function refresh() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: assetKey(id) }),
       queryClient.invalidateQueries({ queryKey: assetVersionsKey(id) }),
-      ...(perfilId ? [queryClient.invalidateQueries({ queryKey: assetsKey(perfilId) })] : []),
+      queryClient.invalidateQueries({ queryKey: ["assets"] }),
     ]);
   }
 
@@ -124,9 +128,9 @@ export default function AssetDetalhe() {
   return (
     <Page>
       <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
-        <Link to={`/app/perfis/${asset.perfilId}?aba=assets`}>
+        <Link to={rotaEstudio(tipoEstudio, asset.perfilId)}>
           <ArrowLeft aria-hidden="true" />
-          Voltar para a biblioteca
+          Voltar para {rotuloTipo[tipoEstudio].toLowerCase()}
         </Link>
       </Button>
 
@@ -141,12 +145,25 @@ export default function AssetDetalhe() {
               <Badge variant="secondary">{tipoLabel[asset.tipo]}</Badge>
               {asset.inUse && <Badge className="bg-success text-success-foreground">Em uso</Badge>}
               {asset.archived && <Badge className="bg-dark text-dark-foreground">Arquivado</Badge>}
+              {asset.revogado && (
+                <Badge className="bg-dark text-dark-foreground" data-testid="asset-revogado">
+                  Revogado
+                </Badge>
+              )}
               {asset.tags.map((t) => (
                 <Badge key={t} variant="outline">
                   #{t}
                 </Badge>
               ))}
             </div>
+            <PerfilBaseEditavel
+              valor={asset.perfilId ?? null}
+              disabled={asset.archived || asset.revogado}
+              onSalvar={async (perfilId) => {
+                await api.assets.update(asset.id, { version: asset.version, perfilId });
+                await refresh();
+              }}
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" asChild>
@@ -159,6 +176,7 @@ export default function AssetDetalhe() {
               label={asset.archived ? "Restaurar" : "Arquivar"}
               icon={asset.archived ? ArchiveRestore : Archive}
               busy={archiving}
+              disabled={asset.archived && asset.revogado}
               title={asset.archived ? `Restaurar ${asset.name}?` : `Arquivar ${asset.name}?`}
               description={
                 asset.archived
@@ -204,6 +222,39 @@ export default function AssetDetalhe() {
 
       {asset.tipo === "avatar" && (
         <>
+          <KitAvatar asset={asset} refresh={refresh} />
+          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+            <ConsentimentoCard
+              perfilId={asset.perfilId}
+              consentimento={asset.consentimento}
+              revogado={asset.revogado}
+              bloqueado={
+                asset.origem === "upload" || asset.origem === "sintetico"
+                  ? `A origem deste avatar é "${asset.origem === "upload" ? "Upload" : "Sintético"}": não é de uma pessoa real e não precisa de consentimento.`
+                  : null
+              }
+              descricao="Avatar feito a partir da foto de uma pessoa real: registre o consentimento dela antes de usar a foto como rosto de origem."
+              oQue="a foto"
+              onRegistrar={async (body) => {
+                await api.assets.consentimentoRegistrar(asset.id, { version: asset.version, ...body });
+                toast.success("Consentimento registrado.");
+                await refresh();
+              }}
+              carregarPrevia={() => api.assets.consentimentoPrevia(asset.id)}
+              onRevogar={async () => {
+                await api.assets.consentimentoRevogar(asset.id, asset.version);
+                toast.success("Consentimento revogado. As imagens da pessoa foram apagadas.");
+                await refresh();
+              }}
+            />
+            <VozPadraoCard
+              asset={asset}
+              onSalvo={async () => {
+                toast.success("Voz padrão salva.");
+                await refresh();
+              }}
+            />
+          </div>
           <Card className="shadow-card">
             <CardHeader>
               <CardTitle>
@@ -213,6 +264,7 @@ export default function AssetDetalhe() {
             </CardHeader>
             <CardContent className="space-y-4">
               <LooksSection asset={asset} run={run} />
+              <GerarLookPose asset={asset} tipo="look" />
               {!asset.archived && (
                 <AssetUpload
                   assetId={asset.id}
@@ -236,6 +288,7 @@ export default function AssetDetalhe() {
             </CardHeader>
             <CardContent className="space-y-4">
               <PosesGrid asset={asset} role="pose" run={run} empty="Nenhuma pose ainda." />
+              <GerarLookPose asset={asset} tipo="pose" />
               {!asset.archived && <AssetUpload assetId={asset.id} tipo="avatar" role="pose" submitLabel="Enviar pose" onUploaded={refresh} />}
             </CardContent>
           </Card>
@@ -259,34 +312,10 @@ export default function AssetDetalhe() {
         </Card>
       )}
 
-      {/* spec 021: gerar cenas do cenário no ComfyUI local; a opção escolhida vira uma referência nova. */}
+      {/* spec 021/025: a cena padrão e as variações do cenário, geradas no ComfyUI local. */}
       {asset.tipo === "cenario" && (
         <>
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle>
-                <h2>Gerar cena</h2>
-              </CardTitle>
-              <CardDescription>
-                {asset.archived
-                  ? "Restaure o cenário antes de gerar."
-                  : "Gera imagens do ambiente no computador da casa. Você compara as opções e escolhe uma, que entra como imagem de referência."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PedirGeracao
-                perfilId={asset.perfilId}
-                alvoTipo="asset"
-                alvoId={asset.id}
-                passo="cenario.cena"
-                nPadrao={2}
-                nMax={2}
-                tiposReferencia={["cenario", "fundo", "imagem"]}
-                instrucaoHint="Descreva o ambiente, a luz e o clima. Ex.: quarto claro e aconchegante, sol da manhã"
-                disabled={asset.archived}
-              />
-            </CardContent>
-          </Card>
+          <CenaVariacoes asset={asset} run={run} />
           <Card className="shadow-card">
             <CardHeader>
               <CardTitle>
@@ -295,7 +324,7 @@ export default function AssetDetalhe() {
               <CardDescription>As abertas e as recentes. Opções não escolhidas são apagadas 90 dias depois do fim da geração.</CardDescription>
             </CardHeader>
             <CardContent>
-              <ListaGeracoes perfilId={asset.perfilId} alvoTipo="asset" alvoId={asset.id} alvoVersion={asset.version} disabled={asset.archived} />
+              <ListaGeracoes alvoTipo="asset" alvoId={asset.id} alvoVersion={asset.version} disabled={asset.archived} />
             </CardContent>
           </Card>
         </>
@@ -363,7 +392,8 @@ function DadosCard({ asset, run, refresh }: { asset: Asset; run: RunAction; refr
       else setForm((f) => ({ ...f, texts: { ...f.texts, [campo]: salvo[campo] ?? "" } }));
       await refresh();
     };
-  const iaProps = { perfilId: asset.perfilId, alvo: { entityType: "asset" as const, entityId: asset.id }, onReload: () => void refresh() };
+  // 029: o perfil base do asset vai como perfilBaseId (null = sem guia)
+  const iaProps = { perfilId: asset.perfilId ?? null, perfilBaseId: asset.perfilId ?? null, alvo: { entityType: "asset" as const, entityId: asset.id }, onReload: () => void refresh() };
   const [nameError, setNameError] = useState<string | null>(null);
   const [tagsError, setTagsError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);

@@ -16,6 +16,8 @@ export function UsosList({ usos, empty = "Não é usado em nenhum lugar." }: { u
           ) : (
             <span className="font-medium">{uso.rotulo}</span>
           )}
+          {/* 029 (FR-015): o uso pode ser de qualquer perfil */}
+          {uso.perfilNome && <span className="text-xs text-muted-foreground">{uso.perfilNome}</span>}
           {uso.bloqueia ? (
             <Badge variant="outline">impede arquivar</Badge>
           ) : (

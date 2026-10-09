@@ -12,6 +12,9 @@ Três blocos, do mais estável ao mais variável:
 O valor atual do campo e a instrução vêm do formulário (o service valida); o resto nunca vem do
 cliente. `faltante` diz ao modelo e à tela o que não existe: `kit`, `persona`, `transcricao`,
 `bio`, `nicho`.
+
+Spec 029 (R4, R9): num item da biblioteca sem perfil base, não há bloco do perfil nem persona
+(só a entidade); o `faltante` não acusa o que é do perfil.
 """
 
 import uuid
@@ -70,7 +73,7 @@ class Persona:
 
 @dataclass(frozen=True)
 class Contexto:
-    perfil: PerfilBloco
+    perfil: PerfilBloco | None  # None = sem perfil base (spec 029)
     personas: tuple[Persona, ...] = ()
     entidade: tuple[tuple[str, str], ...] = ()  # (rótulo, texto da equipe)
     terceiros: tuple[tuple[str, str], ...] = ()  # (tipo, texto de terceiros)
@@ -228,12 +231,19 @@ def _cena(tipo: TipoCampo, cena: CenaInfo) -> list[tuple[str, str]]:
     return linhas
 
 
-def montar(db: Session, tipo: TipoCampo, perfil: Perfil, *, asset: Asset | None = None,
+def montar(db: Session, tipo: TipoCampo, perfil: Perfil | None, *, asset: Asset | None = None,
            corte: Corte | None = None, conta: Conta | None = None,
            postagem: Any | None = None, conteudo: Any | None = None,
            cena: CenaInfo | None = None) -> Contexto:
-    bloco, kit_salvo = perfil_bloco(db, perfil)
     avatar = asset if asset is not None else (cena.avatar if cena is not None else None)
+    if perfil is None:  # só os tipos de asset e de cena chegam aqui sem perfil
+        sem_perfil: list[tuple[str, str]] = []
+        if tipo.entidade == "cena" and cena is not None:
+            sem_perfil = _cena(tipo, cena)
+        elif tipo.entidade == "asset" and asset is not None:
+            sem_perfil = _asset(tipo, asset)
+        return Contexto(perfil=None, entidade=tuple(sem_perfil))
+    bloco, kit_salvo = perfil_bloco(db, perfil)
     personas = _personas(db, perfil.id, avatar.id if avatar is not None else None)
     entidade: list[tuple[str, str]] = []
     terceiros: list[tuple[str, str]] = []

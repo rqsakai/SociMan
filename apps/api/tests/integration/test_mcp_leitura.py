@@ -73,6 +73,8 @@ def _direto(client, h, op: ferramentas.Operacao, args: dict):
     for p in op.path_params:
         caminho = caminho.replace("{" + p + "}", args[p])
     query = {k: args[k] for k in op.query_params if k in args}
+    for nome, valor in op.tool.padroes:  # spec 012: o padrão do mapa, como a ponte
+        query.setdefault(nome, valor)
     if op.limite_param:
         query.setdefault(op.limite_param,
                          op.definicao["inputSchema"]["properties"][op.limite_param]["default"])
@@ -84,8 +86,9 @@ def test_cada_leitura_igual_a_do_membro(client, cenario, db):
     token, ids, hm = cenario
     cat = ferramentas.catalogo(app)
     # spec 010: +8 leituras de cena; spec 013: +2 da agência; spec 022: +1 (público);
-    # spec 023: +7 do aprendizado; spec 026: +16 (coleta_estado e as leituras do mercado)
-    assert len(LEITURA) == 62 + 8 + 2 + 1 + 7 + 16
+    # spec 023: +7 do aprendizado; spec 012: +3 dos produtos; spec 025: +3 das vozes;
+    # spec 029: +6 da agência; spec 026: +16 (coleta_estado e as leituras do mercado)
+    assert len(LEITURA) == 62 + 8 + 2 + 1 + 7 + 3 + 3 + 6 + 16
     chamadas = {nome: _args(cat[nome], ids) for nome in LEITURA}
 
     async def todas(c):
@@ -153,3 +156,25 @@ def test_integracoes_sem_valores(cenario):
     r = com_mcp(token, chamar)
     assert set(r.structured_content) == {"youtube", "openshorts", "claude", "cotaYoutube", "coleta",
                                          "geracao"}  # spec 021: só estados, sem valores
+
+
+def test_lista_da_agencia_filtrada_igual_a_por_perfil(client, cenario, dono):  # noqa: F811
+    """Spec 029 (T034, FR-020): pelo MCP, `assets_listar_agencia` com `perfilId` traz os mesmos itens
+    que a leitura antiga por perfil; o item sem perfil só aparece na lista da agência."""
+    token, ids, _ = cenario
+    _, h = dono
+    for nome, perfil in (("Do perfil", ids["perfil_id"]), ("Sem perfil", None)):
+        r = client.post("/api/assets", headers=h,
+                        json={"tipo": "cenario", "name": nome, "tags": [], "perfilId": perfil})
+        assert r.status_code == 201, r.text
+
+    async def chamar(c):
+        return (await c.call_tool("assets_list", {"perfil_id": ids["perfil_id"]}),
+                await c.call_tool("assets_listar_agencia", {"perfilId": ids["perfil_id"]}),
+                await c.call_tool("assets_listar_agencia", {"perfilId": "sem"}))
+
+    antiga, nova, sem = com_mcp(token, chamar)
+    assert not (antiga.is_error or nova.is_error or sem.is_error)
+    nomes = lambda r: sorted(i["name"] for i in r.structured_content["items"])
+    assert nomes(antiga) == nomes(nova) == ["Do perfil"]
+    assert nomes(sem) == ["Sem perfil"]

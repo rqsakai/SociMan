@@ -100,8 +100,16 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    prompt em inglês montado na ordem do shop-diretor (ao vivo em rascunho, congelado em pronta, "Remontar"),
    ingredientes para baixar, tomadas no HD, vínculo com o vídeo próprio (`usada`), 5 tipos de IA `cena.*` e a
    `proposta_cena` do agente pelo MCP (o humano aceita).
-11. `011-scripts`: roteiros por cena e avatar.
-12. `012-produtos-shop` 📋 **spec pronta** (`specs/012-produtos-shop/`, 2026-10-07; 49 tarefas; depende da 021): catálogo de
+11. `011-roteiros-video-local` 📋 **spec pronta** (`specs/011-roteiros-video-local/`, 2026-10-08; 59 tarefas; depende da
+   012, da 025 e da 021; implementar na ordem 012 → 025 → 011, migration `0024`): roteiro de vídeo de produto com
+   avatar, em voice over, tudo local. Plano pelo Claude (frases, posições, cenas novas ou reaproveitadas da 010),
+   narração contínua no shop-tts com o dicionário de pronúncias do perfil (X3), keyframes e clipes no ComfyUI
+   (MiniMax, Wan, Wan qualidade, LTX), montagem com ffmpeg fora da trava da GPU e acabamento HD (SeedVR2 + 1080×1920
+   24 fps −14 LUFS); 4 portões (narração, keyframes, clipes, final, mais o texto) ou modo automático (opção 1, autor
+   `system:roteiro`). Entrega como conteúdo da 014 marcado como gerado por IA, sem destino. Até 8 cenas
+   (`ROTEIRO_MAX_CENAS`); intermediários não usados limpos após 90 dias (emenda 4.4.0); revogar voz/avatar só
+   proíbe gerações novas. Dependências do dono: X1, X2, X3 e `DOCKERCTL_TOKEN`.
+12. `012-produtos-shop` ✅ **implementada** (`specs/012-produtos-shop/`, 2026-10-08; migration `0022_produtos_shop`; falta com o dono o quickstart na GPU real, que depende de X1 e do `DOCKERCTL_TOKEN`): catálogo de
    produtos do perfil (`produtos`, `produto_variantes`), com fotos, recorte direto, flat lay com 2 opções e
    escolha humana, ficha técnica pelo Claude (editável, registro da 008), aprovação por dono ou membro,
    `url_loja` opcional (preço e comissão ficam para uma spec de afiliados) e a ponte com as cenas da 010.
@@ -152,8 +160,9 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    recomendações por regra, decididas pelo dono, que viram preferências (e "fixar" no guia da 017); a
    análise da IA dos melhores, sob demanda, com quadros opcionais; a afinidade no Descobrir e no Mercado;
    e o bloco `<desempenho>` do assistente (`ia/3`).
-25. `025-cadastro-padronizado` 📋 **spec pronta** (`specs/025-cadastro-padronizado/`, 2026-10-07; 51 tarefas; a
-   antiga 007b; depende da 021 e do shop-tts v2): kit padronizado do avatar (rosto de origem, frontal, 3/4
+25. `025-cadastro-padronizado` ✅ **implementada contra os fakes** (`specs/025-cadastro-padronizado/`, 2026-10-09;
+   migration `0023_cadastro_padronizado`; falta com o dono: X2 (shop-tts `v2` + `DELETE /v2/voices`), X1 e o
+   `DOCKERCTL_TOKEN` para o quickstart na GPU real; a antiga 007b; depende da 021 e do shop-tts v2): kit padronizado do avatar (rosto de origem, frontal, 3/4
    em par, corpo-base e checagem de identidade), vozes do perfil (`vozes`, gravação ou sintética, teste e voz
    padrão do avatar), pessoa real só com consentimento (menor recusado, famoso avisado), looks, poses e
    cenários gerados, e o "Revogar" LGPD só do dono (apaga arquivos e textos, também nas versões antigas).
@@ -173,6 +182,15 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    avaliações e dos vídeos top) pelo registro da 008 e as tools MCP de leitura `mercado_*`, sempre como proposta (009);
    alertas na aba Alertas da 019 (comissão mudou, preço caiu, estoque esgotou, produto novo em loja acompanhada, produto
    promovido em queda, concorrente com poucos afiliados subindo) e a notificação `mercado_novo_em_alta`.
+
+29. `029-ai-studio` ✅ **implementada** (`specs/029-ai-studio/`, 2026-10-09; migration `0024_ai_studio`; a união com a `0025_mercado_shop` é a `0026_uniao_mercado` da 026): grupo
+   **AI Studio** no menu (Avatares, Cenários, Vozes, Produtos, Cenas, Assets, Movimentos); a biblioteca passa a ser
+   da agência, com **perfil base opcional** (o guia desse perfil entra na geração); criar avatar, cenário ou produto
+   de dentro da nova cena; as abas do perfil saem. Substitui a página provisória `/app/estudio`.
+   **Ordem decidida pelo dono (2026-10-09): 029 → 011.** A 029 fica com a migration `0024`; a 011 passa a `0027` (depois da `0026_uniao_mercado` da 026).
+30. `030-clonagem-movimento` 📋 **insumo pronto** (`docs/insumos/030-clonagem-movimento.md`, 2026-10-09; depende da 029
+   e da 021): clonar o movimento de um vídeo de até 10 s para o avatar, local na GPU (Wan 2.2 Animate e outros
+   candidatos, a pesquisar no plan).
 
 **Multi-tenant (spec futura, sem número ainda; decisão do dono em 2026-10-08):** usuários terão suas contas e itens
 separados. A camada de mercado da 026 nasce neutra de tenant (um lago coletado uma vez, lido por todos); a camada de

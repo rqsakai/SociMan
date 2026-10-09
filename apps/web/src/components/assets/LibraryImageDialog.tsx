@@ -8,11 +8,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { api } from "../../lib/api";
-import { checkerClass, libraryImagesKey, tipoLabel, type AssetTipo, type LibraryImage } from "../../lib/assets";
+import { checkerClass, tipoLabel, type AssetTipo, type LibraryImage } from "../../lib/assets";
+import { perfilNomeDe, usePerfisTodos, type PerfilFiltro } from "../../lib/estudio";
 import { EmptyState } from "@/components/shell";
+import { PerfilBaseFiltro } from "../estudio/PerfilBaseFiltro";
 
-// "Abrir biblioteca" dos seletores do kit (FR-006, R6): as imagens escolhíveis do perfil (arquivos
-// ativos de assets ativos) dos tipos do seletor, com busca por nome ou tag e filtro de tipo.
+// "Abrir biblioteca" dos seletores do kit (FR-006, R6): as imagens escolhíveis (arquivos ativos de
+// assets ativos) dos tipos do seletor, com busca por nome ou tag e filtro de tipo. Spec 029: a
+// biblioteca da agência (`GET /api/assets/imagens`), com o filtro "Perfil base" que começa no
+// `perfilId` de quem abriu (null = "Todos") e o perfil de cada imagem.
 export function LibraryImageDialog({
   perfilId,
   tipos,
@@ -20,7 +24,7 @@ export function LibraryImageDialog({
   transparent,
   onPick,
 }: {
-  perfilId: string;
+  perfilId: string | null;
   tipos: readonly AssetTipo[];
   value: string | null;
   transparent?: boolean;
@@ -31,6 +35,8 @@ export function LibraryImageDialog({
   const [text, setText] = useState("");
   const [q, setQ] = useState("");
   const [tipo, setTipo] = useState<AssetTipo | "todos">("todos");
+  const [perfil, setPerfil] = useState<PerfilFiltro>(perfilId ?? "todos");
+  const perfis = usePerfisTodos();
 
   useEffect(() => {
     const t = window.setTimeout(() => setQ(text.trim()), 250);
@@ -39,14 +45,20 @@ export function LibraryImageDialog({
 
   const chosen = tipo === "todos" ? tipos : [tipo];
   const images = useQuery({
-    queryKey: libraryImagesKey(perfilId, chosen, q),
-    queryFn: () => api.assets.images(perfilId, { tipo: [...chosen], q: q || undefined, limit: 60 }),
+    queryKey: ["assets", "agencia", "imagens", perfil, [...chosen], q],
+    queryFn: () => api.assets.imagensAgencia({ tipo: [...chosen], perfilId: perfil === "todos" ? undefined : perfil, q: q || undefined, limit: 60 }),
     enabled: open,
   });
   const items: LibraryImage[] = images.data?.items ?? [];
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (o) setPerfil(perfilId ?? "todos");
+        setOpen(o);
+      }}
+    >
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm">
           <Library aria-hidden="true" />
@@ -55,10 +67,11 @@ export function LibraryImageDialog({
       </DialogTrigger>
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Biblioteca do perfil</DialogTitle>
-          <DialogDescription>{tipos.map((t) => tipoLabel[t]).join(" e ")}. Envie imagens novas pelo seletor ou pela aba Assets.</DialogDescription>
+          <DialogTitle>Biblioteca da agência</DialogTitle>
+          <DialogDescription>{tipos.map((t) => tipoLabel[t]).join(" e ")}. Envie imagens novas pelo seletor ou por AI Studio › Assets.</DialogDescription>
         </DialogHeader>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-end gap-2">
+          <PerfilBaseFiltro valor={perfil} onChange={setPerfil} className="w-full sm:w-48" />
           <div className="relative min-w-48 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -114,7 +127,9 @@ export function LibraryImageDialog({
                     </span>
                     <span className="block truncate px-1.5 py-1 text-xs">
                       {label}
-                      <span className="block text-muted-foreground">{tipoLabel[item.assetTipo]}</span>
+                      <span className="block text-muted-foreground">
+                        {tipoLabel[item.assetTipo]} · {perfilNomeDe(item, perfis.data)}
+                      </span>
                     </span>
                   </button>
                 </li>

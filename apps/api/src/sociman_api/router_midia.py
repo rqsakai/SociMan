@@ -75,8 +75,8 @@ def _not_found() -> ApiError:
     return ApiError(404, "not_found", "Arquivo não encontrado")
 
 
-def _slug(db: Session, perfil_id: uuid.UUID) -> str:
-    perfil = db.get(Perfil, perfil_id)
+def _slug(db: Session, perfil_id: uuid.UUID | None) -> str:
+    perfil = db.get(Perfil, perfil_id) if perfil_id is not None else None  # 029: item sem perfil
     return perfil.slug if perfil is not None else "corte"
 
 

@@ -9,6 +9,7 @@ from pydantic import Field, field_validator
 
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.geracao.models import GeracaoAlvo, GeracaoMotor, GeracaoStatus
+from sociman_api.perfis import base
 from sociman_api.perfis.schemas import ImageRef, UserRef
 
 EXTRAS_MAX_BYTES = 2048
@@ -26,6 +27,13 @@ class GeracaoIn(CamelModel):
     rotulo: str | None = Field(default=None, min_length=1, max_length=60)
     texto: str | None = Field(default=None, min_length=1, max_length=500)
     extras: dict[str, Any] | None = None
+    # Spec 029 (R4): ausente = o perfil base do item (na rota antiga, o do caminho); `null` =
+    # nenhum; um id = aquele perfil, só nesta geração. Ver `perfil_base_pedido`.
+    perfil_base_id: uuid.UUID | None = None
+
+    def perfil_base_pedido(self) -> base.Pedido:
+        return self.perfil_base_id if "perfil_base_id" in self.model_fields_set \
+            else base.AUSENTE
 
     @field_validator("extras")
     @classmethod
@@ -75,7 +83,7 @@ class ImagemCandidato(CamelModel):
 
 class Audio(CamelModel):
     id: uuid.UUID
-    perfil_id: uuid.UUID
+    perfil_id: uuid.UUID | None  # nulo = áudio da agência (spec 029)
     formato: str
     sample_rate: int
     duracao_ms: int
@@ -99,7 +107,8 @@ class CandidatoGeracao(CamelModel):
 
 class GeracaoResumo(CamelModel):
     id: uuid.UUID
-    perfil_id: uuid.UUID
+    perfil_id: uuid.UUID | None  # o perfil base usado (spec 029); nulo = nenhum
+    perfil_nome: str | None
     alvo_tipo: GeracaoAlvo
     alvo_id: uuid.UUID
     passo: str

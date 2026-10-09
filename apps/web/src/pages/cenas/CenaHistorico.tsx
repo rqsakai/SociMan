@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/
 import { VersionHistory } from "@/components/VersionHistory";
 import { api } from "@/lib/api";
 import { cenaFieldLabel, cenaVersionsKey, formatCenaValue, invalidarCena, semRetry404, useCena } from "@/lib/cenas";
-import { perfilKey } from "@/lib/perfis";
+import { metaDetalhe } from "@/lib/estudio";
 
 // /app/cenas/:id/historico (spec 010, FR-008): autor, antes e depois de cada mudança, inclusive o
 // status, o prompt congelado, a origem do "Duplicar", os vínculos com conteúdos e o selo da IA.
@@ -19,19 +19,14 @@ export default function CenaHistorico() {
   const detail = useCena(id);
   const versions = useQuery({ queryKey: cenaVersionsKey(id), queryFn: () => api.cenas.versions(id), retry: semRetry404 });
   const cena = detail.data;
-  const perfilId = cena?.perfilId ?? "";
-  const perfil = useQuery({ queryKey: perfilKey(perfilId), queryFn: () => api.perfis.get(perfilId), enabled: perfilId !== "" });
-  const perfilName = perfil.data?.perfil.name;
+  const meta = metaDetalhe("cenas", cena?.perfilId);
   usePageMeta({
     title: "Histórico",
-    breadcrumbs: [
-      { label: "Perfis", to: "/app/perfis" },
-      ...(perfilName ? [{ label: perfilName, to: `/app/perfis/${perfilId}?aba=cenas` }] : []),
-      ...(cena ? [{ label: cena.nome, to: `/app/cenas/${id}` }] : []),
-    ],
+    ativo: meta.ativo,
+    breadcrumbs: [...meta.breadcrumbs, ...(cena ? [{ label: cena.nome, to: `/app/cenas/${id}` }] : [])],
   });
 
-  const reload = () => invalidarCena(queryClient, id, perfilId || undefined);
+  const reload = () => invalidarCena(queryClient, id);
 
   return (
     <Page>

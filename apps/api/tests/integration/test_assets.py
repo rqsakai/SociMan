@@ -268,7 +268,9 @@ def test_perfil_arquivado(client, h, perfil):
     r = client.post(f"/api/perfis/{perfil['id']}/assets", headers=h,
                     json={"tipo": "avatar", "name": "B"})
     assert error(r)[:2] == (409, "perfil_archived")
-    assert error(patch(client, h, a, name="B"))[:2] == (409, "perfil_archived")
+    # Spec 029 (FR-010): o item de um perfil base arquivado continua editável.
+    r = patch(client, h, a, name="B")
+    assert r.status_code == 200 and r.json()["asset"]["name"] == "B"
 
 
 def test_hd_fora(client, h, perfil, tmp_path, monkeypatch):

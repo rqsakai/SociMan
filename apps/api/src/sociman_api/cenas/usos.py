@@ -2,7 +2,7 @@
 
 `PUT /api/conteudos/{id}/cenas` define o conjunto de cenas do conteúdo (com a `version` do
 conteúdo). O conteúdo precisa ser de origem `video_proprio`; cada cena nova no conjunto precisa
-ser do mesmo perfil, não arquivada e não `rascunho`. O serviço cria e desfaz os usos e recalcula o
+estar não arquivada e não `rascunho` (029, FR-014: de qualquer perfil base, ou sem nenhum). O serviço cria e desfaz os usos e recalcula o
 status das cenas afetadas: com uso ativo → `usada`; sem nenhum → `pronta`.
 
 Histórico nos dois lados: a cena ganha `updated` com `details.uso = {conteudoId, acao}`; o
@@ -82,8 +82,6 @@ def definir(db: Session, actor: Actor, conteudo_id: uuid.UUID,
                                                                           key=str)}
     for i in novas:
         cena = travadas[i]
-        if cena.perfil_id != conteudo.perfil_id:
-            raise _invalido("cena_outro_perfil", "Esta cena é de outro perfil", i)
         if cena.archived:
             raise _invalido("cena_arquivada", "Esta cena está arquivada", i)
         if cena.status == CenaStatus.rascunho:

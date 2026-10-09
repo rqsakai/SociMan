@@ -96,7 +96,8 @@ def _uma(db: Session, actor: Actor, g: Geracao, dry_run: bool) -> Resultado:
         db.execute(delete(Audio).where(Audio.id.in_([a.id for a in audios])))
     g.limpa_em = func.now()
     record_event(db, EVENTO, "ok", actor, details={
-        "excecao": EXCECAO, "geracaoId": str(g.id), "perfilId": str(g.perfil_id),
+        "excecao": EXCECAO, "geracaoId": str(g.id),
+        "perfilId": str(g.perfil_id) if g.perfil_id else None,
         "candidatos": r.candidatos, "imagens": r.imagens, "audios": r.audios,
         "bytes": r.bytes, "mantidos": r.mantidos})
     r.objetos = [("imagens", i.object_key) for i in imagens] + \
