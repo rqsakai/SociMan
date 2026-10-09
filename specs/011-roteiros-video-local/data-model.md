@@ -1,5 +1,3 @@
-> **Achado de escopo da 029 (2026-10-09):** os FKs para avatar, voz, produto, cena e keyframes deixam de exigir "do perfil" (itens da agência com perfil base opcional). Revisar no analyze da 011.
-
 # Modelo de dados: 011-roteiros-video-local
 
 Tudo fica no PostgreSQL (NVMe), na migration **`0027_roteiros_video_local`**, com `down_revision =
@@ -40,8 +38,8 @@ versão. Só as ações humanas versionam, como na 021.
 | `perfil_id` | uuid not null FK → perfis.id | imutável |
 | `nome` | text not null | 1..120, sem espaço nas pontas |
 | `brief` | text not null default '' | ≤ 4.000 |
-| `avatar_id` | uuid null FK → assets.id | asset `avatar` do perfil, não arquivado ao ligar |
-| `voz_id` | uuid null FK → vozes.id | do perfil, `aprovada`, não arquivada, consentimento não revogado (FR-003); obrigatória para narrar; padrão = `assets.voz_id` do avatar na criação |
+| `avatar_id` | uuid null FK → assets.id | asset `avatar` de qualquer perfil base (029), não arquivado ao ligar |
+| `voz_id` | uuid null FK → vozes.id | de qualquer perfil base (029), `aprovada`, não arquivada, consentimento não revogado (FR-003); obrigatória para narrar; padrão = `assets.voz_id` do avatar na criação |
 | `formato` | `roteiro_formato` not null default `voice_over` | |
 | `frases` | text[] not null default '{}' | 0..60 itens de 1..300, pt-BR, uma linha cada |
 | `velocidade` | numeric(3,2) not null default 1.08 | CHECK 0.90..1.20 |
@@ -88,7 +86,7 @@ Ações humanas, cada uma com `history.record` e `details.acao`:
 |---|---|---|
 | `roteiro_id` | uuid not null FK → roteiros.id | PK (`roteiro_id`, `ordem`) |
 | `ordem` | smallint not null | 0..n-1 sem buracos |
-| `produto_id` | uuid not null FK → produtos.id | do perfil; `aprovado` e não arquivado **ao entrar** |
+| `produto_id` | uuid not null FK → produtos.id | de qualquer perfil base (029); `aprovado` e não arquivado **ao entrar** |
 | `produto_variante_id` | uuid null FK → produto_variantes.id | variante ativa daquele produto |
 
 UNIQUE `(roteiro_id, produto_id, produto_variante_id)`; 1..6 produtos. Sem versão própria: é a
@@ -100,7 +98,7 @@ propriedade `produtos` do roteiro.
 |---|---|---|
 | `roteiro_id` | uuid not null FK → roteiros.id | PK (`roteiro_id`, `ordem`) |
 | `ordem` | smallint not null | 0..n-1 sem buracos; n ≤ `ROTEIRO_MAX_CENAS` (R14) |
-| `cena_id` | uuid not null FK → cenas.id | do mesmo perfil; a mesma cena pode repetir |
+| `cena_id` | uuid not null FK → cenas.id | do perfil do roteiro ou sem perfil base (Clarification 2026-10-09; as escolhidas à mão podem ser de qualquer perfil base); a mesma cena pode repetir |
 | `frases` | smallint[] not null | índices de `roteiros.frases`, **contíguos** e em ordem crescente (R6) |
 | `inicio_s`, `duracao_s` | numeric(7,3) null | **derivados** da narração ativa; gravados pela máquina (técnicos), nulos sem narração |
 | `tomada_id` | uuid null FK → cena_tomadas.id | da mesma cena |
@@ -180,10 +178,10 @@ UNIQUE `uq_pronuncias_escrita (perfil_id, lower(escrita)) WHERE archived_at IS N
 |---|---|---|
 | `motor` | `cena_motor` not null default `minimax` | |
 | `largura`, `altura` | smallint not null default 736 / 1280 | múltiplos de 16; 256..1920 |
-| `keyframe_inicial_id` | uuid null FK → images.id | `kind = keyframe`, do perfil; obrigatório para gerar clipe |
+| `keyframe_inicial_id` | uuid null FK → images.id | `kind = keyframe`, da biblioteca (qualquer perfil base); obrigatório para gerar clipe |
 | `keyframe_final_id` | uuid null FK → images.id | opcional; idem |
 | `keyframe_instrucao` | text null | ≤ 2.000, inglês |
-| `keyframe_refs` | uuid[] not null default '{}' | ids de `images` do perfil, ≤ 6, **sem FK** (uma imagem apagada pela revogação vira "referência removida") |
+| `keyframe_refs` | uuid[] not null default '{}' | ids de `images` da biblioteca, ≤ 6, **sem FK** (uma imagem apagada pela revogação vira "referência removida") |
 | `keyframe_geracao_id` | uuid null FK → geracoes.id | a geração da opção escolhida; null em upload manual |
 | `duracao_max_s` | numeric(4,1) null | null = teto do motor (R4) |
 

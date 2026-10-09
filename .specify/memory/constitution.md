@@ -1,18 +1,3 @@
-<!--
-Sync Impact Report
-- Versão: 4.3.0 → 4.4.0 (MINOR: princípio novo IX e restrição técnica nova)
-- Princípio adicionado: IX. Coleta de mercado: leitura, conta própria e ritmo humano
-- Princípios modificados: nenhum (I, II e VII continuam iguais; o IX reforça o VII para o lago de mercado)
-- Seções adicionadas: bullet "Coletor de mercado" em Restrições técnicas
-- Seções removidas: nenhuma
-- Origem: brainstorm de 2026-10-08 (docs/insumos/026-mercado-shop.md); risco da conta de afiliado
-  explicado e aceito pelo dono em 2026-10-08
-- Nota: a emenda prevista pela spec 011 (ainda não aplicada) passa a ser a 4.5.0
-- Templates: ✅ plan-template (o Constitution Check enumera os princípios da constitution em vigor;
-  a seção da 026 precisa citar o IX) ✅ spec-template / tasks-template (sem mudança)
-- Docs: ✅ CLAUDE.md não contradiz; a seção da 026 entra quando a spec for implementada
-- TODOs: nenhum
--->
 # Constitution do SociMan
 
 ## Core Principles
@@ -100,9 +85,11 @@ identificado), a data e o estado anterior. Nada é apagado de fato (soft-delete)
 poder ver o histórico e reverter uma mudança. Os limites do que o MCP pode escrever são
 definidos na spec `009-mcp`, dentro deste princípio.
 
-**Exceções de eliminação (4.3.0):** dois casos podem apagar dados de fato, sempre registrados como
-evento (quem, quando, contagem e motivo) e nunca disparados por IA, agente ou MCP: (1) candidatos de
-geração não escolhidos, 90 dias depois da geração (o escolhido nunca); (2) revogação de
+**Exceções de eliminação (4.3.0, ampliada na 4.5.0):** dois casos podem apagar dados de fato, sempre
+registrados como evento (quem, quando, contagem e motivo) e nunca disparados por IA, agente ou MCP:
+(1) candidatos de geração não escolhidos e artefatos intermediários de roteiro (tomadas, narrações e
+prévias) que não entraram num vídeo final entregue, 90 dias depois de deixarem de ser usados (o
+escolhido e o que está num vídeo entregue, nunca); (2) revogação de
 consentimento de pessoa real (LGPD), só pelo dono: os arquivos e os textos que descrevem a pessoa
 (inclusive em versões antigas do histórico) são apagados; o registro de que houve consentimento e
 revogação fica, sem a mídia nem a descrição. Fora desses dois casos, continua valendo: nada é
@@ -209,4 +196,4 @@ um serviço isolado, para que um erro de coleta nunca vire ação na rede nem co
 - **Conformidade:** toda spec, plano e revisão de código verifica a aderência aos princípios.
   Uma violação dos princípios I, II, VII ou IX bloqueia a entrega.
 
-**Version**: 4.4.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-08
+**Version**: 4.5.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-09
