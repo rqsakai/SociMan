@@ -6,7 +6,7 @@
  * o histórico. O `useProduto` recarrega a cada 2 s enquanto houver passo na fila ou rodando. Toda
  * mutação manda a `version` lida (409 `version_conflict` com "Recarregar").
  */
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Archive, ArchiveRestore, ArrowLeft, CheckCircle2, FilePen, Loader2, Package, RefreshCw, Save, Sparkles } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
@@ -15,6 +15,7 @@ import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { AndamentoGeracao } from "@/components/geracao/AndamentoGeracao";
+import { PerfilBaseEditavel } from "@/components/estudio/PerfilBaseEditavel";
 import { FichaForm } from "@/components/produtos/FichaForm";
 import { FolhaRevisao } from "@/components/produtos/FolhaRevisao";
 import { prepararFoto } from "@/components/produtos/NovoProdutoDialog";
@@ -44,7 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { perfilKey } from "@/lib/perfis";
+import { metaDetalhe, rotaEstudio } from "@/lib/estudio";
 import {
   adicionarVariante,
   estadoProdutoLabel,
@@ -78,21 +79,12 @@ export default function ProdutoPage() {
   const queryClient = useQueryClient();
   const detail = useProduto(id);
   const produto = detail.data;
-  const perfilId = produto?.perfilId ?? "";
-  const perfil = useQuery({ queryKey: perfilKey(perfilId), queryFn: () => api.perfis.get(perfilId), enabled: perfilId !== "" });
-  const perfilName = perfil.data?.perfil.name;
   const [error, setError] = useState<unknown>(null);
   const [aprovando, setAprovando] = useState(false);
   const [manual, setManual] = useState(false);
-  usePageMeta({
-    title: produto ? (produto.ficha?.nomeComercial ?? produto.name) : "Produto",
-    breadcrumbs: [
-      { label: "Perfis", to: "/app/perfis" },
-      ...(perfilName ? [{ label: perfilName, to: `/app/perfis/${perfilId}?aba=produtos` }] : []),
-    ],
-  });
+  usePageMeta({ title: produto ? (produto.ficha?.nomeComercial ?? produto.name) : "Produto", ...metaDetalhe("produtos", produto?.perfilId) });
 
-  const refresh = () => invalidarProduto(queryClient, id, perfilId || undefined);
+  const refresh = () => invalidarProduto(queryClient, id);
 
   const rodar: Rodar = async (acao, ok) => {
     setError(null);
@@ -167,6 +159,15 @@ export default function ProdutoPage() {
                 {ativas.length} {ativas.length === 1 ? "variante" : "variantes"}
               </span>
             </div>
+            <PerfilBaseEditavel
+              valor={p.perfilId ?? null}
+              disabled={arquivado}
+              onSalvar={async (perfilId) => {
+                const novo = await api.produtos.editar(p.id, { version: p.version, perfilId });
+                queryClient.setQueryData(produtoKey(p.id), novo);
+                await refresh();
+              }}
+            />
           </div>
           <div className="flex flex-wrap gap-2">
             {p.estado === "revisao" && (
@@ -287,9 +288,9 @@ export default function ProdutoPage() {
 function Voltar({ perfilId }: { perfilId: string | null }) {
   return (
     <Button type="button" variant="ghost" size="sm" className="-ml-2 self-start text-muted-foreground" asChild>
-      <Link to={perfilId ? `/app/perfis/${perfilId}?aba=produtos` : "/app/perfis"}>
+      <Link to={rotaEstudio("produtos", perfilId)}>
         <ArrowLeft aria-hidden="true" />
-        {perfilId ? "Voltar para os produtos" : "Perfis"}
+        Voltar para os produtos
       </Link>
     </Button>
   );

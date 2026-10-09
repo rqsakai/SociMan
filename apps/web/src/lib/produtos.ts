@@ -217,6 +217,24 @@ export function useProdutos(perfilId: string, filtros: ProdutoFiltros) {
   });
 }
 
+// Spec 029: a lista da agência (todos os perfis e sem perfil), com o filtro de perfil base.
+export function useProdutosAgencia(perfilFiltro: string, filtros: ProdutoFiltros) {
+  return useInfiniteQuery({
+    queryKey: ["produtos", "agencia", perfilFiltro, filtros] as const,
+    queryFn: ({ pageParam }) =>
+      api.produtos.listarAgencia({
+        perfilId: perfilFiltro === "todos" ? undefined : perfilFiltro,
+        q: filtros.q || undefined,
+        status: filtros.status ? [filtros.status] : undefined,
+        arquivados: filtros.arquivados ?? "false",
+        limit: PAGE,
+        cursor: pageParam,
+      }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.proximoCursor ?? undefined,
+  });
+}
+
 export function useProduto(id: string) {
   return useQuery({
     queryKey: produtoKey(id),
@@ -230,11 +248,12 @@ export function useProdutoVersoes(id: string) {
   return useQuery({ queryKey: produtoVersoesKey(id), queryFn: () => api.produtos.versoes(id), enabled: id !== "" });
 }
 
-export async function invalidarProduto(qc: QueryClient, id: string, perfilId?: string) {
+// As listas (do perfil e da agência) ficam todas sob ["produtos"].
+export async function invalidarProduto(qc: QueryClient, id: string, _perfilId?: string | null) {
   await Promise.all([
     qc.invalidateQueries({ queryKey: produtoKey(id) }),
     qc.invalidateQueries({ queryKey: produtoVersoesKey(id) }),
-    perfilId ? qc.invalidateQueries({ queryKey: produtosKey(perfilId) }) : null,
+    qc.invalidateQueries({ queryKey: ["produtos"] }),
   ]);
 }
 
@@ -246,15 +265,17 @@ export const FOTO_MAX_BYTES = 20 * 1024 * 1024;
 export const FOTO_MIN_LADO = 512;
 export const FOTO_ACCEPT = "image/png,image/jpeg,image/webp";
 
+// Spec 029: pela rota da agência (`POST /api/produtos`), com o perfil base opcional.
 export function criarProduto(
-  perfilId: string,
+  perfilId: string | null,
   dados: { name: string; obs: string; urlLoja: string; fotos: File[] },
   onProgress: (fraction: number) => void = () => {},
 ) {
   return uploadMultipart<Produto>(
-    `/api/perfis/${encodeURIComponent(perfilId)}/produtos`,
+    "/api/produtos",
     () => {
       const form = new FormData();
+      if (perfilId) form.append("perfilId", perfilId);
       form.append("name", dados.name.trim());
       if (dados.obs.trim()) form.append("obs", dados.obs.trim());
       if (dados.urlLoja.trim()) form.append("urlLoja", dados.urlLoja.trim());

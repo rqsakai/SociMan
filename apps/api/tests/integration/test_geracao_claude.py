@@ -132,7 +132,7 @@ def test_recorte_injetado_vai_direto_e_nenhum_outro_de_imagem(client, owner, mot
 
     class _Recorte(aplicadores.CenarioCena):
         def montar_params(self, db, actor, alvo, pedido):
-            refs = [aplicadores.referencia_de_asset_ativo(db, alvo.perfil_id, r)
+            refs = [aplicadores.referencia_de_asset_ativo(db, r)
                     for r in pedido.referencias]
             return {"instrucao": pedido.instrucao or "recorte", "bloco": "cutout",
                     "referencias": [str(r.id) for r in refs]}

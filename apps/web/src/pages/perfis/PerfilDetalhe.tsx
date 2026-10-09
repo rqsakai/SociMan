@@ -33,14 +33,13 @@ import {
   perfilStatusLabel,
   perfilVersionsKey,
 } from "../../lib/perfis";
+import { rotaEstudio } from "../../lib/estudio";
 import { ContasTab } from "./ContasTab";
 import { FontesTab } from "./tabs/FontesTab";
 import { MarcaTab } from "./tabs/MarcaTab";
-import { AssetsTab } from "./tabs/AssetsTab";
 import { PadroesCorteTab } from "./tabs/PadroesCorteTab";
 import { GuiaTab } from "./tabs/GuiaTab";
-import { CenasTab } from "./tabs/CenasTab";
-import { ProdutosTab } from "./tabs/ProdutosTab";
+import { VerNoEstudio } from "./VerNoEstudio";
 
 const tabs = [
   { id: "dados", label: "Dados" },
@@ -49,9 +48,6 @@ const tabs = [
   { id: "guia", label: "Guia" },
   { id: "fontes", label: "Fontes" },
   { id: "padroes", label: "Padrões de corte" },
-  { id: "assets", label: "Assets" },
-  { id: "cenas", label: "Cenas" },
-  { id: "produtos", label: "Produtos" },
   { id: "historico", label: "Histórico" },
 ] as const;
 type TabId = (typeof tabs)[number]["id"];
@@ -61,6 +57,8 @@ type TabId = (typeof tabs)[number]["id"];
 // direto funcionarem. Sucesso vira toast; erro da API fica num Alert.
 // Spec 024 (R11): a aba Cortes saiu; o envio de corte é o "Aplicar marca num corte" de Conteúdos, e o
 // link antigo (?aba=cortes) vai para Conteúdos filtrado pelo perfil. O Aprendizado é página própria.
+// Spec 029: as abas Assets, Cenas, Produtos e Vozes saíram para o AI Studio (a biblioteca da agência);
+// os links antigos redirecionam, e a aba Dados mostra o cartão "Ver no AI Studio" com as contagens.
 export default function PerfilDetalhe() {
   const { id = "" } = useParams();
   const queryClient = useQueryClient();
@@ -92,6 +90,11 @@ export default function PerfilDetalhe() {
   }
 
   if (params.get("aba") === "cortes") return <Navigate replace to={`/app/conteudos?perfil=${id}`} />;
+  // Spec 029 (FR-019): as abas de criação saíram; os links antigos abrem a lista do AI Studio filtrada.
+  const abaAntiga = params.get("aba");
+  if (abaAntiga === "assets" || abaAntiga === "cenas" || abaAntiga === "produtos" || abaAntiga === "vozes") {
+    return <Navigate replace to={rotaEstudio(abaAntiga, id)} />;
+  }
   if (detail.isPending) {
     return (
       <Page aria-live="polite">
@@ -168,7 +171,8 @@ export default function PerfilDetalhe() {
 
         {error !== null && <ApiErrorAlert error={error} onReload={() => void reload()} />}
 
-        <TabsContent value="dados">
+        <TabsContent value="dados" className="flex flex-col gap-6">
+          <VerNoEstudio perfilId={perfil.id} />
           <DadosTab
             key={`${perfil.id}-${perfil.version}`}
             perfil={perfil}
@@ -195,15 +199,6 @@ export default function PerfilDetalhe() {
         </TabsContent>
         <TabsContent value="padroes">
           <PadroesCorteTab perfil={perfil} contas={contas} />
-        </TabsContent>
-        <TabsContent value="assets">
-          <AssetsTab perfil={perfil} />
-        </TabsContent>
-        <TabsContent value="cenas">
-          <CenasTab perfil={perfil} />
-        </TabsContent>
-        <TabsContent value="produtos">
-          <ProdutosTab perfil={perfil} />
         </TabsContent>
         <TabsContent value="historico">
           <PerfilHistorico perfil={perfil} onReverted={refresh} />

@@ -2,8 +2,9 @@
 
 O protocolo `Aplicador` (coordenado com a 025 e a 012 em 2026-10-07):
 - `validar_alvo(db, perfil_id, alvo_id, lock=False)`: existência (404 `alvo_nao_encontrado`), o
-  perfil, o tipo (409 `alvo_incompativel`) e o arquivamento (409 `alvo_arquivado`); devolve o
-  alvo;
+  tipo (409 `alvo_incompativel`) e o arquivamento (409 `alvo_arquivado`); devolve o alvo. Desde a
+  029 (R14) o `perfil_id` (o perfil base da geração, pode ser nulo) não restringe o alvo: a
+  biblioteca é da agência e o perfil base do item é só o padrão (`perfil_do_alvo`);
 - `montar_params(db, actor, alvo, pedido)`: monta e valida o `params` (a instrução, o prompt, as
   referências e o `extras`, com as chaves que o passo aceita; chave desconhecida → 400
   `entrada_invalida` com `field = "extras.<chave>"`);
@@ -72,9 +73,13 @@ class Aplicador:
 
     extras_aceitos: frozenset[str] = frozenset()
 
-    def validar_alvo(self, db: Session, perfil_id: uuid.UUID, alvo_id: uuid.UUID, *,
+    def validar_alvo(self, db: Session, perfil_id: uuid.UUID | None, alvo_id: uuid.UUID, *,
                      lock: bool = False) -> Any:
         raise NotImplementedError
+
+    def perfil_do_alvo(self, alvo: Any) -> uuid.UUID | None:
+        """O perfil base do item: o padrão do `perfilBaseId` ausente (spec 029, R4)."""
+        return getattr(alvo, "perfil_id", None)
 
     def montar_params(self, db: Session, actor: Actor, alvo: Any, pedido: Pedido
                       ) -> dict[str, Any]:
@@ -82,7 +87,7 @@ class Aplicador:
 
     def conferir_referencias(self, db: Session, geracao: Geracao) -> None:
         for image_id in geracao.params.get("referencias") or []:
-            referencia_de_asset_ativo(db, geracao.perfil_id, uuid.UUID(image_id), no_job=True)
+            referencia_de_asset_ativo(db, uuid.UUID(image_id), no_job=True)
 
     def alvo_version(self, alvo: Any) -> int:
         return alvo.version
@@ -146,19 +151,19 @@ class Aplicador:
         return extras or None
 
 
-def referencia_de_asset_ativo(db: Session, perfil_id: uuid.UUID, image_id: uuid.UUID, *,
+def referencia_de_asset_ativo(db: Session, image_id: uuid.UUID, *,
                               no_job: bool = False) -> Image:
-    """O padrão dos passos de asset: a imagem está num arquivo ativo de um asset ativo do mesmo
-    perfil. No pedido → 400 `entrada_invalida` (`field = referencias`); no job (`no_job`) →
-    `MotorErro("entrada_invalida")` com a mensagem de qual referência."""
+    """O padrão dos passos de asset: a imagem está num arquivo ativo de um asset ativo da
+    biblioteca (de qualquer perfil base, spec 029 R8). No pedido → 400 `entrada_invalida`
+    (`field = referencias`); no job (`no_job`) → `MotorErro("entrada_invalida")` com a mensagem
+    de qual referência."""
     linha = db.execute(
         select(Image, AssetFile, Asset)
         .join(AssetFile, AssetFile.image_id == Image.id)
         .join(Asset, Asset.id == AssetFile.asset_id)
         .where(Image.id == image_id)
     ).first()
-    ok = (linha is not None and linha[0].perfil_id == perfil_id and not linha[1].archived
-          and not linha[2].archived)
+    ok = linha is not None and not linha[1].archived and not linha[2].archived
     if ok:
         return linha[0]
     if no_job:
@@ -166,7 +171,7 @@ def referencia_de_asset_ativo(db: Session, perfil_id: uuid.UUID, image_id: uuid.
                         f"A foto de referência {str(image_id)[:8]} foi arquivada ou não existe "
                         "mais")
     raise entrada_invalida("referencias",
-                           "use uma foto de um item ativo da biblioteca deste perfil")
+                           "use uma foto de um item ativo da biblioteca")
 
 
 class CenarioCena(Aplicador):
@@ -180,10 +185,10 @@ class CenarioCena(Aplicador):
 
     tipo = AssetTipo.cenario
 
-    def validar_alvo(self, db: Session, perfil_id: uuid.UUID, alvo_id: uuid.UUID, *,
+    def validar_alvo(self, db: Session, perfil_id: uuid.UUID | None, alvo_id: uuid.UUID, *,
                      lock: bool = False) -> Asset:
         asset = db.get(Asset, alvo_id, with_for_update=lock)
-        if asset is None or asset.perfil_id != perfil_id:
+        if asset is None:
             raise alvo_nao_encontrado()
         if asset.tipo != self.tipo:
             raise alvo_incompativel()
@@ -201,7 +206,7 @@ class CenarioCena(Aplicador):
         if pedido.texto is not None:
             raise entrada_invalida("texto", "não se aplica a este passo")
         extras = self.conferir_extras(pedido.extras)
-        refs = [referencia_de_asset_ativo(db, alvo.perfil_id, r) for r in pedido.referencias]
+        refs = [referencia_de_asset_ativo(db, r) for r in pedido.referencias]
         base = instrucao.rstrip(". ")
         if refs:
             bloco, prompt = "keyframe", f"{base}. {passos.MANTER}"
@@ -242,6 +247,16 @@ APLICADORES: dict[str, Aplicador] = {
 }
 
 
+def _registrar_025() -> None:
+    """Spec 025: os passos do avatar, do cenário (o `cenario.cena` substitui o piloto acima) e das
+    vozes. Import tardio: os módulos dependem deste."""
+    from sociman_api.geracao import aplicadores_avatar, aplicadores_cenario, aplicadores_voz
+
+    APLICADORES.update(aplicadores_avatar.APLICADORES)
+    APLICADORES.update(aplicadores_cenario.APLICADORES)
+    APLICADORES.update(aplicadores_voz.APLICADORES)
+
+
 def para(passo_id: str) -> Aplicador | None:
     return APLICADORES.get(passo_id)
 
@@ -252,3 +267,6 @@ def chamar_gancho(db: Session, geracao: Geracao, de: GeracaoStatus | None,
     aplicador = APLICADORES.get(geracao.passo)
     if aplicador is not None:
         aplicador.ao_mudar_estado(db, geracao, de, para_)
+
+
+_registrar_025()

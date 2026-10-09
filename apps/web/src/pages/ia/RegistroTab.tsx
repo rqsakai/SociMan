@@ -78,7 +78,7 @@ export function RegistroTab({ chamadaInicial }: { chamadaInicial: string | null 
           id: "perfil",
           header: "Perfil",
           meta: { className: "hidden md:table-cell" },
-          cell: (c) => c.row.original.perfil.name,
+          cell: (c) => c.row.original.perfil?.name ?? "Sem perfil",
         }),
         col.accessor("tipoCampo", { header: "Campo", cell: (c) => rotulo(c.getValue()) }),
         col.accessor("desfecho", {
@@ -220,7 +220,7 @@ function ChamadaSheet({
         <SheetHeader>
           <SheetTitle>{c ? rotulo(c.tipoCampo) : "Chamada"}</SheetTitle>
           <SheetDescription>
-            {c ? `${c.createdBy?.name ?? "—"} · ${formatDateTime(c.createdAt)} · ${c.perfil.name}` : "Carregando…"}
+            {c ? `${c.createdBy?.name ?? "—"} · ${formatDateTime(c.createdAt)} · ${c.perfil?.name ?? "Sem perfil"}` : "Carregando…"}
           </SheetDescription>
         </SheetHeader>
         {detalhe.isError && <ApiErrorAlert error={detalhe.error} className="mx-4" />}
@@ -284,7 +284,7 @@ function GuiaDaChamada({ c, onNavigate }: { c: IaChamada; onNavigate: () => void
   const contaId = c.alvo.contaId;
   return (
     <Item titulo="Guia usado">
-      {vp != null && (
+      {vp != null && c.perfil && (
         <Link to={guiaPerfilPath(c.perfil.id)} className="text-primary underline-offset-4 hover:underline" onClick={onNavigate}>
           Guia do perfil v{vp}
         </Link>

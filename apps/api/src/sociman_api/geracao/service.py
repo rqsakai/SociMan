@@ -1,5 +1,9 @@
 """Ações humanas sobre as gerações e as leituras (contracts/http-api.md, research R10 e R16).
 
+Spec 029 (R4, R14): a biblioteca é da agência. O alvo vale por si (de qualquer perfil base), e a
+geração grava em `perfil_id` o **perfil base usado**, resolvido por `perfis.base.resolver` a
+partir do `perfilBaseId` do pedido (ausente = o do item; `null` = nenhum; um id = aquele).
+
 Toda ação humana (pedir, escolher, cancelar, tentar de novo, gerar outras) roda numa transação
 só: trava a geração, confere a `version` (409 `version_conflict`), grava a versão da geração em
 `entity_versions` (`entity_type = "geracao"`, com os `details` do R10) e chama o gancho
@@ -34,7 +38,8 @@ from sociman_api.geracao.models import (
     GeracaoMotor,
     GeracaoStatus,
 )
-from sociman_api.perfis.models import Image
+from sociman_api.perfis import base
+from sociman_api.perfis.models import Image, Perfil
 from sociman_api.perfis.schemas import VersionsList
 from sociman_api.perfis.service_perfis import get_perfil_or_404, user_refs, versions_out
 
@@ -91,7 +96,7 @@ def _usa_seeds(passo: passos.Passo) -> bool:
     return passo.motor != GeracaoMotor.claude and passo.bloco != "cutout"
 
 
-def _nova(db: Session, actor: Actor, perfil_id: uuid.UUID, passo: passos.Passo,
+def _nova(db: Session, actor: Actor, perfil_id: uuid.UUID | None, passo: passos.Passo,
           alvo_tipo: GeracaoAlvo, alvo_id: uuid.UUID, params: dict[str, Any], n: int,
           de_geracao_id: uuid.UUID | None = None) -> Geracao:
     """Cria a geração na fila (seeds novas, R7), com a versão `created` e o gancho."""
@@ -115,24 +120,38 @@ def _nova(db: Session, actor: Actor, perfil_id: uuid.UUID, passo: passos.Passo,
     return g
 
 
-def criar_para_alvo(db: Session, actor: Actor, perfil_id: uuid.UUID, passo_id: str,
-                    alvo_tipo: GeracaoAlvo, alvo_id: uuid.UUID,
-                    params: dict[str, Any]) -> Geracao:
+def criar_para_alvo(db: Session, actor: Actor, perfil_id: uuid.UUID | None, passo_id: str,
+                    alvo_tipo: GeracaoAlvo, alvo_id: uuid.UUID, params: dict[str, Any], *,
+                    perfil_base: base.Pedido = base.AUSENTE) -> Geracao:
     """Pedido montado pelo cadastro do próprio alvo (o produto da 012, R1): o `params` já vem
-    pronto do fluxo do alvo, que validou as referências. Seeds novas como no `pedir` (R7)."""
+    pronto do fluxo do alvo, que validou as referências. Seeds novas como no `pedir` (R7).
+
+    `perfil_id` é o perfil base do item. Sem `perfil_base`, vale ele, como antes da 029 (os
+    pedidos que o próprio cadastro encadeia não recusam o perfil arquivado); com ele (pedido
+    humano), passa pelo `resolver`."""
     passo = _passo(passo_id)
     if passo.alvo_tipo != alvo_tipo:
         raise aplicadores.alvo_incompativel()
     _aplicador(passo)
+    if perfil_base is not base.AUSENTE:
+        perfil = base.resolver(db, perfil_id, perfil_base)
+        perfil_id = perfil.id if perfil is not None else None
     return _nova(db, actor, perfil_id, passo, alvo_tipo, alvo_id, params, passo.n_padrao)
 
 
 # ---- pedir ----
 
-def pedir(db: Session, actor: Actor, perfil_id: uuid.UUID, body: schemas.GeracaoIn) -> Geracao:
-    perfil = get_perfil_or_404(db, perfil_id)
-    if perfil.archived:
-        raise ApiError(409, "perfil_archived", "O perfil está arquivado")
+def pedir(db: Session, actor: Actor, body: schemas.GeracaoIn,
+          perfil_caminho: uuid.UUID | None = None) -> Geracao:
+    """`POST /api/geracoes`; a rota antiga por perfil passa o `perfil_caminho`, que vira o padrão
+    do `perfilBaseId` ausente (e mantém o 404 e o 409 `perfil_archived` de antes)."""
+    pedido_base = body.perfil_base_pedido()
+    if perfil_caminho is not None:
+        perfil = get_perfil_or_404(db, perfil_caminho)
+        if perfil.archived:
+            raise ApiError(409, "perfil_archived", "O perfil está arquivado")
+        if pedido_base is base.AUSENTE:
+            pedido_base = perfil_caminho
     if body.alvo_tipo == GeracaoAlvo.produto:  # a 012 usa rotas próprias (R16)
         raise aplicadores.alvo_incompativel()
     passo = _passo(body.passo)
@@ -142,13 +161,13 @@ def pedir(db: Session, actor: Actor, perfil_id: uuid.UUID, body: schemas.Geracao
     n = body.n_opcoes or passo.n_padrao
     if n > passo.n_max:
         raise aplicadores.entrada_invalida("nOpcoes", f"no máximo {passo.n_max} neste passo")
-    for ref in body.referencias:  # o service só confere o perfil; o resto é do aplicador
-        img = db.get(Image, ref)
-        if img is None or img.perfil_id != perfil_id:
-            raise aplicadores.entrada_invalida("referencias",
-                                               "a imagem não existe ou é de outro perfil")
+    for ref in body.referencias:  # o service só confere que existe; o resto é do aplicador
+        if db.get(Image, ref) is None:
+            raise aplicadores.entrada_invalida("referencias", "a imagem não existe")
     _motor_configurado(passo.motor)
-    alvo = aplicador.validar_alvo(db, perfil_id, body.alvo_id)
+    alvo = aplicador.validar_alvo(db, perfil_caminho, body.alvo_id)
+    perfil_base = base.resolver(db, aplicador.perfil_do_alvo(alvo), pedido_base)
+    perfil_id = perfil_base.id if perfil_base is not None else None
     pedido = aplicadores.Pedido(passo=passo, instrucao=body.instrucao,
                                 referencias=list(body.referencias), rotulo=body.rotulo,
                                 texto=body.texto, extras=body.extras)
@@ -286,12 +305,21 @@ def _candidatos_out(db: Session, cands: list[GeracaoCandidato]) -> list[schemas.
     return out
 
 
+def _nomes_perfis(db: Session, gs: list[Geracao]) -> dict[uuid.UUID, str]:
+    ids = {g.perfil_id for g in gs if g.perfil_id is not None}
+    return dict(db.execute(select(Perfil.id, Perfil.name).where(Perfil.id.in_(ids))).all()) \
+        if ids else {}
+
+
 def _resumo_campos(db: Session, g: Geracao, refs: dict[uuid.UUID, Image], users: dict,
-                   n_candidatos: int, miniatura: str | None) -> dict[str, Any]:
+                   n_candidatos: int, miniatura: str | None,
+                   nomes: dict[uuid.UUID, str]) -> dict[str, Any]:
     p = g.params or {}
     passo = passos.get(g.passo)
     return {
-        "id": g.id, "perfil_id": g.perfil_id, "alvo_tipo": g.alvo_tipo, "alvo_id": g.alvo_id,
+        "id": g.id, "perfil_id": g.perfil_id,
+        "perfil_nome": nomes.get(g.perfil_id) if g.perfil_id else None,
+        "alvo_tipo": g.alvo_tipo, "alvo_id": g.alvo_id,
         "passo": g.passo, "motor": g.motor, "instrucao": p.get("instrucao") or "",
         "referencias": [image_ref(refs[uuid.UUID(r)]) for r in p.get("referencias") or []
                         if uuid.UUID(r) in refs],
@@ -321,7 +349,8 @@ def resumo_out(db: Session, g: Geracao) -> schemas.GeracaoResumo:
     n = db.scalar(select(func.count()).select_from(GeracaoCandidato)
                   .where(GeracaoCandidato.geracao_id == g.id)) or 0
     users = user_refs(db, [g.created_by])
-    return schemas.GeracaoResumo(**_resumo_campos(db, g, _refs(db, [g]), users, n, None))
+    return schemas.GeracaoResumo(**_resumo_campos(db, g, _refs(db, [g]), users, n, None,
+                                                  _nomes_perfis(db, [g])))
 
 
 def detalhe(db: Session, geracao_id: uuid.UUID) -> schemas.GeracaoDetalhe:
@@ -338,7 +367,8 @@ def geracao_out(db: Session, g: Geracao) -> schemas.GeracaoDetalhe:
     miniatura = escolhido.imagem.url if escolhido and escolhido.imagem else None
     users = user_refs(db, [g.created_by])
     return schemas.GeracaoDetalhe(**_resumo_campos(db, g, _refs(db, [g]), users, len(cands),
-                                            miniatura), candidatos=candidatos)
+                                                   miniatura, _nomes_perfis(db, [g])),
+                                  candidatos=candidatos)
 
 
 def versoes(db: Session, geracao_id: uuid.UUID) -> VersionsList:
@@ -360,12 +390,16 @@ def _ler_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
         raise ApiError(400, "validation_error", "cursor inválido") from exc
 
 
-def listar(db: Session, perfil_id: uuid.UUID, *, alvo_tipo: GeracaoAlvo | None = None,
+def listar(db: Session, perfil_id: uuid.UUID | None, *, alvo_tipo: GeracaoAlvo | None = None,
            alvo_id: uuid.UUID | None = None, status: list[GeracaoStatus] | None = None,
            passo: str | None = None, cursor: str | None = None,
            limite: int = LIMITE_PADRAO) -> schemas.GeracoesPagina:
-    get_perfil_or_404(db, perfil_id)
-    stmt = select(Geracao).where(Geracao.perfil_id == perfil_id)
+    """Por perfil (a rota antiga: as gerações com aquele perfil base usado) ou, sem perfil, as
+    do alvo (`GET /api/geracoes`, de qualquer perfil base)."""
+    stmt = select(Geracao)
+    if perfil_id is not None:
+        get_perfil_or_404(db, perfil_id)
+        stmt = stmt.where(Geracao.perfil_id == perfil_id)
     if alvo_tipo is not None:
         stmt = stmt.where(Geracao.alvo_tipo == alvo_tipo)
     if alvo_id is not None:
@@ -398,7 +432,8 @@ def listar(db: Session, perfil_id: uuid.UUID, *, alvo_tipo: GeracaoAlvo | None =
             minis[cid] = imaging.image_urls(key)["medium"]
     refs = _refs(db, gs)
     users = user_refs(db, [g.created_by for g in gs])
+    nomes = _nomes_perfis(db, gs)
     itens = [schemas.GeracaoResumo(**_resumo_campos(
-        db, g, refs, users, contagem.get(g.id, 0), minis.get(g.escolhido_id)))
+        db, g, refs, users, contagem.get(g.id, 0), minis.get(g.escolhido_id), nomes))
         for g in gs]
     return schemas.GeracoesPagina(itens=itens, proximo=proximo)

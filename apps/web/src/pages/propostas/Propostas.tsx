@@ -131,7 +131,7 @@ export default function Propostas() {
   }, [isOwner, clientes.data, itens]);
 
   const limpar = () => set(Object.fromEntries(CHAVES.map((k) => [k, null])));
-  const nomePerfil = perfis.data?.find((p) => p.id === perfilId)?.name ?? "perfil";
+  const nomePerfil = perfilId === "sem" ? "Sem perfil" : (perfis.data?.find((p) => p.id === perfilId)?.name ?? "perfil");
   const nomeAutor = opcoesCliente.find((c) => c.id === autorId)?.nome ?? "agente";
   const ativos: FiltroAtivo[] = [
     ...(q ? [{ chave: "q", rotulo: "Busca", valor: q, limpar: () => set({ q: null }) }] : []),
@@ -216,6 +216,8 @@ export default function Propostas() {
                     {({ id }) => (
                       <NativeSelect id={id} value={perfilId} onChange={(e) => set({ perfil: e.target.value || null })}>
                         <option value="">Todos</option>
+                        {/* 029: as propostas presas a itens sem perfil base */}
+                        <option value="sem">Sem perfil</option>
                         {perfis.data?.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name}

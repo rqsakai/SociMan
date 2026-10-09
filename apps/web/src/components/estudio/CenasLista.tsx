@@ -1,10 +1,11 @@
 /*
- * Aba Cenas do perfil (spec 010, US2; FR-007): a biblioteca de cenas (tomadas para o Flow/Veo) com
- * filtros por status, avatar, cenário, produto e tag, busca por nome, ação, fala e produto, "Nova
- * cena", "Duplicar" e "Arquivadas". Também os "Padrões das cenas" (iluminação e estilo e negative que
- * valem quando a cena deixa o campo vazio). Os filtros ficam na URL (spec 024: `q`, `status`, `tag`,
- * `arquivadas=1`, `avatarId`, `cenarioId`, `produtoImagemId` e `produtoId`, este da spec 012; o "onde é
- * usado" dos assets e dos produtos abre a aba já filtrada) e valem ao mudar.
+ * Cenas da agência (spec 029, T017; antes a aba Cenas do perfil, 010 US2/FR-007): as tomadas para o
+ * Flow/Veo de todos os perfis e sem perfil, com o perfil base de cada uma, filtros por perfil base,
+ * status, avatar, cenário, produto e tag, busca por nome, ação, fala e produto, "Nova cena",
+ * "Duplicar" e "Arquivadas". Com um perfil no filtro, também as propostas de cena dos agentes e os
+ * "Padrões das cenas" desse perfil. Os filtros ficam na URL (`perfil`, `q`, `status`, `tag`,
+ * `arquivadas=1`, `avatarId`, `cenarioId`, `produtoImagemId` e `produtoId`; o "onde é usado" dos
+ * assets e dos produtos abre a lista já filtrada) e valem ao mudar.
  */
 import type { Perfil } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -16,7 +17,7 @@ import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { PropostaCard } from "@/components/anotacoes/PropostaCard";
 import { BUSCA_DEBOUNCE_MS } from "@/components/data-table/FilterBar";
 import { DataTable, dataTableColumns, FilterBar, type FiltroAtivo } from "@/components/data-table";
-import { HeaderCard, Page } from "@/components/shell";
+import { HeaderCard } from "@/components/shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,16 +35,25 @@ import {
   statusCenaLabel,
   statusCenaTone,
   useCenaPadroes,
-  useCenas,
+  useCenasAgencia,
   type CenaFiltros,
   type CenaResumo,
   type CenaStatus,
 } from "@/lib/cenas";
 import { useFiltroUrl } from "@/lib/filtros";
-import { produtosKey } from "@/lib/produtos";
+import { assetKey } from "@/lib/assets";
+import { perfilDoFiltro, perfilNomeDe, TETO_TEXTO, vazioDoPerfil, useAssetsOpcoes, usePerfisTodos, useProdutosOpcoes, type PerfilFiltro } from "@/lib/estudio";
 import { formatDateTime } from "@/lib/tz";
+import { PerfilBaseFiltro, usePerfilBaseAtivo } from "./PerfilBaseFiltro";
 
 type AssetFiltro = "avatarId" | "cenarioId" | "produtoImagemId";
+
+// O asset do filtro que não está nas opções (arquivado): o detalhe, só para o nome e o perfil.
+function useAssetForaDasOpcoes(id: string, itens: { id: string }[] | undefined) {
+  const fora = Boolean(id) && itens !== undefined && !itens.some((a) => a.id === id);
+  const q = useQuery({ queryKey: assetKey(id), queryFn: () => api.assets.get(id), enabled: fora, retry: false });
+  return fora ? q.data?.asset : undefined;
+}
 
 // Campo "Tag" em "Mais filtros": aplica 300 ms depois da última tecla, como a busca da barra.
 function TagFiltro({ id, valor, onChange }: { id: string; valor: string; onChange: (v: string) => void }) {
@@ -69,7 +79,7 @@ function TagFiltro({ id, valor, onChange }: { id: string; valor: string; onChang
   return <Input id={id} value={texto} maxLength={100} onChange={(e) => setTexto(e.target.value)} />;
 }
 
-function DuplicarBotao({ cena, perfilId }: { cena: CenaResumo; perfilId: string }) {
+function DuplicarBotao({ cena }: { cena: CenaResumo }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -86,7 +96,7 @@ function DuplicarBotao({ cena, perfilId }: { cena: CenaResumo; perfilId: string 
         try {
           const nova = await api.cenas.duplicar(cena.id);
           toast.success("Cena duplicada como rascunho.");
-          await invalidarCena(queryClient, null, perfilId);
+          await invalidarCena(queryClient, null);
           void navigate(`/app/cenas/${nova.id}`);
         } catch (err) {
           toast.error(err instanceof Error ? err.message : "Não foi possível duplicar.");
@@ -109,7 +119,7 @@ function Miniatura({ cena }: { cena: CenaResumo }) {
   );
 }
 
-function colunas(perfilId: string, nomeProduto: (id: string) => string) {
+function colunas(nomeProduto: (id: string) => string, nomePerfil: (c: CenaResumo) => string) {
   const col = dataTableColumns<CenaResumo>();
   return col.columns([
     col.accessor("nome", {
@@ -131,6 +141,12 @@ function colunas(perfilId: string, nomeProduto: (id: string) => string) {
           </div>
         );
       },
+    }),
+    col.accessor((c) => nomePerfil(c), {
+      id: "perfilBase",
+      header: "Perfil base",
+      meta: { className: "hidden sm:table-cell" },
+      cell: (c) => <span className="whitespace-nowrap">{c.getValue()}</span>,
     }),
     col.accessor((c) => statusCenaLabel[c.status], {
       id: "status",
@@ -178,12 +194,15 @@ function colunas(perfilId: string, nomeProduto: (id: string) => string) {
       meta: { className: "hidden lg:table-cell" },
       cell: (c) => <time dateTime={c.getValue()} className="whitespace-nowrap">{formatDateTime(c.getValue())}</time>,
     }),
-    col.display({ id: "acoes", header: "", cell: (c) => <DuplicarBotao cena={c.row.original} perfilId={perfilId} /> }),
+    col.display({ id: "acoes", header: "", cell: (c) => <DuplicarBotao cena={c.row.original} /> }),
   ]);
 }
 
-export function CenasTab({ perfil }: { perfil: Perfil }) {
+export function CenasLista({ perfilFiltro, onPerfilFiltro }: { perfilFiltro: PerfilFiltro; onPerfilFiltro: (v: PerfilFiltro) => void }) {
   const [params, set] = useFiltroUrl();
+  const perfis = usePerfisTodos();
+  const perfilBase = perfilDoFiltro(perfilFiltro);
+  const perfil = perfis.data?.find((p) => p.id === perfilBase) ?? null;
   const q = params.get("q") ?? "";
   const status = (params.get("status") ?? "") as CenaStatus | "";
   const tag = params.get("tag") ?? "";
@@ -204,44 +223,50 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
     tag: tag || undefined,
     arquivadas: arquivadas || undefined,
   };
-  const cenas = useCenas(perfil.id, filtros);
+  const cenas = useCenasAgencia(perfilFiltro, filtros);
   const itens = useMemo(() => cenas.data?.pages.flatMap((p) => p.items), [cenas.data]);
   // Produtos do catálogo (spec 012): nomes da coluna e opções do filtro, inclusive fora de aprovado.
-  const produtos = useQuery({
-    queryKey: [...produtosKey(perfil.id), "cena-opcoes"],
-    queryFn: () => api.produtos.listar(perfil.id, { arquivados: "true", limit: 100 }),
-  });
-  const produtosLista = useMemo(() => produtos.data?.itens ?? [], [produtos.data]);
+  // A agência inteira (todas as páginas até o teto), os do perfil do filtro primeiro.
+  const produtos = useProdutosOpcoes("todos", perfilBase);
+  const produtosLista = useMemo(() => produtos.itens ?? [], [produtos.itens]);
   const columns = useMemo(() => {
     const nomes = new Map(produtosLista.map((p) => [p.id, p.nomeComercial ?? p.name]));
-    return colunas(perfil.id, (id) => nomes.get(id) ?? "Produto do catálogo");
-  }, [perfil.id, produtosLista]);
+    return colunas(
+      (id) => nomes.get(id) ?? "Produto do catálogo",
+      (c) => perfilNomeDe(c, perfis.data),
+    );
+  }, [produtosLista, perfis.data]);
 
-  const opcoes = (tipo: "avatar" | "cenario" | "imagem") => ({
-    queryKey: ["assets", perfil.id, "cena-opcoes", tipo],
-    queryFn: () => api.assets.list(perfil.id, { tipo: [tipo], archived: "false" as const, limit: 100 }),
-  });
-  const avatares = useQuery(opcoes("avatar"));
-  const cenarios = useQuery(opcoes("cenario"));
-  const imagens = useQuery(opcoes("imagem"));
-  const listas: Record<AssetFiltro, { id: string; name: string }[] | undefined> = {
-    avatarId: avatares.data?.items,
-    cenarioId: cenarios.data?.items,
-    produtoImagemId: imagens.data?.items,
-  };
+  const avatares = useAssetsOpcoes("avatar", perfilBase);
+  const cenarios = useAssetsOpcoes("cenario", perfilBase);
+  const imagens = useAssetsOpcoes("imagem", perfilBase);
+  const opcoesAsset = { avatarId: avatares, cenarioId: cenarios, produtoImagemId: imagens } as const;
   const rotulos: Record<AssetFiltro, string> = { avatarId: "Avatar", cenarioId: "Cenário", produtoImagemId: "Foto do produto" };
-  // o filtro vindo da URL pode ser de um asset arquivado
-  const nomeAsset = (key: AssetFiltro) => listas[key]?.find((a) => a.id === ids[key])?.name ?? "Asset escolhido";
+  // "Nome · Perfil" (ou "Nome · Sem perfil"), como no formulário da cena
+  const comPerfil = (a: { name: string; perfilId?: string | null; perfilNome?: string | null }) => `${a.name} · ${perfilNomeDe(a, perfis.data)}`;
+  // o filtro vindo da URL ("Onde é usado") pode ser de um asset arquivado, fora das opções: busca o nome
+  const foraAvatar = useAssetForaDasOpcoes(ids.avatarId, avatares.itens);
+  const foraCenario = useAssetForaDasOpcoes(ids.cenarioId, cenarios.itens);
+  const foraImagem = useAssetForaDasOpcoes(ids.produtoImagemId, imagens.itens);
+  const fora: Record<AssetFiltro, { name: string; perfilId?: string | null; perfilNome?: string | null } | undefined> = {
+    avatarId: foraAvatar,
+    cenarioId: foraCenario,
+    produtoImagemId: foraImagem,
+  };
+  const nomeAsset = (key: AssetFiltro) => {
+    const a = opcoesAsset[key].itens?.find((x) => x.id === ids[key]) ?? fora[key];
+    return a ? comPerfil(a) : "Asset escolhido";
+  };
 
   const selectAsset = (key: AssetFiltro, className?: string) => (
-    <Field label={rotulos[key]} className={className}>
-      {({ id }) => (
-        <NativeSelect id={id} value={ids[key]} onChange={(e) => set({ [key]: e.target.value })}>
+    <Field label={rotulos[key]} className={className} hint={opcoesAsset[key].truncado ? TETO_TEXTO : undefined}>
+      {({ id, describedBy }) => (
+        <NativeSelect id={id} value={ids[key]} aria-describedby={describedBy} onChange={(e) => set({ [key]: e.target.value })}>
           <option value="">Todos</option>
-          {ids[key] && !listas[key]?.some((a) => a.id === ids[key]) && <option value={ids[key]}>Asset escolhido</option>}
-          {listas[key]?.map((a) => (
+          {ids[key] && !opcoesAsset[key].itens?.some((a) => a.id === ids[key]) && <option value={ids[key]}>{nomeAsset(key)}</option>}
+          {opcoesAsset[key].itens?.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.name}
+              {comPerfil(a)}
             </option>
           ))}
         </NativeSelect>
@@ -249,7 +274,9 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
     </Field>
   );
 
+  const ativosPerfil = usePerfilBaseAtivo(perfilFiltro, () => onPerfilFiltro("todos"));
   const ativos: FiltroAtivo[] = [
+    ...ativosPerfil,
     ...(status ? [{ chave: "status", rotulo: "Status", valor: statusCenaLabel[status] ?? status, limpar: () => set({ status: null }) }] : []),
     ...(ids.avatarId ? [{ chave: "avatarId", rotulo: "Avatar", valor: nomeAsset("avatarId"), limpar: () => set({ avatarId: null }) }] : []),
     ...(arquivadas ? [{ chave: "arquivadas", rotulo: "Arquivadas", valor: "mostrando", limpar: () => set({ arquivadas: null }) }] : []),
@@ -264,7 +291,10 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
           {
             chave: "produtoId",
             rotulo: "Produto do catálogo",
-            valor: produtosLista.find((p) => p.id === produtoId)?.nomeComercial ?? produtosLista.find((p) => p.id === produtoId)?.name ?? "Produto escolhido",
+            valor: (() => {
+              const p = produtosLista.find((x) => x.id === produtoId);
+              return p ? `${p.nomeComercial ?? p.name} · ${perfilNomeDe(p, perfis.data)}` : "Produto escolhido";
+            })(),
             limpar: () => set({ produtoId: null }),
             mais: true,
           },
@@ -274,29 +304,31 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
   ];
 
   return (
-    <Page>
+    <>
       <HeaderCard
-        title="Cenas"
+        title="Biblioteca da agência"
         description="Tomadas de até 8 s para gerar no Google Flow: avatar, cenário, ação, fala e o prompt pronto para copiar."
         actions={
-          !perfil.archived && (
-            <Button variant="secondary" size="sm" asChild>
-              <Link to={`/app/perfis/${perfil.id}/cenas/nova`}>
-                <Plus aria-hidden="true" />
-                Nova cena
-              </Link>
-            </Button>
-          )
+          <Button variant="secondary" size="sm" asChild>
+            <Link to={`/app/estudio/cenas/nova${perfilBase ? `?perfil=${perfilBase}` : ""}`}>
+              <Plus aria-hidden="true" />
+              Nova cena
+            </Link>
+          </Button>
         }
       >
         {cenas.isError && <ApiErrorAlert error={cenas.error} />}
         <DataTable
-          label="Cenas do perfil"
+          label="Cenas"
           columns={columns}
           data={itens}
           loading={cenas.isPending}
           getRowId={(c) => c.id}
-          emptyMessage={'Nenhuma cena com esses filtros. Use "Nova cena" para criar.'}
+          emptyMessage={
+            q || status || tag || arquivadas || ids.avatarId || ids.cenarioId || ids.produtoImagemId || produtoId
+              ? 'Nenhuma cena com esses filtros. Use "Nova cena" para criar.'
+              : `Nenhuma cena${vazioDoPerfil(perfilFiltro, perfis.data).trecho} ainda. Use "Nova cena" para criar a primeira${perfilBase ? ": ela já nasce com este perfil base" : ""}.`
+          }
           toolbar={
             <FilterBar
               busca={{
@@ -307,6 +339,7 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
               }}
               principais={
                 <>
+                  <PerfilBaseFiltro valor={perfilFiltro} onChange={onPerfilFiltro} />
                   <Field label="Status" className="w-full sm:w-40">
                     {({ id }) => (
                       <NativeSelect id={id} value={status} onChange={(e) => set({ status: e.target.value })}>
@@ -330,14 +363,14 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
                 <>
                   {selectAsset("cenarioId")}
                   {selectAsset("produtoImagemId")}
-                  <Field label="Produto do catálogo">
-                    {({ id }) => (
-                      <NativeSelect id={id} value={produtoId} onChange={(e) => set({ produtoId: e.target.value })}>
+                  <Field label="Produto do catálogo" hint={produtos.truncado ? TETO_TEXTO : undefined}>
+                    {({ id, describedBy }) => (
+                      <NativeSelect id={id} value={produtoId} aria-describedby={describedBy} onChange={(e) => set({ produtoId: e.target.value })}>
                         <option value="">Todos</option>
                         {produtoId && !produtosLista.some((p) => p.id === produtoId) && <option value={produtoId}>Produto escolhido</option>}
                         {produtosLista.map((p) => (
                           <option key={p.id} value={p.id}>
-                            {p.nomeComercial ?? p.name}
+                            {p.nomeComercial ?? p.name} · {perfilNomeDe(p, perfis.data)}
                           </option>
                         ))}
                       </NativeSelect>
@@ -347,15 +380,15 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
                 </>
               }
               ativos={ativos}
-              onLimpar={() => set({ q: null, status: null, tag: null, arquivadas: null, avatarId: null, cenarioId: null, produtoImagemId: null, produtoId: null })}
+              onLimpar={() => set({ perfil: null, q: null, status: null, tag: null, arquivadas: null, avatarId: null, cenarioId: null, produtoImagemId: null, produtoId: null })}
             />
           }
           pagination={{ hasMore: cenas.hasNextPage, onLoadMore: () => void cenas.fetchNextPage(), loadingMore: cenas.isFetchingNextPage }}
         />
       </HeaderCard>
-      <PropostasAbertas perfilId={perfil.id} />
-      <PadroesCenas perfil={perfil} />
-    </Page>
+      {perfil && <PropostasAbertas perfilId={perfil.id} />}
+      {perfil && <PadroesCenas key={perfil.id} perfil={perfil} />}
+    </>
   );
 }
 
@@ -394,7 +427,7 @@ function PadroesCenas({ perfil }: { perfil: Perfil }) {
     <Card className="shadow-card">
       <CardHeader>
         <CardTitle>
-          <h2>Padrões das cenas</h2>
+          <h2>Padrões das cenas de {perfil.name}</h2>
         </CardTitle>
         <CardDescription>Valem quando a cena deixa "Iluminação e estilo" ou "Negative prompt" vazio. Em inglês.</CardDescription>
       </CardHeader>

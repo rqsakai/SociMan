@@ -61,10 +61,10 @@ def _ator_do_pedido(geracao: Geracao) -> Actor:
 class _ProdutoBase(base.Aplicador):
     extras_aceitos = frozenset({"varianteId", "nome"})
 
-    def validar_alvo(self, db: Session, perfil_id: uuid.UUID, alvo_id: uuid.UUID, *,
+    def validar_alvo(self, db: Session, perfil_id: uuid.UUID | None, alvo_id: uuid.UUID, *,
                      lock: bool = False) -> Produto:
         produto = _produto(db, alvo_id, lock)
-        if produto is None or produto.perfil_id != perfil_id:
+        if produto is None:
             raise base.alvo_nao_encontrado()
         if produto.archived:
             raise base.alvo_arquivado()

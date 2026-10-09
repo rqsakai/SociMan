@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { cenasKey, conteudoCenasKey, semRetry404, statusCenaLabel, statusCenaTone, useCenas, type CenaResumo } from "@/lib/cenas";
+import { conteudoCenasKey, semRetry404, statusCenaLabel, statusCenaTone, useCenasAgencia, type CenaResumo } from "@/lib/cenas";
 import { api } from "@/lib/api";
 import { invalidarConteudos } from "@/lib/conteudos";
 import { EmptyState } from "@/components/shell";
@@ -97,7 +97,7 @@ function EscolherDialog({
     const t = window.setTimeout(() => setQ(texto.trim()), 250);
     return () => window.clearTimeout(t);
   }, [texto]);
-  const cenas = useCenas(conteudo.perfil.id, { q: q || undefined });
+  const cenas = useCenasAgencia("todos", { q: q || undefined });
   // Só pronta e usada entram (rascunho não tem prompt congelado).
   const opcoes = useMemo(() => {
     const vindas = (cenas.data?.pages.flatMap((p) => p.items) ?? []).filter((c) => c.status !== "rascunho" && !c.arquivada);
@@ -123,7 +123,7 @@ function EscolherDialog({
       await Promise.all([
         invalidarConteudos(queryClient, conteudo.id),
         queryClient.invalidateQueries({ queryKey: conteudoCenasKey(conteudo.id) }),
-        queryClient.invalidateQueries({ queryKey: cenasKey(conteudo.perfil.id) }),
+        queryClient.invalidateQueries({ queryKey: ["cenas"] }),
         queryClient.invalidateQueries({ queryKey: ["cena"] }),
       ]);
       onClose();

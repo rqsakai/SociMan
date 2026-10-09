@@ -355,6 +355,18 @@ export function useCenas(perfilId: string, filtros: CenaFiltros, enabled = true)
   });
 }
 
+// Spec 029: a lista da agência (todos os perfis e sem perfil), com o filtro de perfil base.
+export function useCenasAgencia(perfilFiltro: string, filtros: CenaFiltros) {
+  return useInfiniteQuery({
+    queryKey: ["cenas", "agencia", perfilFiltro, filtros] as const,
+    queryFn: ({ pageParam }) =>
+      api.cenas.listarAgencia({ ...paraQuery(filtros), perfilId: perfilFiltro === "todos" ? undefined : perfilFiltro, limit: PAGE, cursor: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    retry: semRetry404,
+  });
+}
+
 export function useCena(id: string) {
   return useQuery({ queryKey: cenaKey(id), queryFn: () => api.cenas.get(id), enabled: Boolean(id), retry: semRetry404 });
 }
@@ -372,9 +384,10 @@ export function useTomadas(cenaId: string, arquivadas: boolean) {
   return useQuery({ queryKey: cenaTomadasKey(cenaId, arquivadas), queryFn: () => api.cenas.tomadas(cenaId, arquivadas).then((r) => r.items), retry: semRetry404 });
 }
 
-export async function invalidarCena(queryClient: QueryClient, cenaId: string | null, perfilId?: string) {
+// As listas (do perfil e da agência, 029) ficam todas sob ["cenas"].
+export async function invalidarCena(queryClient: QueryClient, cenaId: string | null, _perfilId?: string | null) {
   await Promise.all([
-    perfilId ? queryClient.invalidateQueries({ queryKey: cenasKey(perfilId) }) : queryClient.invalidateQueries({ queryKey: ["cenas"] }),
+    queryClient.invalidateQueries({ queryKey: ["cenas"] }),
     ...(cenaId
       ? [
           queryClient.invalidateQueries({ queryKey: cenaKey(cenaId) }),

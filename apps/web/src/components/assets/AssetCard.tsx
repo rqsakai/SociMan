@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { type AssetSummary, tipoLabel } from "../../lib/assets";
+import { PerfilBaseSelo } from "@/components/estudio/PerfilBaseSelo";
+import { kitStatusLabel, kitStatusTone } from "@/lib/padrao";
 import { AssetThumb } from "./AssetThumb";
 
-// Card da grade da biblioteca: miniatura (ou iniciais), nome, tipo, selos "Em uso" e "Arquivado".
+// Card da grade da biblioteca: miniatura (ou iniciais), nome, tipo, perfil base (029), situação do
+// kit (025) e os selos "Em uso" e "Arquivado".
 // O card inteiro é o link para o detalhe (/app/assets/:id).
 export function AssetCard({ asset }: { asset: AssetSummary }) {
   return (
@@ -21,6 +24,12 @@ export function AssetCard({ asset }: { asset: AssetSummary }) {
           <div className="flex flex-wrap items-center gap-1">
             <Badge variant="secondary">{tipoLabel[asset.tipo]}</Badge>
             {asset.inUse && <Badge className="bg-success text-success-foreground">Em uso</Badge>}
+            <PerfilBaseSelo item={asset} />
+            {asset.kitStatus && (
+              <Badge className={kitStatusTone[asset.kitStatus]} data-testid="kit-status">
+                Kit: {kitStatusLabel[asset.kitStatus].toLowerCase()}
+              </Badge>
+            )}
             {asset.archived && <Badge className="bg-dark text-dark-foreground">Arquivado</Badge>}
           </div>
           {asset.tags.length > 0 && (

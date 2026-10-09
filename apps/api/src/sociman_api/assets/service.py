@@ -1,14 +1,18 @@
-"""Biblioteca de assets do perfil (spec 007, contracts/http-api.md, research R1–R7).
+"""Biblioteca de assets (spec 007, contracts/http-api.md, research R1–R7; spec 029: da agência,
+com perfil base opcional).
 
 Toda mutação trava a linha do asset, confere a `version` (menos o envio de arquivo, que só
-acrescenta), recusa perfil arquivado (`perfil_archived`) e asset arquivado (`asset_archived`) e
-grava **uma** versão do asset em `entity_versions` na mesma transação (`history.record`), com
+acrescenta), recusa asset arquivado (`asset_archived`) e grava **uma** versão do asset em `entity_versions` na mesma transação (`history.record`), com
 os arquivos no snapshot. Nada é apagado: arquivos e assets são arquivados, e a reversão (só o
 dono) arquiva o que não existia na versão alvo.
 
 O envio de arquivo confere o HD (`datadir.ensure_writable`) **antes** de ler o corpo, lê até
 20 MB, valida pelo conteúdo com a classe técnica do tipo (`tipos.IMAGE_KIND`) e grava o objeto
-no bucket `imagens` com a chave de sempre (`perfis/{perfil_id}/{uuid4}.{ext}`).
+no bucket `imagens` (`imaging.object_key`: `perfis/{perfil_id}/…` ou, sem perfil base,
+`agencia/imagens/…`).
+
+Spec 029: criar com um perfil base arquivado continua recusado (`perfil_archived`), mas o item de
+um perfil arquivado segue editável (FR-010); o perfil base muda pelo PATCH, numa versão.
 """
 
 import uuid
@@ -22,12 +26,21 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from sociman_api import datadir, history, imaging, midia, storage
-from sociman_api.assets import schemas, tipos
-from sociman_api.assets.models import Asset, AssetFile, AssetTipo, FileRole, sorted_files
-from sociman_api.assets.usos import UsoImagem, usos_do_perfil
+from sociman_api.assets import padrao, schemas, service_padrao, tipos
+from sociman_api.assets.models import (
+    Asset,
+    AssetFile,
+    AssetOrigem,
+    AssetTipo,
+    FileRole,
+    sorted_files,
+)
+from sociman_api.assets.usos import UsoImagem, usos_das_imagens
 from sociman_api.auth.deps import Actor
 from sociman_api.errors import ApiError
+from sociman_api.estudio.nomes import perfil_nomes
 from sociman_api.ia import aplicacao
+from sociman_api.perfis import base as perfil_base
 from sociman_api.perfis.models import Image, ImageKind, Perfil
 from sociman_api.perfis.platforms import suggest_slug
 from sociman_api.perfis.schemas import ImageRef, ImageUrls, VersionsList
@@ -46,6 +59,7 @@ NOT_FOUND = "Asset não encontrado"
 POSE_LABEL_IN_USE = "Já existe uma pose com esse rótulo neste avatar"
 _TEXT_FIELDS = ("name", "description", "tags", "prompt", "voice_tone", "image_rules")
 _FILE_FIELDS = ("look", "uso", "label", "quando_usar", "notes")
+VARIACAO_LABEL_IN_USE = "Já existe uma variação com esse rótulo neste cenário"
 
 
 # ---- auxiliares ----
@@ -57,19 +71,35 @@ def get_asset_or_404(db: Session, asset_id: uuid.UUID, lock: bool = False) -> As
     return asset
 
 
-def _perfil_ativo(db: Session, perfil_id: uuid.UUID) -> Perfil:
+def _perfil_ativo(db: Session, perfil_id: uuid.UUID | None) -> Perfil | None:
+    """O perfil base de um item novo: sem perfil passa; arquivado é recusado."""
+    if perfil_id is None:
+        return None
     perfil = get_perfil_or_404(db, perfil_id)
     if perfil.archived:
         raise ApiError(409, "perfil_archived", "O perfil está arquivado")
     return perfil
 
 
+def perfil_base_novo(db: Session, perfil_id: uuid.UUID | None) -> None:
+    """O `perfilId` do corpo das rotas da agência: inexistente → 400 `perfil_invalido`;
+    arquivado → 409 `perfil_archived` (só a edição aceita perfil arquivado)."""
+    if perfil_base.perfil_existente(db, perfil_id) is not None:
+        _perfil_ativo(db, perfil_id)
+
+
+def usos_de(db: Session, assets: Iterable[Asset]) -> dict[uuid.UUID, list[UsoImagem]]:
+    """Os usos (em todos os perfis, FR-015) das imagens desses assets."""
+    return usos_das_imagens(db, [f.image_id for a in assets for f in a.arquivos])
+
+
 def _editavel(db: Session, asset_id: uuid.UUID, version: int | None) -> Asset:
-    """Trava o asset, confere a versão, o perfil e o arquivamento (para editar)."""
+    """Trava o asset, confere a versão e o arquivamento (para editar)."""
     asset = get_asset_or_404(db, asset_id, lock=True)
     if version is not None:
         history.check_version(asset, version, LABEL)
-    _perfil_ativo(db, asset.perfil_id)
+    if asset.revogado:  # spec 025
+        raise service_padrao.consentimento_revogado()
     if asset.archived:
         raise ApiError(409, "asset_archived", "Restaure o asset antes de editar")
     return asset
@@ -116,7 +146,15 @@ def _flush_labels(db: Session) -> None:
     except IntegrityError as exc:
         if "uq_asset_files_pose_label" in str(exc.orig):
             raise _pose_label_in_use() from exc
+        if "uq_asset_files_variacao_label" in str(exc.orig):  # spec 025
+            raise ApiError(409, "variacao_label_in_use", VARIACAO_LABEL_IN_USE) from exc
         raise
+
+
+def variacao_label_taken(asset: Asset, label: str, exclude: uuid.UUID | None = None) -> bool:
+    wanted = label.lower()
+    return any(f.label is not None and f.label.lower() == wanted and f.id != exclude
+               for f in asset.active_files(FileRole.variacao))
 
 
 def _renumber(asset: Asset, role: FileRole) -> None:
@@ -146,7 +184,8 @@ def _images(db: Session, ids: Iterable[uuid.UUID | None]) -> dict[uuid.UUID, Ima
 
 def _uso_out(file_id: uuid.UUID, uso: UsoImagem) -> schemas.Uso:
     return schemas.Uso(origem=uso.origem, rotulo=uso.rotulo, campo=uso.campo, file_id=file_id,
-                       bloqueia=uso.bloqueia, href=uso.href)
+                       bloqueia=uso.bloqueia, href=uso.href, perfil_id=uso.perfil_id,
+                       perfil_nome=uso.perfil_nome)
 
 
 def asset_usos(asset: Asset, usos: dict[uuid.UUID, list[UsoImagem]]) -> list[schemas.Uso]:
@@ -161,25 +200,29 @@ def _in_use_error(code: str, prefix: str, usos: list[schemas.Uso]) -> ApiError:
 
 
 def _blocking(db: Session, asset: Asset, files: Sequence[AssetFile]) -> list[schemas.Uso]:
-    usos = usos_do_perfil(db, asset.perfil_id)
-    return [_uso_out(f.id, u) for f in files for u in usos.get(f.image_id, []) if u.bloqueia]
+    por_imagem = usos_das_imagens(db, [f.image_id for f in files])
+    return [_uso_out(f.id, u) for f in files for u in por_imagem.get(f.image_id, [])
+            if u.bloqueia]
 
 
 def _download_name(perfil: Perfil | None, asset: Asset, f: AssetFile, image: Image) -> str:
     """`<slug-do-perfil>-<nome-do-asset>-<n>.<ext>` (contracts, Mídia)."""
     stem = suggest_slug(asset.name) or "asset"
-    slug = perfil.slug if perfil is not None else "perfil"
+    slug = perfil.slug if perfil is not None else "agencia"
     return f"{slug}-{stem}-{f.position + 1}{PurePath(image.object_key).suffix}"
 
 
 def asset_download_name(db: Session, image: Image) -> str:
     """Nome do `?download=1` do link `imagem`; imagem fora da biblioteca usa o id."""
     f = db.scalar(select(AssetFile).where(AssetFile.image_id == image.id))
-    perfil = db.get(Perfil, image.perfil_id)
+    perfil = db.get(Perfil, image.perfil_id) if image.perfil_id else None
     if f is None:
-        slug = perfil.slug if perfil is not None else "perfil"
+        slug = perfil.slug if perfil is not None else "agencia"
         return f"{slug}-imagem-{image.id.hex[:8]}{PurePath(image.object_key).suffix}"
-    return _download_name(perfil, db.get(Asset, f.asset_id), f, image)
+    asset = db.get(Asset, f.asset_id)
+    if asset.perfil_id != image.perfil_id:  # o nome segue o perfil base atual do asset
+        perfil = db.get(Perfil, asset.perfil_id) if asset.perfil_id else None
+    return _download_name(perfil, asset, f, image)
 
 
 def _file_out(f: AssetFile, image: Image, users: dict) -> schemas.AssetFile:
@@ -192,51 +235,68 @@ def _file_out(f: AssetFile, image: Image, users: dict) -> schemas.AssetFile:
         has_alpha=image.kind == ImageKind.watermark, link=link,
         download_url=f"{link}?download=1", created_at=f.created_at,
         created_by=users.get(f.created_by) if f.created_by else None,
+        slot=f.slot, geracao_id=f.geracao_id,
+        origem_arquivo="gerado" if f.geracao_id else "enviado",
     )
 
 
 def _summary_fields(asset: Asset, images: dict[uuid.UUID, Image],
-                    usos: dict[uuid.UUID, list[UsoImagem]]) -> dict[str, Any]:
+                    usos: dict[uuid.UUID, list[UsoImagem]],
+                    nomes: dict[uuid.UUID, str]) -> dict[str, Any]:
     cover = None
     if asset.primary_file_id is not None:
         primary = next((f for f in asset.arquivos if f.id == asset.primary_file_id), None)
         if primary is not None and primary.image_id in images:
             cover = image_ref(images[primary.image_id])
     return {
-        "id": asset.id, "perfil_id": asset.perfil_id, "tipo": asset.tipo, "name": asset.name,
+        "id": asset.id, "perfil_id": asset.perfil_id,
+        "perfil_nome": nomes.get(asset.perfil_id) if asset.perfil_id else None,
+        "tipo": asset.tipo, "name": asset.name,
         "tags": list(asset.tags), "cover": cover, "file_count": len(asset.active_files()),
         "in_use": any(usos.get(f.image_id) for f in asset.arquivos),
         "archived": asset.archived, "version": asset.version, "updated_at": asset.updated_at,
+        "kit_status": asset.kit_status,
     }
 
 
-def summaries_out(db: Session, perfil_id: uuid.UUID,
-                  assets: Sequence[Asset]) -> list[schemas.AssetSummary]:
-    usos = usos_do_perfil(db, perfil_id) if assets else {}
+def summaries_out(db: Session, assets: Sequence[Asset]) -> list[schemas.AssetSummary]:
+    """Uma página da lista: usos, capas e nomes de perfil em consultas por página (sem N+1)."""
+    perfis = [a.perfil_id for a in assets]
+    por_imagem = usos_de(db, assets)
     primaries = {f.id: f.image_id for a in assets for f in a.arquivos
                  if f.id == a.primary_file_id}
     images = _images(db, primaries.values())
-    return [schemas.AssetSummary(**_summary_fields(a, images, usos)) for a in assets]
+    nomes = perfil_nomes(db, perfis)
+    return [schemas.AssetSummary(**_summary_fields(a, images, por_imagem, nomes))
+            for a in assets]
 
 
 def asset_out(db: Session, asset: Asset,
-              usos: dict[uuid.UUID, list[UsoImagem]] | None = None) -> schemas.Asset:
+              usos: dict[uuid.UUID, list[UsoImagem]] | None = None,
+              actor: Actor | None = None) -> schemas.Asset:
     db.flush()
     db.refresh(asset)  # updated_at vem do banco
     if usos is None:
-        usos = usos_do_perfil(db, asset.perfil_id)
+        usos = usos_de(db, [asset])
     files = sorted_files(asset.arquivos)
     images = _images(db, [f.image_id for f in files])
     users = user_refs(db, [asset.created_by, asset.updated_by]
                       + [f.created_by for f in files])
     return schemas.Asset(
-        **_summary_fields(asset, images, usos),
+        **_summary_fields(asset, images, usos, perfil_nomes(db, [asset.perfil_id])),
         description=asset.description, prompt=asset.prompt, voice_tone=asset.voice_tone,
         image_rules=asset.image_rules, primary_file_id=asset.primary_file_id,
         files=[_file_out(f, images[f.image_id], users) for f in files],
         created_at=asset.created_at,
         created_by=users.get(asset.created_by) if asset.created_by else None,
         updated_by=users.get(asset.updated_by) if asset.updated_by else None,
+        # Spec 025: o cadastro padronizado (a prova do consentimento não sai para o MCP).
+        origem=asset.origem,
+        consentimento=service_padrao.consentimento_out(
+            db, asset.consentimento, para_mcp=actor is not None and actor.kind == "mcp_client"),
+        voz_id=asset.voz_id, voz_padrao=service_padrao.voz_padrao_out(db, asset),
+        identidade=asset.identidade, kit=service_padrao.kit_out(db, asset),
+        revogado=asset.revogado,
     )
 
 
@@ -246,10 +306,12 @@ def file_out(out: schemas.Asset, file_id: uuid.UUID) -> schemas.AssetFile:
 
 # ---- consultas ----
 
-def get_asset(db: Session, asset_id: uuid.UUID) -> schemas.AssetDetail:
+def get_asset(db: Session, asset_id: uuid.UUID,
+              actor: Actor | None = None) -> schemas.AssetDetail:
     asset = get_asset_or_404(db, asset_id)
-    usos = usos_do_perfil(db, asset.perfil_id)
-    return schemas.AssetDetail(asset=asset_out(db, asset, usos), usos=asset_usos(asset, usos))
+    por_imagem = usos_de(db, [asset])
+    return schemas.AssetDetail(asset=asset_out(db, asset, por_imagem, actor),
+                               usos=asset_usos(asset, por_imagem))
 
 
 def asset_versions(db: Session, asset_id: uuid.UUID) -> VersionsList:
@@ -259,15 +321,24 @@ def asset_versions(db: Session, asset_id: uuid.UUID) -> VersionsList:
 
 def library_images(db: Session, perfil_id: uuid.UUID, tipos_: Sequence[AssetTipo],
                    q: str | None, limit: int) -> list[schemas.LibraryImage]:
-    """Arquivos ativos de assets ativos dos tipos pedidos, mais recentes primeiro (R6)."""
+    """A rota por perfil (007, obsoleta na 029): a da agência com aquele perfil base."""
     get_perfil_or_404(db, perfil_id)
+    return library_images_agencia(db, perfil_id, tipos_, q, limit)
+
+
+def library_images_agencia(db: Session, filtro: perfil_base.Filtro,
+                           tipos_: Sequence[AssetTipo], q: str | None,
+                           limit: int) -> list[schemas.LibraryImage]:
+    """Arquivos ativos de assets ativos dos tipos pedidos, mais recentes primeiro (R6); spec
+    029: `filtro` None = a biblioteca inteira, `sem` ou um perfil base."""
     stmt = (
         select(AssetFile, Asset, Image)
         .join(Asset, Asset.id == AssetFile.asset_id)
         .join(Image, Image.id == AssetFile.image_id)
-        .where(Asset.perfil_id == perfil_id, Asset.tipo.in_(list(tipos_)),
+        .where(Asset.tipo.in_(list(tipos_)),
                Asset.archived_at.is_(None), AssetFile.archived_at.is_(None))
     )
+    stmt = perfil_base.aplicar_filtro(stmt, Asset.perfil_id, filtro)
     term = (q or "").strip().lower()
     if term:
         stmt = stmt.where(or_(
@@ -277,11 +348,14 @@ def library_images(db: Session, perfil_id: uuid.UUID, tipos_: Sequence[AssetTipo
             Asset.tags.contains([term]),
         ))
     stmt = stmt.order_by(AssetFile.created_at.desc(), AssetFile.id).limit(limit)
+    rows = db.execute(stmt).all()
+    nomes = perfil_nomes(db, [a.perfil_id for _, a, _ in rows])
     return [
         schemas.LibraryImage(image=image_ref(img), asset_id=a.id, asset_name=a.name,
                              asset_tipo=a.tipo, file_id=f.id, label=f.label,
-                             has_alpha=img.kind == ImageKind.watermark)
-        for f, a, img in db.execute(stmt).all()
+                             has_alpha=img.kind == ImageKind.watermark, perfil_id=a.perfil_id,
+                             perfil_nome=nomes.get(a.perfil_id) if a.perfil_id else None)
+        for f, a, img in rows
     ]
 
 
@@ -291,10 +365,10 @@ def escape_like(term: str) -> str:
 
 # ---- criação ----
 
-def create_asset(db: Session, actor: Actor, perfil_id: uuid.UUID,
+def create_asset(db: Session, actor: Actor, perfil_id: uuid.UUID | None,
                  data: schemas.AssetCreate) -> Asset:
     _perfil_ativo(db, perfil_id)
-    values = data.model_dump(exclude={"tipo"})
+    values = data.model_dump(exclude={"tipo", "perfil_id"})
     schemas.check_campos(data.tipo, values)
     asset = Asset(perfil_id=perfil_id, tipo=data.tipo, created_by=actor.user_id,
                   updated_by=actor.user_id, **values)
@@ -304,7 +378,7 @@ def create_asset(db: Session, actor: Actor, perfil_id: uuid.UUID,
     return asset
 
 
-def _store_image(db: Session, actor: Actor, perfil_id: uuid.UUID, tipo: AssetTipo,
+def _store_image(db: Session, actor: Actor, perfil_id: uuid.UUID | None, tipo: AssetTipo,
                  stream: BinaryIO) -> Image:
     """HD conferido, corpo lido até 20 MB, validado pelo conteúdo e gravado no bucket."""
     datadir.ensure_writable()  # HD fora ou cheio: 503/507 antes de ler o corpo
@@ -314,7 +388,7 @@ def _store_image(db: Session, actor: Actor, perfil_id: uuid.UUID, tipo: AssetTip
                                   transparency_message=tipos.transparency_message(tipo),
                                   too_large_message=tipos.TOO_LARGE,
                                   opaque_format_message=tipos.transparency_message(tipo))
-    key = f"perfis/{perfil_id}/{uuid.uuid4()}.{info.ext}"
+    key = imaging.object_key(perfil_id, info.ext)
     # O objeto vai antes do commit; se a transação falhar, sobra um objeto sem referência
     # (nunca apagamos objetos), o que é inofensivo.
     storage.put(key, data, info.content_type)
@@ -340,12 +414,46 @@ def _attach(db: Session, actor: Actor, asset: Asset, image: Image, role: FileRol
     return f
 
 
+def upload_slot(db: Session, actor: Actor, asset: Asset, stream: BinaryIO, slot: str | None,
+                origem: str | None) -> tuple[Asset, AssetFile, list[dict[str, Any]],
+                                             uuid.UUID | None]:
+    """Spec 025 (R16): o envio num slot do kit. A ordem de abertura vale também aqui; o
+    `rosto_origem` enviado define a origem (`upload` ou `pessoa_real`, com consentimento)."""
+    validos = padrao.SLOTS_AVATAR if asset.tipo == AssetTipo.avatar else padrao.SLOTS_CENARIO
+    if slot not in validos:
+        raise schemas.invalid("slot", "slot não se aplica a este tipo")
+    aberto, motivo = padrao.slot_aberto(slot, asset.slots_ativos())
+    if not aberto:
+        raise schemas.invalid("slot", motivo or "slot fechado")
+    nova_origem = None
+    if slot == "rosto_origem":
+        if origem not in ("upload", "pessoa_real"):
+            raise schemas.invalid("origem", "informe upload ou pessoa_real")
+        if origem == "pessoa_real" and not (asset.consentimento or {}).get("nome"):
+            raise ApiError(400, "consentimento_ausente",
+                           "Registre o consentimento da pessoa antes de usar a foto")
+        if asset.origem == AssetOrigem.pessoa_real and origem == "upload":
+            raise schemas.invalid("origem", "este avatar é de pessoa real")
+        nova_origem = AssetOrigem(origem)
+    image = _store_image(db, actor, asset.perfil_id, asset.tipo, stream)
+    avisos, checagem = service_padrao.aplicar_slot(db, actor, asset, [(slot, image)], None,
+                                                   origem=nova_origem)
+    f = asset.slot_ativo(slot)
+    assert f is not None
+    return asset, f, avisos, checagem
+
+
 def upload_file(db: Session, actor: Actor, asset_id: uuid.UUID, stream: BinaryIO,
                 role: FileRole, meta: dict[str, Any]) -> tuple[Asset, AssetFile]:
     """Acrescenta um arquivo (sem `version`: não há atualização perdida). O primeiro vira o
     principal."""
     asset = _editavel(db, asset_id, None)
     schemas.check_file_campos(asset.tipo, role, meta)
+    if role == FileRole.variacao:  # spec 025: rótulo obrigatório e único
+        if not meta.get("label"):
+            raise schemas.invalid("label", "informe o rótulo da variação")
+        if variacao_label_taken(asset, meta["label"]):
+            raise ApiError(409, "variacao_label_in_use", VARIACAO_LABEL_IN_USE)
     if role == FileRole.pose and not meta.get("label"):
         raise schemas.invalid("label", "informe o rótulo da pose")
     if asset.tipo in tipos.SINGLE_FILE and asset.active_files():
@@ -359,7 +467,7 @@ def upload_file(db: Session, actor: Actor, asset_id: uuid.UUID, stream: BinaryIO
     return asset, f
 
 
-def upload_asset(db: Session, actor: Actor, perfil_id: uuid.UUID, stream: BinaryIO,
+def upload_asset(db: Session, actor: Actor, perfil_id: uuid.UUID | None, stream: BinaryIO,
                  tipo: AssetTipo, name: str, tags: list[str]) -> tuple[Asset, AssetFile]:
     """Atalho "um arquivo = um asset" (envio múltiplo e seletores do kit): uma versão só."""
     if tipo not in tipos.SHORTCUT:
@@ -369,7 +477,7 @@ def upload_asset(db: Session, actor: Actor, perfil_id: uuid.UUID, stream: Binary
     return _asset_from_image(db, actor, perfil_id, image, tipo, name, tags)
 
 
-def _asset_from_image(db: Session, actor: Actor, perfil_id: uuid.UUID, image: Image,
+def _asset_from_image(db: Session, actor: Actor, perfil_id: uuid.UUID | None, image: Image,
                       tipo: AssetTipo, name: str, tags: list[str]) -> tuple[Asset, AssetFile]:
     asset = Asset(perfil_id=perfil_id, tipo=tipo, name=name, tags=tags,
                   created_by=actor.user_id, updated_by=actor.user_id)
@@ -404,8 +512,20 @@ def update_asset(db: Session, actor: Actor, asset_id: uuid.UUID,
     demais, é ignorado. Sem mudança real, não grava versão."""
     asset = _editavel(db, asset_id, data.version)
     changes = data.model_dump(exclude_unset=True, exclude={"version", "ia"})
+    voz_mudou = "voz_id" in changes
+    voz_id = changes.pop("voz_id", None)
+    perfil_mudou = "perfil_id" in changes  # spec 029: o perfil base (arquivado é aceito)
+    perfil_id = changes.pop("perfil_id", None)
+    if perfil_mudou:
+        perfil_base.perfil_existente(db, perfil_id)
     schemas.check_campos(asset.tipo, changes)
+    if voz_mudou:  # spec 025 (R15)
+        service_padrao.validar_voz_padrao(db, asset, voz_id)
     before = history.snapshot(asset)
+    if voz_mudou:
+        asset.voz_id = voz_id
+    if perfil_mudou:
+        asset.perfil_id = perfil_id
     for field in _TEXT_FIELDS:
         if field not in changes:
             continue
@@ -504,7 +624,6 @@ def archive_asset(db: Session, actor: Actor, asset_id: uuid.UUID, version: int) 
     """Só o uso no kit bloqueia (Q1 = A); os arquivos ficam como estão."""
     asset = get_asset_or_404(db, asset_id, lock=True)
     history.check_version(asset, version, LABEL)
-    _perfil_ativo(db, asset.perfil_id)
     if asset.archived:
         raise ApiError(409, "conflict", "Este asset já está arquivado")
     blocking = _blocking(db, asset, asset.arquivos)
@@ -520,9 +639,10 @@ def archive_asset(db: Session, actor: Actor, asset_id: uuid.UUID, version: int) 
 def restore_asset(db: Session, actor: Actor, asset_id: uuid.UUID, version: int) -> Asset:
     asset = get_asset_or_404(db, asset_id, lock=True)
     history.check_version(asset, version, LABEL)
-    _perfil_ativo(db, asset.perfil_id)
     if not asset.archived:
         raise ApiError(409, "conflict", "Este asset não está arquivado")
+    if asset.revogado:  # spec 025
+        raise service_padrao.consentimento_revogado()
     before = history.snapshot(asset)
     asset.archived_at = None
     asset.archived_by = None
@@ -538,15 +658,24 @@ def revert_asset(db: Session, actor: Actor, asset_id: uuid.UUID, version: int,
     nova `reverted`. Arquivo que não existia na versão alvo é arquivado (nunca apagado)."""
     asset = get_asset_or_404(db, asset_id, lock=True)
     history.check_version(asset, version, LABEL)
-    _perfil_ativo(db, asset.perfil_id)
+    if asset.revogado:  # spec 025
+        raise service_padrao.consentimento_revogado()
     state = target_state(db, ENTITY, asset, to_version)
     before = history.snapshot(asset)
     now = datetime.now(UTC)
 
     for field in _TEXT_FIELDS:
         setattr(asset, field, state[field])
+    if "perfil_id" in state:  # spec 029: o perfil base da versão alvo (as antigas não têm)
+        asset.perfil_id = uuid.UUID(state["perfil_id"]) if state["perfil_id"] else None
+    # Spec 025 (R17): origem, voz padrão e identidade da versão alvo (o consentimento fica).
+    if "origem" in state:
+        asset.origem = AssetOrigem(state["origem"]) if state["origem"] else None
+        asset.voz_id = uuid.UUID(state["voz_id"]) if state.get("voz_id") else None
+        asset.identidade = state.get("identidade")
     target_files = {uuid.UUID(f["id"]): f for f in state["files"]}
     newly_archived: list[AssetFile] = []
+    restaurar: list[AssetFile] = []
     for f in asset.arquivos:
         snap = target_files.get(f.id)
         archived = True if snap is None else snap["archived"]
@@ -558,7 +687,11 @@ def revert_asset(db: Session, actor: Actor, asset_id: uuid.UUID, version: int,
             f.archived_at, f.archived_by = now, actor.user_id
             newly_archived.append(f)
         elif not archived and f.archived:
-            f.archived_at, f.archived_by = None, None
+            restaurar.append(f)
+    # Arquivar antes de restaurar: os UNIQUE parciais de slot e de variação não colidem.
+    _flush_labels(db)
+    for f in restaurar:
+        f.archived_at, f.archived_by = None, None
     for role in FileRole:
         _renumber(asset, role)
     primary = state["primary_file_id"]
@@ -575,7 +708,12 @@ def revert_asset(db: Session, actor: Actor, asset_id: uuid.UUID, version: int,
     labels = [f.label.lower() for f in asset.active_files(FileRole.pose) if f.label]
     if len(labels) != len(set(labels)):
         raise _pose_label_in_use()
+    variacoes = [f.label.lower() for f in asset.active_files(FileRole.variacao) if f.label]
+    if len(variacoes) != len(set(variacoes)):
+        raise ApiError(409, "variacao_label_in_use", VARIACAO_LABEL_IN_USE)
     _flush_labels(db)
+    if asset.kit_status is not None or asset.slots_ativos():
+        service_padrao.recalcular(asset)
     if history.snapshot(asset) == before:
         raise ApiError(400, "validation_error", "Essa versão é igual à atual")
     _record(db, actor, asset, "reverted", before, {"from_version": to_version})

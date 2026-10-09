@@ -16,7 +16,8 @@ Entidade = Literal["asset", "perfil", "kit", "postagem", "guia", "cena", "aprend
 Idioma = Literal["en", "perfil"]
 UsaGuia = Literal["completo", "so_proibidas"]
 Formato = Literal["texto", "lista", "sugestoes", "textos_postagem", "guia", "variacoes",
-                  "campos_cena", "taxonomia", "classificacao", "analise", "ficha_produto"]
+                  "campos_cena", "taxonomia", "classificacao", "analise", "ficha_produto",
+                  "identidade"]
 TipoCampoId = Literal[
     "avatar.descricao_prompt", "avatar.tom_de_voz", "avatar.regras_imagem",
     "cenario.prompt_ambiente", "asset.nome", "asset.descricao", "perfil.bio", "kit.bordoes",
@@ -25,6 +26,7 @@ TipoCampoId = Literal[
     "cena.acao", "cena.camera", "cena.estilo", "cena.audio", "cena.ajustar",  # spec 010
     "aprendizado.taxonomia", "aprendizado.classificacao", "aprendizado.analise",  # spec 023
     "produto.ficha",  # spec 012
+    "avatar.identidade",  # spec 025
 ]
 
 MAX_SUGESTOES = 10
@@ -167,6 +169,12 @@ _LISTA: tuple[TipoCampo, ...] = (
                "descricao_venda", "precisa_flat"),
               "Produtos › Produto › Ficha", "en", "ficha_produto", Limites(trim=False),
               listar_regras=False, max_tokens=8000, esforco="medium", timeout_s=120.0),
+    # Spec 025 (R4): a checagem de identidade do kit do avatar (passo `avatar.identidade` da 021,
+    # motor `claude`, as 5 imagens). Notas por slot e a descrição fixa para prompts, sem trim.
+    TipoCampo("avatar.identidade", "Checagem de identidade do avatar", "asset",
+              ("prompt", "identidade"), "Assets › Avatar › Kit padrão", "en", "identidade",
+              _PROMPT, frozenset({"avatar"}), usa_guia="so_proibidas", listar_regras=False,
+              max_tokens=4000, esforco="medium", timeout_s=120.0),
 )
 
 TIPOS: dict[str, TipoCampo] = {t.id: t for t in _LISTA}

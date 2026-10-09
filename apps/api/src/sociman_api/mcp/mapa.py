@@ -223,6 +223,36 @@ TOOLS: dict[str, Tool] = {
                        "as pendências e onde é usado. Para sugerir algo, grave uma "
                        "`observacao` no produto com `anotacoes_create`."),
     "produtos_versoes": _versoes("um produto"),
+    # ---- vozes do perfil (spec 025, R18: só leitura) ----
+    "vozes_listar": _l("Listar vozes", "Vozes do perfil (gravação ou sintética), com a situação "
+                       "(rascunho, gerando, revisão, aprovada), a sincronização com o serviço de "
+                       "voz e quantos avatares a usam como padrão.", limite_padrao=20),
+    "vozes_detalhe": _l("Ver voz", "Detalhe de uma voz: tom, descrição (sintética), referência "
+                        "aprovada e a transcrição, análise da gravação, consentimento (sem a "
+                        "prova), avatares que a usam e o último teste."),
+    "vozes_versoes": _versoes("uma voz"),
+    # ---- biblioteca da agência (spec 029: perfil base opcional; as rotas por perfil continuam) ----
+    "assets_listar_agencia": _l("Listar a biblioteca de assets", "Assets da agência inteira "
+                                "(avatares, cenários, fundos, stickers, marcas d'água e imagens), "
+                                "de qualquer perfil base ou sem perfil. Filtre por perfil base "
+                                "(`perfilId`: um id ou `sem`), tipo, tag, busca e arquivados; "
+                                "paginação por `cursor`.", limite_padrao=50),
+    "assets_imagens_agencia": _l("Listar imagens da biblioteca", "Imagens da agência de um tipo, "
+                                 "com o perfil base de cada uma e busca por texto.",
+                                 limite_padrao=50),
+    "cenas_listar_agencia": _l("Listar cenas da agência", "Cenas de qualquer perfil base ou sem "
+                               "perfil, com status, filtros e paginação (`cursor`).",
+                               limite_padrao=50),
+    "produtos_listar_agencia": Tool(
+        "Listar produtos da agência", "Produtos do TikTok Shop de qualquer perfil base ou sem "
+        "perfil. Por padrão, só os aprovados (`status=aprovado`). Filtre por perfil base "
+        "(`perfilId`: um id ou `sem`), estado, busca e arquivados; paginação por `cursor`.",
+        limite_padrao=50, padroes=(("status", ["aprovado"]),)),
+    "vozes_listar_agencia": _l("Listar vozes da agência", "Vozes de qualquer perfil base ou sem "
+                               "perfil, com a situação e a sincronização.", limite_padrao=20),
+    "estudio_resumo": _l("Resumo do AI Studio", "Quantos avatares, cenários, assets, cenas, "
+                         "produtos e vozes ativos existem (de um perfil base, sem perfil ou no "
+                         "total)."),
     # ---- anotações (leitura) ----
     "anotacoes_list": _l("Listar anotações e propostas", "Anotações e propostas presas aos itens, "
                          "com filtros (alvo, perfil, situação, tipo, cliente) e paginação "
@@ -335,6 +365,19 @@ _PROIBIDAS_DONO |= {op: "produtos: cadastro humano (spec 012)" for op in (
     "produtos_variante_arquivar", "produtos_variante_restaurar", "produtos_refazer_flat",
     "produtos_refazer_recorte")}
 
+# Spec 025 (R18): revogar e reverter são do princípio VII; o resto do cadastro é ato humano.
+_PROIBIDAS_DONO |= {op: "princípio VII: revogação e reversão só do dono humano (spec 025)"
+                    for op in ("vozes_revert", "assets_consentimento_revogar",
+                               "vozes_consentimento_revogar", "assets_consentimento_previa")}
+_PROIBIDAS_DONO |= {op: "cadastro é ato humano (009 FR-023, spec 025)" for op in (
+    "vozes_criar", "vozes_update", "vozes_archive", "vozes_restore",
+    "assets_consentimento_registrar", "vozes_consentimento_registrar")}
+
+# Spec 029: as versões da agência das mesmas escritas humanas.
+_PROIBIDAS_DONO |= {op: "ato humano (spec 029, como a rota por perfil)" for op in (
+    "geracoes_pedir_agencia", "audios_enviar_agencia", "produtos_criar_agencia",
+    "vozes_criar_agencia")}
+
 PROIBIDAS: dict[str, str] = {**_PROIBIDAS_I, **_PROIBIDAS_II, **_PROIBIDAS_VII,
                              **_PROIBIDAS_DONO, **_PROIBIDAS_PESSOAS, **_PROIBIDAS_MCP}
 
@@ -381,6 +424,12 @@ _FORA_DONO |= {op: "IA paga ou dado de dono" for op in (
 # Spec 021: as leituras da geração local ficam fora do primeiro corte do MCP.
 _FORA_DONO |= {op: "geração local só pela interface no primeiro corte (spec 021)" for op in (
     "geracoes_listar", "geracoes_detalhe", "geracoes_versoes", "audios_detalhe")}
+
+# Spec 029: criar na biblioteca da agência e ler as gerações de um item seguem as da 007/010/021.
+_FORA_ESCRITAS |= {op: "escrita fora do primeiro corte (spec 029)" for op in (
+    "assets_criar_agencia", "cenas_criar_agencia")}
+_FORA_UPLOAD |= {"assets_criar_arquivo_agencia": "upload ou binário (só pela interface)"}
+_FORA_DONO |= {"geracoes_listar_agencia": "geração local só pela interface (spec 029)"}
 
 FORA: dict[str, str] = {**_FORA_UPLOAD, **_FORA_DEPRECATED, **_FORA_INFRA, **_FORA_ESCRITAS,
                         **_FORA_DONO}

@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
+import { PerfilBaseField } from "@/components/estudio/PerfilBaseField";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
@@ -19,7 +20,7 @@ import {
   FOTOS_MAX,
   fotoDoErro,
   LIM,
-  produtosKey,
+  type Produto,
 } from "@/lib/produtos";
 
 // Uma foto escolhida: a prévia é data: (a CSP não aceita blob:) e o erro é o da checagem local ou o
@@ -64,8 +65,19 @@ export async function prepararFoto(arquivo: File): Promise<FotoEscolhida> {
 
 // "Novo produto" (spec 012, US1, T022): nome, até 6 fotos (uma por cor ou variante, na ordem da
 // lista), observação e o link da loja (opcional). Criar já pede a ficha ao Claude; a tela do produto
-// acompanha o resto.
-export function NovoProdutoDialog({ perfilId, open, onOpenChange }: { perfilId: string; open: boolean; onOpenChange: (o: boolean) => void }) {
+// acompanha o resto. Spec 029: o perfil base nasce com o filtro da lista (ou o da cena) e pode ficar
+// vazio; `onCriado` (criação no lugar da cena) fica na tela em vez de abrir o produto.
+export function NovoProdutoDialog({
+  perfilId,
+  open,
+  onOpenChange,
+  onCriado,
+}: {
+  perfilId: string | null;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onCriado?: (produto: Produto) => void;
+}) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -77,6 +89,7 @@ export function NovoProdutoDialog({ perfilId, open, onOpenChange }: { perfilId: 
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const [progresso, setProgresso] = useState(0);
+  const [perfilBase, setPerfilBase] = useState<string | null>(perfilId);
 
   function abrir(o: boolean) {
     if (o) {
@@ -86,6 +99,7 @@ export function NovoProdutoDialog({ perfilId, open, onOpenChange }: { perfilId: 
       setFotos([]);
       setErrors({});
       setError(null);
+      setPerfilBase(perfilId);
     }
     onOpenChange(o);
   }
@@ -123,11 +137,12 @@ export function NovoProdutoDialog({ perfilId, open, onOpenChange }: { perfilId: 
     setError(null);
     setProgresso(0);
     try {
-      const produto = await criarProduto(perfilId, { name, obs, urlLoja, fotos: fotos.map((f) => f.arquivo) }, setProgresso);
+      const produto = await criarProduto(perfilBase, { name, obs, urlLoja, fotos: fotos.map((f) => f.arquivo) }, setProgresso);
       toast.success(fotos.length > 0 ? "Produto criado. A ficha técnica já foi pedida." : "Produto criado como rascunho.");
-      await queryClient.invalidateQueries({ queryKey: produtosKey(perfilId) });
+      await queryClient.invalidateQueries({ queryKey: ["produtos"] });
       onOpenChange(false);
-      void navigate(`/app/produtos/${produto.id}`);
+      if (onCriado) onCriado(produto);
+      else void navigate(`/app/produtos/${produto.id}`);
     } catch (err) {
       const i = fotoDoErro(err);
       if (i !== null && fotos[i]) {
@@ -157,6 +172,8 @@ export function NovoProdutoDialog({ perfilId, open, onOpenChange }: { perfilId: 
               <Input id={id} value={name} maxLength={LIM.nome} aria-invalid={invalid} aria-describedby={describedBy} onChange={(e) => setName(e.target.value)} />
             )}
           </Field>
+
+          <PerfilBaseField value={perfilBase} onChange={setPerfilBase} disabled={busy} hint="O guia e as palavras proibidas deste perfil entram na ficha técnica." />
 
           <Field
             label="Fotos"

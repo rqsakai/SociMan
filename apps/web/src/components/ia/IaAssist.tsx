@@ -65,7 +65,11 @@ const nova = <V,>(): Sessao<V> => ({ aberto: false, sessaoId: novoSessaoId(), in
 
 export interface IaAssistProps<V extends IaValorCampo> {
   tipo: TipoCampoId;
-  perfilId: string;
+  // O perfil do pedido (campos do perfil, do kit e da postagem; na cena nova, o perfil base dela).
+  perfilId: string | null;
+  // Spec 029 (FR-008), nos campos de asset e de cena: o perfil base da chamada (null = nenhum, sem
+  // guia). Ausente, a API usa o perfil base do item.
+  perfilBaseId?: string | null;
   alvo: IaAlvo;
   value: V;
   onSave: IaOnSave<V>;
@@ -86,6 +90,7 @@ export interface IaAssistProps<V extends IaValorCampo> {
 export function IaAssist<V extends IaValorCampo>({
   tipo,
   perfilId,
+  perfilBaseId,
   alvo,
   value,
   onSave,
@@ -128,7 +133,8 @@ export function IaAssist<V extends IaValorCampo>({
     try {
       const { chamada: nova } = await api.ia.gerar({
         tipoCampo: tipo,
-        perfilId,
+        ...(perfilId ? { perfilId } : {}),
+        ...(perfilBaseId !== undefined ? { perfilBaseId } : {}),
         alvo,
         valorAtual: valorAtual(formato, value),
         instrucao: s.instrucao.trim(),
@@ -400,7 +406,7 @@ function GuiaUsado({ chamada }: { chamada: IaChamada }) {
   return (
     <p className="text-xs text-muted-foreground">
       Guia usado:{" "}
-      {vp != null && (
+      {vp != null && chamada.perfil && (
         <Link to={guiaPerfilPath(chamada.perfil.id)} className="underline-offset-4 hover:underline">
           perfil v{vp}
         </Link>

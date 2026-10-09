@@ -112,10 +112,10 @@ class Cena(_Versioned, AuditMixin, Base):
         "avatar_version_congelada", "cenario_version_congelada", "tomada_escolhida_id",
         "archived", "perfil_id", "duplicada_de",
     )
-    __immutable_fields__ = ("perfil_id", "duplicada_de")
+    __immutable_fields__ = ("duplicada_de",)  # 029: o perfil base é editável
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    perfil_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("perfis.id"), nullable=False)
+    perfil_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("perfis.id"))  # 029: opcional
     nome: Mapped[str] = mapped_column(Text, nullable=False)
     avatar_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("assets.id"))
     avatar_arquivo_id: Mapped[uuid.UUID | None] = mapped_column(Uuid,

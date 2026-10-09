@@ -564,3 +564,6 @@ Detalhe técnico do insumo que a spec não precisa expor, para o `/speckit-plan`
 - **Referência técnica:** `../comfyui-docker/pipeline/PADROES.md`, `pipeline/avatares.py` (instruções
   do kit, `NOTA_MINIMA = 7`, regex `PROIBIDO`), `pipeline/voz.py` e `tts_service/app.py` (`_analyze`,
   janela 8–13 s, testes de 2 frases, `/voices/approve` com `substituir`). Só leitura.
+
+## Correção do dono (2026-10-09): menu AI Studio
+- O dono pediu uma entrada própria para montar vídeos, sem passar pela página do perfil: o item **AI Studio** no menu (`/app/estudio`, logo abaixo de Perfis). Nele se escolhe o **perfil do vídeo** (`?perfil=`, lembrado no aparelho; com um perfil só, ele já vem escolhido) e as abas seguem a ordem de montar o vídeo: 1. Avatares e cenários (kit padrão), 2. Produtos (012), 3. Vozes, 4. Cenas (010). As abas são as mesmas telas da página do perfil (sem cópia); trocar de aba ou de perfil limpa os filtros. Nada muda na API.

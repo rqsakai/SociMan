@@ -6,22 +6,32 @@ dos fakes do pytest (`apps/api/tests/fakes/`):
   `history/{id}` (fica "rodando" por `segundos` e depois sai com a imagem), `view` (PNG
   sintético 768×1344 com a cor tirada da seed, feito com `zlib`/`struct`), `free`, `interrupt` e
   `queue` (GET e o `delete`);
-- `/shop-tts/*`: só `health` e `unload` (o motor `tts` real chega com a 025; o e2e não pede voz);
+- `/shop-tts/*` (contrato `v2`, spec 025): `health`, `voices`, `unload`, `v2/voices/register`
+  (multipart), `v2/voices/design`, `v2/voices/import` (multipart), `v2/tts`, `v2/tts_paragraph`,
+  `GET v2/lotes/{lote}/{arquivo}` (WAV sintético de 24 kHz), `DELETE v2/lotes/{lote}` e
+  `DELETE v2/voices/{nome}`, como `apps/api/tests/fakes/shoptts_fake.py`;
 - `/dockerctl/comfyui/memoria[/subir|/devolver]`: o limite de RAM do ComfyUI, com o token fixo
   de teste (`DOCKERCTL_TOKEN` do `docker-compose.e2e.yml`);
 - controle, só do e2e: `POST /geracao-e2e/gpu {ocupada}`, `POST /geracao-e2e/lento {segundos}`,
   `GET /geracao-e2e/memoria` (os limites depois de cada ação) e `GET /geracao-e2e/pedidos`
-  (os prompts recebidos, com a seed e o bloco).
+  (os prompts recebidos, com a seed e o bloco), `GET /geracao-e2e/vozes-tts` (as vozes do
+  shop-tts falso, as importadas e as apagadas).
 """
 
+import hashlib
 import hmac
+import io
 import json
+import math
 import re
 import struct
 import threading
 import time
 import uuid
+import wave
 import zlib
+from email.parser import BytesParser
+from email.policy import HTTP
 
 GiB = 1024**3
 NORMAL, JOB = 12 * GiB, 28 * GiB
@@ -120,12 +130,166 @@ def comfyui(metodo: str, caminho: str, corpo: bytes, query: str = ""
     return 404, {"detail": "Not Found"}, "json"
 
 
-def shop_tts(metodo: str, caminho: str) -> tuple[int, dict]:
+TAXA = 24000
+_NOME_VOZ = re.compile(r"^[a-z0-9_]{2,40}$")
+_NOME_ARQ = re.compile(r"^[A-Za-z0-9_.-]{1,120}$")
+VOZES: dict[str, dict] = {n: {"file": f"/vozes/ref_{n}.wav", "text": "ref", "sha256": "0" * 64}
+                          for n in ("animada", "calma", "explicativa")}
+IMPORTADAS: list[dict] = []
+VOZES_APAGADAS: list[str] = []
+LOTES: dict[str, dict[str, bytes]] = {}
+
+
+def _wav(segundos: float = 1.0, freq: float = 440.0) -> bytes:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(TAXA)
+        n = int(TAXA * segundos)
+        w.writeframes(b"".join(struct.pack("<h", int(8000 * math.sin(2 * math.pi * freq * i
+                                                                        / TAXA)))
+                               for i in range(n)))
+    return buf.getvalue()
+
+
+def _multipart(corpo: bytes, content_type: str) -> dict[str, tuple[str | None, bytes]]:
+    """nome → (arquivo, bytes)."""
+    msg = BytesParser(policy=HTTP).parsebytes(
+        f"Content-Type: {content_type}\r\n\r\n".encode() + corpo)
+    partes = {}
+    for parte in msg.iter_parts():
+        nome = parte.get_param("name", header="content-disposition")
+        if nome:
+            partes[nome] = (parte.get_filename(), parte.get_payload(decode=True) or b"")
+    return partes
+
+
+def _lote(corpo: dict, arquivos: dict[str, bytes]) -> tuple[int, dict]:
+    lid = uuid.uuid4().hex
+    with _lock:
+        LOTES[lid] = arquivos
+    corpo["lote_id"] = lid
+    return 200, corpo
+
+
+def _candidatos(n: int, transcricao: str) -> tuple[list[dict], dict[str, bytes]]:
+    cands, arquivos = [], {}
+    for k in range(1, n + 1):
+        inicio = round(0.5 + 9.0 * (k - 1), 2)
+        cands.append({"n": k, "arquivo": f"candidato_{k}.wav", "teste": f"teste_{k}.wav",
+                      "segundos": 1.0, "similaridade": round(0.97 - 0.01 * (k - 1), 3),
+                      "transcricao": transcricao,
+                      "janela": {"inicio_s": inicio, "fim_s": round(inicio + 8.5, 2)}})
+        arquivos[f"candidato_{k}.wav"] = _wav(1.0, 220.0 + 20 * k)
+        arquivos[f"teste_{k}.wav"] = _wav(1.0, 330.0 + 20 * k)
+    return cands, arquivos
+
+
+def _n(valor) -> int | None:
+    try:
+        n = int(valor)
+    except (TypeError, ValueError):
+        return None
+    return n if 1 <= n <= 3 else None
+
+
+def _texto(partes: dict, nome: str) -> str:
+    return partes[nome][1].decode() if nome in partes else ""
+
+
+def shop_tts(metodo: str, caminho: str, corpo: bytes = b"", content_type: str = ""
+             ) -> tuple[int, dict | bytes | None, str]:
+    """(status, corpo, content-type) para `/shop-tts/<caminho>`; corpo None = 204."""
     if metodo == "GET" and caminho == "/health":
-        return 200, {"status": "ok", "loaded": False, "voices": [], "vram_free_mb": 14000}
+        return 200, {"status": "ok", "loaded": False, "voices": list(VOZES),
+                     "vram_free_mb": 14000}, "json"
+    if metodo == "GET" and caminho == "/voices":
+        return 200, VOZES, "json"
     if metodo == "POST" and caminho == "/unload":
-        return 200, {"unloaded": True}
-    return 404, {"detail": "Not Found"}
+        return 200, {"unloaded": True}, "json"
+    if metodo == "POST" and caminho == "/v2/voices/register":
+        partes = _multipart(corpo, content_type)
+        arq = partes.get("arquivo")
+        n = _n(_texto(partes, "n"))
+        if not arq or not arq[1] or not _NOME_VOZ.match(_texto(partes, "nome")) or n is None:
+            return 422, {"detail": "pedido inválido"}, "json"
+        comprimido = (arq[0] or "").lower().endswith((".ogg", ".opus", ".m4a", ".mp3"))
+        transcricao = "Oi, gente! Hoje eu vou mostrar um achadinho incrível para vocês."
+        cands, arquivos = _candidatos(n, transcricao)
+        avisos = ["O áudio parece comprimido (WhatsApp); grave de novo pela interface de "
+                  "áudio se der"] if comprimido else []
+        return (*_lote({"analise": {"codec": "opus" if comprimido else "pcm_s16le",
+                                    "bitrate": 32000 if comprimido else 384000,
+                                    "sample_rate": 48000 if comprimido else TAXA,
+                                    "piso_ruido_dbfs": -58.0, "snr_db": 36.5,
+                                    "clipping_pct": 0.0, "duracao_s": 21.4, "avisos": avisos},
+                        "transcricao": transcricao, "candidatos": cands}, arquivos), "json")
+    if metodo == "POST" and caminho == "/v2/voices/design":
+        dados = json.loads(corpo or b"{}")
+        n = _n(dados.get("n"))
+        if not _NOME_VOZ.match(str(dados.get("nome") or "")) or n is None or not str(
+                dados.get("descricao") or "").strip():
+            return 422, {"detail": "pedido inválido"}, "json"
+        texto = dados.get("texto") or "Oi! Essa é a minha voz, prazer em te conhecer."
+        cands, arquivos = _candidatos(n, texto)
+        return (*_lote({"transcricao": texto, "candidatos": cands}, arquivos), "json")
+    if metodo == "POST" and caminho == "/v2/voices/import":
+        partes = _multipart(corpo, content_type)
+        nome, ref = _texto(partes, "nome"), partes.get("ref")
+        if not _NOME_VOZ.match(nome) or not ref or not _texto(partes, "ref_texto").strip():
+            return 422, {"detail": "pedido inválido"}, "json"
+        sha = hashlib.sha256(ref[1]).hexdigest()
+        with _lock:
+            VOZES[nome] = {"file": f"/vozes/ref_{nome}.wav",
+                           "text": _texto(partes, "ref_texto"), "sha256": sha}
+            IMPORTADAS.append({"nome": nome, "sha256": sha})
+        return 200, {"nome": nome, "sha256": sha,
+                     "importada_em": time.strftime("%Y-%m-%dT%H:%M:%S+00:00",
+                                                   time.gmtime())}, "json"
+    if metodo == "POST" and caminho in ("/v2/tts", "/v2/tts_paragraph"):
+        dados = json.loads(corpo or b"{}")
+        frases = dados.get("sentences")
+        if "out_dir" in dados or not isinstance(frases, list) or not frases:
+            return 422, {"detail": "pedido inválido"}, "json"
+        voz = dados.get("voice", "animada")
+        if voz not in VOZES:
+            return 404, {"detail": f"voz desconhecida: {voz}"}, "json"
+        seed = int(dados.get("seed", 1))
+        if caminho.endswith("paragraph"):
+            total = float(len(frases))
+            tempos = [{"index": i, "text": f, "start": float(i - 1), "end": float(i)}
+                      for i, f in enumerate(frases, 1)]
+            return (*_lote({"voice": voz, "arquivo": "narracao.wav", "frases": tempos,
+                            "sample_rate": TAXA, "seconds": total, "similarity": 0.97,
+                            "seed": seed, "transcript": " ".join(frases), "ok": True},
+                           {"narracao.wav": _wav(total)}), "json")
+        saida, arquivos = [], {}
+        for i, f in enumerate(frases, 1):
+            nome = f"frase_{i:02d}.wav"
+            saida.append({"index": i, "text": f, "arquivo": nome, "similarity": 0.97,
+                          "seconds": 1.0, "seed": seed, "transcript": f, "ok": True})
+            arquivos[nome] = _wav(1.0, 300.0 + 10 * i)
+        return (*_lote({"voice": voz, "sample_rate": TAXA, "total_seconds": float(len(frases)),
+                        "frases": saida}, arquivos), "json")
+    partes_path = caminho.strip("/").split("/")
+    if partes_path[:2] == ["v2", "lotes"] and len(partes_path) in (3, 4):
+        if not all(_NOME_ARQ.match(x) and ".." not in x for x in partes_path[2:]):
+            return 400, {"detail": "caminho inválido"}, "json"
+        if metodo == "GET" and len(partes_path) == 4:
+            dados = LOTES.get(partes_path[2], {}).get(partes_path[3])
+            return (200, dados, "audio/wav") if dados else (404, {"detail": "Not Found"}, "json")
+        if metodo == "DELETE" and len(partes_path) == 3:
+            with _lock:
+                LOTES.pop(partes_path[2], None)
+            return 204, None, "json"
+    if partes_path[:2] == ["v2", "voices"] and len(partes_path) == 3 and metodo == "DELETE":
+        with _lock:
+            if VOZES.pop(partes_path[2], None) is None:
+                return 404, {"detail": "voz não existe"}, "json"
+            VOZES_APAGADAS.append(partes_path[2])
+        return 204, None, "json"
+    return 404, {"detail": "Not Found"}, "json"
 
 
 def _estado_memoria() -> dict:
@@ -161,4 +325,7 @@ def controle(metodo: str, caminho: str, corpo: bytes) -> tuple[int, dict]:
         return 200, {"historico": list(MEMORIA), **_estado_memoria()}
     if metodo == "GET" and caminho == "/geracao-e2e/pedidos":
         return 200, {"pedidos": list(PEDIDOS)}
+    if metodo == "GET" and caminho == "/geracao-e2e/vozes-tts":
+        return 200, {"vozes": sorted(VOZES), "importadas": list(IMPORTADAS),
+                     "apagadas": list(VOZES_APAGADAS)}
     return 404, {"detail": "Not Found"}

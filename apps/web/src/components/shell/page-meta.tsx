@@ -7,6 +7,8 @@
  * - title: texto mostrado na barra (não é heading: a página continua com o próprio <h1>).
  * - breadcrumbs: itens ANTES da página atual; o último item da trilha é o próprio title.
  *   "Início" entra sozinho no começo.
+ * - ativo: o `to` do item do menu que fica marcado (029: o detalhe do avatar marca "Avatares", que a
+ *   rota /app/assets/:id sozinha não sabe).
  * Sem usePageMeta, a barra usa o item do menu que casa com a URL (nav.ts).
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
@@ -19,6 +21,7 @@ export interface Crumb {
 export interface PageMeta {
   title: string;
   breadcrumbs?: Crumb[];
+  ativo?: string;
 }
 
 const PageMetaContext = createContext<{

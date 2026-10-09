@@ -74,6 +74,12 @@ export function AssetFileCard({
             </Badge>
           )}
           {file.archived && <Badge className="bg-dark text-dark-foreground">Arquivado</Badge>}
+          {/* spec 025: o arquivo veio de uma geração escolhida ou foi enviado à mão */}
+          {multi && (
+            <Badge variant="secondary" data-testid="origem-arquivo">
+              {file.origemArquivo === "gerado" ? "gerado" : "enviado"}
+            </Badge>
+          )}
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3">
@@ -83,6 +89,7 @@ export function AssetFileCard({
           {file.quandoUsar && <p className="text-muted-foreground">Quando usar: {file.quandoUsar}</p>}
           {file.uso && <p className="text-muted-foreground">Uso: {file.uso}</p>}
           {file.notes && <p className="text-xs text-muted-foreground">{file.notes}</p>}
+          {file.geracaoId && <p className="text-xs text-muted-foreground">Da geração {file.geracaoId.slice(0, 8)}</p>}
           <p className="text-xs text-muted-foreground">
             {file.image.width}×{file.image.height} px
           </p>

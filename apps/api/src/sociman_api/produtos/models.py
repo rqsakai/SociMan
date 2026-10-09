@@ -74,10 +74,10 @@ class Produto(_Versioned, AuditMixin, Base):
         "perfil_id", "name", *CAMPOS_FICHA, "obs", "url_loja", "status", "ficha_por",
         "archived", "variantes",
     )
-    __immutable_fields__ = ("perfil_id",)
+    __immutable_fields__ = ()  # 029: o perfil base é editável
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    perfil_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("perfis.id"), nullable=False)
+    perfil_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("perfis.id"))  # 029: opcional
     name: Mapped[str] = mapped_column(Text, nullable=False)
     nome_comercial: Mapped[str | None] = mapped_column(Text)
     categoria: Mapped[str | None] = mapped_column(Text)
@@ -132,6 +132,7 @@ class Produto(_Versioned, AuditMixin, Base):
         return "arquivado" if self.archived else self.status.value
 
 
+Index("ix_produtos_lista_agencia", Produto.archived_at, Produto.updated_at.desc(), Produto.id)  # 029
 Index("ix_produtos_perfil_lista", Produto.perfil_id, Produto.archived_at,
       Produto.updated_at.desc(), Produto.id)
 Index("ix_produtos_perfil_status", Produto.perfil_id, Produto.status,

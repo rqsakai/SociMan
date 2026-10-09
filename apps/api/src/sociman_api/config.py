@@ -119,6 +119,8 @@ class Settings(BaseSettings):
     # Pisos de VRAM por motor (R3, calibrados no quickstart §3) e teto de uma opção no ComfyUI.
     geracao_vram_min_gb_comfyui: float = Field(12, gt=0)
     geracao_vram_min_gb_tts: float = Field(6, gt=0)
+    # Spec 025 (R12): a linha `vozes_sync` do gerador (importa e remove vozes no shop-tts).
+    gerador_vozes_sync_s: float = Field(60, gt=0)
     geracao_comfyui_teto_s: float = Field(1200, gt=0)
     agendador_geracao_limpeza_s: float = Field(3600, gt=0)
 

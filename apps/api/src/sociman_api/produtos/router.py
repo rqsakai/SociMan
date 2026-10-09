@@ -2,21 +2,27 @@
 (dono, membro e o MCP pelo mapa). Escrever: só humano, dono ou membro (`RequireHuman`; outro
 ator → 403 `somente_humano`). Reverter: só o dono humano (`RequireHumanOwner`). Escolher,
 cancelar, tentar de novo e gerar outras são as rotas da 021 (`/api/geracoes/{id}/…`). Não existe
-rota DELETE."""
+rota DELETE.
+
+Spec 029: a lista e o cadastro da biblioteca da agência (`/api/produtos`), com o perfil base
+opcional; o PATCH muda o perfil base (`perfilId`)."""
 
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, Query, UploadFile
 
 from sociman_api.auth.deps import RequireHuman, RequireHumanOwner, RequireUser
 from sociman_api.db import DbSession
 from sociman_api.errors import ErrorEnvelope
+from sociman_api.estudio.filtros import PerfilFiltro, filtro, form_perfil
 from sociman_api.geracao import schemas as geracao_schemas
 from sociman_api.geracao import service as geracao_service
 from sociman_api.perfis.schemas import RevertIn, VersionIn, VersionsList
 from sociman_api.produtos import schemas
 from sociman_api.produtos import service as svc
+from sociman_api.produtos.models import ProdutoStatus
+from sociman_api.produtos.router_perfil import campos_criar
 
 router = APIRouter(prefix="/api/produtos")
 
@@ -26,6 +32,48 @@ Db = DbSession
 def _errors(*statuses: int) -> dict[int | str, dict]:
     return {status: {"model": ErrorEnvelope} for status in statuses}
 
+
+# ---- biblioteca da agência (spec 029) ----
+
+@router.get("", operation_id="produtos_listar_agencia", response_model=schemas.ProdutosLista,
+            responses=_errors(400, 401, 403))
+def listar_agencia(
+    actor: RequireUser, db: Db, perfil_id: PerfilFiltro = None,
+    status: Annotated[list[ProdutoStatus] | None, Query(description="Estados (OU)")] = None,
+    arquivados: Annotated[schemas.ArquivadosFiltro, Query()] = "false",
+    q: Annotated[str | None, Query(max_length=100, description="Nome interno ou comercial")]
+    = None,
+    cursor: Annotated[str | None, Query(max_length=200)] = None,
+    limit: Annotated[int, Query(ge=1, le=svc.LIMITE_MAX)] = svc.LIMITE_PADRAO,
+) -> schemas.ProdutosLista:
+    return svc.listar_agencia(db, filtro(db, perfil_id), status=status or (),
+                              arquivados=arquivados, q=q, cursor=cursor, limit=limit)
+
+
+@router.post("", operation_id="produtos_criar_agencia", status_code=201,
+             response_model=schemas.Produto,
+             responses=_errors(400, 401, 403, 409, 503, 507))
+def criar_agencia(
+    actor: RequireHuman, db: Db,
+    name: Annotated[str, Form(max_length=200)],
+    obs: Annotated[str | None, Form(max_length=2000)] = None,
+    url_loja: Annotated[str | None, Form(alias="urlLoja", max_length=500)] = None,
+    perfil_id: Annotated[str | None, Form(alias="perfilId", max_length=40,
+                                          description="Perfil base; vazio = sem perfil")]
+    = None,
+    fotos: Annotated[list[UploadFile] | None,
+                     File(description="1 a 6 fotos (PNG, JPG ou WebP, ≥ 512×512, até 20 MB)")]
+    = None,
+) -> schemas.Produto:
+    pid = form_perfil(perfil_id)
+    svc.perfil_base_novo(db, pid)
+    nome, url = campos_criar(name, url_loja)
+    produto = svc.criar(db, actor, pid, nome, (obs or "").strip(), url,
+                        [f.file for f in fotos or []])
+    return svc.produto_out(db, produto)
+
+
+# ---- um produto ----
 
 @router.get("/{produto_id}", operation_id="produtos_ver", response_model=schemas.Produto,
             responses=_errors(401, 403, 404))

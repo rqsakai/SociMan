@@ -16,6 +16,7 @@ from sociman_api.canais.schemas import PerfilRef
 from sociman_api.ia.models import REGRAS_MAX, IaDesfecho
 from sociman_api.ia.schemas_guia import GuiaCampos
 from sociman_api.ia.tipos import Entidade, Formato, Idioma, TipoCampoId, UsaGuia
+from sociman_api.perfis import base
 from sociman_api.perfis.schemas import UserRef
 
 INSTRUCAO_MAX = 1000
@@ -147,7 +148,12 @@ class Selecao(CamelModel):
 
 class GerarIn(CamelModel):
     tipo_campo: TipoCampoId
-    perfil_id: UUID
+    # O perfil do pedido: obrigatório nos campos do perfil, do kit e da postagem; numa cena ainda
+    # não salva, o perfil base dela (spec 029). Nos assets e nas cenas salvas não restringe nada.
+    perfil_id: UUID | None = None
+    # Spec 029 (R4), só nos campos de asset e de cena: ausente = o perfil base do item; `null` =
+    # nenhum (sem guia nem perfil no prompt); um id = aquele perfil, só nesta chamada.
+    perfil_base_id: UUID | None = None
     alvo: Alvo
     valor_atual: Valor = Field(default_factory=Valor)
     instrucao: Annotated[str, StringConstraints(max_length=INSTRUCAO_MAX)] = ""
@@ -157,11 +163,17 @@ class GerarIn(CamelModel):
     selecao: Selecao | None = None
     cena_contexto: CenaContexto | None = None  # spec 010: tipos `cena.*`
 
+    def perfil_base_pedido(self) -> base.Pedido:
+        return self.perfil_base_id if "perfil_base_id" in self.model_fields_set \
+            else base.AUSENTE
+
 
 class IaChamada(CamelModel):
     id: UUID
     tipo_campo: str  # as linhas antigas guardam o id que valia na época
-    perfil: PerfilRef
+    perfil: PerfilRef | None  # o perfil base usado (spec 029); nulo = sem perfil
+    perfil_id: UUID | None
+    perfil_nome: str | None
     alvo: Alvo
     sessao_id: UUID | None
     instrucao: str
@@ -219,7 +231,7 @@ class ResumoTipo(CamelModel):
 
 
 class ResumoPerfil(CamelModel):
-    perfil: PerfilRef
+    perfil: PerfilRef | None  # nulo = "Sem perfil" (spec 029)
     chamadas: int
     custo_usd: float
 

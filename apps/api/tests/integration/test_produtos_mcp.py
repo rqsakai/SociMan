@@ -26,7 +26,8 @@ from sociman_api.mcp.models import McpChamada
 ESCRITAS = sorted(op["operationId"] for p in app.openapi()["paths"].values()
                   for op in p.values() if op["operationId"].startswith("produtos_")
                   and op["operationId"] not in ("produtos_listar", "produtos_ver",
-                                                "produtos_versoes"))
+                                                "produtos_versoes",
+                                                "produtos_listar_agencia"))  # 029
 
 
 @pytest.fixture

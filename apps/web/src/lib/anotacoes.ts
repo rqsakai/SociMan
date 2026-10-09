@@ -65,7 +65,8 @@ export function camposCena(a: Anotacao): CamposCenaProposta | null {
 export function aceitarCenaHref(a: Anotacao): string | null {
   if (a.tipo !== "proposta_cena" || a.situacao !== "aberta") return null;
   if (a.alvo.tipo === "cena") return `/app/cenas/${a.alvo.id}?proposta=${a.id}`;
-  if (a.alvo.tipo === "perfil") return `/app/perfis/${a.alvo.id}/cenas/nova?proposta=${a.id}`;
+  // 029: a nova cena vive no AI Studio, com o perfil da proposta como perfil base
+  if (a.alvo.tipo === "perfil") return `/app/estudio/cenas/nova?perfil=${a.alvo.id}&proposta=${a.id}`;
   return null;
 }
 

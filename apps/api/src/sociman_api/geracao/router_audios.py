@@ -1,18 +1,22 @@
 """Rotas dos áudios (contracts/http-api.md da spec 021, R11): enviar (`RequireHuman`,
 multipart com `arquivo`, até 25 MB; o edge tem `location` própria de 26m) e ler (`RequireUser`).
 Sem rota de alteração: o áudio é imutável. No `mcp/mapa.py`, `audios_enviar` fica em
-`PROIBIDAS` e `audios_detalhe` em `FORA`."""
+`PROIBIDAS` e `audios_detalhe` em `FORA`.
+
+Spec 029: `POST /api/audios` (`audios_enviar_agencia`) aceita `perfilId` opcional no multipart
+(sem ele, o áudio é da agência); a rota por perfil fica `deprecated`, com o mesmo comportamento."""
 
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, File, Form, UploadFile
 
 from sociman_api.auth.deps import RequireHuman, RequireUser
 from sociman_api.db import DbSession
 from sociman_api.errors import ApiError, ErrorEnvelope
 from sociman_api.geracao import audios, schemas
 from sociman_api.geracao.models import Audio
+from sociman_api.perfis import base
 from sociman_api.perfis.service_perfis import get_perfil_or_404, user_refs
 
 router = APIRouter(prefix="/api")
@@ -22,8 +26,18 @@ def _errors(*statuses: int) -> dict[int | str, dict]:
     return {status: {"model": ErrorEnvelope} for status in statuses}
 
 
+@router.post("/audios", operation_id="audios_enviar_agencia", status_code=201,
+             response_model=schemas.Audio, responses=_errors(400, 401, 403, 413, 503, 507))
+def enviar_agencia(arquivo: Annotated[UploadFile, File()], actor: RequireHuman, db: DbSession,
+                   perfil_id: Annotated[UUID | None, Form(alias="perfilId")] = None
+                   ) -> schemas.Audio:
+    base.perfil_existente(db, perfil_id)
+    audio = audios.enviar(db, perfil_id, arquivo.file, actor.user_id)
+    return audios.audio_out(audio, user_refs(db, [audio.created_by]))
+
+
 @router.post("/perfis/{perfil_id}/audios", operation_id="audios_enviar", status_code=201,
-             response_model=schemas.Audio,
+             response_model=schemas.Audio, deprecated=True,
              responses=_errors(400, 401, 403, 404, 409, 413, 503, 507))
 def enviar(perfil_id: UUID, arquivo: Annotated[UploadFile, File()], actor: RequireHuman,
            db: DbSession) -> schemas.Audio:

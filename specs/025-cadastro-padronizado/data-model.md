@@ -1,7 +1,7 @@
 # Modelo de dados: 025-cadastro-padronizado
 
-Tudo fica no PostgreSQL (NVMe), na migration **`0021_cadastro_padronizado`** (`down_revision =
-"0020_geracao_local"`, provisório: o gate da implementação confere a cadeia). Os arquivos continuam no
+Tudo fica no PostgreSQL (NVMe), na migration **`0023_cadastro_padronizado`** (`down_revision =
+"0022_produtos_shop"`, provisório: o gate da implementação confere a cadeia). Os arquivos continuam no
 MinIO do HD: imagens no bucket `sociman` (`images` da 003) e áudios no bucket `sociman-audios` (`audios`
 da 021). Esta feature **estende** `assets`/`asset_files` da 007 (colunas anuláveis, valores de enum) e
 cria `vozes`. Nada da 007 muda de forma nem de comportamento para os dados que já existem.
@@ -189,7 +189,7 @@ O `status` muda pelo gancho `ao_mudar_estado` do aplicador, na transação da ge
   slot trocado (aviso na resposta da troca).
 - **`tts_id`:** função pura de `vozes.id`.
 
-## Migração `0021_cadastro_padronizado`
+## Migração `0023_cadastro_padronizado`
 1. `CREATE TYPE asset_origem`, `asset_kit_status`, `voz_origem`, `voz_status`;
 2. `ALTER TYPE asset_file_role ADD VALUE IF NOT EXISTS 'kit'` e `'variacao'` (num bloco
    `autocommit_block`, porque o valor novo não pode ser usado na mesma transação; os CHECKs e índices que
@@ -203,7 +203,8 @@ O `status` muda pelo gancho `ao_mudar_estado` do aplicador, na transação da ge
 6. sem backfill (os dados da 007 ficam com as colunas novas nulas);
 7. **Downgrade:** recusa se existir linha em `vozes`, arquivo `kit`/`variacao`, asset com `origem`,
    `consentimento`, `voz_id`, `identidade` ou `kit_status`, ou evento `eliminacao_lgpd`; senão remove
-   índices, CHECKs, colunas e a tabela, recria os CHECKs da 007 e recria o `asset_file_role` sem os dois
-   valores (como a `0004`/`0005`). Nada do MinIO é tocado.
+   índices, CHECKs, colunas e a tabela e recria os CHECKs da 007. Os valores `kit`/`variacao` do
+   `asset_file_role` ficam (como na `0015` e na `0022`; decisão da implementação, 2026-10-08). Nada do MinIO
+   é tocado.
 
-`test_migration_0021` cobre upgrade, downgrade vazio e a recusa com dados.
+`test_migration_0023` cobre upgrade, downgrade vazio e a recusa com dados.

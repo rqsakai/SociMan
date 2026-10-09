@@ -78,16 +78,32 @@ def test_texto_diferente_fica_editada_e_trim_segue_o_campo():
     assert p.desfecho == IaDesfecho.editada
 
 
-@pytest.mark.parametrize("caso", ["outro_perfil", "outro_alvo", "tipo_nao_casa", "sem_mudanca",
+def test_asset_casa_com_chamada_de_outro_perfil_base_ou_sem_perfil():
+    """Spec 029 (C1): no item da biblioteca, o perfil base pode ter sido trocado só na geração."""
+    for perfil_id in (OUTRO_PERFIL, None):
+        a = avatar()
+        c = chamada("avatar.descricao_prompt", {"texto": "novo"}, entity_id=a.id,
+                    perfil_id=perfil_id)
+        details = marcar(FakeDb(c), ACTOR, "asset", a, {"prompt": "x"}, {"prompt": "novo"},
+                         ia(c))
+        assert details is not None and c.desfecho == IaDesfecho.aplicada
+
+
+def test_perfil_continua_exigindo_o_mesmo_perfil():
+    p = SimpleNamespace(id=PERFIL, version=2)
+    c = chamada("perfil.bio", {"texto": "nova"}, entity_type="perfil", entity_id=PERFIL,
+                perfil_id=OUTRO_PERFIL)
+    assert marcar(FakeDb(c), ACTOR, "perfil", p, {"bio": "x"}, {"bio": "nova"}, ia(c)) is None
+
+
+@pytest.mark.parametrize("caso", ["outro_alvo", "tipo_nao_casa", "sem_mudanca",
                                   "ja_aplicada", "descartada", "tipo_divergente", "inexistente"])
 def test_itens_que_nao_casam_sao_ignorados(caso):
     a = avatar()
     kw = {"entity_id": a.id}
     tipo = "avatar.descricao_prompt"
     antes, depois = {"prompt": "x"}, {"prompt": "novo"}
-    if caso == "outro_perfil":
-        kw["perfil_id"] = OUTRO_PERFIL
-    elif caso == "outro_alvo":
+    if caso == "outro_alvo":
         kw["entity_id"] = uuid.uuid4()
     elif caso == "sem_mudanca":
         antes = depois

@@ -9,6 +9,10 @@ mudou (o resultado aplicado e o status). É idempotente: o que já tem geração
 novo, então chamar duas vezes não cria nada a mais.
 
 Sem rede e sem motor: criar a próxima geração é só INSERT (regra dos ganchos da 021).
+
+Spec 029 (R4): o perfil base das gerações é o do produto, salvo o `perfil_base` de um pedido
+humano (a ficha usa o guia dele; `None` = nenhum). Os passos que o fluxo encadeia sozinho
+(recorte e flat, só imagem) voltam ao perfil base do produto.
 """
 
 import uuid
@@ -19,6 +23,7 @@ from sqlalchemy.orm import Session
 
 from sociman_api.auth.deps import Actor
 from sociman_api.geracao.models import Geracao, GeracaoAlvo
+from sociman_api.perfis import base
 from sociman_api.produtos import estados, flat
 from sociman_api.produtos.models import Produto, ProdutoVariante
 
@@ -71,7 +76,8 @@ def params_flat(produto: Produto, variante: ProdutoVariante) -> dict[str, Any]:
 
 
 def pedir(db: Session, actor: Actor, produto: Produto, passo: str,
-          variante: ProdutoVariante | None = None) -> Geracao:
+          variante: ProdutoVariante | None = None,
+          perfil_base: base.Pedido = base.AUSENTE) -> Geracao:
     from sociman_api.geracao import service as geracao_service  # a 021 importa os aplicadores
 
     if passo == estados.FICHA:
@@ -83,12 +89,15 @@ def pedir(db: Session, actor: Actor, produto: Produto, passo: str,
         assert variante is not None
         params = params_flat(produto, variante)
     return geracao_service.criar_para_alvo(db, actor, produto.perfil_id, passo,
-                                           GeracaoAlvo.produto, produto.id, params)
+                                           GeracaoAlvo.produto, produto.id, params,
+                                           perfil_base=perfil_base)
 
 
 def reavaliar(db: Session, actor: Actor, produto: Produto,
-              evento: estados.Evento = "gancho") -> list[Geracao]:
-    """Aplica `estados.proximo` (status e pedidos). Devolve as gerações criadas."""
+              evento: estados.Evento = "gancho",
+              perfil_base: base.Pedido = base.AUSENTE) -> list[Geracao]:
+    """Aplica `estados.proximo` (status e pedidos). Devolve as gerações criadas; o
+    `perfil_base` vale para as que este evento cria."""
     db.flush()
     ativas = produto.ativas()
     decisao = estados.proximo(produto, ativas, ultimas(geracoes(db, produto.id)), evento)
@@ -96,6 +105,6 @@ def reavaliar(db: Session, actor: Actor, produto: Produto,
     criadas = []
     for passo, variante_id in decisao.pedidos:
         variante = produto.variante(variante_id) if variante_id else None
-        criadas.append(pedir(db, actor, produto, passo, variante))
+        criadas.append(pedir(db, actor, produto, passo, variante, perfil_base))
     db.flush()
     return criadas

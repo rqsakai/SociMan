@@ -8,14 +8,12 @@ import { SeletorProduto, type EscolhaProduto } from "./SeletorProduto";
 // biblioteca) passa a apontar para um produto aprovado. O save limpa a referência leve; numa cena
 // pronta, mexer no produto a devolve a rascunho (regra da 010).
 export function LigarCatalogo({
-  perfilId,
   produtoNome,
   pronta,
   disabled,
   title,
   onLigar,
 }: {
-  perfilId: string;
   produtoNome: string;
   pronta: boolean;
   disabled?: boolean;
@@ -49,7 +47,7 @@ export function LigarCatalogo({
               {pronta && " A cena volta a rascunho."}
             </DialogDescription>
           </DialogHeader>
-          <SeletorProduto perfilId={perfilId} valor={escolha} onChange={setEscolha} disabled={busy} />
+          <SeletorProduto valor={escolha} onChange={setEscolha} disabled={busy} />
           <DialogFooter>
             <Button type="button" variant="outline" disabled={busy} onClick={() => setOpen(false)}>
               Cancelar

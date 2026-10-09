@@ -201,6 +201,7 @@ services:
       SHOP_TTS_URL: http://openshorts-fake:8000/shop-tts
       DOCKERCTL_URL: http://openshorts-fake:8000/dockerctl
       DOCKERCTL_TOKEN: e2e-token-do-dockerctl-de-teste
+      GERADOR_VOZES_SYNC_S: "1"   # spec 025: a sincronização das vozes sem esperar
     volumes:
       - sociman-data:/srv/sociman-data
     entrypoint: *data-entrypoint

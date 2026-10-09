@@ -23,7 +23,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 
-from sociman_api import history, storage
+from sociman_api import datadir, history, storage
 from sociman_api.auth.deps import Actor
 from sociman_api.cenas import schemas
 from sociman_api.cenas import service as cenas
@@ -59,8 +59,10 @@ def video_key(cena_id: uuid.UUID, tomada_id: uuid.UUID, content_type: str) -> st
     return f"cenas/{cena_id}/tomadas/{tomada_id}.{EXT[content_type]}"
 
 
-def miniatura_key(perfil_id: uuid.UUID, cena_id: uuid.UUID, tomada_id: uuid.UUID) -> str:
-    return f"perfis/{perfil_id}/cenas/{cena_id}/tomadas/{tomada_id}.jpg"
+def miniatura_key(perfil_id: uuid.UUID | None, cena_id: uuid.UUID, tomada_id: uuid.UUID) -> str:
+    """029: a cena sem perfil base guarda a miniatura em `agencia/` (as chaves antigas ficam)."""
+    raiz = f"perfis/{perfil_id}" if perfil_id is not None else "agencia"
+    return f"{raiz}/cenas/{cena_id}/tomadas/{tomada_id}.jpg"
 
 
 def _recebe(cena: Cena) -> None:
@@ -71,11 +73,21 @@ def _recebe(cena: Cena) -> None:
 
 
 def precheck(db: Session, cena_id: uuid.UUID, content_length: str | None) -> None:
+    """O que dá para recusar sem ler o corpo. 029: a cena é da agência, então o perfil base
+    (opcional, e pode estar arquivado) não entra; o resto é o `precheck` dos cortes."""
     cena = cenas.get_cena_or_404(db, cena_id)
     _recebe(cena)
-    cortes_service.precheck(db, cena.perfil_id, content_length,
-                            max_body=max_bytes() + cortes_service.MULTIPART_SLACK,
-                            too_big=TOO_BIG)
+    max_body = max_bytes() + cortes_service.MULTIPART_SLACK
+    try:
+        length = int(content_length) if content_length is not None else None
+    except ValueError:
+        raise ApiError(400, "validation_error", "Content-Length inválido") from None
+    if length is not None and length > max_body:
+        raise ApiError(413, "payload_too_large", TOO_BIG)
+    # Sem Content-Length (envio em partes), reserva o máximo.
+    datadir.ensure_writable(max_body if length is None else length)
+    if not cortes_service.spool_dir().is_dir():
+        raise ApiError(503, "storage_unavailable", "O HD de dados não está disponível")
 
 
 async def receive(request: Request) -> Spooled:
@@ -107,7 +119,6 @@ def registrar_tomada(db: Session, actor: Actor, cena: Cena, arquivo: Spooled,
     """Valida o arquivo (já em `work/tmp`) e cria a tomada com o prompt congelado do momento,
     sem saber de HTTP: a 021 (geração local) vai reaproveitar com outra `origem`."""
     up = arquivo
-    cenas.perfil_ativo(db, cena.perfil_id)
     _recebe(cena)
     info = probe(up.path, max_duration_s=MAX_DURATION_S, min_duration_s=MIN_DURATION_S,
                  max_bytes=max_bytes(), too_long=TOO_LONG, too_short=TOO_SHORT,
@@ -188,7 +199,6 @@ def _editavel(db: Session, tomada_id: uuid.UUID, version: int) -> tuple[CenaToma
     tomada = get_tomada_or_404(db, tomada_id, lock=True)
     history.check_version(tomada, version, LABEL)
     cena = cenas.get_cena_or_404(db, tomada.cena_id, lock=True)
-    cenas.perfil_ativo(db, cena.perfil_id)
     return tomada, cena
 
 

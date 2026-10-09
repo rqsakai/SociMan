@@ -14,7 +14,7 @@ GPU, rede `gpu-local`, `dockerctl` e `gerador` são os da `specs/021-geracao-loc
    ```bash
    docker compose exec gerador python -c "import httpx;print(httpx.get('http://shop-tts:8200/health').json())"
    ```
-4. **Migration:** `docker compose exec api uv run alembic current` mostra `0021_cadastro_padronizado`.
+4. **Migration:** `docker compose exec api uv run alembic current` mostra `0023_cadastro_padronizado`.
 
 ## §1. Automático
 

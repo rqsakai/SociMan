@@ -22,9 +22,9 @@ ENTITY = "cena_padroes"
 LABEL = "O padrão das cenas"
 
 
-def efetivos(db: Session, perfil_id: uuid.UUID) -> tuple[str, str]:
-    """(estilo, negative) em vigor no perfil."""
-    row = db.get(CenaPadroes, perfil_id)
+def efetivos(db: Session, perfil_id: uuid.UUID | None) -> tuple[str, str]:
+    """(estilo, negative) em vigor no perfil; sem perfil base (029), o padrão do código."""
+    row = db.get(CenaPadroes, perfil_id) if perfil_id is not None else None
     if row is None:
         return ESTILO_PADRAO, NEGATIVE_PADRAO
     return row.estilo, row.negative

@@ -9,7 +9,9 @@
   texto da parte antes e depois (o serviço monta as duas);
 - `asset_arquivado`: avatar, cenário ou foto do produto arquivados;
 - `produto_fora_de_aprovado` (spec 012): o produto do catálogo saiu de `aprovado` ou foi
-  arquivado (a cena continua; o aviso pede para conferir).
+  arquivado (a cena continua; o aviso pede para conferir);
+- `sem_perfil_base` (spec 029): a cena não tem perfil base, então vale o estilo e o negative do
+  código, sem os padrões nem as proibidas de um guia.
 """
 
 import math
@@ -56,6 +58,7 @@ class EntradaAvisos:
     mudancas: Sequence[Mudanca] = ()
     arquivados: Sequence[str] = field(default_factory=tuple)  # papéis: avatar, cenario, produto
     catalogo_fora: bool = False  # spec 012
+    sem_perfil_base: bool = False  # spec 029
 
 
 def limite_palavras(duracao_s: int) -> int:
@@ -95,4 +98,7 @@ def calcular(e: EntradaAvisos) -> list[Aviso]:
     if e.catalogo_fora:
         avisos.append(Aviso("produto_fora_de_aprovado", "O produto saiu de aprovado ou foi "
                             "arquivado; confira a ficha antes de gerar", "produtoId"))
+    if e.sem_perfil_base:
+        avisos.append(Aviso("sem_perfil_base", "Sem perfil base: sem padrões nem guia",
+                            "perfilId"))
     return avisos

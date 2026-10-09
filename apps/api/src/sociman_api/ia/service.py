@@ -11,6 +11,11 @@
   alvo tem conta; nos tipos `so_proibidas`, só as proibidas do perfil), manda ao prompt e às
   garantias da saída e grava as versões usadas e as proibidas encontradas. `montar_guia` e
   `testar_guia` são os dois usos novos (R9, R10).
+- Spec 029 (R4, R14): nos campos de asset e de cena, o item é da biblioteca da agência e vale
+  por si; o perfil do prompt (`<guia_perfil>`, proibidas e `<perfil>`) é o **perfil base**
+  resolvido (`perfilBaseId`: ausente = o do item; `null` = nenhum), gravado em
+  `ia_chamadas.perfil_id`. Sem perfil base, vão só a base e as regras do tipo. Os campos do
+  perfil, do kit e da postagem não mudam (o `perfilId` do pedido continua obrigatório).
 """
 
 import base64
@@ -38,6 +43,7 @@ from sociman_api.ia.custo import PRECOS_VERSAO
 from sociman_api.ia.models import IaChamada, IaDesfecho, IaRegra
 from sociman_api.ia.schemas_guia import GuiaCampos, MontarIn, TestarIn
 from sociman_api.ia.tipos import TIPOS, TipoCampo
+from sociman_api.perfis import base as perfis_base
 from sociman_api.perfis.models import Conta, Perfil
 from sociman_api.perfis.service_perfis import get_perfil_or_404, user_refs
 
@@ -73,10 +79,11 @@ def _arquivado(nome: str) -> ApiError:
     return ApiError(409, "conflict", f"{nome} está arquivad{'a' if nome.startswith('Esta') else 'o'}")
 
 
-def _resolver_cena(db: Session, perfil: Perfil, alvo: schemas.Alvo,
+def _resolver_cena(db: Session, perfil_item: uuid.UUID | None, alvo: schemas.Alvo,
                    contexto: schemas.CenaContexto | None) -> AlvoResolvido:
-    """Spec 010: a cena salva (do perfil, não arquivada) ou, numa cena nova, o `cenaContexto`
-    do formulário. Os ids do formulário passam pela mesma conferência do save (422)."""
+    """Spec 010: a cena salva (não arquivada) ou, numa cena nova, o `cenaContexto` do
+    formulário. Os ids do formulário passam pela mesma conferência do save (422), com o perfil
+    base da cena (`perfil_item`: o da cena salva, ou o `perfilId` da cena nova)."""
     from sociman_api.cenas import ingredientes  # import tardio (ciclo)
     from sociman_api.cenas import service as cenas
     from sociman_api.cenas.models import CAMPOS_EDITAVEIS, Cena
@@ -90,8 +97,6 @@ def _resolver_cena(db: Session, perfil: Perfil, alvo: schemas.Alvo,
         cena = db.get(Cena, alvo.entity_id)
         if cena is None:
             raise ApiError(404, "nao_encontrada", "Cena não encontrada")
-        if cena.perfil_id != perfil.id:
-            raise invalid("A cena é de outro perfil")
         if cena.archived:
             raise _arquivado("Esta cena")
         valores = {f: getattr(cena, f) for f in CAMPOS_EDITAVEIS}
@@ -107,7 +112,7 @@ def _resolver_cena(db: Session, perfil: Perfil, alvo: schemas.Alvo,
     valores.setdefault("produto_nome", None)
     if valores.get("produto_imagem_id") is not None and not valores.get("produto_nome"):
         valores["produto_imagem_id"] = None  # o contexto não exige a foto
-    cenas.validar_refs(db, perfil.id, valores, novos=novos)
+    cenas.validar_refs(db, perfil_item, valores, novos=novos)
     assets = cenas.assets_da(db, SimpleNamespace(
         avatar_id=valores.get("avatar_id"), cenario_id=valores.get("cenario_id"),
         produto_imagem_id=valores.get("produto_imagem_id")))
@@ -122,27 +127,45 @@ def _resolver_cena(db: Session, perfil: Perfil, alvo: schemas.Alvo,
     return AlvoResolvido("cena", cena.id if cena is not None else None, cena=info)
 
 
-def _resolver_alvo(db: Session, tipo: TipoCampo, perfil: Perfil,
-                   alvo: schemas.Alvo,
-                   cena_contexto: schemas.CenaContexto | None = None) -> AlvoResolvido:
-    """Confere que o alvo existe, é do perfil e casa com o tipo (400 `invalid_ia` senão)."""
-    et, eid = alvo.entity_type, alvo.entity_id
+BIBLIOTECA = ("asset", "cena")  # spec 029: os campos dos itens da biblioteca da agência
+
+
+def perfil_do_item(db: Session, tipo: TipoCampo, body: schemas.GerarIn) -> uuid.UUID | None:
+    """O perfil base do item (o padrão do `perfilBaseId` ausente): o do asset ou da cena salva;
+    numa cena nova, o `perfilId` do pedido. Item que não existe → None (o alvo dá o 404)."""
+    from sociman_api.cenas.models import Cena  # import tardio (ciclo)
+
+    eid = body.alvo.entity_id
+    if eid is None:
+        return body.perfil_id if tipo.entidade == "cena" else None
+    item = db.get(Asset if tipo.entidade == "asset" else Cena, eid)
+    return item.perfil_id if item is not None else None
+
+
+def _resolver_biblioteca(db: Session, tipo: TipoCampo, perfil_item: uuid.UUID | None,
+                         alvo: schemas.Alvo,
+                         cena_contexto: schemas.CenaContexto | None) -> AlvoResolvido:
+    """Asset ou cena (spec 029): o item vale por si, de qualquer perfil base."""
     if tipo.entidade == "cena":
-        return _resolver_cena(db, perfil, alvo, cena_contexto)
-    if tipo.entidade == "asset":
-        if et != "asset" or eid is None:
-            raise invalid("Este campo é de um asset")
-        asset = db.get(Asset, eid)
-        if asset is None:
-            raise ApiError(404, "not_found", "Asset não encontrado")
-        if asset.perfil_id != perfil.id:
-            raise invalid("O asset é de outro perfil")
-        if tipo.tipos_asset is not None and asset.tipo.value not in tipo.tipos_asset:
-            raise invalid(f"O campo {tipo.rotulo} não existe num asset do tipo "
-                          f"{asset.tipo.value}")
-        if asset.archived:
-            raise _arquivado("Este asset")
-        return AlvoResolvido("asset", asset.id, asset=asset)
+        return _resolver_cena(db, perfil_item, alvo, cena_contexto)
+    if alvo.entity_type != "asset" or alvo.entity_id is None:
+        raise invalid("Este campo é de um asset")
+    asset = db.get(Asset, alvo.entity_id)
+    if asset is None:
+        raise ApiError(404, "not_found", "Asset não encontrado")
+    if tipo.tipos_asset is not None and asset.tipo.value not in tipo.tipos_asset:
+        raise invalid(f"O campo {tipo.rotulo} não existe num asset do tipo "
+                      f"{asset.tipo.value}")
+    if asset.archived:
+        raise _arquivado("Este asset")
+    return AlvoResolvido("asset", asset.id, asset=asset)
+
+
+def _resolver_alvo(db: Session, tipo: TipoCampo, perfil: Perfil,
+                   alvo: schemas.Alvo) -> AlvoResolvido:
+    """Confere que o alvo existe, é do perfil e casa com o tipo (400 `invalid_ia` senão). Os
+    campos da biblioteca (asset e cena) ficam em `_resolver_biblioteca`."""
+    et, eid = alvo.entity_type, alvo.entity_id
     if tipo.entidade == "perfil":
         if et != "perfil" or eid != perfil.id:
             raise invalid("Este campo é do próprio perfil")
@@ -252,11 +275,12 @@ def _selecao(tipo: TipoCampo, selecao: schemas.Selecao | None) -> tuple[list[str
     return [i.strip() for i in selecao.aceitos], [i.strip() for i in selecao.rejeitados]
 
 
-def _anteriores(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil,
+def _anteriores(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil | None,
                 alvo: AlvoResolvido, sessao_id: uuid.UUID,
                 ids: Sequence[uuid.UUID]) -> list[IaChamada]:
     if not ids:
         return []
+    perfil_id = perfil.id if perfil is not None else None
     rows = {c.id: c for c in db.scalars(select(IaChamada).where(IaChamada.id.in_(set(ids))))}
     out = []
     for cid in dict.fromkeys(ids):
@@ -270,7 +294,7 @@ def _anteriores(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil,
             and c.conteudo_id == alvo.conteudo.id)
         if (c is None or not mesmo_alvo or c.created_by != actor.user_id
                 or c.sessao_id != sessao_id or c.tipo_campo != tipo.id
-                or c.perfil_id != perfil.id
+                or c.perfil_id != perfil_id
                 or (alvo.conta is not None and c.conta_id != alvo.conta.id)):
             raise ApiError(400, "ia_anteriores_invalidas",
                            "As versões anteriores precisam ser desta sessão, deste campo e sua")
@@ -330,14 +354,14 @@ def _efetivo(tipo: TipoCampo, guias: guia_mod.GuiasEmVigor) -> guia_mod.GuiaEfet
     return guia_mod.fundir(guias.perfil, guias.conta)
 
 
-def _desempenho(db: Session, tipo: TipoCampo, perfil: Perfil, alvo: AlvoResolvido,
+def _desempenho(db: Session, tipo: TipoCampo, perfil: Perfil | None, alvo: AlvoResolvido,
                 efetivo: guia_mod.GuiaEfetivo) -> tuple[Any, guia_mod.GuiaEfetivo]:
     """Spec 023 (R8): o bloco `<desempenho>` (só `postagem.*` e `guia.testar`, com o uso ligado)
     e as hashtags "evitar" aceitas, que o servidor tira da proposta."""
     from sociman_api.aprendizado import desempenho as desempenho_mod  # import tardio (ciclo)
     from sociman_api.aprendizado import preferencias as prefs_mod
 
-    if tipo.id not in desempenho_mod.TIPOS or alvo.conta is None:
+    if tipo.id not in desempenho_mod.TIPOS or alvo.conta is None or perfil is None:
         return None, efetivo
     ef = prefs_mod.efetivas(db, perfil.id, alvo.conta.id)
     if ef.hashtags_evitar:
@@ -345,7 +369,8 @@ def _desempenho(db: Session, tipo: TipoCampo, perfil: Perfil, alvo: AlvoResolvid
     return desempenho_mod.bloco(db, perfil.id, alvo.conta.id, efetivo.proibidas), efetivo
 
 
-def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: AlvoResolvido,
+def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil | None,
+             alvo: AlvoResolvido,
              valor_atual: dict[str, Any], instrucao: str, client: IaClient | None, *,
              sessao_id: uuid.UUID | None = None, anteriores: Sequence[IaChamada] = (),
              aceitos: Sequence[str] = (), rejeitados: Sequence[str] = (),
@@ -354,11 +379,11 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: A
     """Monta o contexto, chama o Claude e grava a chamada. Com erro, commita e levanta.
 
     `guias`: só no montar e no testar (spec 017); nos outros, os em vigor do perfil e da conta
-    do alvo."""
+    do alvo. `perfil` None (spec 029): sem perfil base, sem guia nem `<perfil>`."""
     regras = regras_em_vigor(db, TIPOS[tipo.regras_de] if tipo.regras_de else tipo)
     if guias is None:
-        guias = guia_mod.em_vigor(db, perfil.id, alvo.conta.id if alvo.conta is not None
-                                  else None)
+        guias = guia_mod.GuiasEmVigor(perfil=None, conta=None) if perfil is None else \
+            guia_mod.em_vigor(db, perfil.id, alvo.conta.id if alvo.conta is not None else None)
     efetivo = _efetivo(tipo, guias)
     desempenho, efetivo = _desempenho(db, tipo, perfil, alvo, efetivo)
     enviado_perfil, enviado_conta = prompt.guias_enviados(tipo, guias)
@@ -371,7 +396,7 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil, alvo: A
             + f" @{alvo.conta.handle}")
         contexto = replace(contexto, entidade=(("Guia de comunicação de", dono),))
     row = IaChamada(
-        id=uuid.uuid4(), tipo_campo=tipo.id, perfil_id=perfil.id,
+        id=uuid.uuid4(), tipo_campo=tipo.id, perfil_id=perfil.id if perfil is not None else None,
         entity_type=alvo.entity_type, entity_id=alvo.entity_id,
         corte_id=alvo.corte.id if alvo.corte is not None else None,
         conteudo_id=alvo.conteudo.id if alvo.conteudo is not None else None,
@@ -448,12 +473,24 @@ def gerar(db: Session, actor: Actor, body: schemas.GerarIn,
         raise invalid("Use as rotas do aprendizado")
     if tipo.entidade == "produto":  # spec 012: a ficha sai das ações do produto
         raise invalid("Use as ações do produto")
-    perfil = get_perfil_or_404(db, body.perfil_id)
-    if perfil.archived:
-        raise _arquivado("Este perfil")
+    if tipo.formato == "identidade":  # spec 025: o servidor pede ao completar o kit
+        raise invalid("A checagem de identidade sai do kit padrão do avatar")
     if body.cena_contexto is not None and tipo.entidade != "cena":
         raise invalid("cenaContexto: só nos campos da cena")
-    alvo = _resolver_alvo(db, tipo, perfil, body.alvo, body.cena_contexto)
+    perfil: Perfil | None
+    if tipo.entidade in BIBLIOTECA:
+        if body.perfil_id is not None and body.alvo.entity_id is None:
+            perfis_base.perfil_existente(db, body.perfil_id)  # o perfil base da cena nova
+        perfil_item = perfil_do_item(db, tipo, body)
+        perfil = perfis_base.resolver(db, perfil_item, body.perfil_base_pedido())
+        alvo = _resolver_biblioteca(db, tipo, perfil_item, body.alvo, body.cena_contexto)
+    else:
+        if body.perfil_id is None:
+            raise invalid("perfilId: obrigatório neste campo")
+        perfil = get_perfil_or_404(db, body.perfil_id)
+        if perfil.archived:
+            raise _arquivado("Este perfil")
+        alvo = _resolver_alvo(db, tipo, perfil, body.alvo)
     valor_atual = _valor_atual(tipo, body.valor_atual)
     aceitos, rejeitados = _selecao(tipo, body.selecao)
     anteriores = _anteriores(db, actor, tipo, perfil, alvo, body.sessao_id, body.anteriores)
@@ -567,16 +604,18 @@ _SNAKE = {"naoFaca": "nao_faca", "emojisPreferidos": "emojis_preferidos",
 def chamadas_out(db: Session, rows: Sequence[IaChamada]) -> list[schemas.IaChamada]:
     from sociman_api.canais.schemas import PerfilRef
 
-    perfis = {p.id: p for p in db.scalars(
-        select(Perfil).where(Perfil.id.in_({r.perfil_id for r in rows})))} if rows else {}
+    ids = {r.perfil_id for r in rows if r.perfil_id is not None}
+    perfis = {p.id: p for p in db.scalars(select(Perfil).where(Perfil.id.in_(ids)))} \
+        if ids else {}
     users = user_refs(db, [u for r in rows for u in (r.created_by, r.desfecho_por)])
     out = []
     for r in rows:
-        p = perfis[r.perfil_id]
+        p = perfis.get(r.perfil_id) if r.perfil_id is not None else None
         conta_id = r.conta_id if r.entity_type in ("corte", "conteudo") else None
         out.append(schemas.IaChamada(
             id=r.id, tipo_campo=r.tipo_campo,
-            perfil=PerfilRef(id=p.id, name=p.name, slug=p.slug),
+            perfil=PerfilRef(id=p.id, name=p.name, slug=p.slug) if p is not None else None,
+            perfil_id=r.perfil_id, perfil_nome=p.name if p is not None else None,
             alvo=schemas.Alvo(entity_type=r.entity_type, entity_id=r.entity_id,
                               conta_id=conta_id),
             sessao_id=r.sessao_id, instrucao=r.instrucao, aceitos=list(r.aceitos),
@@ -711,20 +750,22 @@ def resumo(db: Session, mes: str | None) -> schemas.IaResumo:
         .where(no_mes).group_by(IaChamada.tipo_campo)
         .order_by(func.coalesce(func.sum(IaChamada.custo_usd), 0).desc(), IaChamada.tipo_campo)
     ).all()
-    por_perfil = db.execute(
+    por_perfil = db.execute(  # spec 029: as chamadas sem perfil base numa linha "Sem perfil"
         select(Perfil.id, Perfil.name, Perfil.slug, func.count(),
                func.coalesce(func.sum(IaChamada.custo_usd), 0))
-        .join(Perfil, Perfil.id == IaChamada.perfil_id).where(no_mes)
-        .group_by(Perfil.id, Perfil.name, Perfil.slug)
-        .order_by(func.coalesce(func.sum(IaChamada.custo_usd), 0).desc(), Perfil.name)
+        .select_from(IaChamada).outerjoin(Perfil, Perfil.id == IaChamada.perfil_id)
+        .where(no_mes).group_by(Perfil.id, Perfil.name, Perfil.slug)
+        .order_by(func.coalesce(func.sum(IaChamada.custo_usd), 0).desc(),
+                  Perfil.name.nulls_last())
     ).all()
     return schemas.IaResumo(
         mes=rotulo, de=inicio, ate=fim - timedelta(days=1), chamadas=total[0], erros=total[1],
         aplicadas=total[2], editadas=total[3], descartadas=total[4], custo_usd=_custo(total[5]),
         por_tipo=[schemas.ResumoTipo(tipo_campo=t, chamadas=n, custo_usd=_custo(c))
                   for t, n, c in por_tipo],
-        por_perfil=[schemas.ResumoPerfil(perfil=PerfilRef(id=i, name=nome, slug=slug),
-                                         chamadas=n, custo_usd=_custo(c))
+        por_perfil=[schemas.ResumoPerfil(
+            perfil=PerfilRef(id=i, name=nome, slug=slug) if i is not None else None,
+            chamadas=n, custo_usd=_custo(c))
                     for i, nome, slug, n, c in por_perfil],
         precos_versao=PRECOS_VERSAO,
     )

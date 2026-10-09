@@ -27,6 +27,10 @@ determinístico, uma cor por foto enviada). Na `<instrucao>`: "sem flat" devolve
 `material_en` de 6 palavras (fora do limite, nas duas tentativas). `anthropic_fake.fichas` conta
 as chamadas de ficha (SC-002).
 
+Spec 025 (T010): a resposta padrão cobre a checagem de identidade do avatar (`identidade(...)`):
+as notas vêm de `anthropic_fake.notas_identidade` (padrão 8 em cada slot) e a descrição de
+`anthropic_fake.descricao_identidade` (padrão: 50 palavras em inglês).
+
 Spec 017: a resposta padrão cobre os formatos `guia` (`guia(...)`) e `variacoes`
 (`variacoes(...)`, 3 textos de postagem **sem** hashtags fixas: quem inclui é o servidor);
 `anthropic_fake.systems` devolve o `system` enviado em cada chamada (texto dos blocos) e
@@ -148,6 +152,24 @@ def _ficha(body: dict[str, Any]) -> dict[str, Any]:
     return ficha(n or 1, precisa_flat="sem flat" not in pedido)
 
 
+SLOTS_NOTA = ("rosto_frontal", "rosto_34_esq", "rosto_34_dir", "corpo_base")
+DESCRICAO_IDENTIDADE = (
+    "Adult woman in her early thirties with warm medium-brown skin, an oval face, almond-shaped "
+    "dark brown eyes under softly arched eyebrows, a straight medium nose, full lips, shoulder-"
+    "length dark curly hair with defined ringlets parted slightly to the left, an average build "
+    "with rounded shoulders, and a small beauty mark above the right corner of the upper lip.")
+
+
+def identidade(notas: dict[str, int] | None = None, descricao: str = DESCRICAO_IDENTIDADE,
+               **kw: Any) -> dict[str, Any]:
+    """Spec 025: as notas por slot e a descrição fixa para prompts."""
+    notas = {s: 8 for s in SLOTS_NOTA} | (notas or {})
+    return mensagem({"notas": [{"slot": s, "nota": n, "observacao": "Mesmo rosto, mesma pele."}
+                               for s, n in notas.items()],
+                     "descricao_prompt": descricao, "explicacao": "Conferi as 5 imagens.",
+                     "avisos": []}, **kw)
+
+
 def _texto_user(body: dict[str, Any]) -> str:
     conteudo = body["messages"][0]["content"]
     if isinstance(conteudo, str):
@@ -217,6 +239,8 @@ def _padrao(body: dict[str, Any]) -> dict[str, Any]:
         return resposta
     if "material_en" in props:  # spec 012
         return _ficha(body)
+    if "descricao_prompt" in props and "notas" in props:  # spec 025
+        return identidade(_NOTAS.get("atual"), _NOTAS.get("descricao", DESCRICAO_IDENTIDADE))
     if "proposta" in props:
         return texto("Texto proposto pela IA.")
     if "variacoes" in props:
@@ -234,8 +258,28 @@ def _padrao(body: dict[str, Any]) -> dict[str, Any]:
     return base
 
 
+_NOTAS: dict[str, Any] = {}
+
+
 class AnthropicFake:
+    @property
+    def notas_identidade(self) -> dict[str, int] | None:
+        return _NOTAS.get("atual")
+
+    @notas_identidade.setter
+    def notas_identidade(self, valor: dict[str, int] | None) -> None:
+        _NOTAS["atual"] = valor
+
+    @property
+    def descricao_identidade(self) -> str:
+        return _NOTAS.get("descricao", DESCRICAO_IDENTIDADE)
+
+    @descricao_identidade.setter
+    def descricao_identidade(self, valor: str) -> None:
+        _NOTAS["descricao"] = valor
+
     def __init__(self) -> None:
+        _NOTAS.clear()
         self.fila: deque[Any] = deque()
         self.requests: list[httpx2.Request] = []
         self.transport = httpx2.MockTransport(self._handle)

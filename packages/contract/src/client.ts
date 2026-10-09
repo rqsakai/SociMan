@@ -324,6 +324,41 @@ export type ProdutoUso = components["schemas"]["UsoProduto"];
 export type ProdutoPatchRequest = components["schemas"]["ProdutoPatch"];
 export type ProdutoVarianteEditarRequest = components["schemas"]["VarianteEditarIn"];
 export type ProdutoFilters = NonNullable<paths["/api/perfis/{perfil_id}/produtos"]["get"]["parameters"]["query"]>;
+// 025-cadastro-padronizado
+export type KitPadrao = components["schemas"]["KitPadrao"];
+export type KitSlot = components["schemas"]["SlotKit"];
+export type KitSlotId = KitSlot["slot"];
+export type KitPasso = components["schemas"]["PassoKit"];
+export type KitStatus = components["schemas"]["KitStatus"];
+export type AssetOrigem = components["schemas"]["AssetOrigem"];
+export type ConsentimentoPessoa = components["schemas"]["ConsentimentoPessoa"];
+export type ConsentimentoRequest = components["schemas"]["ConsentimentoIn"];
+export type IdentidadeKit = components["schemas"]["Identidade"];
+export type VozPadrao = components["schemas"]["VozPadrao"];
+export type PreviaRevogacao = components["schemas"]["PreviaRevogacao"];
+export type RevogacaoAsset = components["schemas"]["RevogacaoAssetOut"];
+export type RevogacaoVoz = components["schemas"]["RevogacaoVozOut"];
+export type AssetFileEnviado = components["schemas"]["AssetFileOut"];
+export type AvisoDerivados = components["schemas"]["AvisoDerivados"];
+export type Voz = components["schemas"]["Voz"];
+export type VozResumo = components["schemas"]["VozResumo"];
+export type VozOrigem = components["schemas"]["VozOrigem"];
+export type VozStatus = components["schemas"]["VozStatus"];
+export type VozAnalise = components["schemas"]["Analise"];
+export type VozCreateRequest = components["schemas"]["VozIn"];
+export type VozPatchRequest = components["schemas"]["VozPatch"];
+export type VozFilters = NonNullable<paths["/api/perfis/{perfil_id}/vozes"]["get"]["parameters"]["query"]>;
+// 029-ai-studio
+export type AssetAgenciaFilters = NonNullable<paths["/api/assets"]["get"]["parameters"]["query"]>;
+export type AssetCreateAgenciaRequest = components["schemas"]["AssetCreateAgencia"];
+export type LibraryImageAgenciaFilters = paths["/api/assets/imagens"]["get"]["parameters"]["query"];
+export type CenaAgenciaFilters = NonNullable<paths["/api/cenas"]["get"]["parameters"]["query"]>;
+export type CenaAgenciaCreateRequest = components["schemas"]["CenaAgenciaIn"];
+export type ProdutoAgenciaFilters = NonNullable<paths["/api/produtos"]["get"]["parameters"]["query"]>;
+export type VozAgenciaFilters = NonNullable<paths["/api/vozes"]["get"]["parameters"]["query"]>;
+export type VozAgenciaCreateRequest = components["schemas"]["VozInAgencia"];
+export type GeracaoAgenciaFilters = paths["/api/geracoes"]["get"]["parameters"]["query"];
+export type EstudioResumo = components["schemas"]["ResumoOut"];
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -560,6 +595,10 @@ export function createApiClient(options: ApiClientOptions = {}) {
     // Biblioteca de assets (spec 007). Os envios (POST multipart …/arquivos e …/assets/arquivo)
     // ficam no app, por XHR, para ter o progresso do upload. Nenhuma rota DELETE.
     assets: {
+      // 029: a biblioteca da agência (perfil base opcional: ausente = todos, `sem`, ou um perfil)
+      listarAgencia: (query: AssetAgenciaFilters = {}) => unwrap(client.GET("/api/assets", { params: { query } })),
+      criarAgencia: (body: AssetCreateAgenciaRequest) => unwrap(client.POST("/api/assets", { body })),
+      imagensAgencia: (query: LibraryImageAgenciaFilters) => unwrap(client.GET("/api/assets/imagens", { params: { query } })),
       list: (perfilId: string, query: AssetFilters = {}) =>
         unwrap(client.GET("/api/perfis/{perfil_id}/assets", { params: { path: { perfil_id: perfilId }, query } })),
       create: (perfilId: string, body: AssetCreateRequest) =>
@@ -604,6 +643,18 @@ export function createApiClient(options: ApiClientOptions = {}) {
           client.POST("/api/assets/{asset_id}/revert", {
             params: { path: { asset_id: assetId } },
             body: { version, toVersion },
+          }),
+        ),
+      // spec 025: consentimento da pessoa real (registrar: dono e membro; prévia e revogar: só dono)
+      consentimentoRegistrar: (assetId: string, body: ConsentimentoRequest) =>
+        unwrap(client.PUT("/api/assets/{asset_id}/consentimento", { params: { path: { asset_id: assetId } }, body })),
+      consentimentoPrevia: (assetId: string) =>
+        unwrap(client.GET("/api/assets/{asset_id}/consentimento/previa-revogacao", { params: { path: { asset_id: assetId } } })),
+      consentimentoRevogar: (assetId: string, version: number) =>
+        unwrap(
+          client.POST("/api/assets/{asset_id}/consentimento/revogar", {
+            params: { path: { asset_id: assetId } },
+            body: { version, confirmo: true },
           }),
         ),
     },
@@ -1047,6 +1098,9 @@ export function createApiClient(options: ApiClientOptions = {}) {
     // Cenas para o Flow/Veo (spec 010). O envio de tomada (multipart) fica no app, por XHR, para ter o
     // progresso. Nenhuma rota DELETE.
     cenas: {
+      // 029: as cenas da agência; a cena nova tem perfil base opcional
+      listarAgencia: (query: CenaAgenciaFilters = {}) => unwrap(client.GET("/api/cenas", { params: { query } })),
+      criarAgencia: (body: CenaAgenciaCreateRequest) => unwrap(client.POST("/api/cenas", { body })),
       list: (perfilId: string, query: CenaFilters = {}) =>
         unwrap(client.GET("/api/perfis/{perfil_id}/cenas", { params: { path: { perfil_id: perfilId }, query } })),
       create: (perfilId: string, body: CenaCreateRequest) =>
@@ -1203,6 +1257,9 @@ export function createApiClient(options: ApiClientOptions = {}) {
     // Geração local (spec 021): pedir, acompanhar e decidir (escritas só de humano). O envio de
     // áudio (multipart) fica no app, por XHR, para ter o progresso. Nenhuma rota DELETE.
     geracoes: {
+      // 029: o pedido da agência, com o perfil base da geração (`perfilBaseId`: ausente = o do item, null = nenhum)
+      pedirAgencia: (body: GeracaoInRequest) => unwrap(client.POST("/api/geracoes", { body })),
+      listarAgencia: (query: GeracaoAgenciaFilters) => unwrap(client.GET("/api/geracoes", { params: { query } })),
       criar: (perfilId: string, body: GeracaoInRequest) =>
         unwrap(client.POST("/api/perfis/{perfil_id}/geracoes", { params: { path: { perfil_id: perfilId } }, body })),
       listar: (perfilId: string, query: GeracaoFilters = {}) =>
@@ -1225,6 +1282,8 @@ export function createApiClient(options: ApiClientOptions = {}) {
     // humano). Criar e variante nova são multipart e ficam no app, por XHR, para ter o progresso.
     // Escolher, cancelar e tentar de novo as gerações são as rotas de `geracoes`. Nenhuma rota DELETE.
     produtos: {
+      // 029: o catálogo da agência (criar é multipart, no app, com `perfilId` opcional)
+      listarAgencia: (query: ProdutoAgenciaFilters = {}) => unwrap(client.GET("/api/produtos", { params: { query } })),
       listar: (perfilId: string, query: ProdutoFilters = {}) =>
         unwrap(client.GET("/api/perfis/{perfil_id}/produtos", { params: { path: { perfil_id: perfilId }, query } })),
       ver: (produtoId: string) => unwrap(client.GET("/api/produtos/{produto_id}", { params: { path: { produto_id: produtoId } } })),
@@ -1282,6 +1341,36 @@ export function createApiClient(options: ApiClientOptions = {}) {
             body: { version },
           }),
         ),
+    },
+    // Vozes do perfil (spec 025): cadastro, consentimento e revogação. A gravação vai pelo envio de
+    // áudio da 021 (`audios`, no app) e entra com `gravacaoAudioId`; os candidatos e o teste são
+    // gerações (`geracoes`). Nenhuma rota DELETE.
+    vozes: {
+      // 029: as vozes da agência (o nome é único na agência inteira)
+      listarAgencia: (query: VozAgenciaFilters = {}) => unwrap(client.GET("/api/vozes", { params: { query } })),
+      criarAgencia: (body: VozAgenciaCreateRequest) => unwrap(client.POST("/api/vozes", { body })),
+      listar: (perfilId: string, query: VozFilters = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/vozes", { params: { path: { perfil_id: perfilId }, query } })),
+      criar: (perfilId: string, body: VozCreateRequest) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/vozes", { params: { path: { perfil_id: perfilId } }, body })),
+      detalhe: (vozId: string) => unwrap(client.GET("/api/vozes/{voz_id}", { params: { path: { voz_id: vozId } } })),
+      editar: (vozId: string, body: VozPatchRequest) =>
+        unwrap(client.PATCH("/api/vozes/{voz_id}", { params: { path: { voz_id: vozId } }, body })),
+      consentimentoRegistrar: (vozId: string, body: ConsentimentoRequest) =>
+        unwrap(client.PUT("/api/vozes/{voz_id}/consentimento", { params: { path: { voz_id: vozId } }, body })),
+      consentimentoRevogar: (vozId: string, version: number) =>
+        unwrap(client.POST("/api/vozes/{voz_id}/consentimento/revogar", { params: { path: { voz_id: vozId } }, body: { version, confirmo: true } })),
+      arquivar: (vozId: string, version: number) =>
+        unwrap(client.POST("/api/vozes/{voz_id}/archive", { params: { path: { voz_id: vozId } }, body: { version } })),
+      restaurar: (vozId: string, version: number) =>
+        unwrap(client.POST("/api/vozes/{voz_id}/restore", { params: { path: { voz_id: vozId } }, body: { version } })),
+      versoes: (vozId: string) => unwrap(client.GET("/api/vozes/{voz_id}/versoes", { params: { path: { voz_id: vozId } } })),
+      reverter: (vozId: string, version: number, toVersion: number) =>
+        unwrap(client.POST("/api/vozes/{voz_id}/revert", { params: { path: { voz_id: vozId } }, body: { version, toVersion } })),
+    },
+    // 029: as contagens do card "Ver no AI Studio" do perfil
+    estudio: {
+      resumo: (perfilId?: string) => unwrap(client.GET("/api/estudio/resumo", { params: { query: { perfilId } } })),
     },
     config: () => unwrap(client.GET("/api/config")),
     health: () => unwrap(client.GET("/api/health")),

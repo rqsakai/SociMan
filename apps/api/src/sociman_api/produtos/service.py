@@ -1,13 +1,17 @@
-"""Produtos do perfil (spec 012, contracts/api.md, research R2, R4 e R8–R12, R16).
+"""Produtos (spec 012, contracts/api.md, research R2, R4 e R8–R12, R16; spec 029: da agência,
+com perfil base opcional).
 
 Toda mutação trava a linha do produto, confere a `version` (409 `version_conflict`), recusa
-perfil arquivado e produto arquivado e grava **uma** versão do produto na mesma transação
+produto arquivado e grava **uma** versão do produto na mesma transação
 (`history.record`), com as variantes no snapshot. Nada é apagado: produtos e variantes são
 arquivados; a reversão (só o dono humano) volta a ficha e as imagens sem gerar nada.
 
 As fotos são validadas **todas** antes de gravar qualquer uma (nada fica pela metade): HD
 conferido (`datadir`, 503/507), até 20 MB cada, PNG/JPG/WebP ≥ 512×512, no bucket `imagens`.
 Depois de cada mudança, `fluxo.reavaliar` decide o status e pede as gerações que faltam.
+
+Spec 029: criar com perfil base arquivado continua recusado (`perfil_archived`), mas o produto de
+um perfil arquivado segue editável (FR-010); o perfil base muda pelo PATCH, numa versão.
 """
 
 import base64
@@ -23,8 +27,10 @@ from sqlalchemy.orm import Session
 from sociman_api import datadir, history, imaging, midia, storage
 from sociman_api.auth.deps import Actor
 from sociman_api.errors import ApiError
+from sociman_api.estudio.nomes import perfil_nomes
 from sociman_api.geracao import service as geracao_service
 from sociman_api.geracao.models import FINAIS, Geracao, GeracaoStatus
+from sociman_api.perfis import base as perfil_base
 from sociman_api.perfis.models import Image, ImageKind, Perfil
 from sociman_api.perfis.schemas import VersionsList
 from sociman_api.perfis.service_imagens import read_limited
@@ -68,17 +74,25 @@ def get_or_404(db: Session, produto_id: uuid.UUID, lock: bool = False) -> Produt
     return produto
 
 
-def _perfil_ativo(db: Session, perfil_id: uuid.UUID) -> Perfil:
+def _perfil_ativo(db: Session, perfil_id: uuid.UUID | None) -> Perfil | None:
+    """O perfil base de um produto novo: sem perfil passa; arquivado é recusado."""
+    if perfil_id is None:
+        return None
     perfil = get_perfil_or_404(db, perfil_id)
     if perfil.archived:
         raise ApiError(409, "perfil_archived", "O perfil está arquivado")
     return perfil
 
 
+def perfil_base_novo(db: Session, perfil_id: uuid.UUID | None) -> None:
+    """O `perfilId` da rota da agência: inexistente → 400 `perfil_invalido`; arquivado → 409."""
+    if perfil_base.perfil_existente(db, perfil_id) is not None:
+        _perfil_ativo(db, perfil_id)
+
+
 def _editavel(db: Session, produto_id: uuid.UUID, version: int) -> Produto:
     produto = get_or_404(db, produto_id, lock=True)
     history.check_version(produto, version, LABEL)
-    _perfil_ativo(db, produto.perfil_id)
     if produto.archived:
         raise ApiError(409, "produto_arquivado", "Restaure o produto antes de editar")
     return produto
@@ -117,9 +131,9 @@ def _ler_foto(stream: BinaryIO, field: str) -> tuple[bytes, imaging.ImageInfo]:
     return data, info
 
 
-def _gravar_foto(db: Session, actor: Actor, perfil_id: uuid.UUID, data: bytes,
+def _gravar_foto(db: Session, actor: Actor, perfil_id: uuid.UUID | None, data: bytes,
                  info: imaging.ImageInfo) -> Image:
-    key = f"perfis/{perfil_id}/{uuid.uuid4()}.{info.ext}"
+    key = imaging.object_key(perfil_id, info.ext)
     # O objeto vai antes do commit; se a transação falhar, sobra um objeto sem referência
     # (nunca apagamos objetos), o que é inofensivo.
     storage.put(key, data, info.content_type)
@@ -221,7 +235,9 @@ def produto_out(db: Session, produto: Produto) -> schemas.Produto:
     pendencias = [schemas.Pendencia(variante_id=p.variante_id, motivo=p.motivo)
                   for p in estados.pendencias(produto, produto.ativas(), fluxo.abertas(gs))]
     return schemas.Produto(
-        id=produto.id, perfil_id=produto.perfil_id, name=produto.name, obs=produto.obs,
+        id=produto.id, perfil_id=produto.perfil_id,
+        perfil_nome=perfil_nomes(db, [produto.perfil_id]).get(produto.perfil_id),
+        name=produto.name, obs=produto.obs,
         url_loja=produto.url_loja, status=produto.status, estado=produto.estado,
         ficha_por=produto.ficha_por, ficha=_ficha_out(produto), variantes=variantes,
         passos=_passos(gs), pendencias=pendencias, usos=usos.do_produto(db, produto.id),
@@ -264,11 +280,18 @@ def _termo(q: str) -> str:
     return termo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-def listar(db: Session, perfil_id: uuid.UUID, *, status: Sequence[ProdutoStatus] = (),
-           arquivados: str = "false", q: str | None = None, cursor: str | None = None,
-           limit: int = LIMITE_PADRAO) -> schemas.ProdutosLista:
+def listar(db: Session, perfil_id: uuid.UUID, **kw) -> schemas.ProdutosLista:
+    """A lista por perfil (012, obsoleta na 029): a da agência com aquele perfil base."""
     get_perfil_or_404(db, perfil_id)
-    stmt = select(Produto).where(Produto.perfil_id == perfil_id)
+    return listar_agencia(db, perfil_id, **kw)
+
+
+def listar_agencia(db: Session, filtro: perfil_base.Filtro, *,
+                   status: Sequence[ProdutoStatus] = (), arquivados: str = "false",
+                   q: str | None = None, cursor: str | None = None,
+                   limit: int = LIMITE_PADRAO) -> schemas.ProdutosLista:
+    """Spec 029: `filtro` None = todos; `sem` = sem perfil base; ou um perfil."""
+    stmt = perfil_base.aplicar_filtro(select(Produto), Produto.perfil_id, filtro)
     if arquivados == "false":
         stmt = stmt.where(Produto.archived_at.is_(None))
     elif arquivados == "so":
@@ -289,6 +312,7 @@ def listar(db: Session, perfil_id: uuid.UUID, *, status: Sequence[ProdutoStatus]
                            .limit(limit + 1)))
     page, mais = rows[:limit], len(rows) > limit
     imgs = _imagens(db, page)
+    nomes = perfil_nomes(db, [p.perfil_id for p in page])
     itens = []
     for p in page:
         ativas = p.ativas()
@@ -297,7 +321,8 @@ def listar(db: Session, perfil_id: uuid.UUID, *, status: Sequence[ProdutoStatus]
             img = imgs.get(ativas[0].recorte_image_id or ativas[0].original_image_id)
             capa = imaging.image_urls(img.object_key)["thumb"] if img else None
         itens.append(schemas.ProdutoResumo(
-            id=p.id, name=p.name, nome_comercial=p.nome_comercial, categoria=p.categoria,
+            id=p.id, perfil_id=p.perfil_id,
+            perfil_nome=nomes.get(p.perfil_id) if p.perfil_id else None, name=p.name, nome_comercial=p.nome_comercial, categoria=p.categoria,
             status=p.status, estado=p.estado, variantes_ativas=len(ativas), thumb_url=capa,
             updated_at=p.updated_at, version=p.version))
     proximo = _encode(page[-1].updated_at, page[-1].id) if mais else None
@@ -306,7 +331,7 @@ def listar(db: Session, perfil_id: uuid.UUID, *, status: Sequence[ProdutoStatus]
 
 # ---- criar e editar (US1) ----
 
-def criar(db: Session, actor: Actor, perfil_id: uuid.UUID, name: str, obs: str,
+def criar(db: Session, actor: Actor, perfil_id: uuid.UUID | None, name: str, obs: str,
           url_loja: str | None, fotos: Sequence[BinaryIO]) -> Produto:
     _perfil_ativo(db, perfil_id)
     if len(fotos) > MAX_VARIANTES:
@@ -329,12 +354,16 @@ def editar(db: Session, actor: Actor, produto_id: uuid.UUID,
            body: schemas.ProdutoPatch) -> Produto:
     produto = _editavel(db, produto_id, body.version)
     mudancas = body.model_dump(exclude_unset=True, exclude={"version"})
+    if "perfil_id" in mudancas:  # spec 029: o perfil base (arquivado é aceito)
+        perfil_base.perfil_existente(db, mudancas["perfil_id"])
     before = history.snapshot(produto)
     for campo in ("name", "obs"):
         if mudancas.get(campo) is not None:
             setattr(produto, campo, mudancas[campo])
     if "url_loja" in mudancas:
         produto.url_loja = mudancas["url_loja"]
+    if "perfil_id" in mudancas:
+        produto.perfil_id = mudancas["perfil_id"]
     gravar_versao(db, actor, produto, before)
     return produto
 
@@ -549,7 +578,6 @@ def arquivar(db: Session, actor: Actor, produto_id: uuid.UUID, body: schemas.Arq
     menos que `cancelarGeracoes` (o resultado entra no produto arquivado)."""
     produto = get_or_404(db, produto_id, lock=True)
     history.check_version(produto, body.version, LABEL)
-    _perfil_ativo(db, produto.perfil_id)
     if produto.archived:
         raise ApiError(409, "conflict", "Este produto já está arquivado")
     if body.cancelar_geracoes:
@@ -564,7 +592,6 @@ def arquivar(db: Session, actor: Actor, produto_id: uuid.UUID, body: schemas.Arq
 def restaurar(db: Session, actor: Actor, produto_id: uuid.UUID, version: int) -> Produto:
     produto = get_or_404(db, produto_id, lock=True)
     history.check_version(produto, version, LABEL)
-    _perfil_ativo(db, produto.perfil_id)
     if not produto.archived:
         raise ApiError(409, "conflict", "Este produto não está arquivado")
     before = history.snapshot(produto)
@@ -583,12 +610,12 @@ def reverter(db: Session, actor: Actor, produto_id: uuid.UUID, version: int,
     (FR-023). Variante que não existia na versão alvo é arquivada. Nunca volta a `aprovado`."""
     produto = get_or_404(db, produto_id, lock=True)
     history.check_version(produto, version, LABEL)
-    _perfil_ativo(db, produto.perfil_id)
     state = target_state(db, ENTITY, produto, to_version)
     before = history.snapshot(produto)
     agora = datetime.now(UTC)
     for campo in ("name", *CAMPOS_FICHA, "obs", "url_loja"):
         setattr(produto, campo, state[campo])
+    produto.perfil_id = _uuid(state.get("perfil_id"))  # spec 029: o perfil base da versão
     produto.ficha_por = ProdutoFichaPor(state["ficha_por"]) if state["ficha_por"] else None
     alvo = {uuid.UUID(v["id"]): v for v in state["variantes"]}
     for v in produto.variantes_rel:

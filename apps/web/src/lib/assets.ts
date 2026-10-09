@@ -3,6 +3,7 @@ import {
   toApiError,
   type Asset,
   type AssetFile,
+  type AssetFileEnviado,
   type AssetTipo,
   type FileRole,
   type Uso,
@@ -35,6 +36,9 @@ export const roleLabel: Record<FileRole, string> = {
   referencia: "Referência",
   pose: "Pose",
   arquivo: "Arquivo",
+  // spec 025
+  kit: "Kit padrão",
+  variacao: "Variação",
 };
 
 export const MAX_BYTES = 20 * 1024 * 1024;
@@ -160,6 +164,12 @@ export const assetFieldLabel: Record<string, string> = {
   primary_file_id: "Imagem principal",
   archived: "Arquivado",
   files: "Arquivos",
+  // spec 025
+  origem: "Origem",
+  consentimento: "Consentimento",
+  voz_id: "Voz padrão",
+  identidade: "Checagem de identidade",
+  kit_status: "Situação do kit",
 };
 
 interface SnapshotFile {
@@ -167,6 +177,7 @@ interface SnapshotFile {
   role?: FileRole;
   look?: string | null;
   label?: string | null;
+  slot?: string | null;
   archived?: boolean;
 }
 
@@ -175,11 +186,25 @@ export function formatAssetValue(field: string, value: unknown): string {
   if (field === "tipo" && typeof value === "string") return tipoLabel[value as AssetTipo] ?? value;
   if (field === "tags" && Array.isArray(value)) return value.length ? value.join(", ") : "—";
   if (field === "primary_file_id" && typeof value === "string") return `Arquivo ${value.slice(0, 8)}`;
+  // spec 025
+  if (field === "origem" && typeof value === "string") return ({ upload: "Upload", sintetico: "Sintético", pessoa_real: "Pessoa real" } as Record<string, string>)[value] ?? value;
+  if (field === "kit_status" && typeof value === "string") return ({ incompleto: "Incompleto", completo: "Completo", atencao: "Atenção" } as Record<string, string>)[value] ?? value;
+  if (field === "voz_id" && typeof value === "string") return `Voz ${value.slice(0, 8)}`;
+  if (field === "identidade" && typeof value === "object") {
+    const notas = (value as { notas?: Record<string, { nota?: unknown }> }).notas ?? {};
+    const lista = Object.entries(notas).map(([slot, n]) => `${slot}: ${String(n.nota ?? "—")}`);
+    return lista.length ? `Notas: ${lista.join(", ")}` : "Checagem feita";
+  }
+  if (field === "consentimento" && typeof value === "object") {
+    const c = value as { nome?: unknown; data?: unknown; revogado_em?: unknown };
+    const partes = [typeof c.nome === "string" ? c.nome : null, typeof c.data === "string" ? c.data.split("-").reverse().join("/") : null].filter(Boolean);
+    return `${partes.join(", ") || "Registrado"}${c.revogado_em ? " (revogado)" : ""}`;
+  }
   if (field === "files" && Array.isArray(value)) {
     if (value.length === 0) return "Nenhum";
     return (value as SnapshotFile[])
       .map((f, i) => {
-        const name = f.label || f.look || `${f.role ? roleLabel[f.role] : "Arquivo"} ${i + 1}`;
+        const name = f.slot || f.label || f.look || `${f.role ? roleLabel[f.role] : "Arquivo"} ${i + 1}`;
         return `${f.role ? roleLabel[f.role] : "Arquivo"}: ${name}${f.archived ? " (arquivado)" : ""}`;
       })
       .join("\n");
@@ -233,11 +258,14 @@ export interface FileFields {
   label?: string;
   quandoUsar?: string;
   notes?: string;
+  // spec 025: `role=kit` com o slot (no `rosto_origem`, a origem); `role=variacao` com o `label`
+  slot?: string;
+  origem?: "upload" | "pessoa_real";
 }
 
 // POST /api/assets/{id}/arquivos: acrescenta um arquivo (sem version); o primeiro vira o principal.
 export function uploadAssetFile(assetId: string, file: File, fields: FileFields, onProgress?: (fraction: number) => void) {
-  return xhrUpload<{ asset: Asset; file: AssetFile }>(
+  return xhrUpload<AssetFileEnviado>(
     `/api/assets/${enc(assetId)}/arquivos`,
     () => {
       const form = new FormData();
@@ -253,17 +281,19 @@ export function uploadAssetFile(assetId: string, file: File, fields: FileFields,
 
 // POST /api/perfis/{id}/assets/arquivo: "um arquivo = um asset" (fundo, sticker, marca d'água,
 // imagem), usado pelo envio múltiplo da aba e pelos seletores do kit.
+// Spec 029: pela rota da agência (`POST /api/assets/arquivo`), com o perfil base opcional.
 export function uploadSingleAsset(
-  perfilId: string,
+  perfilId: string | null,
   tipo: AssetTipo,
   file: File,
   opts: { name?: string; tags?: string[] } = {},
   onProgress?: (fraction: number) => void,
 ) {
   return xhrUpload<{ asset: Asset; file: AssetFile }>(
-    `/api/perfis/${enc(perfilId)}/assets/arquivo`,
+    "/api/assets/arquivo",
     () => {
       const form = new FormData();
+      if (perfilId) form.append("perfilId", perfilId);
       form.append("tipo", tipo);
       if (opts.name) form.append("name", opts.name);
       if (opts.tags?.length) form.append("tags", opts.tags.join(","));

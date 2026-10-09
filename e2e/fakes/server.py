@@ -463,6 +463,13 @@ def _ficha_produto(body: dict, instrucao: str) -> dict:
     }
 
 
+DESCRICAO_IDENTIDADE = (  # spec 025: 40 a 80 palavras, em inglês, sem nada de proibido
+    "Adult woman in her early thirties with warm medium-brown skin, an oval face, almond-shaped "
+    "dark brown eyes under softly arched eyebrows, a straight medium nose, full lips, shoulder-"
+    "length dark curly hair with defined ringlets parted slightly to the left, an average build "
+    "with rounded shoulders, and a small mole above the right corner of the upper lip.")
+
+
 def claude(body: dict) -> tuple[int, dict]:
     system = "\n".join(_textos(body.get("system")))
     user = "\n".join(_textos(body.get("messages")))
@@ -483,6 +490,11 @@ def claude(body: dict) -> tuple[int, dict]:
     avisos = ["Mantive as regras do campo."] if "system prompt" in instrucao.lower() else []
     if (aprendizado := _aprendizado(props, user)) is not None:  # spec 023
         dados = aprendizado
+    elif "descricao_prompt" in props and "notas" in props:  # spec 025: identidade do avatar
+        dados = {"notas": [{"slot": sl, "nota": 8, "observacao": "Mesmo rosto, mesma pele."}
+                           for sl in ("rosto_frontal", "rosto_34_esq", "rosto_34_dir",
+                                      "corpo_base")],
+                 "descricao_prompt": DESCRICAO_IDENTIDADE}
     elif "material_en" in props:  # spec 012
         dados = _ficha_produto(body, instrucao)
     elif "titulo" in props:  # textos_postagem
@@ -1044,7 +1056,21 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(dados)
             return True
         if path.startswith("/shop-tts/"):
-            self._json(*geracao_fake.shop_tts(self.command, path.removeprefix("/shop-tts")))
+            codigo, dados, tipo = geracao_fake.shop_tts(
+                self.command, path.removeprefix("/shop-tts"), corpo,
+                self.headers.get("content-type", ""))
+            if dados is None:
+                self.send_response(codigo)
+                self.send_header("content-length", "0")
+                self.end_headers()
+            elif tipo == "json":
+                self._json(codigo, dados)
+            else:
+                self.send_response(codigo)
+                self.send_header("content-type", tipo)
+                self.send_header("content-length", str(len(dados)))
+                self.end_headers()
+                self.wfile.write(dados)
             return True
         if path.startswith("/dockerctl/"):
             self._json(*geracao_fake.dockerctl(self.command, path.removeprefix("/dockerctl"),
@@ -1096,6 +1122,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(*claude(json.loads(corpo or b"{}")))
             except (BrokenPipeError, ConnectionResetError):  # o cliente desistiu ("lento")
                 return None
+        return self._json(404, {"detail": "Not Found"})
+
+    def do_DELETE(self) -> None:  # noqa: N802
+        if self._geracao(urlsplit(self.path), b""):
+            return None
         return self._json(404, {"detail": "Not Found"})
 
     def do_PUT(self) -> None:  # noqa: N802

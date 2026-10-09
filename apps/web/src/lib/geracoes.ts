@@ -12,9 +12,10 @@ import type {
 } from "@sociman/contract";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { api } from "./api";
-import { assetKey, assetsKey, assetVersionsKey } from "./assets";
+import { assetKey, assetVersionsKey } from "./assets";
 import { uploadMultipart } from "./marcaApi";
-import { produtoKey, produtosKey, produtoVersoesKey } from "./produtos";
+import { produtoKey, produtoVersoesKey } from "./produtos";
+import { vozKey, vozVersoesKey } from "./vozes";
 
 // Geração local (spec 021): pedidos ao ComfyUI e ao shop-tts que a API enfileira e o gerador roda.
 // A tela pede, acompanha (polling de 2 s enquanto não termina), compara as opções e escolhe uma;
@@ -33,11 +34,13 @@ export type GeracaoListaQuery = GeracaoFilters;
 
 export const geracoesApi = {
   ...api.geracoes,
-  enviarAudio: (perfilId: string, arquivo: File, onProgress: (fraction: number) => void = () => {}, signal?: AbortSignal) =>
+  // 029: pela rota da agência (`POST /api/audios`), com o perfil base opcional
+  enviarAudio: (perfilId: string | null, arquivo: File, onProgress: (fraction: number) => void = () => {}, signal?: AbortSignal) =>
     uploadMultipart<Audio>(
-      `/api/perfis/${encodeURIComponent(perfilId)}/audios`,
+      "/api/audios",
       () => {
         const form = new FormData();
+        if (perfilId) form.append("perfilId", perfilId);
         form.append("arquivo", arquivo);
         return form;
       },
@@ -100,8 +103,9 @@ export const fmtDataHora = (iso: string) => dataHora.format(new Date(iso));
 // ---------------------------------------------------------------------------------------------
 // Chaves e hooks
 
-export const geracoesKey = (perfilId: string) => ["geracoes", perfilId] as const;
-export const geracoesListaKey = (perfilId: string, filtros: GeracaoListaQuery) => [...geracoesKey(perfilId), "lista", filtros] as const;
+// 029: as gerações são da agência (o perfil base é só o guia da geração): as listas ficam sob ["geracoes"].
+export const geracoesKey = ["geracoes"] as const;
+export const geracoesListaKey = (filtros: GeracaoListaQuery) => [...geracoesKey, "lista", filtros] as const;
 export const geracaoKey = (id: string) => ["geracao", id] as const;
 export const geracaoVersoesKey = (id: string) => ["geracao-versoes", id] as const;
 
@@ -114,15 +118,16 @@ export function useGeracao(id: string, opts: { enabled?: boolean } = {}) {
   });
 }
 
-// Lista por alvo (mais nova primeiro). Enquanto houver item em andamento, recarrega a cada 2 s.
-export function useGeracoesDoAlvo(perfilId: string, alvoTipo: GeracaoAlvo, alvoId: string, limite = 10) {
+// Lista por alvo (mais nova primeiro), pela rota da agência. Enquanto houver item em andamento,
+// recarrega a cada 2 s.
+export function useGeracoesDoAlvo(alvoTipo: GeracaoAlvo, alvoId: string, limite = 10) {
   const filtros: GeracaoListaQuery = { alvoTipo, alvoId, limite };
   return useInfiniteQuery({
-    queryKey: geracoesListaKey(perfilId, filtros),
-    queryFn: ({ pageParam }) => geracoesApi.listar(perfilId, { ...filtros, cursor: pageParam ?? undefined }),
+    queryKey: geracoesListaKey(filtros),
+    queryFn: ({ pageParam }) => geracoesApi.listarAgencia({ alvoTipo, alvoId, limite, cursor: pageParam ?? undefined }),
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.proximo,
-    enabled: perfilId !== "" && alvoId !== "",
+    enabled: alvoId !== "",
     refetchInterval: (q) =>
       q.state.data?.pages.some((p) => p.itens.some((g) => !geracaoParada(g.status))) ? POLL_MS : false,
   });
@@ -132,21 +137,31 @@ export function useGeracaoVersoes(id: string, enabled: boolean) {
   return useQuery({ queryKey: geracaoVersoesKey(id), queryFn: () => geracoesApi.versoes(id), enabled: enabled && id !== "" });
 }
 
-async function invalidarGeracao(qc: QueryClient, g: { id: string; perfilId: string }) {
+async function invalidarGeracao(qc: QueryClient, g: { id: string }) {
   await Promise.all([
     qc.invalidateQueries({ queryKey: geracaoKey(g.id) }),
     qc.invalidateQueries({ queryKey: geracaoVersoesKey(g.id) }),
-    qc.invalidateQueries({ queryKey: geracoesKey(g.perfilId) }),
+    qc.invalidateQueries({ queryKey: geracoesKey }),
   ]);
 }
 
-// O resultado escolhido vai para o alvo: no asset e no produto (012), o detalhe, a lista e o histórico.
-async function invalidarAlvo(qc: QueryClient, perfilId: string, alvo: { tipo: GeracaoAlvo; id: string }) {
+// O resultado escolhido vai para o alvo: no asset, no produto (012) e na voz (025), o detalhe, a lista
+// e o histórico. Pedir, cancelar e tentar de novo também mudam o alvo (passos do kit, estado da voz).
+// As listas (do perfil e da agência, 029) ficam sob ["assets"], ["produtos"] e ["vozes"].
+export async function invalidarAlvo(qc: QueryClient, _perfilId: string | null, alvo: { tipo: GeracaoAlvo; id: string }) {
+  if (alvo.tipo === "voz") {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: vozKey(alvo.id) }),
+      qc.invalidateQueries({ queryKey: vozVersoesKey(alvo.id) }),
+      qc.invalidateQueries({ queryKey: ["vozes"] }),
+    ]);
+    return;
+  }
   if (alvo.tipo === "produto") {
     await Promise.all([
       qc.invalidateQueries({ queryKey: produtoKey(alvo.id) }),
       qc.invalidateQueries({ queryKey: produtoVersoesKey(alvo.id) }),
-      qc.invalidateQueries({ queryKey: produtosKey(perfilId) }),
+      qc.invalidateQueries({ queryKey: ["produtos"] }),
     ]);
     return;
   }
@@ -154,17 +169,19 @@ async function invalidarAlvo(qc: QueryClient, perfilId: string, alvo: { tipo: Ge
   await Promise.all([
     qc.invalidateQueries({ queryKey: assetKey(alvo.id) }),
     qc.invalidateQueries({ queryKey: assetVersionsKey(alvo.id) }),
-    qc.invalidateQueries({ queryKey: assetsKey(perfilId) }),
+    qc.invalidateQueries({ queryKey: ["assets"] }),
   ]);
 }
 
-export function useCriarGeracao(perfilId: string) {
+// 029 (FR-008): o pedido vai pela rota da agência; o corpo leva o `perfilBaseId` da geração (o guia e
+// as proibidas desse perfil; null = só as regras do tipo; ausente = o perfil base do item).
+export function useCriarGeracao() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: GeracaoIn) => geracoesApi.criar(perfilId, body),
+    mutationFn: (body: GeracaoIn) => geracoesApi.pedirAgencia(body),
     onSuccess: async (g) => {
       qc.setQueryData(geracaoKey(g.id), g);
-      await qc.invalidateQueries({ queryKey: geracoesKey(perfilId) });
+      await Promise.all([qc.invalidateQueries({ queryKey: geracoesKey }), invalidarAlvo(qc, g.perfilId, { tipo: g.alvoTipo, id: g.alvoId })]);
     },
   });
 }
@@ -187,9 +204,9 @@ export function useAcaoGeracao(acao: Acao) {
     mutationFn: (g: Geracao) => geracoesApi[acao](g.id, g.version),
     onSuccess: async (nova, antiga) => {
       qc.setQueryData(geracaoKey(nova.id), nova);
-      // no produto (012), cancelar, tentar de novo e gerar outras mudam os passos e o estado
-      const produto = antiga.alvoTipo === "produto" ? invalidarAlvo(qc, antiga.perfilId, { tipo: "produto", id: antiga.alvoId }) : null;
-      await Promise.all([invalidarGeracao(qc, antiga), nova.id !== antiga.id ? invalidarGeracao(qc, nova) : null, produto]);
+      // cancelar, tentar de novo e gerar outras mudam o alvo (passos do produto e do kit, estado da voz)
+      const alvo = invalidarAlvo(qc, antiga.perfilId, { tipo: antiga.alvoTipo, id: antiga.alvoId });
+      await Promise.all([invalidarGeracao(qc, antiga), nova.id !== antiga.id ? invalidarGeracao(qc, nova) : null, alvo]);
     },
   });
 }

@@ -197,6 +197,20 @@ export const errorCodes = [
   "produto_incompleto",
   "produto_arquivado",
   "ficha_existente",
+  // 025-cadastro-padronizado
+  "geracao_em_andamento",
+  "passo_fechado",
+  "menor_proibido",
+  "consentimento_ausente",
+  "consentimento_revogado",
+  "voz_invalida",
+  "voz_nome_em_uso",
+  "variacao_label_in_use",
+  "voz_nao_sincronizada",
+  "versao_redigida",
+  "revert_midia_apagada",
+  "confirmacao_obrigatoria",
+  "sem_consentimento",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

@@ -144,4 +144,17 @@ comparáveis fazem diferente (até 160 caracteres); n: quantos posts sustentam.
 são hipóteses a conferir."""),
     # Spec 012 (R5): o texto do pipeline (`produtos.py`), adaptado; não é editável.
     "produto.ficha": (1, _FICHA_PRODUTO),
+    # Spec 025 (R4): o texto do `avatares.py` (avaliar_kit), adaptado; não é editável.
+    "avatar.identidade": (1, """\
+These are the standard reference images of ONE synthetic (AI-generated, fictional, adult) \
+presenter, or of a real adult who gave consent. Score how consistently each kit image shows the \
+same person as the REFERENCE (the origin face), judging only identity (not clothing, pose, angle, \
+light or background). Be strict: a merely similar-looking person is 5-6; 7 is the minimum to reuse \
+it as a reference. Give one score per kit slot: rosto_frontal, rosto_34_esq, rosto_34_dir, \
+corpo_base, each with one short observation in Brazilian Portuguese (what matches or drifts: face \
+shape, eyes, nose, mouth, skin tone, hair, apparent age, body proportions). Then write \
+descricao_prompt: the fixed English description of the person, used verbatim in image prompts: \
+apparent age range (adult), skin tone, face shape, eyes, eyebrows, nose, lips, hair (color, length, \
+texture, style), build and distinctive features. No clothing, background, pose, expression or \
+lighting. One paragraph, 40-80 words."""),
 }

@@ -30,6 +30,11 @@ export const actionLabel: Record<EntityVersion["action"], string> = {
   archived: "Arquivado",
   restored: "Restaurado",
   reverted: "Revertido",
+  // spec 025
+  kit_escolhido: "Opção do kit escolhida",
+  identidade: "Checagem de identidade",
+  consentimento: "Consentimento registrado",
+  revoked: "Consentimento revogado",
 };
 
 // Cor do ponto na linha do tempo, por ação.
@@ -39,6 +44,10 @@ const actionDot: Record<EntityVersion["action"], string> = {
   archived: "tone-dark",
   restored: "tone-info",
   reverted: "tone-warning",
+  kit_escolhido: "tone-primary",
+  identidade: "tone-info",
+  consentimento: "tone-success",
+  revoked: "tone-dark",
 };
 
 const actorKindLabel: Record<string, string> = { "system:cli": "CLI", "system:agendador": "Agendador", mcp_client: "Cliente MCP", "system:publicacao": "Envio automático" };
@@ -120,6 +129,8 @@ export function VersionHistory({ versions, labels, formatValue, onRevert, onRelo
           const ia = iaDaVersao(v.details);
           const agente = agenteDaVersao(v);
           const proposta = propostaDaVersao(v.details);
+          // spec 025: a revogação do consentimento (LGPD) apaga o antes e o depois desta versão
+          const redigida = Boolean(v.details.redigida);
           // "archived" também está no snapshot, mas a ação já diz isso; a tabela fica para os dados.
           const fields = v.changedFields.filter((f) => v.action === "updated" || v.action === "reverted" || f !== "archived");
           return (
@@ -134,6 +145,11 @@ export function VersionHistory({ versions, labels, formatValue, onRevert, onRelo
                   <span className="text-muted-foreground">versão {v.version}</span>
                   {fromVersion !== null && <span className="text-muted-foreground">(para a versão {fromVersion})</span>}
                   {v.version === current && <Badge variant="secondary">atual</Badge>}
+                  {redigida && (
+                    <Badge variant="outline" data-testid="versao-redigida">
+                      Redigido (LGPD)
+                    </Badge>
+                  )}
                   {ia && <IaSelo chamadaId={ia[0]?.chamadaId} />}
                   {agente && <AgenteSelo nome={agente} />}
                   {proposta && (
@@ -172,7 +188,7 @@ export function VersionHistory({ versions, labels, formatValue, onRevert, onRelo
                 </div>
               )}
 
-              {canRevert && v.version !== current && (
+              {canRevert && v.version !== current && !redigida && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button

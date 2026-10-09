@@ -40,9 +40,12 @@ test("cadastro completo: ficha, flats, cor, aprovar, cena e celular", async ({ p
   // Criar com 2 fotos.
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  await page.goto(`/app/perfis/${perfilId}?aba=produtos`);
-  await page.getByRole("button", { name: "Novo produto" }).click();
+  // spec 029: AI Studio › Produtos, filtrada pelo perfil; o produto nasce com ele como perfil base
+  await page.goto(`/app/estudio/produtos?perfil=${perfilId}`);
+  await expect(page.getByRole("heading", { level: 1, name: "Produtos" })).toBeVisible();
+  await page.getByRole("button", { name: "Novo produto" }).first().click();
   const dialogo = page.getByRole("dialog");
+  await expect(dialogo.getByTestId("perfil-base")).toHaveValue(perfilId);
   await dialogo.getByLabel("Nome do produto").fill("shorts_canelado");
   await dialogo.getByLabel("Fotos").setInputFiles([
     { name: "foto1.png", mimeType: "image/png", buffer: pngBuffer(800, 900) },
@@ -96,10 +99,14 @@ test("cadastro completo: ficha, flats, cor, aprovar, cena e celular", async ({ p
   await page.getByLabel("Descrição de venda").fill("Short canelado confortável. Logo LS discreto.");
   await page.getByRole("button", { name: "Salvar ficha" }).click();
   await expect(page.getByTestId("estado-produto")).toHaveText("Em revisão", { timeout: 15_000 });
+  // (o endereço antigo da cena nova redireciona para o AI Studio; o seletor lista os aprovados da
+  // agência inteira, então confere só que este produto saiu)
   await page.goto(`/app/perfis/${perfilId}/cenas/nova`);
+  await expect(page).toHaveURL(new RegExp(`/app/estudio/cenas/nova\\?perfil=${perfilId}$`));
   const seletor = page.getByLabel("Produto do catálogo");
   await expect(seletor).toBeVisible();
-  await expect(seletor.locator("option")).toHaveText(["Nenhum"]);
+  await expect(seletor.locator("option").first()).toHaveText("Nenhum");
+  await expect(seletor.locator(`option[value="${produtoId}"]`)).toHaveCount(0);
 
   // No celular, a folha cabe sem rolagem horizontal.
   await page.setViewportSize({ width: 390, height: 844 });

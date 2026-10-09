@@ -65,6 +65,18 @@ def _voz(valor: str) -> str:
     return valor
 
 
+SEM_V2 = ("O shop-tts não tem o contrato v2 (as rotas /v2): atualize o serviço antes de gerar "
+          "voz. Tentar de novo não resolve.")
+
+
+def _rota_inexistente(resp: httpx.Response) -> bool:
+    """404 do roteador (`{"detail": "Not Found"}`), não da regra do serviço (voz desconhecida)."""
+    try:
+        return resp.json().get("detail") == "Not Found"
+    except ValueError:
+        return False
+
+
 class ShopTtsClient:
     """`transport` só nos testes."""
 
@@ -91,6 +103,10 @@ class ShopTtsClient:
             raise MotorErro("servico_fora", detalhe=f"{method} {path}: {resp.status_code}")
         if resp.status_code == 404 and ok_404:
             return resp
+        if resp.status_code == 404 and path.startswith("/v2/") and _rota_inexistente(resp):
+            # O serviço não tem a rota (shop-tts antigo, sem o contrato v2): tentar de novo não
+            # adianta, e a tela precisa dizer o que fazer.
+            raise MotorErro("internal", mensagem=SEM_V2, detalhe=f"{method} {path}: 404 sem a rota")
         if resp.status_code == 422:
             raise MotorErro("entrada_invalida",
                             detalhe=f"{method} {path}: 422 {resp.text[:300]}")

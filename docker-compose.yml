@@ -228,6 +228,7 @@ services:
       DOCKERCTL_TOKEN: ${DOCKERCTL_TOKEN:-}
       GERACAO_VRAM_MIN_GB_COMFYUI: ${GERACAO_VRAM_MIN_GB_COMFYUI:-12}
       GERACAO_VRAM_MIN_GB_TTS: ${GERACAO_VRAM_MIN_GB_TTS:-6}
+      GERADOR_VOZES_SYNC_S: ${GERADOR_VOZES_SYNC_S:-60}
     networks: [default, gpu-local, dockerctl]
     volumes:
       - ./apps/api:/app

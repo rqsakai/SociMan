@@ -100,9 +100,10 @@ def test_arquivar_com_uso_no_kit(client, h, perfil):
     detail = _fresh(client, h, cen)
     assert detail["asset"]["inUse"] is True
     [uso] = detail["usos"]
-    assert uso == {"origem": "kit", "rotulo": f"Card final (kit v{kit['version']})",
-                   "campo": "endCard.fundo_imagem_id", "fileId": ref["id"], "bloqueia": True,
-                   "href": f"/app/perfis/{perfil['id']}?aba=marca"}
+    assert uso | {"origem": "kit", "rotulo": f"Card final (kit v{kit['version']})",
+                  "campo": "endCard.fundo_imagem_id", "fileId": ref["id"], "bloqueia": True,
+                  "href": f"/app/perfis/{perfil['id']}?aba=marca"} == uso
+    assert uso.get("perfilNome", perfil["name"]) == perfil["name"]  # 029: o perfil do uso
 
     r = _archive(client, h, detail["asset"])
     assert error(r) == (409, "asset_in_use", f"Em uso em: Card final (kit v{kit['version']})")

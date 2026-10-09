@@ -5,17 +5,20 @@ e o primeiro PUT (com `version: 0`) cria a v1 (`created`). O PUT troca o kit int
 tokens dependem uns dos outros (paleta e fontes). Toda mutação trava a linha do perfil, faz
 `check_version` e grava a versão em `entity_versions` na mesma transação, com um snapshot por
 seção (o histórico diz "hook" ou "caption"). Só o dono reverte (a rota usa `RequireOwner`).
+
+Spec 029 (FR-013): o fundo e a marca d'água vêm da biblioteca da agência, de qualquer perfil
+base ou sem perfil; o uso no kit continua bloqueando o arquivar do asset.
 """
 
 import uuid
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from sociman_api import history, imaging, midia
-from sociman_api.assets.usos import archived_image_ids
+from sociman_api.assets.models import Asset, AssetFile
 from sociman_api.auth.deps import Actor
 from sociman_api.errors import ApiError
 from sociman_api.ia import aplicacao
@@ -32,6 +35,7 @@ from sociman_api.marca.tokens import (
     default_kit,
     font_refs,
     fundo_image_ids,
+    image_fields,
     perfil_font_id,
     resolve_tokens,
 )
@@ -78,19 +82,32 @@ def current_tokens(db: Session, perfil_id: uuid.UUID) -> tuple[KitTokens, BrandK
     return KitTokens.from_sections({s: getattr(row, s) for s in KIT_SECTIONS}), row
 
 
-def ref_context(db: Session, perfil: Perfil) -> RefContext:
-    """O que `check_refs` precisa do banco: fontes ativas, logo, contas e imagens do perfil."""
+def _imagens_kit(kit: KitTokens | None) -> list[uuid.UUID]:
+    if kit is None:
+        return []
+    return [image_id for _, image_id in image_fields(kit)]
+
+
+def ref_context(db: Session, perfil: Perfil, kit: KitTokens | None = None) -> RefContext:
+    """O que `check_refs` precisa do banco: fontes ativas, logo e contas do perfil e as imagens
+    que o kit cita (da biblioteca da agência, spec 029)."""
     fonts = db.scalars(select(BrandFont.id).where(
         BrandFont.perfil_id == perfil.id, BrandFont.archived_at.is_(None)))
     contas = db.scalars(select(Conta.id).where(
         Conta.perfil_id == perfil.id, Conta.archived_at.is_(None)))
+    citadas = _imagens_kit(kit)
     images = db.execute(select(Image.id, Image.kind).where(
-        Image.perfil_id == perfil.id, Image.kind.in_((ImageKind.watermark, ImageKind.fundo))
-    )).all()
+        Image.id.in_(citadas), Image.kind.in_((ImageKind.watermark, ImageKind.fundo))
+    )).all() if citadas else []
     # Spec 007: a imagem precisa estar em arquivo ativo de asset ativo da biblioteca. Imagem sem
     # asset (só por inserção direta; a migração 0005 pôs todas na biblioteca) segue valendo.
+    arquivadas = db.scalars(
+        select(AssetFile.image_id).join(Asset, Asset.id == AssetFile.asset_id).where(
+            AssetFile.image_id.in_(citadas),
+            or_(AssetFile.archived_at.is_not(None), Asset.archived_at.is_not(None)))
+    ) if citadas else []
     return RefContext(
-        archived_image_ids=archived_image_ids(db, perfil.id),
+        archived_image_ids=frozenset(arquivadas),
         active_font_ids=frozenset(fonts), has_logo=perfil.logo_image_id is not None,
         conta_ids=frozenset(contas),
         watermark_image_ids=frozenset(i for i, k in images if k == ImageKind.watermark),
@@ -173,7 +190,7 @@ def put_kit(db: Session, actor: Actor, perfil_id: uuid.UUID, data: schemas.KitIn
     else:
         history.check_version(row, data.version, LABEL)
     try:
-        check_refs(tokens, ref_context(db, perfil))
+        check_refs(tokens, ref_context(db, perfil, tokens))
     except KitInvalid as exc:
         raise _invalid(exc) from exc
 
@@ -211,7 +228,7 @@ def revert_kit(db: Session, actor: Actor, perfil_id: uuid.UUID, version: int,
     state = target_state(db, ENTITY, row, to_version)
     tokens = KitTokens.from_sections({s: state[s] for s in KIT_SECTIONS})
 
-    ctx = ref_context(db, perfil)
+    ctx = ref_context(db, perfil, tokens)
     for ref in font_refs(tokens):
         font_id = perfil_font_id(ref)
         if font_id is not None and font_id not in ctx.active_font_ids:

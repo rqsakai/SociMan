@@ -55,7 +55,7 @@ com sentinela e piso (`datadir`). Nada novo no HD além disso.
 - integração: kit de ponta a ponta, par 3/4, identidade (completo, atenção, proibida não aplicada, Claude
   fora), troca de slot, revert com slot, consentimento, revogação (arquivos e linhas apagados, evento,
   bloqueios), vozes (estados pelo gancho, sincronização, troca de referência, teste, voz padrão, nome),
-  provedor "em uso", permissões (MCP 403), migration `0021`;
+  provedor "em uso", permissões (MCP 403), migration `0023`;
 - guardas: princípio I (rotas novas sem nome de rede), VII (versão com autor em toda mutação; o guarda
   `test_delete_so_nas_excecoes` da 021 passa a aceitar `sociman_api/revogacao.py`), "nunca auto" (os
   aplicadores de imagem e áudio só rodam pela escolha humana);
@@ -102,7 +102,7 @@ nomeadas e auditadas, (1) candidatos não escolhidos aos 90 dias e (2) revogaç�
 | **VII. Humano no controle** | ✅ com a exceção 2 da 4.3.0 | `history.record` em toda mutação de asset e voz (inclusive a checagem automática, com `details.automatico` e o autor do pedido); soft-delete (arquivar) em tudo; reversão do dono para asset e voz. **Exceção 2 (revogação LGPD):** só `RequireHumanOwner`, com confirmação, apaga a mídia da pessoa pelo `storage.apagar_por_excecao(excecao="lgpd_revogacao")`, usado só por `sociman_api/revogacao.py`, e grava o evento `eliminacao_lgpd` (quem, quando, contagem, motivo); o registro do consentimento e da revogação fica, sem mídia. A gravação original e a referência ficam fora da exceção 1 (provedor "em uso", R22). a limpeza do texto que descreve a pessoa nos snapshots antigos está coberta pelo texto da exceção 2 (D1 = sim) |
 | **VIII. Simplicidade** | ✅ | Sem serviço, dependência ou fila nova. Uma tabela (`vozes`), colunas anuláveis e módulos dentro de `assets/`, `geracao/` e um pacote `vozes/` |
 | Restrições: armazenamento NVMe × HD | ✅ | Mídia só no MinIO do HD (021); o PG guarda metadados |
-| Restrições: banco | ✅ | `0021_cadastro_padronizado` (`down_revision = "0020_geracao_local"`, provisório), com upgrade/downgrade e `test_migration_0021` |
+| Restrições: banco | ✅ | `0023_cadastro_padronizado` (`down_revision = "0022_produtos_shop"`, provisório), com upgrade/downgrade e `test_migration_0023` |
 | Restrições: portas | ✅ | Nenhuma porta nova |
 | Restrições: containers UID 1000 | ✅ | Sem container novo |
 
@@ -143,7 +143,7 @@ uma linha do `gerador` da 021 (o único na rede `gpu-local`) em vez de uma trilh
 specs/025-cadastro-padronizado/
 ├── plan.md              # este arquivo
 ├── research.md          # R1–R22
-├── data-model.md        # colunas novas da 007, `vozes`, estados, migration 0021
+├── data-model.md        # colunas novas da 007, `vozes`, estados, migration 0023
 ├── quickstart.md        # automático + manual com o dono (GPU e shop-tts reais)
 ├── contracts/
 │   ├── http-api.md      # rotas do SociMan (OpenAPI gerado)
@@ -178,14 +178,14 @@ apps/api/src/sociman_api/
 ├── mcp/mapa.py              # tools de leitura de vozes; escritas na lista proibida
 ├── history.py               # entity_type "voz"
 └── main.py                  # include_router (vozes, padrão)
-apps/api/migrations/versions/0021_cadastro_padronizado.py
+apps/api/migrations/versions/0023_cadastro_padronizado.py
 apps/api/tests/
 ├── fakes/shoptts_fake.py (+DELETE, inspeção), anthropic_fake.py (+identidade)
 ├── integration/padrao_helpers.py
 ├── unit/test_padrao.py, test_tts_id.py, test_constitution_guards.py (+025)
 └── integration/test_kit_avatar.py, test_identidade.py, test_cenario_padrao.py, test_looks_poses.py,
     test_vozes.py, test_vozes_sync.py, test_revogacao.py, test_padrao_permissoes.py,
-    test_assets_revert_slot.py, test_migration_0021.py
+    test_assets_revert_slot.py, test_migration_0023.py
 e2e/fakes/server.py           # /shop-tts DELETE, /geracao-e2e/vozes-tts, Claude: formato identidade
 e2e/cadastro-padronizado.spec.ts
 
@@ -206,7 +206,7 @@ do pacote para o guarda do delete apontar um arquivo só.
 1. **Gate:** a 021 implementada (motor, `image_par_id`, `voz.teste`/`entregue`, `extras`, gancho
    `ao_mudar_estado`, delete restrito) e a constitution 4.3.0 aplicada (com o texto ajustado de D1); shop-tts `v2` + `DELETE /v2/voices/{nome}` no ar (021 D3);
    conferir o número da migration.
-2. Migration `0021` + models + `padrao.py` (unitários).
+2. Migration `0023` + models + `padrao.py` (unitários).
 3. Aplicadores do kit do avatar + identidade (008/017) + troca de slot (US1, US6).
 4. Consentimento + origem pessoa real (US3).
 5. Vozes: pacote, aplicadores, gancho, sync no `gerador`, teste, voz padrão (US2).

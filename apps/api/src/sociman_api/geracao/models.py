@@ -70,7 +70,7 @@ class Geracao(AuditMixin, Base):
     __immutable_fields__ = ("alvo_tipo", "alvo_id", "passo", "motor")
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    perfil_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("perfis.id"), nullable=False)
+    perfil_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("perfis.id"))  # 029: opcional
     alvo_tipo: Mapped[GeracaoAlvo] = mapped_column(Enum(GeracaoAlvo, name="geracao_alvo"),
                                                    nullable=False)
     alvo_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)  # polimórfico, sem FK
@@ -128,7 +128,7 @@ class Audio(Base):
     __tablename__ = "audios"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
-    perfil_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("perfis.id"), nullable=False)
+    perfil_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("perfis.id"))  # 029: opcional
     object_key: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
     formato: Mapped[str] = mapped_column(Text, nullable=False)  # wav | m4a | ogg | mp3
     sample_rate: Mapped[int] = mapped_column(Integer, nullable=False)

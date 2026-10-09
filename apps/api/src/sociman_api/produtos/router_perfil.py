@@ -1,6 +1,9 @@
 """Rotas dos produtos do perfil (contracts/api.md da 012, "Produtos do perfil"). Ler: dono,
 membro e cliente MCP pelo mapa (`RequireUser`); criar: só humano (`RequireHuman`). Não existe
-rota DELETE."""
+rota DELETE.
+
+Spec 029: as duas ficam obsoletas (`deprecated`), com o mesmo comportamento das rotas da agência
+(`/api/produtos`) com `perfilId` = o perfil do caminho."""
 
 import re
 from typing import Annotated
@@ -26,7 +29,8 @@ def _errors(*statuses: int) -> dict[int | str, dict]:
 
 
 @router.get("/{perfil_id}/produtos", operation_id="produtos_listar",
-            response_model=schemas.ProdutosLista, responses=_errors(400, 401, 403, 404))
+            response_model=schemas.ProdutosLista, responses=_errors(400, 401, 403, 404),
+            deprecated=True)
 def listar(
     perfil_id: UUID, actor: RequireUser, db: Db,
     status: Annotated[list[ProdutoStatus] | None, Query(description="Estados (OU)")] = None,
@@ -42,7 +46,7 @@ def listar(
 
 @router.post("/{perfil_id}/produtos", operation_id="produtos_criar", status_code=201,
              response_model=schemas.Produto,
-             responses=_errors(400, 401, 403, 404, 409, 503, 507))
+             responses=_errors(400, 401, 403, 404, 409, 503, 507), deprecated=True)
 def criar(
     perfil_id: UUID, actor: RequireHuman, db: Db,
     name: Annotated[str, Form(max_length=200)],
@@ -52,12 +56,18 @@ def criar(
                      File(description="1 a 6 fotos (PNG, JPG ou WebP, ≥ 512×512, até 20 MB)")]
     = None,
 ) -> schemas.Produto:
+    nome, url = campos_criar(name, url_loja)
+    produto = svc.criar(db, actor, perfil_id, nome, (obs or "").strip(), url,
+                        [f.file for f in fotos or []])
+    return svc.produto_out(db, produto)
+
+
+def campos_criar(name: str, url_loja: str | None) -> tuple[str, str | None]:
+    """O nome (1 a 80) e o link https da loja do multipart de criação."""
     nome = name.strip()
     if not 1 <= len(nome) <= 80:
         raise schemas.invalid("name", "de 1 a 80 caracteres")
     url = (url_loja or "").strip() or None
     if url is not None and not _URL.match(url):
         raise schemas.invalid("url_loja", "use um link https://")
-    produto = svc.criar(db, actor, perfil_id, nome, (obs or "").strip(), url,
-                        [f.file for f in fotos or []])
-    return svc.produto_out(db, produto)
+    return nome, url

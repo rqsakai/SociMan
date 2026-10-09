@@ -95,8 +95,8 @@ export function ResumoTab() {
                   </TableRow>
                 )}
                 {r.porPerfil.map((p) => (
-                  <TableRow key={p.perfil.id}>
-                    <TableCell>{p.perfil.name}</TableCell>
+                  <TableRow key={p.perfil?.id ?? "sem-perfil"}>
+                    <TableCell>{p.perfil?.name ?? "Sem perfil"}</TableCell>
                     <TableCell className="text-right">{p.chamadas}</TableCell>
                     <TableCell className="text-right">{custoText(p.custoUsd)}</TableCell>
                   </TableRow>

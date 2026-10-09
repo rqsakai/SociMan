@@ -1,5 +1,8 @@
 /*
- * Cena (spec 010): /app/cenas/:id (detalhe) e /app/perfis/:id/cenas/nova (cena nova).
+ * Cena (spec 010): /app/cenas/:id (detalhe) e /app/estudio/cenas/nova?perfil=<id> (cena nova, spec 029;
+ * o endereço antigo /app/perfis/:id/cenas/nova redireciona). Spec 029: o perfil base é opcional (sem
+ * ele, sem padrões nem guia, e a tela avisa), os seletores listam a biblioteca da agência e "+ Novo …"
+ * cria avatar, cenário ou produto num diálogo, fora do `<form>` da cena.
  *
  * Esquerda: o formulário (CenaForm) com "Salvar". Direita: avisos, "o avatar/cenário mudou" com
  * "Remontar prompt", o prompt montado com "Copiar prompt"/"Copiar negative prompt", os ingredientes,
@@ -10,14 +13,17 @@
  * "Salvar" humano grava com o `propostaId` e a proposta fica aplicada.
  */
 import { ApiError } from "@sociman/contract";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { Archive, ArchiveRestore, ArrowLeft, Bot, CheckCircle2, Copy, History, Link2, Loader2, PencilLine, Save, TriangleAlert, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
 import { Avisos, AvisoMudou } from "@/components/cenas/Avisos";
-import { CenaForm } from "@/components/cenas/CenaForm";
+import { CenaForm, type NovoTipo } from "@/components/cenas/CenaForm";
+import { NovoItemDialog, type ItemCriado } from "@/components/estudio/NovoItemDialog";
+import { PerfilBaseEditavel } from "@/components/estudio/PerfilBaseEditavel";
+import { PerfilBaseField } from "@/components/estudio/PerfilBaseField";
 import { AjustarCenaIa, iaCenaDecorador, type IaCtx } from "@/components/cenas/IaCena";
 import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
 import { Ingredientes } from "@/components/cenas/Ingredientes";
@@ -38,10 +44,10 @@ import {
   camposDe,
   camposVazios,
   campoCenaLabel,
-  
   diferencas,
   faltandoDe,
   invalidarCena,
+  LIM,
   statusCenaLabel,
   statusCenaTone,
   useCena,
@@ -51,10 +57,31 @@ import {
   type IaAplicacaoCena,
 } from "@/lib/cenas";
 import { useFormRebase } from "@/lib/ia";
-import { perfilKey } from "@/lib/perfis";
+import { metaDetalhe, rotaEstudio } from "@/lib/estudio";
 import { formatDateTime } from "@/lib/tz";
 
-const abaCenas = (perfilId: string) => `/app/perfis/${perfilId}?aba=cenas`;
+// Ao criar no lugar: o item volta escolhido. O produto novo ainda não está aprovado (o catálogo só liga
+// aprovados, 012): a cena guarda o nome dele como referência leve e o "Ligar ao catálogo" vem depois.
+function aplicarCriado(item: ItemCriado, set: (patch: Partial<CenaCampos>) => void, queryClient: QueryClient) {
+  if (item.tipo === "avatar") set({ avatarId: item.id, avatarArquivoId: null });
+  if (item.tipo === "cenario") set({ cenarioId: item.id, cenarioArquivoId: null });
+  if (item.tipo === "produto" && item.produto) {
+    const nome = (item.produto.ficha?.nomeComercial ?? item.produto.name).slice(0, LIM.produtoNome);
+    set({ produtoId: null, produtoVarianteId: null, produtoNome: nome, produtoImagemId: null });
+    toast.info(`O produto ${nome} foi criado e ainda precisa ser aprovado no catálogo. Depois de aprovado, ligue-o a esta cena.`, { duration: 10_000 });
+  }
+  void queryClient.invalidateQueries({ queryKey: [item.tipo === "produto" ? "produtos" : "assets"] });
+}
+
+function AvisoSemPerfil() {
+  return (
+    <Alert role="note" data-testid="aviso-sem-perfil-base">
+      <TriangleAlert aria-hidden="true" />
+      <AlertTitle>Sem perfil base: sem padrões nem guia</AlertTitle>
+      <AlertDescription>A cena não usa os padrões de estilo e negativo de nenhum perfil, nem o guia de comunicação e as palavras proibidas.</AlertDescription>
+    </Alert>
+  );
+}
 
 // A proposta de cena aberta de `?proposta=` (só `proposta_cena` aberta conta).
 function usePropostaCena() {
@@ -92,33 +119,25 @@ function FaixaProposta({ proposta }: { proposta: Anotacao }) {
   );
 }
 
-function VoltarPerfil({ perfilId }: { perfilId: string }) {
+function VoltarPerfil({ perfilId }: { perfilId: string | null }) {
   return (
-    <Button type="button" variant="ghost" size="sm" className="-ml-2 text-muted-foreground" asChild>
-      <Link to={abaCenas(perfilId)}>
+    <Button type="button" variant="ghost" size="sm" className="-ml-2 self-start text-muted-foreground" asChild>
+      <Link to={rotaEstudio("cenas", perfilId)}>
         <ArrowLeft aria-hidden="true" />
-        Cenas do perfil
+        Voltar para as cenas
       </Link>
     </Button>
   );
-}
-
-function usePerfilNome(perfilId: string) {
-  const perfil = useQuery({ queryKey: perfilKey(perfilId), queryFn: () => api.perfis.get(perfilId), enabled: Boolean(perfilId) });
-  return perfil.data?.perfil.name;
 }
 
 // ---------------------------------------------------------------------------------------------
 // Nova cena
 
 export function CenaNova() {
-  const { id: perfilId = "" } = useParams();
-  const perfilNome = usePerfilNome(perfilId);
+  const [params] = useSearchParams();
+  const perfilId = params.get("perfil") || null;
   const p = usePropostaCena();
-  usePageMeta({
-    title: "Nova cena",
-    breadcrumbs: [{ label: "Perfis", to: "/app/perfis" }, ...(perfilNome ? [{ label: perfilNome, to: abaCenas(perfilId) }] : [])],
-  });
+  usePageMeta({ title: "Nova cena", ...metaDetalhe("cenas", perfilId) });
   if (p.pendente) return <Skeleton className="h-96 w-full rounded-xl" />;
   return <NovaForm key={p.proposta?.id ?? "nova"} perfilId={perfilId} proposta={p.proposta} propostaInvalida={Boolean(p.invalida)} />;
 }
@@ -129,13 +148,15 @@ function NovaForm({
   proposta,
   propostaInvalida,
 }: {
-  perfilId: string;
+  perfilId: string | null;
   proposta: Anotacao | null;
   propostaInvalida: boolean;
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const padroes = useCenaPadroes(perfilId);
+  const [perfilBase, setPerfilBase] = useState<string | null>(perfilId);
+  const [novo, setNovo] = useState<NovoTipo | null>(null);
+  const padroes = useCenaPadroes(perfilBase ?? "");
   const [valores, setValores] = useState<CenaCampos>(() => ({ ...camposVazios(), ...(proposta ? camposDaProposta(proposta) : {}) }));
   const [ia, setIa] = useState<IaAplicacaoCena[]>([]);
   const [busy, setBusy] = useState(false);
@@ -148,14 +169,15 @@ function NovaForm({
     if (faltam.length) return setError(new ApiError(400, "validation_error", `Preencha: ${faltam.join(" e ")}.`));
     setBusy(true);
     try {
-      const cena = await api.cenas.create(perfilId, {
+      const cena = await api.cenas.criarAgencia({
         ...valores,
+        perfilId: perfilBase,
         nome: valores.nome.trim(),
         ...(proposta ? { propostaId: proposta.id } : {}),
         ...(ia.length ? { ia } : {}),
       });
       toast.success("Cena criada como rascunho.");
-      await invalidarCena(queryClient, null, perfilId);
+      await invalidarCena(queryClient, null);
       if (proposta) await invalidarAnotacoes(queryClient);
       void navigate(`/app/cenas/${cena.id}`, { replace: true });
     } catch (err) {
@@ -166,7 +188,7 @@ function NovaForm({
   }
 
   const iaCtx: IaCtx = {
-    perfilId,
+    perfilId: perfilBase,
     cena: null,
     valores,
     salvar: async (patch, marcas) => {
@@ -180,6 +202,7 @@ function NovaForm({
     <Page>
       <VoltarPerfil perfilId={perfilId} />
       <h1 className="text-xl font-bold">Nova cena</h1>
+      {!perfilBase && <AvisoSemPerfil />}
       {proposta && <FaixaProposta proposta={proposta} />}
       {propostaInvalida && (
         <Alert>
@@ -198,8 +221,23 @@ function NovaForm({
             }}
             className="space-y-6"
           >
+            <PerfilBaseField
+              value={perfilBase}
+              onChange={setPerfilBase}
+              disabled={busy}
+              className="sm:max-w-sm"
+              hint="Os padrões de estilo e negativo, o guia e as palavras proibidas vêm deste perfil."
+            />
             <AjustarCenaIa ctx={iaCtx} />
-            <CenaForm perfilId={perfilId} valores={valores} onChange={set} padroes={padroes.data} disabled={busy} iaCampo={iaCenaDecorador(iaCtx)} />
+            <CenaForm
+              perfilId={perfilBase}
+              valores={valores}
+              onChange={set}
+              padroes={padroes.data}
+              disabled={busy}
+              iaCampo={iaCenaDecorador(iaCtx)}
+              onNovo={setNovo}
+            />
             {error !== null && <ApiErrorAlert error={error} />}
             <Button type="submit" disabled={busy} aria-busy={busy}>
               {busy ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Save aria-hidden="true" />}
@@ -208,6 +246,15 @@ function NovaForm({
           </form>
         </CardContent>
       </Card>
+      <NovoItemDialog
+        tipo={novo}
+        perfilId={perfilBase}
+        onClose={() => setNovo(null)}
+        onCriado={(item) => {
+          setNovo(null);
+          aplicarCriado(item, set, queryClient);
+        }}
+      />
     </Page>
   );
 }
@@ -220,14 +267,7 @@ export default function CenaDetalhe() {
   const q = useCena(id);
   const p = usePropostaCena();
   const cena = q.data;
-  const perfilNome = usePerfilNome(cena?.perfilId ?? "");
-  usePageMeta({
-    title: cena?.nome ?? "Cena",
-    breadcrumbs: [
-      { label: "Perfis", to: "/app/perfis" },
-      ...(cena && perfilNome ? [{ label: perfilNome, to: abaCenas(cena.perfilId) }] : []),
-    ],
-  });
+  usePageMeta({ title: cena?.nome ?? "Cena", ...metaDetalhe("cenas", cena?.perfilId) });
 
   if (q.isPending || p.pendente) {
     return (
@@ -260,7 +300,8 @@ function CenaEditor({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [, setParams] = useSearchParams();
-  const padroes = useCenaPadroes(cena.perfilId);
+  const padroes = useCenaPadroes(cena.perfilId ?? "");
+  const [novo, setNovo] = useState<NovoTipo | null>(null);
   const salvos = camposDe(cena);
   // O "Aplicar" da IA salva um campo e a versão muda (o editor remonta): os outros campos sujos voltam
   // por cima dos dados novos (spec 008, R-9).
@@ -332,7 +373,7 @@ function CenaEditor({
 
   return (
     <Page>
-      <VoltarPerfil perfilId={cena.perfilId} />
+      <VoltarPerfil perfilId={cena.perfilId ?? null} />
 
       <Card className="shadow-card">
         <CardHeader>
@@ -360,6 +401,14 @@ function CenaEditor({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          <PerfilBaseEditavel
+            valor={cena.perfilId ?? null}
+            disabled={cena.arquivada || usada || busy !== null || sujo}
+            onSalvar={async (perfilId) => {
+              await api.cenas.update(cena.id, { version: cena.version, perfilId });
+              await refresh();
+            }}
+          />
           <div className="flex flex-wrap gap-2" role="group" aria-label="Ações da cena">
             {!cena.arquivada && cena.status === "rascunho" && (
               <Button
@@ -431,7 +480,6 @@ function CenaEditor({
             />
             {cena.produtoNome && !cena.produtoId && !usada && !cena.arquivada && (
               <LigarCatalogo
-                perfilId={cena.perfilId}
                 produtoNome={cena.produtoNome}
                 pronta={cena.status === "pronta"}
                 disabled={busy !== null || sujo}
@@ -509,7 +557,7 @@ function CenaEditor({
                 )}
                 {!usada && !cena.arquivada && <AjustarCenaIa ctx={iaCtx} />}
                 <CenaForm
-                  perfilId={cena.perfilId}
+                  perfilId={cena.perfilId ?? null}
                   valores={valores}
                   onChange={set}
                   refs={{ avatar: cena.avatar, cenario: cena.cenario, produtoImagem: cena.produtoImagem, produto: cena.produto }}
@@ -517,6 +565,7 @@ function CenaEditor({
                   bloquearPrompt={usada}
                   disabled={cena.arquivada || busy === "salvar"}
                   iaCampo={iaCenaDecorador(iaCtx)}
+                  onNovo={setNovo}
                 />
                 {cena.status === "pronta" && mexePrompt && (
                   <p role="status" className="text-sm text-warning-foreground">
@@ -561,6 +610,15 @@ function CenaEditor({
           <AnotacoesCard alvoTipo="cena" alvoId={cena.id} arquivado={cena.arquivada} titulo="Anotações da cena" />
         </div>
       </div>
+      <NovoItemDialog
+        tipo={novo}
+        perfilId={cena.perfilId ?? null}
+        onClose={() => setNovo(null)}
+        onCriado={(item) => {
+          setNovo(null);
+          aplicarCriado(item, set, queryClient);
+        }}
+      />
     </Page>
   );
 }

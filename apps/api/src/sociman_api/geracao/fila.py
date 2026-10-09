@@ -57,7 +57,7 @@ class Job:
     """O que o gerador precisa da geração pega (uma cópia; a sessão já foi fechada)."""
 
     id: uuid.UUID
-    perfil_id: uuid.UUID
+    perfil_id: uuid.UUID | None  # o perfil base usado (spec 029)
     alvo_tipo: GeracaoAlvo
     alvo_id: uuid.UUID
     passo: str

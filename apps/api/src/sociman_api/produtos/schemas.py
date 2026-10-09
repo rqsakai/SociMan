@@ -55,6 +55,7 @@ class ProdutoPatch(CamelModel):
     name: Nome | None = None
     obs: Obs | None = None
     url_loja: UrlLoja | None = None
+    perfil_id: uuid.UUID | None = None  # spec 029: o perfil base (null = sem perfil)
 
 
 class FichaIn(CamelModel):
@@ -174,6 +175,8 @@ class UsoProduto(CamelModel):
 
 class ProdutoResumo(CamelModel):
     id: uuid.UUID
+    perfil_id: uuid.UUID | None = None  # spec 029: o perfil base (null = sem perfil)
+    perfil_nome: str | None = None
     name: str
     nome_comercial: str | None
     categoria: str | None
@@ -192,7 +195,8 @@ class ProdutosLista(CamelModel):
 
 class Produto(CamelModel):
     id: uuid.UUID
-    perfil_id: uuid.UUID
+    perfil_id: uuid.UUID | None  # spec 029: o perfil base (null = sem perfil)
+    perfil_nome: str | None = None
     name: str
     obs: str
     url_loja: str | None

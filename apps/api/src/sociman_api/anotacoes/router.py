@@ -15,6 +15,7 @@ from sociman_api.anotacoes.models import AnotacaoAlvo, AnotacaoSituacao, Anotaca
 from sociman_api.auth.deps import RequireHuman, RequireHumanOwner, RequireUser
 from sociman_api.db import DbSession
 from sociman_api.errors import ErrorEnvelope
+from sociman_api.perfis import base as perfil_base
 from sociman_api.perfis.schemas import RevertIn, VersionsList
 
 router = APIRouter(prefix="/api/anotacoes")
@@ -35,7 +36,10 @@ def anotacoes_list(
     db: DbSession,
     alvo_tipo: Annotated[AnotacaoAlvo | None, Query(alias="alvoTipo")] = None,
     alvo_id: Annotated[UUID | None, Query(alias="alvoId")] = None,
-    perfil_id: Annotated[UUID | None, Query(alias="perfilId")] = None,
+    perfil_id: Annotated[str | None, Query(
+        alias="perfilId", max_length=40,
+        description="Um id de perfil ou `sem` (sem perfil); cena e produto pelo perfil base "
+                    "atual")] = None,
     situacao: Annotated[AnotacaoSituacao | None, Query()] = None,
     tipo: Annotated[AnotacaoTipo | None, Query()] = None,
     autor_cliente_id: Annotated[UUID | None, Query(alias="autorClienteId")] = None,
@@ -45,17 +49,17 @@ def anotacoes_list(
 ) -> schemas.AnotacoesPage:
     """Anotações e propostas, das mais novas para as mais antigas, com filtros. `q` busca um
     trecho do texto, sem acento e sem caixa (spec 024)."""
-    return service.listar(db, alvo_tipo, alvo_id, perfil_id, situacao, tipo, autor_cliente_id,
-                          cursor, limit, q)
+    return service.listar(db, alvo_tipo, alvo_id, perfil_base.filtro_perfil(perfil_id),
+                          situacao, tipo, autor_cliente_id, cursor, limit, q)
 
 
 @router.get("/resumo", operation_id="anotacoes_resumo", response_model=schemas.AnotacoesResumo,
             responses=_errors(401, 403))
 def anotacoes_resumo(actor: RequireUser, db: DbSession,
-                     perfil_id: Annotated[UUID | None, Query(alias="perfilId")] = None
-                     ) -> schemas.AnotacoesResumo:
+                     perfil_id: Annotated[str | None, Query(alias="perfilId", max_length=40)]
+                     = None) -> schemas.AnotacoesResumo:
     """Quantas propostas estão abertas (contador do menu)."""
-    return service.resumo(db, perfil_id)
+    return service.resumo(db, perfil_base.filtro_perfil(perfil_id))
 
 
 @router.post("", operation_id="anotacoes_create", status_code=201,

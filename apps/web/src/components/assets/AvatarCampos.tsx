@@ -18,7 +18,9 @@ export interface PromptFields {
 
 // "Melhorar com IA" nos textos (spec 008): `onSave(campo)` salva só aquele campo.
 export interface AvatarCamposIa {
-  perfilId: string;
+  // o perfil base do asset (029: null = sem perfil, sem guia)
+  perfilId: string | null;
+  perfilBaseId?: string | null;
   alvo: IaAlvo;
   onSave: (campo: keyof PromptFields) => IaOnSave<string>;
   onReload?: () => void;
@@ -48,6 +50,7 @@ export function AvatarCampos({
       <IaAssist
         tipo={tipoCampo}
         perfilId={ia.perfilId}
+        perfilBaseId={ia.perfilBaseId}
         alvo={ia.alvo}
         value={value[campo]}
         onSave={ia.onSave(campo)}
@@ -69,12 +72,16 @@ export function AvatarCampos({
       {ia && (
         <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
           <BookText className="size-3.5" aria-hidden="true" />
-          {avatar
-            ? "As palavras proibidas do guia valem na descrição para prompts e nas regras de imagem."
-            : "As palavras proibidas do guia valem no prompt do ambiente."}
-          <Link to={guiaPerfilPath(ia.perfilId)} className="text-primary underline-offset-4 hover:underline">
-            Ver guia de comunicação do perfil
-          </Link>
+          {!ia.perfilId
+            ? "Sem perfil base: só as regras do tipo, sem guia."
+            : avatar
+              ? "As palavras proibidas do guia valem na descrição para prompts e nas regras de imagem."
+              : "As palavras proibidas do guia valem no prompt do ambiente."}
+          {ia.perfilId && (
+            <Link to={guiaPerfilPath(ia.perfilId)} className="text-primary underline-offset-4 hover:underline">
+              Ver guia de comunicação do perfil
+            </Link>
+          )}
         </p>
       )}
       {comIa(

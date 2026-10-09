@@ -17,7 +17,6 @@ from integration.cenas_helpers import (  # noqa: F401 — fixtures
     cena_pronta,
     criar_cena,
     get,
-    montar_perfil,
     owner,
 )
 from integration.mcp_helpers import bearer, com_mcp, criar_cliente, ligar
@@ -100,9 +99,9 @@ def test_recusas_da_proposta(client, db, base, agente):
     cena = cena_pronta(client, h, base)
     erro = _propor(client, token, "conta", str(uuid.uuid4()), status=422, acao="x")["error"]
     assert erro["code"] == "proposta_alvo_invalido"
-    outro = montar_perfil(client, h, "outro", proibida=None)
+    # 029: asset de outro perfil base passa; o do tipo errado continua recusado
     erro = _propor(client, token, "perfil", pid, status=422,
-                   avatarId=outro["avatar"]["id"])["error"]
+                   avatarId=base["cenario"]["id"])["error"]
     assert erro["code"] == "proposta_invalida"
     # cena usada → 409
     from integration.test_cenas_usos import video_proprio

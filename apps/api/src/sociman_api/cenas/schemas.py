@@ -73,6 +73,12 @@ class CenaIn(_CamposCena):
     ia: IaAplicacoes | None = None  # campos aplicados da IA (008)
 
 
+class CenaAgenciaIn(CenaIn):
+    """Spec 029: a cena nova na biblioteca da agência, com o perfil base opcional."""
+
+    perfil_id: UUID | None = None
+
+
 class CenaPatch(_CamposCena):
     """Qualquer subconjunto dos campos. Nulo limpa os opcionais; em nome, ação, duração, modo,
     tags e notas, é ignorado."""
@@ -86,6 +92,8 @@ class CenaPatch(_CamposCena):
     notas: Notas | None = None
     proposta_id: UUID | None = None
     ia: IaAplicacoes | None = None
+    # Spec 029: muda o perfil base (nulo = nenhum); ausente = não muda.
+    perfil_id: UUID | None = None
 
 
 class CamposCena(_CamposCena):
@@ -198,7 +206,8 @@ class UsoOut(CamelModel):
 
 class CenaResumo(CamelModel):
     id: UUID
-    perfil_id: UUID
+    perfil_id: UUID | None  # 029: o perfil base (nulo = nenhum)
+    perfil_nome: str | None = None
     nome: str
     status: CenaStatus
     duracao_s: int
@@ -235,7 +244,8 @@ class ProdutoRef(CamelModel):
 
 class Cena(CamelModel):
     id: UUID
-    perfil_id: UUID
+    perfil_id: UUID | None  # 029: o perfil base (nulo = nenhum)
+    perfil_nome: str | None = None
     nome: str
     avatar_id: UUID | None
     avatar_arquivo_id: UUID | None
