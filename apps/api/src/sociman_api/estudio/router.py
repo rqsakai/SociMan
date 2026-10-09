@@ -26,15 +26,15 @@ def _contar(db, modelo, f: perfil_base.Filtro, *where) -> int:
     return db.scalar(perfil_base.aplicar_filtro(stmt, modelo.perfil_id, f)) or 0
 
 
-@router.get("/resumo", operation_id="estudio_resumo", response_model=schemas.ResumoOut,
+@router.get("/resumo", operation_id="estudio_resumo", response_model=schemas.EstudioResumo,
             responses={s: {"model": ErrorEnvelope} for s in (400, 401, 403)})
 def resumo(actor: RequireUser, db: DbSession,
-           perfil_id: PerfilFiltro = None) -> schemas.ResumoOut:
+           perfil_id: PerfilFiltro = None) -> schemas.EstudioResumo:
     f = filtro(db, perfil_id)
     por_tipo = dict(db.execute(perfil_base.aplicar_filtro(
         select(Asset.tipo, func.count()).where(Asset.archived_at.is_(None))
         .group_by(Asset.tipo), Asset.perfil_id, f)).all())
-    return schemas.ResumoOut(
+    return schemas.EstudioResumo(
         avatares=por_tipo.get(AssetTipo.avatar, 0),
         cenarios=por_tipo.get(AssetTipo.cenario, 0),
         assets=sum(por_tipo.get(t, 0) for t in TIPOS_ASSETS),

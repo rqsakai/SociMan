@@ -77,6 +77,10 @@ const EstudioCenas = lazy(() => import("./pages/estudio/Cenas"));
 const EstudioAssets = lazy(() => import("./pages/estudio/Assets"));
 const EstudioMovimentos = lazy(() => import("./pages/estudio/Movimentos"));
 const carregando = <p className="text-sm text-muted-foreground" aria-live="polite">Carregando…</p>;
+// 026-mercado-shop: cockpit e detalhe do produto (também usam o ECharts).
+const Mercado = lazy(() => import("./pages/mercado/Mercado"));
+const ProdutoMercado = lazy(() => import("./pages/mercado/ProdutoMercado"));
+const ColetaConfig = lazy(() => import("./pages/configuracoes/Coleta"));
 
 // Vitrine dos componentes da spec 005 (só em dev; o build de produção descarta o import).
 const Showcase = import.meta.env.DEV ? lazy(() => import("./pages/_Showcase")) : null;
@@ -215,6 +219,23 @@ export default function App() {
                   }
                 />
                 <Route path="/app/metricas/videos/:id" element={<VideoMetricas />} />
+                {/* 026-mercado-shop */}
+                <Route
+                  path="/app/mercado"
+                  element={
+                    <Suspense fallback={<p className="text-sm text-muted-foreground" aria-live="polite">Carregando…</p>}>
+                      <Mercado />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/app/mercado/produtos/:id"
+                  element={
+                    <Suspense fallback={<p className="text-sm text-muted-foreground" aria-live="polite">Carregando…</p>}>
+                      <ProdutoMercado />
+                    </Suspense>
+                  }
+                />
                 <Route path="/app/assistente-ia" element={<AssistenteIa />} />
                 <Route path="/app/assistente-ia/regras/:tipo" element={<RegraDetalhe />} />
                 <Route path="/app/propostas" element={<Propostas />} />
@@ -253,6 +274,15 @@ export default function App() {
                 {/* 013-importacao: membro vê o estado e as importações; ler, confirmar e desfazer são do dono */}
                 <Route path="/app/configuracoes/importacao" element={<ImportacaoAgencia />} />
                 <Route path="/app/configuracoes/importacao/:id" element={<ImportacaoDetalhe />} />
+                {/* 026-mercado-shop: o membro vê só o estado; aceite, interruptor e tokens são do dono (dentro da tela) */}
+                <Route
+                  path="/app/configuracoes/coleta"
+                  element={
+                    <Suspense fallback={<p className="text-sm text-muted-foreground" aria-live="polite">Carregando…</p>}>
+                      <ColetaConfig />
+                    </Suspense>
+                  }
+                />
                 <Route
                   path="/app/configuracoes/agentes"
                   element={

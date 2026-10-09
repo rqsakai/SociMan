@@ -44,12 +44,14 @@ MidiaKind = Literal["corte_original", "corte_marcado", "fonte", "marca_dagua", "
                     "imagem",  # imagem: qualquer `images.id` (biblioteca da 007)
                     "conteudo_video",  # vídeo próprio (spec 014)
                     "cena_tomada",  # tomada de uma cena (spec 010)
-                    "audio"]  # áudio do perfil (spec 021, R11): sempre com validade
+                    "audio",  # áudio do perfil (spec 021, R11): sempre com validade
+                    "mercado_imagem",  # imagem original do lago (spec 026): sem validade
+                    "mercado_bruto"]  # bruto gzip de uma coleta (spec 026): só o coletor, 1 h
 KINDS: frozenset[str] = frozenset(get_args(MidiaKind))
 VIDEO_KINDS: frozenset[str] = frozenset({"corte_original", "corte_marcado", "conteudo_video",
                                          "cena_tomada"})
 # Nunca saem sem `exp`: os vídeos e, na spec 021, os áudios (podem ser apagados pela limpeza).
-COM_VALIDADE: frozenset[str] = VIDEO_KINDS | {"audio"}
+COM_VALIDADE: frozenset[str] = VIDEO_KINDS | {"audio", "mercado_bruto"}
 LINK_TTL = 60 * 60  # 1 h (interface)
 PATH_PREFIX = "/api/midia/"
 _DOMAIN = b"midia:"

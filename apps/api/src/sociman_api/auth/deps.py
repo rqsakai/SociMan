@@ -8,6 +8,8 @@
   deixa um evento de segurança `publicacao_recusada` (princípio I).
 - `require_human` (spec 009): qualquer humano (`actor.kind == "user"`), com a mesma recusa.
 - Bearer `smcp_…` (spec 009): o ator `mcp_client` vem do portão (`mcp/portao.py`, R5).
+- Bearer `scol_…` (spec 026): o ator `coletor` vem do portão `coleta/portao.py` e só vale nas
+  rotas **C** da ingestão (`require_coletor`); em qualquer outra, o portão já recusou.
 """
 
 import logging
@@ -31,12 +33,13 @@ log = logging.getLogger(__name__)
 class Actor:
     """Autor de uma ação. O `mcp_client` (spec 009) nunca tem `user`: lê como um membro."""
 
-    kind: str  # user | anonymous | system:cli | system:publicacao | mcp_client (009)
+    kind: str  # user | anonymous | system:cli | system:publicacao | mcp_client (009) | coletor
     user_id: uuid.UUID | None = None
     user: User | None = None
     fam: str | None = None
     mcp_client_id: uuid.UUID | None = None  # spec 009: o cliente MCP (kind == "mcp_client")
     mcp_escopo: str | None = None  # leitura | propostas
+    coleta_cliente_id: uuid.UUID | None = None  # spec 026: o coletor (kind == "coletor")
 
 
 ANONYMOUS = Actor(kind="anonymous")
@@ -63,6 +66,10 @@ def _actor_from_request(request: Request, db: Session) -> Actor | None:
         from sociman_api.mcp import portao  # import tardio (o portão usa este módulo)
 
         return portao.ator(request)
+    if token.startswith("scol_"):  # spec 026: token do coletor, decidido pelo portão da coleta
+        from sociman_api.coleta import portao as coleta_portao
+
+        return coleta_portao.ator(request)
     claims = tokens.decode_access(token)
     if not claims:
         return None
@@ -161,9 +168,31 @@ def require_human(request: Request, actor: Annotated[Actor, Depends(require_user
     return actor
 
 
+SOMENTE_COLETOR = "Esta rota é do serviço do coletor"
+
+
+def require_coletor(request: Request, actor: Annotated[Actor, Depends(current_user)]) -> Actor:
+    """Rotas **C** da 026 (ingestão): só o ator `coletor` (Bearer `scol_` que passou pelo
+    portão). Usuário, MCP ou `system:*` → 403 `somente_coletor`."""
+    if actor.kind != "coletor":
+        raise ApiError(403, "somente_coletor", SOMENTE_COLETOR)
+    return actor
+
+
+def require_user_ou_coletor(actor: Annotated[Actor, Depends(current_user)]) -> Actor:
+    """Rotas de leitura da operação da coleta (rodadas): usuário comum **ou** o ator `coletor`
+    (o `reprocessar --desde` lista as próprias rodadas, spec 026, FR-012). O service restringe o
+    coletor às rodadas do próprio cliente."""
+    if actor.kind == "coletor":
+        return actor
+    return require_user(actor)
+
+
 CurrentUser = Annotated[Actor, Depends(current_user)]
 RequireUser = Annotated[Actor, Depends(require_user)]
 RequireOwner = Annotated[Actor, Depends(require_owner)]
 OptionalActor = Annotated[Actor, Depends(get_actor)]
 RequireHumanOwner = Annotated[Actor, Depends(require_human_owner)]
 RequireHuman = Annotated[Actor, Depends(require_human)]
+RequireColetor = Annotated[Actor, Depends(require_coletor)]  # spec 026
+RequireUserOuColetor = Annotated[Actor, Depends(require_user_ou_coletor)]  # spec 026

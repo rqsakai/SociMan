@@ -24,6 +24,13 @@ x-api-env: &api-env
   S3_BUCKET: sociman
   S3_FONTS_BUCKET: sociman-fonts
   S3_VIDEOS_BUCKET: sociman-videos
+  S3_MERCADO_BUCKET: sociman-mercado   # spec 026
+  # Spec 026: coleta de mercado ligada no servidor SÓ aqui (o botão da tela começa desligado) e
+  # um pepper fixo de teste (não é segredo).
+  COLETA_HABILITADA: "true"
+  MERCADO_HASH_PEPPER: pepper-e2e-efemero-nao-e-segredo
+  MERCADO_URL_PUBLICA: https://exemplo.test/shop
+  MERCADO_URL_AFFILIATE: https://exemplo.test/affiliate
   # Fixo e público: só assina tokens da stack efêmera (não é segredo).
   JWT_SECRET: teste-e2e-efemero-nao-e-segredo-0123456789abcdef
   # HD de dados de mentira (volume tmpfs abaixo); piso baixo porque o tmpfs é pequeno.
@@ -177,6 +184,7 @@ services:
       AGENDADOR_PUBLICACAO_S: "2"
       AGENDADOR_METRICAS_S: "2"   # spec 016 (T079)
       AGENDADOR_APRENDIZADO_S: "2"   # spec 023: a trilha roda no e2e
+      AGENDADOR_MERCADO_S: "2"   # spec 026: a trilha `mercado` roda no e2e
     extra_hosts: *tiktok-hosts
     volumes:
       - sociman-data:/srv/sociman-data
@@ -289,7 +297,7 @@ services:
       - -c
       - >
         mc alias set e2e http://minio:9000 sociman-e2e sociman-e2e-secret &&
-        mc mb -p e2e/sociman e2e/sociman-fonts e2e/sociman-videos e2e/sociman-audios
+        mc mb -p e2e/sociman e2e/sociman-fonts e2e/sociman-videos e2e/sociman-audios e2e/sociman-mercado
     depends_on:
       minio:
         condition: service_healthy

@@ -58,7 +58,7 @@ function foto(videoId: string, idadeH: number, views: number): void {
   );
 }
 
-const ABA: Record<string, string> = { curvas: "Curvas", contas: "Contas", funil: "Funil", mercado: "Mercado", alertas: "Alertas" };
+const ABA: Record<string, string> = { curvas: "Curvas", contas: "Contas", funil: "Funil", mercado: "Fontes", alertas: "Alertas" };
 
 async function abrirAba(page: Page, aba: string, perfilId: string): Promise<void> {
   await page.goto(`/app/metricas?aba=${aba}&perfil=${perfilId}`);

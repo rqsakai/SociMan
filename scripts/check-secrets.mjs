@@ -15,6 +15,8 @@ const patterns = [
   { name: "Bearer token longo hardcoded", re: /Bearer\s+[A-Za-z0-9._-]{40,}/ },
   // Spec 009: credencial de cliente MCP (smcp_<8 base32>_<43 base64url>).
   { name: "token de cliente MCP", re: /\bsmcp_[a-z2-7]{8}_[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/ },
+  // Spec 026: credencial do coletor de mercado (scol_<8 base32>_<43 base64url>).
+  { name: "token do coletor de mercado", re: /\bscol_[a-z2-7]{8}_[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/ },
 ];
 
 // Spec 015: a chave dos tokens e o client secret da TikTok com VALOR (formas `=` e `:`).
@@ -42,6 +44,18 @@ const allowedTestValues = new Set([
   "e2e-client-secret-de-teste", // e2e: TIKTOK_CLIENT_SECRET do fake
   "e2e-token-do-dockerctl-de-teste", // e2e (spec 021): DOCKERCTL_TOKEN do fake
 ]);
+
+// Autoteste do padrão do coletor (spec 026): um token sintético montado em tempo de execução
+// (nunca um literal) casa; um com o segredo curto não casa.
+{
+  const scol = patterns.find((p) => p.name === "token do coletor de mercado").re;
+  const positivo = "scol_" + "a".repeat(8) + "_" + "b".repeat(43);
+  const negativo = "scol_" + "a".repeat(8) + "_" + "b".repeat(42);
+  if (!scol.test(`x ${positivo} y`) || scol.test(`x ${negativo} y`)) {
+    console.error("✗ autoteste do padrão scol_ falhou");
+    process.exit(1);
+  }
+}
 
 // caminhos onde exemplos/placeholders são esperados (não são segredos reais)
 const allowFile = (p) => p.endsWith(".env.example") || p === "scripts/check-secrets.mjs";

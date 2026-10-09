@@ -1,14 +1,16 @@
 <!--
 Sync Impact Report
-- Versão: 4.2.0 → 4.3.0 (MINOR: exceção nova e nomeada no princípio VII)
-- Princípio modificado: VII. Humano no controle (+ "Exceções de eliminação (4.3.0)")
-- Seções adicionadas: nenhuma; seções removidas: nenhuma
-- Origem: spec 021-geracao-local (limpeza de candidatos aos 90 dias) e 025-cadastro-padronizado
-  (revogação LGPD); aprovada pelo dono em 2026-10-06, texto final de 2026-10-07
-- Templates: ✅ plan-template (Constitution Check já cita os oito princípios; sem mudança)
-  ✅ spec-template / tasks-template (sem mudança)
-- Docs: ✅ CLAUDE.md não contradiz (a regra "não existe DELETE no domínio" continua; a exceção é só
-  `storage.apagar_por_excecao`, citada na seção da 021)
+- Versão: 4.3.0 → 4.4.0 (MINOR: princípio novo IX e restrição técnica nova)
+- Princípio adicionado: IX. Coleta de mercado: leitura, conta própria e ritmo humano
+- Princípios modificados: nenhum (I, II e VII continuam iguais; o IX reforça o VII para o lago de mercado)
+- Seções adicionadas: bullet "Coletor de mercado" em Restrições técnicas
+- Seções removidas: nenhuma
+- Origem: brainstorm de 2026-10-08 (docs/insumos/026-mercado-shop.md); risco da conta de afiliado
+  explicado e aceito pelo dono em 2026-10-08
+- Nota: a emenda prevista pela spec 011 (ainda não aplicada) passa a ser a 4.5.0
+- Templates: ✅ plan-template (o Constitution Check enumera os princípios da constitution em vigor;
+  a seção da 026 precisa citar o IX) ✅ spec-template / tasks-template (sem mudança)
+- Docs: ✅ CLAUDE.md não contradiz; a seção da 026 entra quando a spec for implementada
 - TODOs: nenhum
 -->
 # Constitution do SociMan
@@ -87,7 +89,7 @@ casa), e injeção de CSS não executa código.
 ### VI. Empírico: testes antes de pronto
 Nenhuma feature pode ser declarada pronta sem que passem: `uv run pytest`, `uv run ruff check .`,
 `npm run check:web` e os testes e2e (Playwright) dos fluxos críticos que ela toca. Cada regra
-inegociável (I, II e VII) DEVE ter teste automatizado no backend. A ordem de escrita (teste antes
+inegociável (I, II, VII e IX) DEVE ter teste automatizado no backend. A ordem de escrita (teste antes
 ou depois do código) é livre, mas o teste acompanha a entrega.
 
 **Por quê:** o dono trabalha de forma empírica, e "funcionou na minha máquina" não é evidência.
@@ -116,6 +118,37 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 
 **Por quê:** o projeto tem um dono só, e cada peça extra é manutenção que ninguém pediu.
 
+### IX. Coleta de mercado: leitura, conta própria e ritmo humano
+- O SociMan PODE coletar dados públicos de mercado de uma rede (páginas de produto e de loja do TikTok
+  Shop, rankings e o Affiliate Center da conta do próprio dono) **só para leitura**. O coletor NÃO DEVE
+  executar nenhuma ação que escreva na rede (seguir, curtir, comentar, adicionar à vitrine, comprar,
+  pedir amostra); a lista de ações permitidas é fechada e tem teste.
+- A coleta roda num **serviço separado, no desktop do dono, fora do compose** (`apps/coletor/`), que
+  navega como uma pessoa no navegador real do dono. Ele NÃO DEVE chamar diretamente a API interna
+  assinada da rede: lê o que a página carrega. Fala com o SociMan **só pela API de ingestão**, com
+  token próprio (`scol_`, só o hash no banco), e nunca com o banco nem com o armazenamento. A API NÃO
+  DEVE conter navegador, Playwright nem endereços da rede; o teste-guarda verifica.
+- O robô usa **a conta do próprio dono**, nunca uma credencial de terceiro. O risco de a rede restringir
+  essa conta é do dono: o interruptor da coleta só liga depois de um **aceite de risco registrado**
+  (quem e quando, em `coleta_config` e em `docs/decisoes/coleta-mercado.md`).
+- **Ritmo humano ditado pelo servidor:** janela de horário, pausas aleatórias e teto diário de páginas
+  são configuráveis pelo dono, com padrões conservadores; uma aba, uma tarefa por vez. Um interruptor
+  em dois níveis (`COLETA_HABILITADA` e o botão da tela) para toda a coleta. Captcha, login perdido ou
+  bloqueio DEVEM parar a coleta e avisar o dono; o coletor NUNCA tenta contornar uma verificação.
+- **Terceiros:** de criadores e autores de avaliação guardam-se só identificadores públicos (id, @) e
+  contadores; nunca nome, foto, bio ou texto pessoal; o autor de uma avaliação entra só como hash. Logs
+  não levam dado pessoal.
+- **Lago permanente e neutro:** o dado de mercado não pertence a perfil, conta nem tenant, é coletado
+  uma vez e lido por todos, e **nunca é apagado** (vale o VII sem exceção nova; "esfriar" só reduz a
+  cadência). O payload bruto é guardado para reprocessar sem recoletar.
+- Todo número derivado (vendas, GMV, crescimento, retorno) é marcado como **estimado**, e nenhuma
+  recomendação vira ação sem um humano (o princípio I não muda).
+
+**Por quê:** não existe API oficial de mercado do TikTok Shop, e as ferramentas pagas vivem de coleta
+em escala. O dono decidiu, em 2026-10-08, coletar por conta própria com a conta de afiliado dele,
+ciente de que a rede pode restringi-la. A constitution limita o robô à leitura, ao ritmo humano e a
+um serviço isolado, para que um erro de coleta nunca vire ação na rede nem contamine a API.
+
 ## Restrições técnicas
 
 - **Stack fixa:** SPA React 19 + Vite + Tailwind 4 + **shadcn/ui** (Radix) + **TanStack Query**
@@ -129,6 +162,9 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
   gráficos. Tooltips escapam todo texto vindo de fora (ADR 0002).
 - **Servidor MCP:** SDK oficial `mcp` (Python), dentro da API, atrás do edge (endpoint `/mcp`,
   Streamable HTTP sem estado; nenhum serviço novo, ADR 0003).
+- **Coletor de mercado:** `apps/coletor/` é o terceiro aplicativo da stack (Python 3.12 + uv +
+  Playwright sobre o Chrome do sistema), executado **fora do Docker**, como serviço systemd de usuário
+  no desktop do dono; só ele pode automatizar navegador, e só fala com a API de ingestão (princípio IX).
 - **Ferramentas só de dev:** Mailpit captura os e-mails em desenvolvimento e testes e NÃO DEVE ser
   usado em produção.
 - **Redis não é banco de registro:** dado que precisa sobreviver (usuários, eventos de segurança,
@@ -155,7 +191,7 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
 - **Spec Kit obrigatório:** `/speckit-specify` → `/speckit-clarify` → `/speckit-plan` →
   `/speckit-tasks` → `/speckit-implement`. Nenhum código de feature sem spec aprovada pelo dono
   em `specs/NNN-nome/`.
-- **Constitution Check:** o `plan.md` de cada spec DEVE conferir os oito princípios antes da
+- **Constitution Check:** o `plan.md` de cada spec DEVE conferir os nove princípios antes da
   pesquisa e de novo depois do design, e justificar qualquer exceção.
 - **Um passo por vez:** comando mostrado, explicado em uma linha, executado e verificado antes do
   próximo.
@@ -171,6 +207,6 @@ uma spec aprovada que precise dela. Complexidade além do mínimo DEVE ser justi
   princípio ou seção nova, ou uma orientação ampliada de forma relevante; PATCH para redação e
   esclarecimentos.
 - **Conformidade:** toda spec, plano e revisão de código verifica a aderência aos princípios.
-  Uma violação dos princípios I, II ou VII bloqueia a entrega.
+  Uma violação dos princípios I, II, VII ou IX bloqueia a entrega.
 
-**Version**: 4.3.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-07
+**Version**: 4.4.0 | **Ratified**: 2026-09-28 | **Last Amended**: 2026-10-08

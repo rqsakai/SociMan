@@ -100,9 +100,11 @@ class Produto(_Versioned, AuditMixin, Base):
     ficha_por: Mapped[ProdutoFichaPor | None] = mapped_column(
         Enum(ProdutoFichaPor, name="produto_ficha_por"))
 
+    # Classes da 012 por referência direta (lambda): a 026 tem outro `Produto` (mercado_produtos)
+    # no mesmo registro, e o nome em texto ficaria ambíguo.
     variantes_rel: Mapped[list["ProdutoVariante"]] = relationship(
-        primaryjoin="Produto.id == ProdutoVariante.produto_id",
-        foreign_keys="ProdutoVariante.produto_id", lazy="selectin",
+        primaryjoin=lambda: Produto.id == ProdutoVariante.produto_id,
+        foreign_keys=lambda: [ProdutoVariante.produto_id], lazy="selectin",
     )
 
     @property

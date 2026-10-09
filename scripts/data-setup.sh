@@ -72,6 +72,7 @@ cmd_check() {
 }
 
 AUDIOS_BUCKET=${S3_AUDIOS_BUCKET:-sociman-audios}
+MERCADO_BUCKET=${S3_MERCADO_BUCKET:-sociman-mercado}   # spec 026: bruto da coleta de mercado
 GPU_NETWORK=gpu-local
 
 # Spec 021 (geração local): só informa; nada aqui reprova o HD.
@@ -84,6 +85,8 @@ check_geracao() {
   if minio_running; then
     mc_sh "mc ls l/$AUDIOS_BUCKET" >/dev/null 2>&1 && ok "bucket $AUDIOS_BUCKET" \
       || echo "aviso: falta o bucket $AUDIOS_BUCKET (rode init ou o minio-init)"
+    mc_sh "mc ls l/$MERCADO_BUCKET" >/dev/null 2>&1 && ok "bucket $MERCADO_BUCKET" \
+      || echo "aviso: falta o bucket $MERCADO_BUCKET (rode init; a API também o cria na subida)"
   else
     echo "aviso: minio fora do ar; bucket $AUDIOS_BUCKET não conferido"
   fi
@@ -111,6 +114,7 @@ cmd_init() {
   fi
   if minio_running; then
     mc_sh "mc mb -p l/$AUDIOS_BUCKET" >/dev/null && ok "bucket $AUDIOS_BUCKET"
+    mc_sh "mc mb -p l/$MERCADO_BUCKET" >/dev/null && ok "bucket $MERCADO_BUCKET"   # spec 026
   else
     echo "aviso: minio fora do ar; o bucket $AUDIOS_BUCKET é criado pelo minio-init no próximo up"
   fi

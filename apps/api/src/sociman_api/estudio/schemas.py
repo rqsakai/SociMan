@@ -3,7 +3,7 @@
 from sociman_api.auth.schemas import CamelModel
 
 
-class ResumoOut(CamelModel):
+class EstudioResumo(CamelModel):
     """Os itens ativos (não arquivados) da biblioteca por tipo, no filtro de perfil base."""
 
     avatares: int

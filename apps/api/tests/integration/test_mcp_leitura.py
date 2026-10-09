@@ -26,7 +26,11 @@ from sociman_api.mcp import ferramentas, mapa
 LEITURA = sorted(n for n, t in mapa.TOOLS.items() if t.escopo == "leitura")
 # Mudam entre duas chamadas iguais: links assinados com validade e o `generatedAt` do kit
 # exportado (comparados sem esses campos).
-VOLATEIS = {"midia_links": ("items",), "kit_export": ("generatedAt",)}
+VOLATEIS = {"midia_links": ("items",), "kit_export": ("generatedAt",),
+            # spec 026: o `contexto` traz `geradoEm` (relógio da leitura)
+            "mercado_produtos_listar": ("contexto",), "mercado_resumo": ("contexto",),
+            "mercado_rankings_listar": ("contexto",), "mercado_lojas_listar": ("contexto",),
+            "mercado_produtos_detalhe": ("contexto",), "mercado_lojas_detalhe": ("contexto",)}
 
 
 @pytest.fixture
@@ -82,8 +86,9 @@ def test_cada_leitura_igual_a_do_membro(client, cenario, db):
     token, ids, hm = cenario
     cat = ferramentas.catalogo(app)
     # spec 010: +8 leituras de cena; spec 013: +2 da agência; spec 022: +1 (público);
-    # spec 023: +7 do aprendizado; spec 012: +3 dos produtos; spec 025: +3 das vozes
-    assert len(LEITURA) == 62 + 8 + 2 + 1 + 7 + 3 + 3 + 6  # spec 029: as 6 leituras da agência
+    # spec 023: +7 do aprendizado; spec 012: +3 dos produtos; spec 025: +3 das vozes;
+    # spec 029: +6 da agência; spec 026: +16 (coleta_estado e as leituras do mercado)
+    assert len(LEITURA) == 62 + 8 + 2 + 1 + 7 + 3 + 3 + 6 + 16
     chamadas = {nome: _args(cat[nome], ids) for nome in LEITURA}
 
     async def todas(c):
@@ -149,7 +154,7 @@ def test_integracoes_sem_valores(cenario):
         return await c.call_tool("integracoes_get", {})
 
     r = com_mcp(token, chamar)
-    assert set(r.structured_content) == {"youtube", "openshorts", "claude", "cotaYoutube",
+    assert set(r.structured_content) == {"youtube", "openshorts", "claude", "cotaYoutube", "coleta",
                                          "geracao"}  # spec 021: só estados, sem valores
 
 
@@ -170,6 +175,6 @@ def test_lista_da_agencia_filtrada_igual_a_por_perfil(client, cenario, dono):  #
 
     antiga, nova, sem = com_mcp(token, chamar)
     assert not (antiga.is_error or nova.is_error or sem.is_error)
-    nomes = lambda r: sorted(i["name"] for i in r.structured_content["items"])  # noqa: E731
+    nomes = lambda r: sorted(i["name"] for i in r.structured_content["items"])
     assert nomes(antiga) == nomes(nova) == ["Do perfil"]
     assert nomes(sem) == ["Sem perfil"]

@@ -140,13 +140,15 @@ def test_volta_com_erro_faz_rollback(rodar, db):
 def test_trilhas_padrao_e_ociosidade(monkeypatch):
     nomes = [t.nome for t in agendador_mod.trilhas_padrao()]
     assert nomes == ["sync", "openshorts", "importacao", "lembretes", "publicacao",  # + 015
-                     "metricas", "aprendizado", "geracao_limpeza"]  # + 016, + 023, + 021
+                     "metricas", "aprendizado", "geracao_limpeza", "mercado"]  # + 016, 023, 021, 026
 
     trilhas = {t.nome: t for t in agendador_mod.trilhas_padrao()}
     # Stack de teste sem YOUTUBE_API_KEY: a sync fica ociosa com motivo claro, sem vazar valor.
     assert "YOUTUBE_API_KEY" in (trilhas["sync"].ociosa() or "")
     assert trilhas["openshorts"].ociosa() is None
     assert trilhas["importacao"].ociosa() is None  # o HD de teste tem o sentinela
+    # Spec 026: a stack de teste nasce com COLETA_HABILITADA=false → a trilha `mercado` fica ociosa.
+    assert "COLETA_HABILITADA" in (trilhas["mercado"].ociosa() or "")
 
     class _SemHd:
         reason = "sem_sentinela"

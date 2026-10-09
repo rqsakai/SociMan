@@ -56,12 +56,13 @@ services:
       MC_FONTS_BUCKET: ${TEST_S3_FONTS_BUCKET:-sociman-fonts-test}
       MC_VIDEOS_BUCKET: ${TEST_S3_VIDEOS_BUCKET:-sociman-videos-test}
       MC_AUDIOS_BUCKET: ${TEST_S3_AUDIOS_BUCKET:-sociman-audios-test}   # spec 021
+      MC_MERCADO_BUCKET: ${TEST_S3_MERCADO_BUCKET:-sociman-mercado-test}   # spec 026
     entrypoint:
       - /bin/sh
       - -c
       - >
         mc alias set t http://minio:9000 "$$MC_USER" "$$MC_PASSWORD" &&
-        mc mb -p "t/$$MC_BUCKET" "t/$$MC_FONTS_BUCKET" "t/$$MC_VIDEOS_BUCKET" "t/$$MC_AUDIOS_BUCKET"
+        mc mb -p "t/$$MC_BUCKET" "t/$$MC_FONTS_BUCKET" "t/$$MC_VIDEOS_BUCKET" "t/$$MC_AUDIOS_BUCKET" "t/$$MC_MERCADO_BUCKET"
     depends_on:
       minio:
         condition: service_healthy
@@ -89,6 +90,8 @@ services:
       TEST_S3_VIDEOS_BUCKET: *videos-bucket
       S3_AUDIOS_BUCKET: &audios-bucket ${TEST_S3_AUDIOS_BUCKET:-sociman-audios-test}   # spec 021
       TEST_S3_AUDIOS_BUCKET: *audios-bucket
+      S3_MERCADO_BUCKET: &mercado-bucket ${TEST_S3_MERCADO_BUCKET:-sociman-mercado-test}   # spec 026
+      TEST_S3_MERCADO_BUCKET: *mercado-bucket
       # HD de dados de mentira (tmpfs abaixo); piso baixo porque o tmpfs é pequeno.
       SOCIMAN_DATA_DIR: /srv/sociman-data
       DATA_MIN_FREE_GB: "0.01"
@@ -103,6 +106,12 @@ services:
       MCP_HABILITADO: "false"
       # Spec 016: coleta ligada (os testes desligam por override de Settings).
       METRICAS_COLETA_HABILITADA: "true"
+      # Spec 026: coleta de mercado desligada no servidor (os testes ligam por override) e um
+      # pepper FIXO de teste (não é segredo; só o banco efêmero o usa).
+      COLETA_HABILITADA: "false"
+      MERCADO_HASH_PEPPER: pepper-de-teste-efemero-nao-e-segredo
+      MERCADO_URL_PUBLICA: https://exemplo.test/shop
+      MERCADO_URL_AFFILIATE: https://exemplo.test/affiliate
       # Os testes usam MemoryEmailSender; um host inexistente faz qualquer envio real falhar.
       SMTP_HOST: smtp.invalido.test
       SMTP_PORT: "1025"

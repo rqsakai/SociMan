@@ -29,6 +29,13 @@ export const tipoLabel: Record<NotificacaoTipo, string> = {
   // spec 016 (o link vem da API: /app/conteudos/{conteudoId}?conta={contaId})
   post_detectado: "Post detectado",
   vinculo_a_confirmar: "Escolha o post",
+  // spec 026 (coleta de mercado; o link vem da API: /app/configuracoes/coleta ou /app/mercado)
+  coleta_captcha: "Coleta: verificação na tela",
+  coleta_login: "Coleta: login perdido",
+  coleta_bloqueio: "Coleta: bloqueio suspeito",
+  coleta_layout: "Coleta: a página mudou",
+  coleta_parada: "Coleta parada",
+  mercado_interesse_auto: "Novos produtos acompanhados",
 };
 
 // Polling (R11): 20 s com a aba visível e 60 s em segundo plano.

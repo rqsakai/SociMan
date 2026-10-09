@@ -45,6 +45,13 @@ const tipoTone: Record<NotificacaoTipo, string> = {
   // spec 016
   post_detectado: "bg-success",
   vinculo_a_confirmar: "bg-warning",
+  // spec 026
+  coleta_captcha: "bg-warning",
+  coleta_login: "bg-destructive",
+  coleta_bloqueio: "bg-destructive",
+  coleta_layout: "bg-warning",
+  coleta_parada: "bg-destructive",
+  mercado_interesse_auto: "bg-info",
 };
 
 export function Sino() {

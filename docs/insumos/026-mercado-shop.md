@@ -234,7 +234,7 @@ categorias), `mercado` (BR), `rede` (tiktok), `categoriaId`, `lojaId`, `origem`,
   mesma disciplina. Nenhuma tabela agregada; os GETs não gravam (guarda). Desempenho: 10× volume, < 2 s por
   rota.
 
-### Emenda da constitution (4.3.0 → 4.5.0; a 011 reservou a 4.4.0)
+### Emenda da constitution (4.3.0 → 4.4.0; a emenda prevista pela 011 passa a ser a 4.5.0)
 **Princípio IX: coleta de mercado com conta própria, só leitura e ritmo humano.** Observação pública
 coletada em nome do dono, com a conta de afiliado do dono (risco aceito e registrado em
 `docs/decisoes/coleta-mercado.md` e em `coleta_config.risco_aceito_em`); só leitura, com lista fechada de
@@ -268,7 +268,7 @@ rankings → quentes → mornas → relacionados; a 1ª visita custa a página m
 - **X1** perfil de Chrome dedicado, logado na conta de afiliado (`sociman-coletor perfil-iniciar`).
 - **X2** categorias do nicho por perfil, depois da 1ª tarefa `categorias`.
 - **X3** token `scol_` em `~/.config/sociman-coletor/token` (600), `api_url` e `ca_cert` no `config.toml`.
-- **X4** aceite de risco na tela, `docs/decisoes/coleta-mercado.md` e aprovação da emenda 4.5.0.
+- **X4** aceite de risco na tela, `docs/decisoes/coleta-mercado.md` e aprovação da emenda 4.4.0.
 - **X5** unidade systemd de usuário instalada, com a sessão gráfica ativa nas janelas.
 - **X6** validação `uma-vez --limite 3` acompanhada antes de liberar o `rodar`.
 - **X7** lista inicial de links de produtos e a vitrine.

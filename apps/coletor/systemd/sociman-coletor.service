@@ -1,0 +1,24 @@
+# Unidade de USUÁRIO do coletor de mercado do SociMan (spec 026, contracts/coletor.md).
+# Instalar: cp systemd/sociman-coletor.service ~/.config/systemd/user/
+#           systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XAUTHORITY
+#           systemctl --user enable --now sociman-coletor
+# Nunca com sudo: o coletor precisa da sessão gráfica do dono.
+
+[Unit]
+Description=SociMan coletor de mercado (Chrome do dono, só leitura)
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/sociman-coletor rodar
+EnvironmentFile=-%h/.config/sociman-coletor/env
+Restart=on-failure
+RestartSec=60
+# 4 = token inválido/escopo/suspenso, 5 = protocolo antigo: não adianta reiniciar.
+RestartPreventExitStatus=4 5
+TimeoutStopSec=45
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=default.target
