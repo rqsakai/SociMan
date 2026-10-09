@@ -70,7 +70,9 @@ class LimitesLocais(BaseModel):
 
 
 class ConfigLog(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    # `validate_default`: o padrão com `~` também passa pelo `_expandir` (sem isso o `~` ficava
+    # literal e virava uma pasta `~/` no diretório atual).
+    model_config = ConfigDict(extra="forbid", validate_default=True)
 
     nivel: str = "INFO"
     arquivo: Path | None = Path("~/.local/state/sociman-coletor/coletor.log")
@@ -82,6 +84,8 @@ class ConfigLog(BaseModel):
             return Path(v).expanduser()
         if v == "":
             return None
+        if isinstance(v, Path):
+            return v.expanduser()
         return v
 
 
@@ -106,6 +110,8 @@ class Config(BaseModel):
             return Path(v).expanduser()
         if v == "":
             return None
+        if isinstance(v, Path):
+            return v.expanduser()
         return v
 
     @field_validator("api_url")

@@ -87,6 +87,7 @@ def configurar(nivel: str = "INFO", arquivo: Path | None = None, destino=None) -
     logger.addHandler(saida)
     if arquivo is not None:
         try:
+            arquivo = arquivo.expanduser()
             arquivo.parent.mkdir(parents=True, exist_ok=True)
             fh = logging.FileHandler(arquivo, encoding="utf-8")
             fh.setFormatter(formato)

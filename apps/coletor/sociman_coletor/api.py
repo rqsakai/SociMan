@@ -106,7 +106,7 @@ class ClienteApi:
     def __init__(
         self,
         cfg: Config,
-        token: Segredo,
+        token: Segredo | None,
         chrome_versao: str | None = None,
         *,
         transport: httpx.BaseTransport | None = None,
@@ -133,13 +133,16 @@ class ClienteApi:
     # ---- infraestrutura ----
 
     def _cabecalhos(self) -> dict[str, str]:
+        # Sem token (autoteste `--sem-token`) não vai `Authorization` nenhum: o portão do SociMan
+        # valida qualquer `Bearer scol_`, até em rota pública como o `/api/health`.
         h = {
-            "Authorization": f"Bearer {self._token.revelar()}",
             "X-Sociman-Coleta-Protocolo": str(PROTOCOLO),
             "X-Sociman-Coletor-Versao": __version__,
             "User-Agent": f"sociman-coletor/{__version__}",
             "Accept": "application/json",
         }
+        if self._token is not None:
+            h["Authorization"] = f"Bearer {self._token.revelar()}"
         if self.chrome_versao:
             h["X-Sociman-Chrome-Versao"] = self.chrome_versao
         return h

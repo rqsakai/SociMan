@@ -11418,6 +11418,10 @@
             "title": "Textorisco",
             "type": "string"
           },
+          "textoRiscoVersao": {
+            "title": "Textoriscoversao",
+            "type": "string"
+          },
           "updatedAt": {
             "anyOf": [
               {
@@ -11453,6 +11457,7 @@
           "riscoAceitoPor",
           "riscoTextoVersao",
           "textoRisco",
+          "textoRiscoVersao",
           "janelaInicio",
           "janelaFim",
           "paginasDia",

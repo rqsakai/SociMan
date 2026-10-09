@@ -296,8 +296,9 @@ class ColetaConfig(CamelModel):
     risco_aceito: bool
     risco_aceito_em: datetime | None
     risco_aceito_por: UserRef | None
-    risco_texto_versao: str | None
+    risco_texto_versao: str | None  # a versão do texto aceita (nula antes do 1º aceite)
     texto_risco: str
+    texto_risco_versao: str  # a versão corrente do texto, a que o aceite deve mandar
     janela_inicio: int
     janela_fim: int
     paginas_dia: int

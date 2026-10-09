@@ -279,6 +279,7 @@ def config_out(db: Session, cfg: ColetaConfig) -> schemas.ColetaConfig:
         risco_aceito=cfg.risco_aceito_em is not None, risco_aceito_em=cfg.risco_aceito_em,
         risco_aceito_por=users.get(cfg.risco_aceito_por) if cfg.risco_aceito_por else None,
         risco_texto_versao=cfg.risco_texto_versao, texto_risco=TEXTO_RISCO,
+        texto_risco_versao=TEXTO_RISCO_VERSAO,
         janela_inicio=cfg.janela_inicio, janela_fim=cfg.janela_fim, paginas_dia=cfg.paginas_dia,
         imagens_dia=cfg.imagens_dia, imagens_por_produto=cfg.imagens_por_produto,
         itens_por_coleta=cfg.itens_por_coleta, pausa_min_s=cfg.pausa_min_s,

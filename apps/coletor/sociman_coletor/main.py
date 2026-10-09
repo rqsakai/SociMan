@@ -177,7 +177,7 @@ def cmd_autoteste(cfg: config.Config, args: argparse.Namespace) -> int:
         print("sessao grafica: ok")
     else:
         falhas.append("sem DISPLAY/WAYLAND_DISPLAY: o coletor não abre o Chrome sem sessão gráfica")
-    cliente = api.ClienteApi(cfg, token or config.Segredo("scol_autoteste_sem_token_000000"))
+    cliente = api.ClienteApi(cfg, token)  # sem token, o /health vai sem Authorization
     try:
         try:
             saude = cliente.health()
