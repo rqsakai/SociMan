@@ -1,15 +1,19 @@
-import { execFileSync } from "node:child_process";
-import { rmSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { OWNER } from "./fixtures";
+import { clearInbox, compose, waitForHealth } from "./helpers";
 
-// Banco e outbox zerados a cada execução do e2e, migrations aplicadas antes
-// dos servidores subirem.
-export default function globalSetup(): void {
-  const apiDir = fileURLToPath(new URL("../apps/api", import.meta.url));
-  rmSync(`${apiDir}/data/dev.db`, { force: true });
-  rmSync(`${apiDir}/data/outbox.jsonl`, { force: true });
-  execFileSync("npm", ["run", "migrate", "-w", "@sociman/api"], {
-    cwd: fileURLToPath(new URL("..", import.meta.url)),
-    stdio: "inherit",
-  });
+// Estado limpo a cada execução: banco e Redis zerados, só o dono de teste
+// cadastrado e caixa do Mailpit vazia.
+export default async function globalSetup(): Promise<void> {
+  await waitForHealth(60_000);
+  compose(["exec", "-T", "api", "uv", "run", "sociman", "reset-db", "--yes"]);
+  compose(
+    [
+      "exec", "-T", "api", "uv", "run", "sociman", "create-owner",
+      "--email", OWNER.email,
+      "--name", OWNER.name,
+      "--password-stdin",
+    ],
+    `${OWNER.password}\n`,
+  );
+  await clearInbox();
 }

@@ -1,32 +1,18 @@
 import { defineConfig } from "@playwright/test";
+import { BASE_URL } from "./e2e/fixtures";
 
-// e2e sobe os dois apps de verdade (api 3001 + web 5173 com proxy) e roda os
-// fluxos no navegador. A API usa EMAIL_PROVIDER=file para os testes lerem os
-// links de verificação/reset de apps/api/data/outbox.jsonl.
+// e2e roda numa stack EFÊMERA e isolada (docker-compose.e2e.yml, projeto sociman-e2e):
+// rode com `npm run test:e2e`, que sobe a stack, passa os endereços por variável
+// (E2E_BASE_URL, E2E_MAILPIT_URL, E2E_COMPOSE) e a destrói no fim. Sem essas variáveis
+// o import de ./e2e/fixtures falha: nunca cai na stack de dev (:8180).
+// O global setup espera o /api/health, zera o banco pela CLI, cria o dono de
+// teste e limpa o Mailpit.
 export default defineConfig({
   testDir: "e2e",
   globalSetup: "./e2e/global-setup.ts",
   timeout: 60_000,
-  workers: 1, // fluxos compartilham o mesmo banco de dev — serializa
+  workers: 1, // fluxos compartilham o mesmo banco e o mesmo Mailpit — serializa
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: BASE_URL,
   },
-  webServer: [
-    {
-      command: "npm run dev -w @sociman/api",
-      url: "http://localhost:3001/api/health",
-      reuseExistingServer: false,
-      timeout: 60_000,
-      env: {
-        EMAIL_PROVIDER: "file",
-        EMAIL_FILE: "./data/outbox.jsonl",
-      },
-    },
-    {
-      command: "npm run dev -w @sociman/web",
-      url: "http://localhost:5173",
-      reuseExistingServer: false,
-      timeout: 60_000,
-    },
-  ],
 });

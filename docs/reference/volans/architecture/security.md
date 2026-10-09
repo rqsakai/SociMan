@@ -1,5 +1,8 @@
 # Arquitetura — Segurança
 
+
+> **Nota do SociMan (2026-09-29):** no SociMan, apenas o `script-src` segue estrito; o `style-src` permite `'unsafe-inline'`. Ver [ADR 0001 do SociMan](../../../adr/0001-ui-shadcn-tanstack-csp-styles.md).
+
 Segurança é o produto, não uma feature. Os itens [NÃO-NEGOCIÁVEL] do brief (§6)
 são obrigatórios. Este é o modelo, item a item, com os arquivos.
 

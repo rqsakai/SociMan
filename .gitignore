@@ -4,7 +4,6 @@ dist/
 *.tsbuildinfo
 test-results/
 playwright-report/
-packages/contract/openapi.json
 # python
 __pycache__/
 *.pyc
@@ -21,3 +20,22 @@ data/
 # ferramentas
 .remember/
 .claude/settings.local.json
+*.egg-info/
+docker/certs/ca/*
+!docker/certs/ca/.gitkeep
+.playwright-mcp/
+.e2e/
+# spec 020: exportações reais do TikTok Studio (têm o @ e, no Conteúdo, títulos e links)
+Overview_*.zip
+Followers_*.zip
+Content_*.zip
+Viewers_*.zip
+Overview.csv
+FollowerHistory.csv
+Content.csv
+# spec 022: público do Studio (o Viewers_*.zip e o Followers_*.zip já estão acima)
+Viewers.xlsx
+FollowerGender.csv
+FollowerTopTerritories.csv
+FollowerActivity.csv
+.claude/worktrees/

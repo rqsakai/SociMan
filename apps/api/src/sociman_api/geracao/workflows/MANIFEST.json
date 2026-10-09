@@ -1,0 +1,25 @@
+{
+ "_doc": "Cópia versionada dos blocos do pipeline (spec 021, R6). Atualizar = copiar de novo de ../comfyui-docker/workflows/api/ e regravar os sha256.",
+ "blocos": {
+  "cena": {
+   "origem": "V3 - Imagem FLUX schnell (txt2img)",
+   "api_sha256": "2bc6258b9e50d05baf34692e50ebd69d96987526688d6674aa908e917f6299ab",
+   "params_sha256": "927dea9ad372f7ca1ddecf5d7930484e85ea5d6b56a7d4b66df1c26facdbd74e"
+  },
+  "keyframe": {
+   "origem": "V2 - Keyframe (Qwen Edit)",
+   "api_sha256": "65d5a9120235e6ab5f128ee58bc37a2332259bd83a069743dc7afa5d183015f3",
+   "params_sha256": "85cc2fa55edf98935e3ff248903021eaf77a6f7dcbf37443a6507d4b6d0dc7c7"
+  },
+  "retrato": {
+   "origem": "V3 - Retrato Juggernaut XL (txt2img)",
+   "api_sha256": "767127ae27fbf805d8a4f071f53dceb1ffce21bd9d11355f51b9f3e79f6b737c",
+   "params_sha256": "7184dc5e79082ac2990325d82bb4a7d55a40ab69fc95c074aa3a5f468682a1d4"
+  },
+  "cutout": {
+   "origem": "V2 - Cutout (BiRefNet, fundo branco)",
+   "api_sha256": "b7c24fa9ed1cdd398de438fa7d4bd3953ea73cf52238178dbbf3a21744ade84e",
+   "params_sha256": "5f29ae669aaf53d63ff3cc00198733be55741c97434b9619a581e64a25f540d5"
+  }
+ }
+}

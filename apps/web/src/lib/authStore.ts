@@ -3,7 +3,8 @@ import type { User } from "@sociman/contract";
 
 // Access token vive SÓ aqui, em memória (§6.2): sem `persist`, sem localStorage.
 // No reload a sessão é restaurada pelo cookie de refresh (bootstrapSession).
-type AuthStatus = "unknown" | "authenticated" | "guest";
+// "offline": o boot não alcançou o servidor (falha de rede, não 401).
+type AuthStatus = "unknown" | "authenticated" | "guest" | "offline";
 
 interface AuthState {
   accessToken: string | null;
@@ -15,6 +16,11 @@ interface AuthState {
   sessionEpoch: number;
   setSession(accessToken: string, user: User): void;
   clearSession(): void;
+  // Boot sem rede: sem sessão, mas também sem mandar ao login.
+  setOffline(): void;
+  // A API respondeu 403 password_change_required: o RequireAuth passa a
+  // mandar para /trocar-senha.
+  requirePasswordChange(): void;
 }
 
 export const useAuth = create<AuthState>()((set) => ({
@@ -30,4 +36,7 @@ export const useAuth = create<AuthState>()((set) => ({
       status: "guest",
       sessionEpoch: state.sessionEpoch + 1,
     })),
+  setOffline: () => set({ accessToken: null, user: null, status: "offline" }),
+  requirePasswordChange: () =>
+    set((state) => (state.user ? { user: { ...state.user, mustChangePassword: true } } : {})),
 }));

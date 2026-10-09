@@ -1,0 +1,90 @@
+{
+ "1": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "p1.png"
+  }
+ },
+ "2": {
+  "class_type": "LoadBackgroundRemovalModel",
+  "inputs": {
+   "bg_removal_name": "birefnet.safetensors"
+  }
+ },
+ "3": {
+  "class_type": "RemoveBackground",
+  "inputs": {
+   "bg_removal_model": [
+    "2",
+    0
+   ],
+   "image": [
+    "1",
+    0
+   ]
+  }
+ },
+ "4": {
+  "class_type": "GetImageSize",
+  "inputs": {
+   "image": [
+    "1",
+    0
+   ]
+  }
+ },
+ "5": {
+  "class_type": "EmptyImage",
+  "inputs": {
+   "width": [
+    "4",
+    0
+   ],
+   "height": [
+    "4",
+    1
+   ],
+   "batch_size": 1,
+   "color": 16777215
+  }
+ },
+ "6": {
+  "class_type": "ImageCompositeMasked",
+  "inputs": {
+   "destination": [
+    "5",
+    0
+   ],
+   "source": [
+    "1",
+    0
+   ],
+   "x": 0,
+   "y": 0,
+   "resize_source": false,
+   "mask": [
+    "3",
+    0
+   ]
+  }
+ },
+ "7": {
+  "class_type": "PrimitiveString",
+  "inputs": {
+   "value": "v2/cutout"
+  }
+ },
+ "8": {
+  "class_type": "SaveImage",
+  "inputs": {
+   "images": [
+    "6",
+    0
+   ],
+   "filename_prefix": [
+    "7",
+    0
+   ]
+  }
+ }
+}

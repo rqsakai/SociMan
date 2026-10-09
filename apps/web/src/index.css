@@ -1,35 +1,312 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /*
- * Tokens de tema do starter — ponto único de customização (§7 do brief).
- * Tema default NEUTRO (não é a marca de nenhum cliente): apps herdeiros trocam
- * estas cores/raios/fonte e o app inteiro acompanha.
+ * Tema do SociMan (spec 005-ui-base): tokens CSS no formato do shadcn/ui.
+ * Ponto único de customização: componentes usam só classes geradas destes tokens
+ * (bg-primary, text-muted-foreground, rounded-xl, shadow-card…), nada de hex solto.
  *
- * INVARIANTE: todo estilo do app vem de classes Tailwind geradas destes tokens.
- * Nada de style={} inline nem CSS-in-JS — a CSP estrita de produção usa
- * `style-src 'self'` e bloqueia estilo inline.
+ * Referência visual: docs/design/layout-referencia.md (painel com menu lateral
+ * escuro flutuante, fundo cinza-claro, cartões brancos com selo colorido).
  *
- * Fonte: stack de sistema — a CSP (default-src 'self') não permite carregar
- * fontes externas; para fonte própria, sirva o arquivo do próprio domínio.
+ * CSP (ADR 0001): style-src 'self' 'unsafe-inline'. Radix e sonner injetam
+ * <style>; o app em si continua preferindo classes a style={}.
+ * Fonte: Roboto variável servida da própria origem (@fontsource-variable/roboto,
+ * importada em main.tsx) — sem CDN.
+ *
+ * Tema (spec 018, US1): ESCURO por padrão. O variant `dark:` e os tokens escuros ficam
+ * presos à classe .dark no <html> (index.html nasce com ela; src/lib/tema.ts troca para
+ * claro/sistema). :root guarda o tema claro; .dark sobrescreve só os tokens.
+ * No escuro, as cores de estado (primary/success/warning/info/destructive) ficam
+ * claras e o texto sobre elas escuro: a mesma cor serve de fundo de selo e de texto sobre
+ * o cartão com contraste AA (>= 4.5:1) nos dois usos. Exceções (spec 024): a faixa
+ * (tone-primary, tokens --band*) é igual nos dois temas, e o --dark continua escuro.
  */
-@theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+@custom-variant dark (&:is(.dark *));
 
-  --color-bg: oklch(0.985 0 0); /* fundo da página */
-  --color-surface: oklch(1 0 0); /* cartões, header, banner */
-  --color-border: oklch(0.92 0.004 286.32);
-  --color-text: oklch(0.21 0.006 285.885);
-  --color-muted: oklch(0.552 0.016 285.938); /* texto secundário, ícones de campo */
-  --color-primary: oklch(0.274 0.006 286.033);
-  --color-primary-foreground: oklch(1 0 0);
-  --color-danger: oklch(0.505 0.213 27.518);
-  /* extensão mínima à paleta do brief: feedback positivo (alerts de sucesso) */
-  --color-success: oklch(0.527 0.154 150.069);
+:root {
+  --radius: 0.75rem;
 
-  --radius-field: 0.5rem; /* inputs, botões */
-  --radius-panel: 0.75rem; /* cartões, painéis */
+  --background: #f0f2f5;
+  --foreground: oklch(0.33 0.05 262); /* texto principal (azul-ardósia escuro) */
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --popover: oklch(1 0 0);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.52 0.2 266); /* azul-índigo */
+  --primary-light: oklch(0.66 0.16 258); /* ponta clara do degradê */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.955 0.008 264);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.955 0.008 264);
+  --muted-foreground: oklch(0.55 0.025 262);
+  --accent: oklch(0.94 0.012 264);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.58 0.21 27); /* erro */
+  --destructive-light: oklch(0.7 0.17 22);
+  --destructive-foreground: oklch(1 0 0);
+  --success: oklch(0.6 0.15 150);
+  --success-light: oklch(0.72 0.15 145);
+  --success-foreground: oklch(1 0 0);
+  --warning: oklch(0.7 0.17 55);
+  --warning-light: oklch(0.8 0.15 70);
+  --warning-foreground: oklch(1 0 0);
+  --info: oklch(0.62 0.13 235);
+  --info-light: oklch(0.74 0.12 225);
+  --info-foreground: oklch(1 0 0);
+  /* "escuro" da referência: selos e cabeçalhos neutros */
+  --dark: oklch(0.25 0.02 262);
+  --dark-light: oklch(0.38 0.02 262);
+  --dark-foreground: oklch(1 0 0);
+  /* faixa do HeaderCard (spec 024, FR-031): a cor da marca, igual nos dois temas, texto branco.
+     Contraste do branco: 5,8:1 no --band e 4,8:1 no --band-light (a ponta clara do degradê). */
+  --band: oklch(0.52 0.2 266);
+  --band-light: oklch(0.56 0.17 260);
+  --band-foreground: oklch(1 0 0);
+
+  --border: oklch(0.91 0.008 264);
+  --input: oklch(0.88 0.01 264);
+  --ring: var(--primary);
+
+  /* menu lateral: degradê quase preto */
+  --sidebar: oklch(0.21 0.015 262);
+  --sidebar-light: oklch(0.31 0.02 262);
+  --sidebar-foreground: oklch(0.97 0 0);
+  --sidebar-muted-foreground: oklch(0.75 0.01 262);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(1 0 0 / 0.1);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 0.14);
+  --sidebar-ring: var(--primary);
+  /* Gráficos (spec 019, ADR 0002): paleta categórica validada (skill dataviz) em ordem fixa */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
+  --chart-6: #008300;
+  --chart-7: #4a3aa7;
+  --chart-8: #e34948;
+  /* sequencial (mapas de calor), azul claro → escuro */
+  --chart-seq-100: #cde2fb;
+  --chart-seq-150: #b7d3f6;
+  --chart-seq-200: #9ec5f4;
+  --chart-seq-250: #86b6ef;
+  --chart-seq-300: #6da7ec;
+  --chart-seq-350: #5598e7;
+  --chart-seq-400: #3987e5;
+  --chart-seq-450: #2a78d6;
+  --chart-seq-500: #256abf;
+  --chart-seq-550: #1c5cab;
+  --chart-seq-600: #184f95;
+  --chart-seq-650: #104281;
+  --chart-seq-700: #0d366b;
 }
 
-body {
-  @apply bg-bg font-sans text-text antialiased;
+.dark {
+  color-scheme: dark; /* <select> nativo, datas, barras de rolagem */
+
+  --background: #0f172a; /* = theme-color do index.html e do manifest */
+  --foreground: oklch(0.93 0.01 262);
+  --card: oklch(0.255 0.035 263);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.275 0.035 263);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.72 0.14 266);
+  --primary-light: oklch(0.8 0.11 258);
+  --primary-foreground: oklch(0.2 0.04 266);
+  --secondary: oklch(0.33 0.03 263);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.33 0.03 263);
+  --muted-foreground: oklch(0.74 0.02 262);
+  --accent: oklch(0.36 0.035 263);
+  --accent-foreground: var(--foreground);
+
+  --destructive: oklch(0.72 0.16 25);
+  --destructive-light: oklch(0.78 0.13 22);
+  --destructive-foreground: oklch(0.2 0.03 25);
+  --success: oklch(0.74 0.15 150);
+  --success-light: oklch(0.82 0.13 145);
+  --success-foreground: oklch(0.2 0.03 150);
+  --warning: oklch(0.8 0.15 70);
+  --warning-light: oklch(0.86 0.12 80);
+  --warning-foreground: oklch(0.22 0.04 60);
+  --info: oklch(0.74 0.12 230);
+  --info-light: oklch(0.82 0.1 225);
+  --info-foreground: oklch(0.2 0.03 235);
+  /* neutro: escuro também no tema escuro (spec 024; nunca um bloco cinza-claro), texto claro */
+  --dark: oklch(0.34 0.03 263);
+  --dark-light: oklch(0.44 0.03 263);
+  --dark-foreground: oklch(0.97 0 0);
+  /* a faixa não muda com o tema (ver :root) */
+  --band: oklch(0.52 0.2 266);
+  --band-light: oklch(0.56 0.17 260);
+  --band-foreground: oklch(1 0 0);
+
+  --border: oklch(1 0 0 / 0.12);
+  --input: oklch(1 0 0 / 0.2);
+  --ring: var(--primary);
+
+  /* menu lateral: um pouco mais escuro que o fundo, com borda para destacar */
+  --sidebar: oklch(0.17 0.03 264);
+  --sidebar-light: oklch(0.25 0.035 264);
+  --sidebar-foreground: oklch(0.95 0.005 262);
+  --sidebar-muted-foreground: oklch(0.76 0.015 262);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(1 0 0 / 0.1);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(1 0 0 / 0.14);
+  --sidebar-ring: var(--primary);
+  /* Gráficos (spec 019, ADR 0002): paleta categórica validada (skill dataviz) em ordem fixa */
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --chart-6: #008300;
+  --chart-7: #9085e9;
+  --chart-8: #e66767;
+  /* sequencial (mapas de calor), azul claro → escuro */
+  --chart-seq-100: #cde2fb;
+  --chart-seq-150: #b7d3f6;
+  --chart-seq-200: #9ec5f4;
+  --chart-seq-250: #86b6ef;
+  --chart-seq-300: #6da7ec;
+  --chart-seq-350: #5598e7;
+  --chart-seq-400: #3987e5;
+  --chart-seq-450: #2a78d6;
+  --chart-seq-500: #256abf;
+  --chart-seq-550: #1c5cab;
+  --chart-seq-600: #184f95;
+  --chart-seq-650: #104281;
+  --chart-seq-700: #0d366b;
+}
+
+@theme inline {
+  --font-sans: "Roboto Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+  --color-info-foreground: var(--info-foreground);
+  --color-dark: var(--dark);
+  --color-dark-foreground: var(--dark-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted-foreground: var(--sidebar-muted-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* sombras da referência: cartão suave e "brilho" colorido dos selos */
+  --shadow-card: 0 0.25rem 0.5rem -0.125rem oklch(0 0 0 / 0.08), 0 0.125rem 0.25rem -0.125rem oklch(0 0 0 / 0.05);
+  --shadow-float: 0 1.25rem 1.6rem -1.5rem oklch(0 0 0 / 0.5);
+
+}
+
+/*
+ * Tons em degradê (selo do MetricCard, faixa do HeaderCard, item ativo do menu,
+ * cabeçalho do AuthShell): fundo em degradê, texto branco e sombra da mesma cor.
+ */
+@utility tone-primary {
+  background-image: linear-gradient(195deg, var(--band-light), var(--band));
+  color: var(--band-foreground);
+  box-shadow: 0 0.25rem 1.25rem 0 oklch(0 0 0 / 0.14), 0 0.45rem 0.6rem -0.3rem color-mix(in oklch, var(--band) 45%, transparent);
+}
+@utility tone-success {
+  background-image: linear-gradient(195deg, var(--success-light), var(--success));
+  color: var(--success-foreground);
+  box-shadow: 0 0.25rem 1.25rem 0 oklch(0 0 0 / 0.14), 0 0.45rem 0.6rem -0.3rem color-mix(in oklch, var(--success) 45%, transparent);
+}
+@utility tone-warning {
+  background-image: linear-gradient(195deg, var(--warning-light), var(--warning));
+  color: var(--warning-foreground);
+  box-shadow: 0 0.25rem 1.25rem 0 oklch(0 0 0 / 0.14), 0 0.45rem 0.6rem -0.3rem color-mix(in oklch, var(--warning) 45%, transparent);
+}
+@utility tone-info {
+  background-image: linear-gradient(195deg, var(--info-light), var(--info));
+  color: var(--info-foreground);
+  box-shadow: 0 0.25rem 1.25rem 0 oklch(0 0 0 / 0.14), 0 0.45rem 0.6rem -0.3rem color-mix(in oklch, var(--info) 45%, transparent);
+}
+@utility tone-destructive {
+  background-image: linear-gradient(195deg, var(--destructive-light), var(--destructive));
+  color: var(--destructive-foreground);
+  box-shadow: 0 0.25rem 1.25rem 0 oklch(0 0 0 / 0.14), 0 0.45rem 0.6rem -0.3rem color-mix(in oklch, var(--destructive) 45%, transparent);
+}
+@utility tone-dark {
+  background-image: linear-gradient(195deg, var(--dark-light), var(--dark));
+  color: var(--dark-foreground);
+  box-shadow: 0 0.25rem 1.25rem 0 oklch(0 0 0 / 0.14), 0 0.45rem 0.6rem -0.3rem oklch(0 0 0 / 0.3);
+}
+/* fundo do menu lateral e do AuthShell */
+@utility bg-sidebar-gradient {
+  background-image: linear-gradient(195deg, var(--sidebar-light), var(--sidebar));
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  /* a largura útil não muda entre páginas com e sem barra de rolagem (spec 024, FR-033) */
+  html {
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+}
+
+/* Tema escuro: a lista aberta do <select> nativo (Chrome/Linux) pinta as opções de branco se o
+   select tiver fundo transparente. Fundo e texto das opções vêm dos tokens do popover. */
+.dark select {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+}
+.dark select option,
+.dark select optgroup {
+  background-color: var(--popover);
+  color: var(--popover-foreground);
 }

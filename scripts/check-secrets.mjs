@@ -13,7 +13,49 @@ const patterns = [
   { name: "chave privada PEM", re: /-----BEGIN (?:RSA |EC )?PRIVATE KEY-----/ },
   { name: "atribuição jwt_secret literal", re: /jwt_secret\s*=\s*["'][A-Za-z0-9+/=]{24,}["']/i },
   { name: "Bearer token longo hardcoded", re: /Bearer\s+[A-Za-z0-9._-]{40,}/ },
+  // Spec 009: credencial de cliente MCP (smcp_<8 base32>_<43 base64url>).
+  { name: "token de cliente MCP", re: /\bsmcp_[a-z2-7]{8}_[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/ },
+  // Spec 026: credencial do coletor de mercado (scol_<8 base32>_<43 base64url>).
+  { name: "token do coletor de mercado", re: /\bscol_[a-z2-7]{8}_[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/ },
 ];
+
+// Spec 015: a chave dos tokens e o client secret da TikTok com VALOR (formas `=` e `:`).
+// Referências sem valor (`${SOCIMAN_TOKENS_KEY:-}`, `SOCIMAN_TOKENS_KEY=` em docs) não casam.
+const valuePatterns = [
+  {
+    name: "SOCIMAN_TOKENS_KEY com valor",
+    re: /\bSOCIMAN_TOKENS_KEY(?:_ANTERIOR)?\s*[=:]\s*["']?([A-Za-z0-9_\-+/]{20,}={0,2})/g,
+  },
+  {
+    name: "TIKTOK_CLIENT_SECRET com valor",
+    re: /\bTIKTOK_CLIENT_SECRET\s*[=:]\s*["']?([A-Za-z0-9_\-]{16,})/g,
+  },
+  // Spec 021: o token do dockerctl (poder sobre o docker.sock), gerado pelo dono.
+  {
+    name: "DOCKERCTL_TOKEN com valor",
+    re: /\bDOCKERCTL_TOKEN\s*[=:]\s*["']?([A-Za-z0-9_\-]{16,})/g,
+  },
+];
+// Valores FIXOS de teste, públicos de propósito (stack efêmera do pytest e do e2e). Lista
+// explícita de valores, nunca uma liberação por arquivo.
+const allowedTestValues = new Set([
+  "dGVzdGUtZWZlbWVyby1jaGF2ZS1kby10b2tlbi0zMmI=", // pytest: "teste-efemero-chave-do-token-32b"
+  "ZTJlLWVmZW1lcm8tY2hhdmUtZG9zLXRva2Vucy0zMmI=", // e2e: "e2e-efemero-chave-dos-tokens-32b"
+  "e2e-client-secret-de-teste", // e2e: TIKTOK_CLIENT_SECRET do fake
+  "e2e-token-do-dockerctl-de-teste", // e2e (spec 021): DOCKERCTL_TOKEN do fake
+]);
+
+// Autoteste do padrão do coletor (spec 026): um token sintético montado em tempo de execução
+// (nunca um literal) casa; um com o segredo curto não casa.
+{
+  const scol = patterns.find((p) => p.name === "token do coletor de mercado").re;
+  const positivo = "scol_" + "a".repeat(8) + "_" + "b".repeat(43);
+  const negativo = "scol_" + "a".repeat(8) + "_" + "b".repeat(42);
+  if (!scol.test(`x ${positivo} y`) || scol.test(`x ${negativo} y`)) {
+    console.error("✗ autoteste do padrão scol_ falhou");
+    process.exit(1);
+  }
+}
 
 // caminhos onde exemplos/placeholders são esperados (não são segredos reais)
 const allowFile = (p) => p.endsWith(".env.example") || p === "scripts/check-secrets.mjs";
@@ -33,6 +75,13 @@ for (const file of files) {
     const m = content.match(re);
     if (m) {
       console.error(`✗ possível ${name} em ${file}: ${m[0].slice(0, 12)}…`);
+      failed = true;
+    }
+  }
+  for (const { name, re } of valuePatterns) {
+    for (const m of content.matchAll(re)) {
+      if (allowedTestValues.has(m[1])) continue;
+      console.error(`✗ possível ${name} em ${file}: ${m[0].slice(0, 22)}…`);
       failed = true;
     }
   }

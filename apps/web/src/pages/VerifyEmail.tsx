@@ -1,9 +1,9 @@
 import { ApiError } from "@sociman/contract";
-import { Loader2 } from "lucide-react";
+import { CircleAlert, CircleCheck, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { AuthLayout } from "../components/layout";
-import { Alert } from "../components/ui";
+import { AuthShell } from "@/components/shell";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { api } from "../lib/api";
 
 type Status = "verifying" | "success" | "error";
@@ -28,7 +28,17 @@ export default function VerifyEmail() {
   }, [token]);
 
   return (
-    <AuthLayout title="Verificação de e-mail">
+    <AuthShell
+      title="Verificação de e-mail"
+      tone={status === "error" ? "destructive" : status === "success" ? "success" : "primary"}
+      footer={
+        status !== "verifying" && (
+          <Link className="font-semibold text-primary hover:underline" to="/login">
+            {status === "success" ? "Ir para o login" : "Voltar para o login"}
+          </Link>
+        )
+      }
+    >
       {status === "verifying" && (
         <p className="flex items-center gap-2 text-sm" aria-live="polite">
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -36,21 +46,17 @@ export default function VerifyEmail() {
         </p>
       )}
       {status === "success" && (
-        <div className="space-y-4">
-          <Alert tone="success">E-mail confirmado! Sua conta está ativa.</Alert>
-          <Link className="text-sm text-text underline hover:text-muted" to="/login">
-            Ir para o login
-          </Link>
-        </div>
+        <Alert role="status" className="border-success/40 [&>svg]:text-success">
+          <CircleCheck aria-hidden="true" />
+          <AlertDescription>E-mail confirmado, faça login.</AlertDescription>
+        </Alert>
       )}
       {status === "error" && (
-        <div className="space-y-4">
-          <Alert tone="error">{message}</Alert>
-          <Link className="text-sm text-text underline hover:text-muted" to="/login">
-            Voltar para o login
-          </Link>
-        </div>
+        <Alert variant="destructive">
+          <CircleAlert aria-hidden="true" />
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
       )}
-    </AuthLayout>
+    </AuthShell>
   );
 }

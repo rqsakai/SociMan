@@ -14,12 +14,19 @@
     "dev:web": "npm run dev -w @sociman/web",
     "build": "npm run build -w @sociman/web",
     "typecheck": "tsc -p packages/contract && tsc -p apps/web",
-    "test:e2e": "playwright test",
+    "test:api": "sh scripts/test-api.sh",
+    "test:e2e": "sh scripts/test-e2e.sh",
     "preview:csp": "npm run build -w @sociman/web && npm run preview -w @sociman/web",
     "check:bundle": "node scripts/check-bundle.mjs",
     "check:csp": "tsx scripts/check-csp-sync.ts",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "check:web": "npm run typecheck && npm run build && npm run check:bundle && npm run check:csp && npm run check:secrets"
+    "gen:contract": "uv run --directory apps/api python scripts/export_openapi.py && openapi-typescript packages/contract/openapi.json -o packages/contract/src/generated/schema.d.ts",
+    "check:contract": "node scripts/check-contract.mjs",
+    "check:web": "npm run check:contract && npm run typecheck && npm run build && npm run check:pwa && npm run check:bundle && npm run check:csp && npm run check:secrets",
+    "casa:up": "npm run build -w @sociman/web && EDGE_MODE=prod docker compose --profile prod up -d",
+    "check:pwa": "node scripts/check-pwa.mjs",
+    "test:e2e:pwa": "sh scripts/test-e2e.sh --pwa",
+    "icons": "npm run icons -w @sociman/web"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",

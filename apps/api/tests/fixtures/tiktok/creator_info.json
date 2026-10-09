@@ -1,0 +1,13 @@
+{
+  "data": {
+    "creator_avatar_url": "https://p16-sign.tiktokcdn-us.com/fake-avatar.jpeg",
+    "creator_username": "SUBSTITUIDO",
+    "creator_nickname": "Apelido de teste",
+    "privacy_level_options": ["SELF_ONLY"],
+    "comment_disabled": false,
+    "duet_disabled": false,
+    "stitch_disabled": true,
+    "max_video_post_duration_sec": 600
+  },
+  "error": {"code": "ok", "message": "", "log_id": "202609290000000000000000FAKE"}
+}

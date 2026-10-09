@@ -23,6 +23,8 @@ a XSS (roubo de token) e a CSRF. O design doc (§8.8-B) define o padrão híbrid
 
 ## Consequências
 
+> **Nota do SociMan (2026-09-29):** no SociMan, apenas o `script-src` segue estrito; o `style-src` permite `'unsafe-inline'`. Ver [ADR 0001 do SociMan](../../../adr/0001-ui-shadcn-tanstack-csp-styles.md).
+
 - Access morre no reload; a sessão é restaurada pelo refresh no boot do app.
 - XSS não *rouba* o refresh (httpOnly), mas pode *usá-lo* same-origin — por isso
   a CSP estrita é inegociável (ver [../architecture/security.md](../architecture/security.md)).

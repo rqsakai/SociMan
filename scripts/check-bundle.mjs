@@ -53,8 +53,32 @@ for (const file of walk(distDir)) {
   }
 }
 
+// Spec 019 (R1, cuidado 3): nenhum chunk JS pode avaliar código em runtime. A CSP de produção
+// (script-src 'self', sem 'unsafe-eval') quebraria a tela, e um ECharts importado inteiro traz o
+// `new Function` do GeoJSON. Chamada direta a `eval(` ou `Function(` (com ou sem `new`) reprova;
+// `isFunction(`, `obj.eval(` e afins não casam. Única exceção: a sonda de CSP com corpo vazio
+// dentro de try (`try{return Function(``),!0}catch`, do zod), que não executa nada e só detecta
+// se eval é permitido (com a nossa CSP, não é).
+const evalCall = /(?<![\w$.])(?:new\s+)?(Function|eval)\s*\(/g;
+const sondaVazia = /^(?:new\s+)?Function\s*\(\s*(?:``|""|'')\s*\)/;
+let chunks = 0;
+for (const file of walk(distDir)) {
+  if (!/\.m?js$/.test(file)) continue;
+  chunks++;
+  const content = readFileSync(file, "utf8");
+  for (const m of content.matchAll(evalCall)) {
+    const resto = content.slice(m.index, m.index + 40);
+    const antes = content.slice(Math.max(0, m.index - 12), m.index);
+    if (sondaVazia.test(resto) && /try\s*\{\s*(?:return\s*)?$/.test(antes)) continue;
+    const trecho = content.slice(Math.max(0, m.index - 40), m.index + 40).replace(/\s+/g, " ");
+    console.error(`✗ ${m[1]}( em ${file}: …${trecho}…`);
+    failed = true;
+  }
+}
+
 if (failed) {
-  console.error("\nSegredo vazou para o bundle do frontend — corrija antes de publicar.");
+  console.error("\nSegredo ou execução dinâmica de código no bundle do frontend — corrija antes de publicar.");
   process.exit(1);
 }
 console.log("✓ Nenhum segredo no bundle do frontend.");
+console.log(`✓ Nenhum eval( nem Function( nos ${chunks} chunks JS do build.`);

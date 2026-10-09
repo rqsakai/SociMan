@@ -1,0 +1,3 @@
+{"error": {"code": 403, "message": "YouTube Data API v3 has not been used in project 123 before or it is disabled.",
+  "errors": [{"message": "YouTube Data API v3 has not been used in project 123 before or it is disabled.", "domain": "usageLimits", "reason": "accessNotConfigured"}],
+  "status": "PERMISSION_DENIED"}}

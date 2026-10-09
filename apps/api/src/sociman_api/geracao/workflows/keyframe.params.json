@@ -1,0 +1,73 @@
+{
+ "workflow": "V2 - Keyframe (Qwen Edit).api.json",
+ "params": {
+  "base_image": {
+   "node": "1",
+   "input": "image",
+   "kind": "image",
+   "default": "composite_00005_.png",
+   "doc": "Imagem base (cena ou keyframe anterior)"
+  },
+  "instruction": {
+   "node": "4",
+   "input": "value",
+   "kind": "value",
+   "default": "Describe the edit. image 1 = base, image 2 = ref1, image 3 = ref2.",
+   "doc": "Comando de edição concreto"
+  },
+  "seed": {
+   "node": "5",
+   "input": "value",
+   "kind": "value",
+   "default": 42,
+   "doc": ""
+  },
+  "prefix": {
+   "node": "6",
+   "input": "value",
+   "kind": "value",
+   "default": "v2/keyframe",
+   "doc": ""
+  },
+  "ref1": {
+   "node": "2",
+   "input": "image",
+   "kind": "image_optional",
+   "default": "p1.png",
+   "doc": "Painel de produtos 1 (opcional)",
+   "consumers": [
+    [
+     "14",
+     "image2"
+    ],
+    [
+     "15",
+     "image2"
+    ]
+   ]
+  },
+  "ref2": {
+   "node": "3",
+   "input": "image",
+   "kind": "image_optional",
+   "default": "p2.png",
+   "doc": "Painel de produtos 2 (opcional)",
+   "consumers": [
+    [
+     "14",
+     "image3"
+    ],
+    [
+     "15",
+     "image3"
+    ]
+   ]
+  }
+ },
+ "outputs": {
+  "image": {
+   "node": "21",
+   "kind": "image"
+  }
+ }
+}

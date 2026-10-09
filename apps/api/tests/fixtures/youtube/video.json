@@ -1,0 +1,20 @@
+{
+  "kind": "youtube#video",
+  "etag": "x",
+  "id": "vvvvvvvvvvv",
+  "snippet": {
+    "publishedAt": "2026-09-20T15:00:00Z",
+    "channelId": "UCaaaaaaaaaaaaaaaaaaaaaa",
+    "title": "Review do notebook",
+    "description": "Descrição do vídeo",
+    "thumbnails": {
+      "default": {"url": "https://i.ytimg.com/vi/vvvvvvvvvvv/default.jpg", "width": 120, "height": 90},
+      "medium": {"url": "https://i.ytimg.com/vi/vvvvvvvvvvv/mqdefault.jpg", "width": 320, "height": 180}
+    },
+    "channelTitle": "The IT Nerd",
+    "liveBroadcastContent": "none"
+  },
+  "contentDetails": {"duration": "PT24M10S", "dimension": "2d", "definition": "hd", "caption": "false"},
+  "status": {"uploadStatus": "processed", "privacyStatus": "public", "embeddable": true},
+  "statistics": {"viewCount": "10000", "likeCount": "500", "favoriteCount": "0", "commentCount": "40"}
+}

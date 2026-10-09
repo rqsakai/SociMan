@@ -1,0 +1,46 @@
+{
+ "workflow": "V3 - Imagem FLUX schnell (txt2img).api.json",
+ "params": {
+  "prompt": {
+   "node": "1",
+   "input": "value",
+   "kind": "value",
+   "default": "cozy bright minimalist bedroom, vertical phone photo, natural light, photorealistic",
+   "doc": "Descrição da imagem (em inglês funciona melhor)"
+  },
+  "width": {
+   "node": "2",
+   "input": "value",
+   "kind": "value",
+   "default": 768,
+   "doc": ""
+  },
+  "height": {
+   "node": "3",
+   "input": "value",
+   "kind": "value",
+   "default": 1344,
+   "doc": ""
+  },
+  "seed": {
+   "node": "4",
+   "input": "value",
+   "kind": "value",
+   "default": 42,
+   "doc": ""
+  },
+  "prefix": {
+   "node": "5",
+   "input": "value",
+   "kind": "value",
+   "default": "v3/txt2img",
+   "doc": ""
+  }
+ },
+ "outputs": {
+  "image": {
+   "node": "13",
+   "kind": "image"
+  }
+ }
+}

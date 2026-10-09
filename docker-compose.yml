@@ -18,10 +18,16 @@ services:
       - "${EDGE_TLS_PORT:-8543}:8443"
     environment:
       EDGE_MODE: ${EDGE_MODE:-dev}
+      LAN_HOST: ${LAN_HOST:-192.168.86.47}   # HTTP por esse IP → HTTPS (spec 002-pwa)
     volumes:
       - ./docker/nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
       - ./docker/nginx/05-edge-mode.envsh:/docker-entrypoint.d/05-edge-mode.envsh:ro
       - ./docker/certs:/etc/nginx/certs:ro
+      # SÓ a parte pública da CA da casa (./scripts/certs-casa.sh), servida por HTTP.
+      # Sem o script, o Docker cria estes caminhos como pastas vazias; o script
+      # as remove antes de gerar os arquivos.
+      - ./docker/certs/ca/sociman-ca.crt:/usr/share/nginx/ca/sociman-ca.crt:ro
+      - ./docker/certs/ca/sociman-ca.cer:/usr/share/nginx/ca/sociman-ca.cer:ro
     depends_on:
       api:
         condition: service_started
@@ -50,11 +56,228 @@ services:
     environment:
       SOCIMAN_RELOAD: "1"
       PYTHONDONTWRITEBYTECODE: "1"
+      UV_CACHE_DIR: /tmp/uv-cache   # UID 1000 não tem HOME gravável no container
+      UV_NO_SYNC: "1"               # o venv (/opt/venv) já vem pronto da imagem
+      IMGPROXY_KEY: ${IMGPROXY_KEY:-}     # opcionais (.env da raiz, gitignored): URLs /img assinadas
+      IMGPROXY_SALT: ${IMGPROXY_SALT:-}
+      # HD de dados (spec 004, R5). SOCIMAN_DATA_DIR precisa ficar dentro de /media/sakai.
+      SOCIMAN_DATA_DIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}
+      DATA_MIN_FREE_GB: ${DATA_MIN_FREE_GB:-20}
+      TMPDIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}/work/tmp   # spool de upload
+      # Spec 006 (R15): chaves no .env da raiz (gitignored); vazias = integração não configurada.
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENSHORTS_URL: ${OPENSHORTS_URL:-http://host.docker.internal:8000}
+      # Spec 015: publicação no TikTok (contracts, "Variáveis de ambiente"). Segredos só no .env
+      # da raiz; o worker NÃO recebe a chave dos tokens. PUBLICACAO_HABILITADA=false desliga tudo.
+      TIKTOK_CLIENT_KEY: ${TIKTOK_CLIENT_KEY:-}
+      TIKTOK_CLIENT_SECRET: ${TIKTOK_CLIENT_SECRET:-}
+      SOCIMAN_TOKENS_KEY: ${SOCIMAN_TOKENS_KEY:-}
+      SOCIMAN_TOKENS_KEY_ANTERIOR: ${SOCIMAN_TOKENS_KEY_ANTERIOR:-}
+      PUBLICACAO_HABILITADA: ${PUBLICACAO_HABILITADA:-false}
+      TIKTOK_APP_SITUACAO: ${TIKTOK_APP_SITUACAO:-sandbox}
+      TIKTOK_API_URL: ${TIKTOK_API_URL:-}
+      TIKTOK_UPLOAD_HOSTS: ${TIKTOK_UPLOAD_HOSTS:-}
+      TIKTOK_REDIRECT_WEB: ${TIKTOK_REDIRECT_WEB:-}
+      TIKTOK_REDIRECT_DESKTOP: ${TIKTOK_REDIRECT_DESKTOP:-}
+      TIKTOK_SCOPES: ${TIKTOK_SCOPES:-user.info.basic,user.info.profile,video.upload,video.publish,user.info.stats,video.list}
+      # Spec 016: métricas (só leitura). false pausa a coleta sem desconectar.
+      METRICAS_COLETA_HABILITADA: ${METRICAS_COLETA_HABILITADA:-true}
+      AGENDADOR_METRICAS_S: ${AGENDADOR_METRICAS_S:-60}
+      # Spec 009: servidor MCP dos agentes (`/mcp`). false = desligado no servidor (padrão).
+      MCP_HABILITADO: ${MCP_HABILITADO:-false}
+      MCP_ORIGENS_PERMITIDAS: ${MCP_ORIGENS_PERMITIDAS:-}
+      # Spec 026: coleta de mercado (princípio IX). false = fila do coletor vazia. O pepper é
+      # segredo do .env da raiz, gerado pelo dono.
+      COLETA_HABILITADA: ${COLETA_HABILITADA:-false}
+      MERCADO_HASH_PEPPER: ${MERCADO_HASH_PEPPER:-}
+      MERCADO_URL_PUBLICA: ${MERCADO_URL_PUBLICA:-}
+      MERCADO_URL_AFFILIATE: ${MERCADO_URL_AFFILIATE:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # OpenShorts roda no host (:8000)
     volumes:
       - ./apps/api:/app   # código ao vivo; o venv fica em /opt/venv na imagem
+      # Spec 013 (R1): as pastas da agência, SÓ LEITURA (o SociMan nunca escreve nelas). Têm de
+      # existir no host antes de subir (senão o Docker as cria como root, armadilha 1).
+      - ${AGENCIA_SHARED_HOST:-../shared}:/agencia/shared:ro
+      - ${AGENCIA_CLIPES_HOST:-../media/clipes}:/agencia/clipes:ro
+      # O pai do ponto de montagem, no mesmo caminho: a API sobe sem o HD (e nunca cria a pasta
+      # de dados); com rslave, montar ou desmontar o HD no host aparece aqui sem reiniciar.
+      - type: bind
+        source: /media/sakai
+        target: /media/sakai
+        bind:
+          create_host_path: false
+          propagation: rslave
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  # Fila de cortes (spec 004, R1): a mesma imagem da API rodando `sociman worker`, um corte por
+  # vez. Mesmos env e binds da API: o HD em /media/sakai com rslave (sem o sentinela o worker não
+  # pega nada e espera) e a pasta de trabalho em ${SOCIMAN_DATA_DIR}/work/cortes/{id}.
+  worker:
+    build: ./apps/api
+    image: sociman-api   # a mesma tag do serviço api: um build serve os dois
+    user: "1000:1000"
+    command: ["sociman", "worker"]
+    env_file: .env.docker
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_NO_SYNC: "1"
+      IMGPROXY_KEY: ${IMGPROXY_KEY:-}
+      IMGPROXY_SALT: ${IMGPROXY_SALT:-}
+      SOCIMAN_DATA_DIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}
+      DATA_MIN_FREE_GB: ${DATA_MIN_FREE_GB:-20}
+      TMPDIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}/work/tmp
+    volumes:
+      - ./apps/api:/app
+      - type: bind
+        source: /media/sakai
+        target: /media/sakai
+        bind:
+          create_host_path: false
+          propagation: rslave
+    # SIGTERM devolve o corte em andamento à fila (sem contar tentativa) antes de sair.
+    stop_grace_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # Tarefas periódicas (spec 006, R1): a mesma imagem da API rodando `sociman agendador`, com as
+  # trilhas sync (YouTube), openshorts, importacao e lembretes. Um advisory lock do Postgres
+  # garante uma instância ativa. Sem as chaves, sobe e fica ociosa (log claro). Sem porta.
+  agendador:
+    build: ./apps/api
+    image: sociman-api
+    user: "1000:1000"
+    command: ["sociman", "agendador"]
+    env_file: .env.docker
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_NO_SYNC: "1"
+      IMGPROXY_KEY: ${IMGPROXY_KEY:-}
+      IMGPROXY_SALT: ${IMGPROXY_SALT:-}
+      SOCIMAN_DATA_DIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}
+      DATA_MIN_FREE_GB: ${DATA_MIN_FREE_GB:-20}
+      TMPDIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}/work/tmp
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENSHORTS_URL: ${OPENSHORTS_URL:-http://host.docker.internal:8000}
+      # Spec 015: publicação no TikTok (contracts, "Variáveis de ambiente"). Segredos só no .env
+      # da raiz; o worker NÃO recebe a chave dos tokens. PUBLICACAO_HABILITADA=false desliga tudo.
+      TIKTOK_CLIENT_KEY: ${TIKTOK_CLIENT_KEY:-}
+      TIKTOK_CLIENT_SECRET: ${TIKTOK_CLIENT_SECRET:-}
+      SOCIMAN_TOKENS_KEY: ${SOCIMAN_TOKENS_KEY:-}
+      SOCIMAN_TOKENS_KEY_ANTERIOR: ${SOCIMAN_TOKENS_KEY_ANTERIOR:-}
+      PUBLICACAO_HABILITADA: ${PUBLICACAO_HABILITADA:-false}
+      TIKTOK_APP_SITUACAO: ${TIKTOK_APP_SITUACAO:-sandbox}
+      TIKTOK_API_URL: ${TIKTOK_API_URL:-}
+      TIKTOK_UPLOAD_HOSTS: ${TIKTOK_UPLOAD_HOSTS:-}
+      AGENDADOR_PUBLICACAO_S: ${AGENDADOR_PUBLICACAO_S:-15}
+      # Spec 016: métricas (só leitura). false pausa a coleta sem desconectar.
+      METRICAS_COLETA_HABILITADA: ${METRICAS_COLETA_HABILITADA:-true}
+      AGENDADOR_METRICAS_S: ${AGENDADOR_METRICAS_S:-60}
+      # Spec 023: classificação dos posts (≤ 50 por perfil por dia) e análises pedidas pelo dono.
+      AGENDADOR_APRENDIZADO_S: ${AGENDADOR_APRENDIZADO_S:-300}
+      # Spec 026: a trilha `mercado` (cadência, fila do dia, interesses automáticos).
+      COLETA_HABILITADA: ${COLETA_HABILITADA:-false}
+      MERCADO_HASH_PEPPER: ${MERCADO_HASH_PEPPER:-}
+      MERCADO_URL_PUBLICA: ${MERCADO_URL_PUBLICA:-}
+      MERCADO_URL_AFFILIATE: ${MERCADO_URL_AFFILIATE:-}
+      AGENDADOR_MERCADO_S: ${AGENDADOR_MERCADO_S:-300}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./apps/api:/app
+      - type: bind
+        source: /media/sakai
+        target: /media/sakai
+        bind:
+          create_host_path: false
+          propagation: rslave
+    stop_grace_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # Geração local (spec 021, R1): a mesma imagem da API rodando `sociman gerador`, com a linha
+  # GPU (um job do ComfyUI ou do shop-tts por vez) e a linha Claude. É o ÚNICO serviço na rede
+  # `gpu-local` (ComfyUI e shop-tts, D2) e na `dockerctl` (ajuste de RAM do ComfyUI, D1). Sem
+  # porta. Sem o ComfyUI na rede, fica na fila com "O serviço de geração está fora do ar".
+  gerador:
+    build: ./apps/api
+    image: sociman-api
+    user: "1000:1000"
+    command: ["sociman", "gerador"]
+    env_file: .env.docker
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      UV_CACHE_DIR: /tmp/uv-cache
+      UV_NO_SYNC: "1"
+      IMGPROXY_KEY: ${IMGPROXY_KEY:-}
+      IMGPROXY_SALT: ${IMGPROXY_SALT:-}
+      SOCIMAN_DATA_DIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}
+      DATA_MIN_FREE_GB: ${DATA_MIN_FREE_GB:-20}
+      TMPDIR: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}/work/tmp
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      COMFYUI_URL: ${COMFYUI_URL:-http://comfyui:8188}
+      SHOP_TTS_URL: ${SHOP_TTS_URL:-http://shop-tts:8200}
+      DOCKERCTL_URL: http://dockerctl:8080
+      # Segredo do .env da raiz, gerado pelo dono (quickstart §0.3); vazio = sem jobs do ComfyUI.
+      DOCKERCTL_TOKEN: ${DOCKERCTL_TOKEN:-}
+      GERACAO_VRAM_MIN_GB_COMFYUI: ${GERACAO_VRAM_MIN_GB_COMFYUI:-12}
+      GERACAO_VRAM_MIN_GB_TTS: ${GERACAO_VRAM_MIN_GB_TTS:-6}
+    networks: [default, gpu-local, dockerctl]
+    volumes:
+      - ./apps/api:/app
+      - type: bind
+        source: /media/sakai
+        target: /media/sakai
+        bind:
+          create_host_path: false
+          propagation: rslave
+    # SIGTERM devolve a geração em andamento à fila (sem contar tentativa) e a RAM a 12 GB.
+    stop_grace_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # Ajuste de RAM do ComfyUI (spec 021, R4, D1 = A; contracts/dockerctl.md). RISCO: o
+  # docker.sock dá poder total no host. Este é o ÚNICO serviço que o monta (guarda em
+  # test_constitution_guards.py) — nunca o monte em outro. 3 ações fixas, sem parâmetros; rede
+  # `internal` só com o gerador; sem porta; sem DOCKERCTL_TOKEN, sai sem subir.
+  dockerctl:
+    build: ./docker/dockerctl
+    image: sociman-dockerctl
+    user: "1000:${DOCKER_GID:-984}"   # gid do grupo docker do host (data-setup.sh check)
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      DOCKERCTL_TOKEN: ${DOCKERCTL_TOKEN:-}
+      DOCKERCTL_CONTAINER: comfyui
+      DOCKERCTL_MEM_JOB: 28g
+      DOCKERCTL_MEM_NORMAL: 12g
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock   # PODER TOTAL: só aqui
+    networks: [dockerctl]
 
   web:
     image: node:22-bookworm
@@ -82,23 +305,63 @@ services:
       POSTGRES_DB: sociman
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro   # cria sociman_test (só em volume novo)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U sociman -d sociman"]
       interval: 2s
       timeout: 3s
       retries: 20
 
-  # Mídia (logos, banners, avatares, poses, cenas) — S3-compatível
+  # Sessões de login e limites de tentativa (efêmero; AOF para sobreviver a restart). Sem porta no host.
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  # E-mail SÓ de dev: captura tudo que a API envia. UI em http://127.0.0.1:8126
+  # (8025/1025 do host são do arka-manager). SMTP 1025 só na rede interna.
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8126}:8025"
+
+  # Mídia (logos, banners, fontes, vídeos) — S3-compatível. Os dados ficam no HD (spec 004, R5):
+  # sem o HD montado (ou sem o sentinela) os binds falham e o container não sobe; o entrypoint
+  # ainda confere o sentinela. Nunca grava no NVMe.
+  # Tag fixa: a mesma versão que gravou os dados migrados do volume minio-data (R12).
   minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    user: "1000:1000"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - >
+        test -f /sentinela/.sociman-volume ||
+        { echo "ERRO: /sentinela/.sociman-volume não existe: o HD de dados não está montado (scripts/data-setup.sh check)" >&2; exit 1; };
+        exec minio server /data --console-address :9001
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     ports:
       - "${MINIO_CONSOLE_PORT:-9101}:9001"
     volumes:
-      - minio-data:/data
+      - type: bind
+        source: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}/minio
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${SOCIMAN_DATA_DIR:-/media/sakai/BACKUP/tiktok/sociman}/.sociman-volume
+        target: /sentinela/.sociman-volume
+        read_only: true
+        bind:
+          create_host_path: false
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
       interval: 3s
@@ -113,7 +376,9 @@ services:
     entrypoint:
       - /bin/sh
       - -c
-      - mc alias set local http://minio:9000 minioadmin minioadmin && mc mb -p local/sociman
+      - >
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb -p local/sociman local/sociman-fonts local/sociman-videos local/sociman-audios
 
   # Thumbnails/redimensionamento on-the-fly em /img/* — fontes RESTRITAS ao bucket
   imgproxy:
@@ -124,11 +389,30 @@ services:
       IMGPROXY_S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
-      IMGPROXY_ALLOWED_SOURCES: "s3://sociman/"
+      # + miniaturas e avatares do YouTube (spec 006, R13): lista fechada, a CSP não muda.
+      IMGPROXY_ALLOWED_SOURCES: "s3://sociman/,https://i.ytimg.com/,https://yt3.ggpht.com/,https://yt3.googleusercontent.com/"
+      # Biblioteca de assets (spec 007, R3): até 20 MB por imagem; 40 MP cobre 2048×2048 com folga.
+      IMGPROXY_MAX_SRC_RESOLUTION: "40"
+      IMGPROXY_KEY: ${IMGPROXY_KEY:-}
+      IMGPROXY_SALT: ${IMGPROXY_SALT:-}
     depends_on:
       minio:
         condition: service_healthy
 
+networks:
+  # Spec 021 (D2): a rede do ComfyUI e do shop-tts (../comfyui-docker). Externa: tem de existir
+  # antes do `up` (`./scripts/data-setup.sh init` cria).
+  gpu-local:
+    external: true
+  # Spec 021 (D1): só o gerador e o dockerctl; sem saída para fora.
+  dockerctl:
+    internal: true
+
 volumes:
   postgres-data:
+  # SEM USO desde a spec 004 (os dados foram para o HD). É a cópia de segurança da migração e só
+  # o dono o remove, à mão. `external` impede que `down -v` o apague (volume interno seria apagado).
   minio-data:
+    external: true
+    name: sociman_minio-data
+  redis-data:

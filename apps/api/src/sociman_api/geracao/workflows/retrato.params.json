@@ -1,0 +1,53 @@
+{
+ "workflow": "V3 - Retrato Juggernaut XL (txt2img).api.json",
+ "params": {
+  "prompt": {
+   "node": "1",
+   "input": "value",
+   "kind": "value",
+   "default": "RAW photo, close-up portrait of a woman, natural skin texture, soft daylight, 85mm",
+   "doc": "Descrição completa da foto (inglês)"
+  },
+  "negative": {
+   "node": "2",
+   "input": "value",
+   "kind": "value",
+   "default": "cartoon, painting, illustration, 3d render, cgi, anime, plastic skin, airbrushed, doll, deformed face, asymmetric eyes, cross-eyed, bad teeth, extra fingers, bad hands, blurry, lowres, jpeg artifacts, watermark, text",
+   "doc": ""
+  },
+  "width": {
+   "node": "3",
+   "input": "value",
+   "kind": "value",
+   "default": 832,
+   "doc": ""
+  },
+  "height": {
+   "node": "4",
+   "input": "value",
+   "kind": "value",
+   "default": 1216,
+   "doc": ""
+  },
+  "seed": {
+   "node": "5",
+   "input": "value",
+   "kind": "value",
+   "default": 1,
+   "doc": ""
+  },
+  "prefix": {
+   "node": "6",
+   "input": "value",
+   "kind": "value",
+   "default": "v3/retrato",
+   "doc": ""
+  }
+ },
+ "outputs": {
+  "image": {
+   "node": "13",
+   "kind": "image"
+  }
+ }
+}
