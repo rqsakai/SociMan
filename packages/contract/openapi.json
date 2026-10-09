@@ -26884,6 +26884,18 @@
             "title": "Id",
             "type": "string"
           },
+          "mercadoProdutoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mercadoprodutoid"
+          },
           "name": {
             "title": "Name",
             "type": "string"

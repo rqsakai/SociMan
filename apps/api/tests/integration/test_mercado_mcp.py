@@ -1,7 +1,6 @@
 """T064/T065 (US6): o cliente MCP lista e chama as tools de leitura do mercado e da coleta e é
 recusado em qualquer escrita (`escopo_mcp`/`somente_humano`); o mapa (fonte do `mcp-tools.json`)
-tem as leituras e nenhuma escrita; "Adotar no catálogo" sem a 012 nesta branca → 409
-`passo_indisponivel`, e pelo MCP → recusado."""
+tem as leituras e nenhuma escrita. "Adotar no catálogo" está em `test_mercado_adotar.py`."""
 
 from integration.coleta_helpers import coletor, dono, ligado  # noqa: F401
 from integration.mcp_helpers import bearer as bearer_mcp
@@ -69,19 +68,3 @@ def test_mcp_le_o_cockpit_e_e_recusado_nas_escritas(client, db, ligado, coletor,
     r = client.post(f"/api/mercado/produtos/{lista.structured_content['itens'][0]['id']}/adotar",
                     headers=h, json={"perfilId": perfil["id"]})
     assert r.status_code == 403 and r.json()["error"]["code"] == "somente_humano"
-
-
-def test_adotar_sem_a_012_e_passo_indisponivel(client, db, ligado, coletor):  # noqa: F811
-    perfil = criar_perfil(client, ligado)
-    coletor.semear(db, produtos=1, dias=1, ranking=False)
-    db.commit()
-    pid = client.get("/api/mercado/produtos", headers=ligado).json()["itens"][0]["id"]
-    r = client.post(f"/api/mercado/produtos/{pid}/adotar", headers=ligado,
-                    json={"perfilId": perfil["id"]})
-    assert r.status_code == 409, r.text
-    assert r.json()["error"]["code"] == "passo_indisponivel"
-    r = client.post("/api/mercado/produtos/00000000-0000-0000-0000-000000000001/adotar",
-                    headers=ligado, json={"perfilId": perfil["id"]})
-    assert r.status_code == 404
-    det = client.get(f"/api/mercado/produtos/{pid}", headers=ligado).json()
-    assert det["adotadoEm"] == []

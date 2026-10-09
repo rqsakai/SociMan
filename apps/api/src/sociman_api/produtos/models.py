@@ -72,7 +72,7 @@ class Produto(_Versioned, AuditMixin, Base):
     )
     __versioned_fields__ = (
         "perfil_id", "name", *CAMPOS_FICHA, "obs", "url_loja", "status", "ficha_por",
-        "archived", "variantes",
+        "archived", "variantes", "mercado_produto_id",  # 026: o produto do lago adotado
     )
     __immutable_fields__ = ()  # 029: o perfil base é editável
 
@@ -94,6 +94,9 @@ class Produto(_Versioned, AuditMixin, Base):
     precisa_flat: Mapped[bool | None] = mapped_column(Boolean)
     obs: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     url_loja: Mapped[str | None] = mapped_column(Text)
+    # Spec 026 ("Adotar no catálogo"): o produto do lago de onde a ficha veio (migration 0026).
+    mercado_produto_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("mercado_produtos.id"))
     status: Mapped[ProdutoStatus] = mapped_column(
         Enum(ProdutoStatus, name="produto_status"), nullable=False,
         default=ProdutoStatus.rascunho, server_default="rascunho")

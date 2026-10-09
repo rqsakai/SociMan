@@ -166,7 +166,7 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    em par, corpo-base e checagem de identidade), vozes do perfil (`vozes`, gravação ou sintética, teste e voz
    padrão do avatar), pessoa real só com consentimento (menor recusado, famoso avisado), looks, poses e
    cenários gerados, e o "Revogar" LGPD só do dono (apaga arquivos e textos, também nas versões antigas).
-26. `026-mercado-shop` 🚧 **implementada na API, no coletor e na SPA** (`specs/026-mercado-shop/`, 2026-10-09; constitution 4.4.0 aplicada; falta com o dono: X1 perfil de Chrome logado, X3 token no desktop, X4 aceite do risco na tela, X6 `uma-vez --limite 1` e a sonda dos campos reais (`INTERCEPTAR`/parsers, `MERCADO_URL_*` no `.env`), X5 systemd; "Adotar no catálogo" fica `passo_indisponivel` até a 012 estar mesclada):
+26. `026-mercado-shop` 🚧 **implementada na API, no coletor e na SPA** (`specs/026-mercado-shop/`, 2026-10-09; constitution 4.4.0 aplicada; falta com o dono: X1 perfil de Chrome logado, X3 token no desktop, X4 aceite do risco na tela, X6 `uma-vez --limite 1` e a sonda dos campos reais (`INTERCEPTAR`/parsers, `MERCADO_URL_*` no `.env`), X5 systemd; "Adotar no catálogo" ligado à 012 pela migration `0026_uniao_mercado`):
    o cockpit do TikTok Shop coletado pelo próprio SociMan ("Kalodata caseiro"). Um serviço `coletor` no desktop do dono
    (Chrome real, perfil dedicado logado na **conta de afiliado do dono**, risco aceito e registrado) navega como pessoa
    (~300 páginas/dia, 08h-23h, pausas de 5 a 40 s), intercepta a API interna e devolve tudo por uma API de ingestão com

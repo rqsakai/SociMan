@@ -549,7 +549,7 @@ lê o cockpit e é recusado em qualquer escrita.
 `0022` presentes) e a coluna `produtos.mercado_produto_id` criada (T006 a cria quando a tabela existe;
 se a 0025 já rodou sem ela, criar `0026_mercado_produto_vinculo` só com a coluna, a FK e o índice).
 
-- [x] T063 [US6] (parcial, 2026-10-09: guarda `passo_indisponivel`, `ja_adotado`, interesse manual e `adotadoEm` prontos; a cópia em `_adotar_com_012` espera a 012 nesta branch) `apps/api/src/sociman_api/mercado/adotar.py`: `adotar(db, actor, mercado_produto_id,
+- [x] T063 [US6] (completa em 2026-10-09 depois do merge da 012; migration `0026_uniao_mercado`) `apps/api/src/sociman_api/mercado/adotar.py`: `adotar(db, actor, mercado_produto_id,
   perfil_id)` (RequireHuman): lê a ficha atual e a galeria; copia os bytes das imagens para `images`
   do perfil (kind `produto`, via `imaging.validate_image` + `storage.put` no bucket `imagens`, prefixo do
   perfil); chama `produtos.service.create` da 012 com `nome` = título, `categoria` = caminho,
@@ -566,7 +566,7 @@ se a 0025 já rodou sem ela, criar `0026_mercado_produto_vinculo` só com a colu
   `mercado_lojas_listar`, `mercado_categorias_listar`, `mercado_interesses_listar`, `coleta_estado`; é
   recusado em adotar, interesses, config, clientes e ingestão (`escopo_mcp`/`somente_humano`);
   `mcp-tools.json` gerado contém as tools de leitura e nenhuma de escrita.
-- [x] T066 [US6] (o e2e cobre o aviso `passo_indisponivel`; o fluxo completo espera a 012) SPA: botão "Adotar no catálogo" no `ProdutoMercado.tsx` (seletor de perfil, AlertDialog,
+- [x] T066 [US6] (e2e cobre adotar, link para o catálogo e o aviso de já adotado) SPA: botão "Adotar no catálogo" no `ProdutoMercado.tsx` (seletor de perfil, AlertDialog,
   sucesso → link para o produto da 012; `ja_adotado` → link para o existente); `e2e/mercado.spec.ts`
   (US6): adotar e ver o produto no catálogo do perfil; adotar de novo → aviso.
 

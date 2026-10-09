@@ -14764,6 +14764,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Mercadoprodutoid */
+            mercadoProdutoId?: string | null;
             /** Name */
             name: string;
             /** Obs */

@@ -200,6 +200,7 @@ class Produto(CamelModel):
     name: str
     obs: str
     url_loja: str | None
+    mercado_produto_id: uuid.UUID | None = None  # spec 026: adotado do mercado
     status: ProdutoStatus
     estado: Estado
     ficha_por: ProdutoFichaPor | None
