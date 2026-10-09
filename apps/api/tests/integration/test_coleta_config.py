@@ -32,6 +32,8 @@ def test_ligar_sem_aceite_409_e_aceite_registra_quem_quando(client, db, dono,  #
     cfg = client.get("/api/coleta/config", headers=h).json()
     assert cfg["riscoAceito"] is False and cfg["habilitada"] is False
     assert "conta de afiliado" in cfg["textoRisco"]
+    # A tela manda a versão corrente do texto, que a API expõe (antes do 1º aceite a aceita é nula).
+    assert cfg["textoRiscoVersao"] == "2026-10-08" and cfg["riscoTextoVersao"] is None
     r = client.put("/api/coleta/config", headers=h,
                    json={**CORPO_CONFIG, "habilitada": True, "version": cfg["version"]})
     assert r.status_code == 409 and r.json()["error"]["code"] == "risco_nao_aceito"

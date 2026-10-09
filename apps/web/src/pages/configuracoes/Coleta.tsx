@@ -209,7 +209,7 @@ function RiscoEInterruptor() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => void salvar(() => api.coleta.aceitarRisco({ version: c.version, textoVersao: c.riscoTextoVersao ?? "", confirmo: true }), "Risco aceito e registrado.")}
+              onClick={() => void salvar(() => api.coleta.aceitarRisco({ version: c.version, textoVersao: c.textoRiscoVersao, confirmo: true }), "Risco aceito e registrado.")}
             >
               Aceito o risco
             </AlertDialogAction>

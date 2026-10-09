@@ -89,3 +89,13 @@ def test_tem_tela():
     assert config.tem_tela({"DISPLAY": ":1"})
     assert config.tem_tela({"WAYLAND_DISPLAY": "wayland-0"})
     assert not config.tem_tela({})
+
+
+def test_log_padrao_expande_o_til(monkeypatch, tmp_path):
+    """O padrão `~/.local/state/...` tem de virar o `$HOME` real: com o `~` literal, o coletor
+    criava uma pasta `~/` dentro do repositório (achado de 2026-10-09)."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    cfg = config.ConfigLog()
+    assert cfg.arquivo is not None
+    assert "~" not in str(cfg.arquivo) and str(cfg.arquivo).startswith(str(tmp_path))
+    assert config.ConfigLog(arquivo="").arquivo is None

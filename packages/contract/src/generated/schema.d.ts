@@ -9600,6 +9600,8 @@ export interface components {
             servidorHabilitado: boolean;
             /** Textorisco */
             textoRisco: string;
+            /** Textoriscoversao */
+            textoRiscoVersao: string;
             /** Updatedat */
             updatedAt: string | null;
             updatedBy: components["schemas"]["UserRef"] | null;

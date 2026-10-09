@@ -151,6 +151,26 @@ def test_timeout_reenvia_o_lote_uma_vez(cfg, token, sociman, relogio):
     assert vez["n"] == 2 and resp.resultados[0].status == "gravado"
 
 
+def test_sem_token_o_health_vai_sem_authorization(cfg, relogio):
+    """`autoteste --sem-token`: nenhum `Authorization` (um token de mentira tomaria 401 do portão
+    global do SociMan, até no `/api/health`); os outros cabeçalhos continuam."""
+    import httpx
+
+    visto: dict[str, str] = {}
+
+    def handler(req: httpx.Request) -> httpx.Response:
+        visto.update(req.headers)
+        return httpx.Response(200, json={"status": "ok"})
+
+    c = api.ClienteApi(cfg, None, transport=httpx.MockTransport(handler), dormir=relogio.dormir)
+    assert c.health()["status"] == "ok"
+    assert "authorization" not in visto
+    assert visto["x-sociman-coleta-protocolo"] == str(api.PROTOCOLO)
+    c.definir_chrome_versao("154.0")
+    c.health()
+    assert "authorization" not in visto and visto["x-sociman-chrome-versao"] == "154.0"
+
+
 # ---- rodada completa com o navegador falso ----
 
 
