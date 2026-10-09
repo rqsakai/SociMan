@@ -36,6 +36,7 @@ def _dominio(base: str) -> str:
     return host.removeprefix("www.")
 
 
+_HOST_SIMPLES = re.compile(r"[A-Za-z0-9.-]+(:443)?")
 _ID_NA_URL = re.compile(r"/(?:product|produto|p|pdp/[^/?#]+)/(\d{6,})(?:[/?#]|$)")
 _FAIXA = re.compile(r"^\s*([\d.,]+)\s*(mil|k|mi|m)?\s*(\+)?\s*$", re.IGNORECASE)
 
@@ -380,13 +381,20 @@ class FonteTikTokShop:
         subdomínio); sem a base configurada, nenhum link é aceito. O servidor nunca cita o
         domínio em código (princípio IX)."""
         canonica = self.url_canonica(url)
+        if "\\" in canonica or any(c in canonica for c in "\t\r\n "):
+            return None
         partes = urlsplit(canonica)
-        if partes.scheme != "https" or not partes.hostname:
+        # Só `https://host/caminho`: sem userinfo, sem porta e com o host em caracteres simples
+        # (o que o navegador vai abrir é reconstruído daqui, não copiado do que veio).
+        if (partes.scheme != "https" or not partes.hostname or partes.username
+                or partes.password or "@" in partes.netloc
+                or not _HOST_SIMPLES.fullmatch(partes.netloc)):
             return None
         dominio = _dominio(BasesUrl.das_settings().publica)
         host = partes.hostname.rstrip(".").lower()
         if not dominio or not (host == dominio or host.endswith("." + dominio)):
             return None
+        canonica = urlunsplit(("https", host, partes.path, "", ""))
         m = _ID_NA_URL.search(canonica)
         if m is None:
             return None

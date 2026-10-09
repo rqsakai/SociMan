@@ -124,4 +124,11 @@ def test_produto_de_url_e_url_canonica():
     assert FONTE.produto_de_url("http://exemplo.test/shop/product/7291000000000000001", "BR") is None
     assert FONTE.produto_de_url("https://outro.test/shop/product/7291000000000000001", "BR") is None
     assert FONTE.produto_de_url("https://m.exemplo.test/product/7291000000000000001", "BR") is not None
+    # Userinfo, porta estranha e host com caracteres fora do simples: recusados; a URL devolvida é
+    # reconstruída (host em minúsculas, sem porta).
+    assert FONTE.produto_de_url("https://exemplo.test@evil.test/product/7291000000000000001", "BR") is None
+    assert FONTE.produto_de_url("https://exemplo.test:8443/product/7291000000000000001", "BR") is None
+    assert FONTE.produto_de_url("https://exem plo.test/product/7291000000000000001", "BR") is None
+    ref = FONTE.produto_de_url("https://WWW.Exemplo.test:443/shop/product/7291000000000000002", "BR")
+    assert ref is not None and ref.url_canonica == "https://www.exemplo.test/shop/product/7291000000000000002"
     assert FONTE.url_canonica("https://x.test/p/1/?q=2") == "https://x.test/p/1"
