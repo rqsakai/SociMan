@@ -73,14 +73,14 @@ Sem as duas últimas, **não comece** (T001).
 **Objetivo:** banco, modelos, fakes, funções puras e as extensões da 021 e da 010 que todas as histórias
 usam.
 
-- [ ] T004 Migration `apps/api/migrations/versions/0024_roteiros_video_local.py` (`down_revision =
+- [ ] T004 Migration `apps/api/migrations/versions/0027_roteiros_video_local.py` (`down_revision =
   "0023_cadastro_padronizado"`), exatamente como o data-model §Migration: os enums (`ADD VALUE` em
   `autocommit_block`), as 7 tabelas, as FKs `use_alter`, o trigger `roteiro_entregas_so_insercao`, as
   colunas em `cenas`/`cena_tomadas`/`geracoes`/`geracao_candidatos`/`conteudos`, o `ck_geracoes_passo`
   com os 21 passos, o `ck_candidatos_midia`, o trigger `geracao_candidatos_midia` atualizado e o downgrade
   com recusa. **Backup antes de aplicar no dev:** `pg_dump` para
   `/media/sakai/BACKUP/tiktok/sociman/backups/pre-0024.dump`, sob o `flock` combinado.
-- [ ] T005 [P] `apps/api/tests/integration/test_migration_0024.py` cobre:
+- [ ] T005 [P] `apps/api/tests/integration/test_migration_0027.py` cobre:
   - upgrade sobre dados da 010, 012, 021 e 025, com as colunas novas nulas e os padrões corretos;
   - cada CHECK e trigger recusa um INSERT direto: `ck_roteiros_falhou`, `ck_tomadas_origem_local`,
     `ck_tomadas_limpa`, `ck_tomadas_limpa_local`, `ck_candidatos_midia`, o trigger de mídia (vídeo em

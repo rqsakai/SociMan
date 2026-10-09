@@ -6,18 +6,18 @@ Como provar que a feature funciona. O §1 é automático (sem GPU nem serviço r
 
 ## 0. Pré-requisitos
 - 012 (produtos) e 025 (kit do avatar, vozes) implementadas e com migration aplicada; a 011 vem depois
-  (migration `0024`, conferida no gate T001).
+  (migration `0027`, conferida no gate T001).
 - Emenda da constitution **4.4.0** aplicada (T001): exceção (1) ampliada aos intermediários de roteiro.
 - Para o §2 em diante, as dependências externas do dono:
   - X1 (rede `gpu-local`);
   - X2 (shop-tts v2);
   - **X3** (campo `pronuncias` no `/v2/tts_paragraph`, [contracts/shop-tts-pronuncias.md](contracts/shop-tts-pronuncias.md));
   - `DOCKERCTL_TOKEN` no `.env`.
-- Backup antes da migration: `pg_dump` em `/media/sakai/BACKUP/tiktok/sociman/backups/pre-0024.dump`.
+- Backup antes da migration: `pg_dump` em `/media/sakai/BACKUP/tiktok/sociman/backups/pre-0027.dump`.
 
 ## 1. Automático (sem GPU)
 ```bash
-npm run test:api -- -k "roteiro or tempos or pronuncia or migration_0024 or cena_local or limpeza"
+npm run test:api -- -k "roteiro or tempos or pronuncia or migration_0027 or cena_local or limpeza"
 npm run gen:contract && npm run check:web
 flock /tmp/sociman-e2e.lock npm run test:e2e -- e2e/roteiros.spec.ts
 ```

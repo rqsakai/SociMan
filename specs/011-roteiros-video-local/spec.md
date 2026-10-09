@@ -14,6 +14,11 @@ cortados no ritmo da fala e montados com acabamento HD. Cria o roteiro e estende
 (geração local). Portões opcionais (texto, narração, keyframes, clipes, final) ou modo automático. Depende
 da 010, 021, 012, 025 e 014."
 
+> **Achado de escopo da 029 (2026-10-09):** a 029 (AI Studio) entra antes da 011 e torna avatar, voz, produto, cena e
+> keyframes itens **da agência, com perfil base opcional**. Nesta spec, onde estiver "do perfil" para esses itens, leia
+> "de qualquer perfil base"; o roteiro continua do perfil do vídeo. A migration da 011 passa a `0027_roteiros_video_local`
+> (`down_revision = "0026_uniao_mercado"`). Rodar o `/speckit-analyze` da 011 antes do implement.
+
 ## Contexto
 
 Hoje a cena da 010 é uma tomada para gerar **à mão no Flow**: o SociMan monta o prompt, o dono gera fora e

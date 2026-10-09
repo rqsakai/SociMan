@@ -56,7 +56,7 @@ Na SPA: TanStack Query, shadcn/ui, `<video>`/`<audio>` nativos. **Nenhuma depend
   testsrc2`, e o `shoptts_fake` atende `/v2/tts_paragraph` com tempos;
 - regressão `test_tempos_bia_vo`;
 - guardas AST da seção 011;
-- `test_migration_0024`;
+- `test_migration_0027`;
 - Playwright `e2e/roteiros.spec.ts`, em que o `geracao_fake` devolve um mp4 fixo de 8 s e um wav.
 
 Nenhum teste chama a GPU real. O teste real é com o dono (quickstart §2–§4).
@@ -105,7 +105,7 @@ implementação. Texto proposto para a exceção (1):
 | **VII. Humano no controle** | ✅ com a 4.4.0 | Roteiro, padrões e pronúncias versionados. As ações humanas têm `history.record`; a escolha automática gera versão com o ator `system:roteiro`, à vista. Invalidar nunca apaga. A limpeza dos intermediários é a exceção (1) ampliada, com evento `eliminacao_intermediarios`, nunca disparada por IA, agente ou MCP (só a trilha e o CLI) |
 | **VIII. Simplicidade** | ⚠️ justificado | Uma linha a mais no `gerador` e 7 tabelas. Nenhum serviço, dependência ou fila nova (a fila é a `geracoes`). Ver Complexity Tracking |
 | Restrições: NVMe × HD | ✅ | Mídia e temporários no HD, com o sentinela e o piso; o PG só com metadados |
-| Restrições: banco | ✅ | `0024_roteiros_video_local` (provisória), com upgrade/downgrade e teste |
+| Restrições: banco | ✅ | `0027_roteiros_video_local` (provisória), com upgrade/downgrade e teste |
 | Restrições: portas | ✅ | Nenhuma porta nova |
 
 **Reavaliação pós-design:** mantida.
@@ -183,14 +183,14 @@ apps/api/src/sociman_api/
 ├── storage.py (Excecao intermediarios_90d), midia.py (MidiaKind geracao_video), imaging.py (keyframe)
 ├── auth/deps.py (ator system:roteiro), history.py ("sistema (automático)")
 ├── ia/tipos.py (roteiro.plano), mcp/mapa.py, config.py (ROTEIRO_MAX_CENAS), main.py
-apps/api/migrations/versions/0024_roteiros_video_local.py
+apps/api/migrations/versions/0027_roteiros_video_local.py
 apps/api/tests/
 ├── fakes/comfyui_fake.py (+vídeo), shoptts_fake.py (+tts_paragraph), fixtures/bia_vo_timings.json
 ├── unit/test_roteiro_tempos.py, test_roteiro_pronuncia.py, test_prompt_local.py, test_roteiro_maquina.py,
 │   test_montagem_comandos.py, test_constitution_guards.py (+011), test_workflows_manifest.py
 └── integration/roteiro_helpers.py, test_roteiro_fluxo.py, test_roteiro_automatico.py,
     test_roteiro_invalidacoes.py, test_roteiro_reuso.py, test_roteiro_entrega.py, test_roteiro_limpeza.py,
-    test_roteiro_revogacao.py, test_roteiro_permissoes.py, test_pronuncias.py, test_migration_0024.py
+    test_roteiro_revogacao.py, test_roteiro_permissoes.py, test_pronuncias.py, test_migration_0027.py
 docker/nginx/default.conf.template              # location do upload de keyframe (21m)
 docker-compose.yml, docker-compose.e2e.yml      # ROTEIRO_MAX_CENAS em api e gerador
 e2e/fakes/geracao_fake.py, e2e/fixtures/geracao/clipe_8s.mp4, narracao.wav, e2e/roteiros.spec.ts

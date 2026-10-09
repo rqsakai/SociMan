@@ -1,6 +1,8 @@
+> **Achado de escopo da 029 (2026-10-09):** os FKs para avatar, voz, produto, cena e keyframes deixam de exigir "do perfil" (itens da agência com perfil base opcional). Revisar no analyze da 011.
+
 # Modelo de dados: 011-roteiros-video-local
 
-Tudo fica no PostgreSQL (NVMe), na migration **`0024_roteiros_video_local`**, com `down_revision =
+Tudo fica no PostgreSQL (NVMe), na migration **`0027_roteiros_video_local`**, com `down_revision =
 "0023_cadastro_padronizado"`. O número é **provisório** (research R19): a 012 entrou primeiro como
 `0022_produtos_shop` (2026-10-08), e a 025 vira `0023_cadastro_padronizado`. O gate T001 confere com
 `alembic heads`.
@@ -303,7 +305,7 @@ editar etapa anterior ─▶ status da etapa editada (invalidações, FR-035/036
   As gerações abertas das etapas seguintes são canceladas com o ator da mudança. O `desuso_em` é gravado
   nos artefatos substituídos.
 
-## Migration `0024_roteiros_video_local`
+## Migration `0027_roteiros_video_local`
 1. Em `autocommit_block`, `ALTER TYPE … ADD VALUE IF NOT EXISTS`:
    - `tomada_origem` + `geracao_local`;
    - `image_kind` + `keyframe`;
@@ -334,4 +336,4 @@ editar etapa anterior ─▶ status da etapa editada (invalidações, FR-035/036
    Senão remove tudo na ordem inversa, recria os CHECKs e o trigger da 021 e recria os 4 enums sem os
    valores novos (como a `0004`). Nada do MinIO é tocado.
 
-O `test_migration_0024` cobre o upgrade, o downgrade vazio e a recusa com dados.
+O `test_migration_0027` cobre o upgrade, o downgrade vazio e a recusa com dados.

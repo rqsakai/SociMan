@@ -315,7 +315,7 @@ classificação.
 
 ## R19. Migration
 
-`0024_roteiros_video_local`, com `down_revision = "0023_cadastro_padronizado"`. O número é
+`0027_roteiros_video_local`, com `down_revision = "0026_uniao_mercado"`. O número é
 **provisório**: a 012 entrou primeiro como `0022_produtos_shop` (2026-10-08) e a 025 deve virar
 `0023_cadastro_padronizado`, e o gate T001 confere `alembic heads`. Ver o data-model.
 
