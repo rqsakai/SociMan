@@ -285,6 +285,10 @@ def editar(db: Session, actor: Actor, voz_id: uuid.UUID, body: schemas.VozPatch)
             if mudancas["gravacao_audio_id"] else None
         if audio is None:  # spec 029: o áudio pode ser de qualquer perfil base
             raise _invalida("gravacaoAudioId", "envie o áudio antes")
+        if service_padrao.midia_de_outra_pessoa(db, alvo_tipo="voz", alvo_id=voz.id,
+                                                audio_id=audio.id):
+            raise _invalida("gravacaoAudioId", "esse áudio é a voz de outro item: envie a "
+                            "gravação desta pessoa")
         voz.gravacao_audio_id = audio.id
     gravar(db, actor, voz, "updated", before)
     return voz
@@ -298,7 +302,8 @@ def registrar_consentimento(db: Session, actor: Actor, voz_id: uuid.UUID, versio
         raise _invalida("consentimento", "só na voz de gravação")
     before = history.snapshot(voz)
     voz.consentimento = service_padrao.montar_consentimento(db, actor, voz.perfil_id, nome,
-                                                            data, observacao, prova)
+                                                            data, observacao, prova,
+                                                            alvo_tipo="voz", alvo_id=voz.id)
     gravar(db, actor, voz, "consentimento", before)
     return voz
 

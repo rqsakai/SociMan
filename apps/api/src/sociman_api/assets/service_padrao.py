@@ -16,7 +16,7 @@ import uuid
 from datetime import UTC, date, datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, true
 from sqlalchemy.orm import Session
 
 from sociman_api import history
@@ -190,8 +190,47 @@ def kit_out(db: Session, asset: Asset) -> dict[str, Any] | None:
 
 # ---- consentimento (R9) ----
 
-def _prova(db: Session, prova: dict[str, Any] | None) -> dict[str, str] | None:
-    """A imagem ou o áudio da prova: de qualquer perfil base (spec 029, T028a)."""
+def midia_de_outra_pessoa(db: Session, *, alvo_tipo: str, alvo_id: uuid.UUID,
+                          image_id: uuid.UUID | None = None, audio_id: uuid.UUID | None = None
+                          ) -> bool:
+    """Spec 029 (revisão de segurança): o arquivo pode ser de qualquer perfil base, mas não da
+    pessoa de **outro** item (a foto do kit de outro avatar, a gravação, a referência ou um
+    candidato de outra voz). Sem isso, um consentimento valeria para a mídia de outra pessoa e a
+    revogação de um item apagaria um arquivo que outro usa."""
+    from sociman_api.geracao.models import Geracao, GeracaoCandidato
+    from sociman_api.vozes.models import Voz
+
+    if image_id is not None:
+        outro_avatar = select(AssetFile.id).join(Asset, Asset.id == AssetFile.asset_id).where(
+            AssetFile.image_id == image_id, Asset.tipo == AssetTipo.avatar,
+            Asset.id != alvo_id if alvo_tipo == "asset" else true())
+        candidato = select(GeracaoCandidato.id).join(
+            Geracao, Geracao.id == GeracaoCandidato.geracao_id).where(
+            (GeracaoCandidato.image_id == image_id) | (GeracaoCandidato.image_par_id == image_id),
+            Geracao.alvo_tipo == "asset", Geracao.alvo_id != alvo_id)
+        cand_avatar = candidato.join(Asset, Asset.id == Geracao.alvo_id).where(
+            Asset.tipo == AssetTipo.avatar)
+        if db.scalar(outro_avatar.limit(1)) or db.scalar(cand_avatar.limit(1)):
+            return True
+    if audio_id is not None:
+        outra_voz = select(Voz.id).where(
+            (Voz.gravacao_audio_id == audio_id) | (Voz.ref_audio_id == audio_id),
+            Voz.id != alvo_id if alvo_tipo == "voz" else true())
+        candidato = select(GeracaoCandidato.id).join(
+            Geracao, Geracao.id == GeracaoCandidato.geracao_id).where(
+            (GeracaoCandidato.audio_id == audio_id)
+            | (GeracaoCandidato.metricas["teste_audio_id"].astext == str(audio_id)),
+            Geracao.alvo_tipo == "voz",
+            Geracao.alvo_id != alvo_id if alvo_tipo == "voz" else true())
+        if db.scalar(outra_voz.limit(1)) or db.scalar(candidato.limit(1)):
+            return True
+    return False
+
+
+def _prova(db: Session, prova: dict[str, Any] | None, *, alvo_tipo: str, alvo_id: uuid.UUID
+           ) -> dict[str, str] | None:
+    """A imagem ou o áudio da prova: de qualquer perfil base (spec 029, T028a), mas nunca da
+    pessoa de outro item (`midia_de_outra_pessoa`)."""
     from sociman_api.geracao.models import Audio
 
     if not prova:
@@ -201,26 +240,33 @@ def _prova(db: Session, prova: dict[str, Any] | None) -> dict[str, str] | None:
         if img is None:
             raise ApiError(400, "entrada_invalida", "prova: imagem não encontrada",
                            details={"field": "prova"})
+        if midia_de_outra_pessoa(db, alvo_tipo=alvo_tipo, alvo_id=alvo_id, image_id=img.id):
+            raise ApiError(400, "entrada_invalida", "prova: a imagem é de outra pessoa",
+                           details={"field": "prova"})
         return {"image_id": str(img.id)}
     if prova.get("audio_id"):
         a = db.get(Audio, prova["audio_id"])
         if a is None:
             raise ApiError(400, "entrada_invalida", "prova: áudio não encontrado",
                            details={"field": "prova"})
+        if midia_de_outra_pessoa(db, alvo_tipo=alvo_tipo, alvo_id=alvo_id, audio_id=a.id):
+            raise ApiError(400, "entrada_invalida", "prova: o áudio é de outra pessoa",
+                           details={"field": "prova"})
         return {"audio_id": str(a.id)}
     return None
 
 
 def montar_consentimento(db: Session, actor: Actor, perfil_id: uuid.UUID | None, nome: str,
-                         data: date, observacao: str, prova: dict[str, Any] | None
-                         ) -> dict[str, Any]:
+                         data: date, observacao: str, prova: dict[str, Any] | None, *,
+                         alvo_tipo: str, alvo_id: uuid.UUID) -> dict[str, Any]:
     if data > datetime.now(UTC).date():
         raise ApiError(400, "entrada_invalida", "data: não pode ser no futuro",
                        details={"field": "data"})
     return {"nome": nome, "data": data.isoformat(), "observacao": observacao,
             "registrado_por": str(actor.user_id) if actor.user_id else None,
             "registrado_em": datetime.now(UTC).isoformat(),
-            "prova": _prova(db, prova), "revogado_em": None, "revogado_por": None}
+            "prova": _prova(db, prova, alvo_tipo=alvo_tipo, alvo_id=alvo_id),
+            "revogado_em": None, "revogado_por": None}
 
 
 def registrar_consentimento(db: Session, actor: Actor, asset: Asset, version: int,
@@ -239,7 +285,8 @@ def registrar_consentimento(db: Session, actor: Actor, asset: Asset, version: in
                        details={"field": "origem"})
     before = history.snapshot(asset)
     asset.consentimento = montar_consentimento(db, actor, asset.perfil_id, nome, data,
-                                               observacao, prova)
+                                               observacao, prova, alvo_tipo="asset",
+                                               alvo_id=asset.id)
     asset.origem = AssetOrigem.pessoa_real
     assets_service._record(db, actor, asset, "consentimento", before)
     return asset

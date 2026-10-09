@@ -213,3 +213,19 @@ def test_voz_de_outro_perfil_como_padrao_e_gravacao_de_outro_perfil(client, owne
     v2 = consentimento(client, h, outra["id"], r.json()["version"], rota="vozes",
                        prova={"audioId": prova["id"]})
     assert v2["consentimento"]["temProva"] is True
+
+
+def test_gravacao_de_outra_voz_recusada(client, owner, motores):
+    """Spec 029 (revisão de segurança): a gravação pode ser de qualquer perfil base, mas não o
+    áudio de outra voz (outra pessoa): o consentimento não valeria para ela."""
+    h = owner[1]
+    pid = perfil(client, h)
+    v1 = _gravacao_pronta(client, h, pid)
+    v2 = voz(client, h, pid, name="Outra pessoa")
+    r = client.patch(f"/api/vozes/{v2['id']}", headers=h,
+                     json={"version": v2["version"], "gravacaoAudioId": v1["gravacao"]["id"]})
+    assert r.status_code == 400 and r.json()["error"]["details"]["field"] == "gravacaoAudioId"
+    solto = enviar_audio(client, h, perfil(client, h, slug="outro"), wav_sintetico(20.0))
+    r = client.patch(f"/api/vozes/{v2['id']}", headers=h,
+                     json={"version": v2["version"], "gravacaoAudioId": solto["id"]})
+    assert r.status_code == 200, r.text  # áudio solto de outro perfil base vale

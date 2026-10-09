@@ -228,3 +228,25 @@ def test_revogar_voz_de_outro_perfil_lista_o_avatar_e_apaga(client, owner, motor
     assert r.status_code == 200, r.text
     assert [x["id"] for x in r.json()["avataresAfetados"]] == [a["id"]]
     assert not any(_existe(k, bucket="audios") for k in chaves)
+
+
+def test_prova_com_midia_de_outra_pessoa_recusada(client, owner, motores):
+    """Spec 029 (revisão de segurança): a prova do consentimento não pode ser a foto do kit de
+    outro avatar nem a gravação de uma voz."""
+    from integration.test_vozes import _gravacao_pronta
+
+    h = owner[1]
+    pid = perfil(client, h)
+    ana = _pessoa_real(client, h, motores, pid)
+    foto_ana = next(f for f in ana["files"] if f["slot"] == "rosto_origem")["image"]["id"]
+    bia = avatar(client, h, pid, "Bia real")
+    erro = consentimento(client, h, bia["id"], bia["version"], status=400,
+                         prova={"imageId": foto_ana})
+    assert "outra pessoa" in erro["error"]["message"]
+    v = _gravacao_pronta(client, h, pid)
+    erro = consentimento(client, h, bia["id"], bia["version"], status=400,
+                         prova={"audioId": v["gravacao"]["id"]})
+    assert "outra pessoa" in erro["error"]["message"]
+    # A própria foto do avatar vale como prova.
+    out = consentimento(client, h, ana["id"], ana["version"], prova={"imageId": foto_ana})
+    assert out["asset"]["consentimento"]["temProva"] is True
