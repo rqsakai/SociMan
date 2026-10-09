@@ -17,7 +17,7 @@ from integration.mcp_helpers import criar_cliente, ligar
 from integration.postagem_helpers import criar_perfil
 from sociman_api.mercado.models import Calor, Loja, Produto
 
-LINK = "https://www.tiktok.com/shop/pdp/legging-x/7399999999999999999?region=BR&utm=x"
+LINK = "https://www.exemplo.test/shop/pdp/legging-x/7399999999999999999?region=BR&utm=x"
 
 
 def _url(perfil_id: str) -> str:
@@ -43,8 +43,15 @@ def test_acompanhar_por_link_cria_produto_do_lago_e_duplicado_409(client, db, li
     assert r.json()["error"]["details"]["interesseId"] == i["id"]
     # Link sem produto → 400.
     r = client.post(f"{_url(perfil['id'])}/interesses", headers=ligado,
-                    json={"url": "https://www.tiktok.com/@alguem"})
+                    json={"url": "https://www.exemplo.test/@alguem"})
     assert r.status_code == 400 and r.json()["error"]["code"] == "link_invalido"
+    # Host fora do domínio configurado (MERCADO_URL_PUBLICA) ou sem https: o coletor nunca abre
+    # URL que não seja da rede → 400 (revisão de segurança 2026-10-09).
+    for url in ("https://malicioso.test/shop/pdp/x/7399999999999999998",
+                "http://exemplo.test/shop/pdp/x/7399999999999999998",
+                "https://exemplo.test.evil.com/shop/pdp/x/7399999999999999998"):
+        r = client.post(f"{_url(perfil['id'])}/interesses", headers=ligado, json={"url": url})
+        assert r.status_code == 400 and r.json()["error"]["code"] == "link_invalido", url
     # Nem link nem produto → 400.
     r = client.post(f"{_url(perfil['id'])}/interesses", headers=ligado, json={"nota": "x"})
     assert r.status_code == 400

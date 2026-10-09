@@ -78,7 +78,7 @@ def test_fila_do_dia_com_dois_perfis_rankings_vitrine_e_link_manual(client, db, 
     coletor.fechar()
     # Link manual no perfil B: produto novo no lago.
     r = client.post(f"/api/perfis/{p2['id']}/mercado/interesses", headers=ligado,
-                    json={"url": "https://www.tiktok.com/shop/pdp/x/7400000000000000001"})
+                    json={"url": "https://exemplo.test/shop/pdp/x/7400000000000000001"})
     assert r.status_code == 201, r.text
     antes = _contagens(db)
 

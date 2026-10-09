@@ -30,6 +30,12 @@ _CHAVES = {
     "produto_videos": re.compile(r"^produto_videos:[A-Za-z0-9_-]+$"),
 }
 # O id do produto na URL canônica: o último segmento numérico do caminho (`/product/7291…`).
+def _dominio(base: str) -> str:
+    """O domínio registrável aproximado da base configurada: o host sem o `www.` inicial."""
+    host = (urlsplit(base).hostname or "").rstrip(".").lower() if base else ""
+    return host.removeprefix("www.")
+
+
 _ID_NA_URL = re.compile(r"/(?:product|produto|p|pdp/[^/?#]+)/(\d{6,})(?:[/?#]|$)")
 _FAIXA = re.compile(r"^\s*([\d.,]+)\s*(mil|k|mi|m)?\s*(\+)?\s*$", re.IGNORECASE)
 
@@ -367,9 +373,19 @@ class FonteTikTokShop:
         raise ValueError(f"tipo de tarefa sem URL: {tipo}")
 
     def produto_de_url(self, url: str, mercado: str) -> ProdutoRef | None:
-        """O id do produto no link colado pelo humano (FR-039). Não reconheceu → None."""
+        """O id do produto no link colado pelo humano (FR-039). Não reconheceu → None.
+
+        O link vira a URL que o coletor (Chrome logado na conta do dono) vai abrir, então só
+        entra `https` num host do domínio configurado em `MERCADO_URL_PUBLICA` (o próprio ou um
+        subdomínio); sem a base configurada, nenhum link é aceito. O servidor nunca cita o
+        domínio em código (princípio IX)."""
         canonica = self.url_canonica(url)
-        if not canonica.startswith(("https://", "http://")):
+        partes = urlsplit(canonica)
+        if partes.scheme != "https" or not partes.hostname:
+            return None
+        dominio = _dominio(BasesUrl.das_settings().publica)
+        host = partes.hostname.rstrip(".").lower()
+        if not dominio or not (host == dominio or host.endswith("." + dominio)):
             return None
         m = _ID_NA_URL.search(canonica)
         if m is None:

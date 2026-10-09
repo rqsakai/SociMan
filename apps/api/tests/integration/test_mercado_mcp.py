@@ -60,7 +60,7 @@ def test_mcp_le_o_cockpit_e_e_recusado_nas_escritas(client, db, ligado, coletor,
     # Escritas pela API direta com a credencial MCP: proibidas (somente_humano) ou fora de escopo.
     h = bearer_mcp(token)
     r = client.post(f"/api/perfis/{perfil['id']}/mercado/interesses", headers=h,
-                    json={"url": "https://www.tiktok.com/shop/pdp/x/7399999999999999999"})
+                    json={"url": "https://exemplo.test/shop/pdp/x/7399999999999999999"})
     assert r.status_code == 403 and r.json()["error"]["code"] == "somente_humano"
     r = client.post("/api/coleta/clientes", headers=h, json={"nome": "x", "mercado": "BR"})
     assert r.status_code == 403 and r.json()["error"]["code"] == "somente_humano"

@@ -268,7 +268,7 @@ test("026 US4: nicho, link manual, pausar/reativar pelo membro, vitrine para tod
 
   // ---- link manual ----
   const linkId = `74${sfx.replace(/\D/g, "1").padEnd(17, "7")}`;
-  await page.getByLabel("Link do produto").fill(`https://www.tiktok.com/shop/pdp/legging/${linkId}?utm=x`);
+  await page.getByLabel("Link do produto").fill(`https://exemplo.test/shop/pdp/legging/${linkId}?utm=x`);
   await page.getByLabel("Nota (opcional)").fill("visto no vídeo");
   await page.getByRole("button", { name: "Acompanhar", exact: true }).click();
   await expect(page.getByText(/Acompanhando/)).toBeVisible();
@@ -311,7 +311,7 @@ test("026 US4: nicho, link manual, pausar/reativar pelo membro, vitrine para tod
   const escrita = await fetch(new URL(`/api/perfis/${perfilA}/mercado/interesses`, BASE_URL).toString(), {
     method: "POST",
     headers: { Authorization: `Bearer ${mcp.token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ url: `https://www.tiktok.com/shop/pdp/x/${linkId}1` }),
+    body: JSON.stringify({ url: `https://exemplo.test/shop/pdp/x/${linkId}1` }),
   });
   expect(escrita.status).toBe(403);
   expect(((await escrita.json()) as { error: { code: string } }).error.code).toBe("somente_humano");

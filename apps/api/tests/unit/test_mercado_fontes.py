@@ -120,4 +120,8 @@ def test_produto_de_url_e_url_canonica():
     assert ref.mercado == "BR"
     assert FONTE.produto_de_url("https://exemplo.test/nada", "BR") is None
     assert FONTE.produto_de_url("texto solto", "BR") is None
+    # Só https num host do domínio de MERCADO_URL_PUBLICA (o coletor abre a URL logado).
+    assert FONTE.produto_de_url("http://exemplo.test/shop/product/7291000000000000001", "BR") is None
+    assert FONTE.produto_de_url("https://outro.test/shop/product/7291000000000000001", "BR") is None
+    assert FONTE.produto_de_url("https://m.exemplo.test/product/7291000000000000001", "BR") is not None
     assert FONTE.url_canonica("https://x.test/p/1/?q=2") == "https://x.test/p/1"
