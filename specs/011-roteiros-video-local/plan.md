@@ -28,7 +28,7 @@ Como o roteiro é conduzido:
   automático. A escolha automática da opção 1 do keyframe é a única exceção à "escolha humana" da 021: ela
   acontece só dentro do roteiro, com o ator `system:roteiro`, e uma guarda AST a protege (R9).
 - **Nada se apaga nas invalidações.** As invalidações só marcam. A limpeza de 90 dias passa a cobrir os
-  intermediários sem uso num vídeo final, com a emenda **4.4.0** (R12).
+  intermediários sem uso num vídeo final, com a emenda **4.5.0** (R12).
 
 Nada publica: o conteúdo nasce sem destino, e aprovar e agendar continuam na 014/015 (princípio I).
 
@@ -86,9 +86,9 @@ Nenhum teste chama a GPU real. O teste real é com o dono (quickstart §2–§4)
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.* A constitution é a **4.3.0**,
-com a emenda **4.4.0** decidida pelo dono no clarify (2026-10-08) e **aplicada na 1ª tarefa** da
-implementação. Texto proposto para a exceção (1):
+*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.* A constitution é a **4.5.0**: a emenda
+decidida pelo dono no clarify (2026-10-08) foi **aplicada em 2026-10-09** (achado G1 do analyze; a 4.4.0 foi
+usada pela 026, princípio IX). Texto proposto para a exceção (1):
 
 > (1) candidatos de geração não escolhidos e artefatos intermediários de roteiro (tomadas, narrações e
 > prévias) que não entraram num vídeo final entregue, 90 dias depois de deixarem de ser usados (o
@@ -102,8 +102,9 @@ implementação. Texto proposto para a exceção (1):
 | **IV. Contrato é a fonte única** | ✅ | Rotas e schemas Pydantic → `npm run gen:contract`; códigos novos no `errors.ts`. Os contratos externos (blocos do ComfyUI, campo `pronuncias` do shop-tts) ficam em `contracts/*.md` e nos fakes |
 | **V. Segurança e segredos** | ✅ | Nenhum segredo novo. O `dockerctl` da 021 não muda (as mesmas 3 ações). Upload de keyframe validado pelo conteúdo (Pillow) e limitado a 20 MB. Links de vídeo por HMAC com validade (`geracao_video`) |
 | **VI. Testes antes de pronto** | ✅ | Unitários (tempos, prompt local, pronúncia/hash, máquina), integração (fluxo com portões, automático, invalidações, reuso, entrega, limpeza, revogação, permissões, migration), guardas e e2e |
-| **VII. Humano no controle** | ✅ com a 4.4.0 | Roteiro, padrões e pronúncias versionados. As ações humanas têm `history.record`; a escolha automática gera versão com o ator `system:roteiro`, à vista. Invalidar nunca apaga. A limpeza dos intermediários é a exceção (1) ampliada, com evento `eliminacao_intermediarios`, nunca disparada por IA, agente ou MCP (só a trilha e o CLI) |
+| **VII. Humano no controle** | ✅ com a 4.5.0 | Roteiro, padrões e pronúncias versionados. As ações humanas têm `history.record`; a escolha automática gera versão com o ator `system:roteiro`, à vista. Invalidar nunca apaga. A limpeza dos intermediários é a exceção (1) ampliada, com evento `eliminacao_intermediarios`, nunca disparada por IA, agente ou MCP (só a trilha e o CLI) |
 | **VIII. Simplicidade** | ⚠️ justificado | Uma linha a mais no `gerador` e 7 tabelas. Nenhum serviço, dependência ou fila nova (a fila é a `geracoes`). Ver Complexity Tracking |
+| **IX. Coleta de mercado** | ✅ (não afetado) | A 011 não coleta dado de mercado nem automatiza navegador; não toca `mercado/` nem `coleta/` |
 | Restrições: NVMe × HD | ✅ | Mídia e temporários no HD, com o sentinela e o piso; o PG só com metadados |
 | Restrições: banco | ✅ | `0027_roteiros_video_local` (provisória), com upgrade/downgrade e teste |
 | Restrições: portas | ✅ | Nenhuma porta nova |
@@ -111,7 +112,7 @@ implementação. Texto proposto para a exceção (1):
 **Reavaliação pós-design:** mantida.
 - A escolha automática ficou num módulo só, coberto por uma guarda AST, e confere passo, roteiro e modo na
   mesma transação.
-- A emenda 4.4.0 é a única mudança de governança, e o dono a pediu.
+- A emenda 4.5.0 é a única mudança de governança, e o dono a pediu.
 - Todas as rotas novas estão classificadas no `mcp/mapa.py`: as escritas em `PROIBIDAS`, as leituras em
   `FORA`.
 
@@ -157,7 +158,7 @@ specs/011-roteiros-video-local/
 ### Source Code (repository root)
 
 ```text
-.specify/memory/constitution.md                 # T001: emenda 4.4.0 (via /speckit-constitution)
+.specify/memory/constitution.md                 # T001: emenda 4.5.0 (via /speckit-constitution)
 apps/api/src/sociman_api/roteiros/
 ├── __init__.py
 ├── models.py          # Roteiro, RoteiroProduto, RoteiroCena, RoteiroNarracao, RoteiroEntrega, RoteiroPadroes, Pronuncia
@@ -213,5 +214,5 @@ apps/web/src/
 |---|---|---|
 | 3ª linha (thread) no `gerador` | A montagem não pode esperar a GPU (FR-043), e o gerador já tem o MinIO e o `work/tmp` | Rodar a montagem na linha GPU segura a GPU à toa; o worker de cortes tem a fila presa a `cortes` |
 | Escolha automática (exceção à regra da 021) | Decisão do dono (modo automático) | Não há alternativa; fica contida num módulo, com guarda AST e conferência na transação |
-| Limpeza que apaga mídia de tomada e narração | Decisão do dono no clarify (90 dias) | Guardar tudo enche o HD com clipes de 3 a 20 MB por tentativa; exige a emenda 4.4.0 |
+| Limpeza que apaga mídia de tomada e narração | Decisão do dono no clarify (90 dias) | Guardar tudo enche o HD com clipes de 3 a 20 MB por tentativa; exige a emenda 4.5.0 |
 | 7 tabelas | Cada uma tem ciclo de vida próprio: posições, narrações (várias por roteiro), entregas (só inserção, protege da limpeza), padrões e pronúncias (versionados) | Colocar tudo em jsonb do roteiro perderia as FKs que a limpeza e a proteção precisam |

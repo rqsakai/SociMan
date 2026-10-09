@@ -57,9 +57,9 @@ Sem as duas últimas, **não comece** (T001).
   - os testes da 010, 012, 021 e 025 estão verdes: `npm run test:api -- -k "cenas or produtos or geracao
     or vozes or kit" -q`;
   - `git status` só tem o esperado.
-- [ ] T002 **Emenda 4.4.0** da constitution via `/speckit-constitution`: a exceção (1) do princípio VII,
-  com o texto do plan.md (Constitution Check), **aprovado pelo dono antes de gravar**. Tipo da emenda:
-  MINOR. O Sync Impact Report vai no topo e é retirado antes do commit.
+- [X] T002 **Emenda 4.5.0** da constitution via `/speckit-constitution` (aplicada em 2026-10-09, achado G1 do
+  analyze; a 4.4.0 foi usada pela 026): a exceção (1) do princípio VII com o texto do plan.md, aprovada pelo
+  dono. O Sync Impact Report fica no topo e é retirado antes do commit.
 - [ ] T003 [P] Copiar os 5 blocos (`contracts/comfyui-blocos.md`) de `../comfyui-docker/workflows/api/` (só
   leitura) para `apps/api/src/sociman_api/geracao/workflows/`: `clipe_minimax`, `clipe_wan`,
   `clipe_wan_qualidade`, `clipe_ltx` e `upscale_video` (`.api.json` + `.params.json`). Atualizar o
@@ -457,7 +457,7 @@ escolher tomada.
   - rodar com `flock /tmp/sociman-e2e.lock npm run test:e2e -- e2e/roteiros.spec.ts`.
 - [ ] T058 Docs:
   - `CLAUDE.md` do SociMan: seção "Roteiros (desde a spec 011)", com pacote, máquina, automático,
-    limpeza 4.4.0, `ROTEIRO_MAX_CENAS` e X3;
+    limpeza 4.5.0, `ROTEIRO_MAX_CENAS` e X3;
   - `docs/visao.md`: 011 ✅;
   - os `[X]` nesta lista.
 - [ ] T059 Verificação final, com o código congelado:

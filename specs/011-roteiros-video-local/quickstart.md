@@ -7,7 +7,7 @@ Como provar que a feature funciona. O §1 é automático (sem GPU nem serviço r
 ## 0. Pré-requisitos
 - 012 (produtos) e 025 (kit do avatar, vozes) implementadas e com migration aplicada; a 011 vem depois
   (migration `0027`, conferida no gate T001).
-- Emenda da constitution **4.4.0** aplicada (T001): exceção (1) ampliada aos intermediários de roteiro.
+- Emenda da constitution **4.5.0** aplicada (T002, 2026-10-09): exceção (1) ampliada aos intermediários de roteiro.
 - Para o §2 em diante, as dependências externas do dono:
   - X1 (rede `gpu-local`);
   - X2 (shop-tts v2);

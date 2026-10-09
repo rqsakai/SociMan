@@ -64,7 +64,7 @@ Perguntas do clarify (respondidas pelo dono):
   **apagadas 90 dias** depois, como os candidatos da 021. Fica guardado só o que foi usado nos **vídeos
   finais entregues** (o conteúdo da 014 e o que ele precisa para ser reaproveitado: as tomadas e os
   keyframes que entraram nele). Isso amplia a exceção (1) do princípio VII e exige **emenda da
-  constitution 4.3.0 → 4.4.0**, pré-requisito da implementação (1ª tarefa).
+  constitution 4.4.0 → 4.5.0**, aplicada em 2026-10-09 (a 4.4.0 foi usada pela 026).
 - Q: O que acontece com o que já foi gerado com a voz ou o rosto de uma pessoa real que revogou o
   consentimento? → A: **O que foi criado fica** (keyframes, tomadas, narrações, vídeos finais e
   conteúdos não são apagados pela revogação). A revogação só **proíbe gerar coisa nova** com aquela voz
@@ -644,7 +644,7 @@ ficou desatualizada.
   da revogação, o SociMan DEVE recusar toda geração nova que use aquela voz ou aquele avatar (narração,
   keyframe, clipe), com a mensagem "consentimento revogado", e o roteiro DEVE mostrar o aviso.
 
-**Limpeza de 90 dias (pré-requisito: emenda 4.4.0 da constitution)**
+**Limpeza de 90 dias (pré-requisito: emenda 4.5.0 da constitution)**
 
 - **FR-049**: Noventa dias depois de ficar sem uso, os artefatos intermediários dos roteiros DEVEM ser
   apagados (as linhas e os arquivos): as tomadas locais, as narrações, as prévias de montagem e os
@@ -705,7 +705,7 @@ ficou desatualizada.
 
 ## Assumptions
 
-- **Emenda da constitution 4.4.0:** a exceção (1) do princípio VII ("candidatos de geração não
+- **Emenda da constitution 4.5.0:** a exceção (1) do princípio VII ("candidatos de geração não
   escolhidos, 90 dias depois") passa a cobrir também os artefatos intermediários de roteiro sem uso num
   vídeo final entregue (FR-049, FR-050). O texto final é aprovado pelo dono na 1ª tarefa da
   implementação, como a 4.3.0 na 021.
@@ -826,7 +826,7 @@ narração (mudança de contrato, dependência externa, documentar em `contracts
    humano que pediu o plano do roteiro (ou que ligou o modo).
 6. **Retenção (resolvida no clarify):** a limpeza de 90 dias passa a cobrir as tomadas locais, as
    narrações, as prévias e os acabamentos sem uso num vídeo final entregue (FR-049, FR-050), com a emenda
-   4.4.0. O plano define:
+   4.5.0. O plano define:
    - onde fica a data de "deixou de ser atual" (coluna técnica ou cálculo pelas versões);
    - como a limpeza da 021 (`geracao/limpeza.py`, trilha `geracao_limpeza`) passa a apagar
      `cena_tomadas`, `roteiro_narracoes` e os candidatos aplicados direto;

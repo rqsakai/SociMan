@@ -210,7 +210,7 @@ Esta é a receita do `finalizar_hd.py`. O vídeo do candidato aprovado foi ampli
 da cena), apesar do padrão 720×1248 do script: vale a resolução da cena (Divergência 4 da spec). O
 `comfy_free` roda no fim; os passos ffmpeg usam CPU, ainda com a GPU travada para este job.
 
-## R12. Limpeza dos intermediários (exceção 1 ampliada, emenda 4.4.0)
+## R12. Limpeza dos intermediários (exceção 1 ampliada, emenda 4.5.0)
 
 - **Coluna técnica `desuso_em`** em `cena_tomadas`, `roteiro_narracoes` e `geracoes`: quando o artefato
   deixou de ser atual. Ela é preenchida pela máquina ao substituir ou invalidar, ao arquivar o roteiro e,
