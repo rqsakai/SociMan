@@ -44,6 +44,8 @@ from sociman_api.perfis.router_contas import router as contas_router
 from sociman_api.perfis.router_imagens import router as imagens_router
 from sociman_api.perfis.router_perfis import router as perfis_router
 from sociman_api.postagem.router import router as postagem_router
+from sociman_api.produtos.router import router as produtos_router  # spec 012
+from sociman_api.produtos.router_perfil import router as produtos_perfil_router  # spec 012
 from sociman_api.publicacao.router import router as publicacao_router
 from sociman_api.redis import get_redis
 from sociman_api.router_midia import router as midia_router
@@ -91,6 +93,8 @@ app.include_router(agencia_router)  # spec 013: importação da agência (só do
 app.include_router(aprendizado_router)  # spec 023: aprender com o desempenho
 app.include_router(geracao_router)  # spec 021: geração local com candidatos
 app.include_router(audios_router)  # spec 021: áudios do perfil
+app.include_router(produtos_perfil_router)  # spec 012: produtos do perfil
+app.include_router(produtos_router)  # spec 012: produto, ficha, variantes e aprovação
 install_openapi_error_contract(app)
 
 

@@ -58,6 +58,8 @@ import ImportacaoDetalhe from "./pages/configuracoes/ImportacaoDetalhe";
 // 010-cenas
 import CenaDetalhe, { CenaNova } from "./pages/cenas/CenaDetalhe";
 import CenaHistorico from "./pages/cenas/CenaHistorico";
+// 012-produtos-shop
+import ProdutoPage from "./pages/produtos/ProdutoPage";
 
 // 019-analytics: /app/metricas carrega sob demanda (traz o ECharts, chunk `graficos`).
 const Analytics = lazy(() => import("./pages/analytics/Analytics"));
@@ -181,6 +183,8 @@ export default function App() {
                 <Route path="/app/perfis/:id/cenas/nova" element={<CenaNova />} />
                 <Route path="/app/cenas/:id" element={<CenaDetalhe />} />
                 <Route path="/app/cenas/:id/historico" element={<CenaHistorico />} />
+                {/* 012-produtos-shop */}
+                <Route path="/app/produtos/:id" element={<ProdutoPage />} />
                 <Route
                   path="/app/usuarios"
                   element={

@@ -25,6 +25,7 @@ from pydantic import BaseModel
 from sociman_api.ia import guia as guia_mod
 from sociman_api.ia.tipos import CAMPOS_CENA_IA, LIMITES_CENA, TipoCampo
 from sociman_api.postagem import textos  # normalizar_hashtags e os limites da postagem
+from sociman_api.produtos import ficha as ficha_produto  # spec 012 (puro)
 
 EXPLICACAO_MAX = 400
 AVISOS_MAX = 5
@@ -138,7 +139,7 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "textos_postagem": PropostaTextosPostagem, "guia": PropostaGuia,
     "variacoes": PropostaVariacoes, "campos_cena": PropostaCamposCena,
     "taxonomia": PropostaTaxonomia, "classificacao": PropostaClassificacao,
-    "analise": PropostaAnalise,
+    "analise": PropostaAnalise, "ficha_produto": ficha_produto.FichaSaida,
 }
 VARIACOES = 3
 
@@ -255,6 +256,8 @@ def problemas(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
     elif isinstance(parsed, PropostaAnalise):
         if not any(h.texto.strip() for h in parsed.hipoteses):
             erros.append("nenhuma hipótese veio preenchida")
+    elif isinstance(parsed, ficha_produto.FichaSaida):  # spec 012
+        erros.extend(ficha_produto.validar_limites(parsed))
     elif isinstance(parsed, PropostaCamposCena):
         if not parsed.acao.strip():
             erros.append("a ação veio vazia")
@@ -529,6 +532,12 @@ def finalizar(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
     elif isinstance(parsed, PropostaTaxonomia | PropostaClassificacao | PropostaAnalise):
         out.proposta, avisos = _ajustar_aprendizado(tipo, parsed)  # spec 023
         out.avisos.extend(avisos)
+    elif isinstance(parsed, ficha_produto.FichaSaida):  # spec 012: nada vai fora dos limites
+        erros = ficha_produto.validar_limites(parsed)
+        if erros:
+            raise Invalida("; ".join(erros))
+        out.proposta = {"ficha": {**ficha_produto.campos_do_produto(parsed),
+                                  "cores": [c.model_dump() for c in parsed.cores]}}
     else:  # pragma: no cover
         raise TypeError(type(parsed).__name__)
     _avisos_do_guia(tipo, parsed, out, efetivo)

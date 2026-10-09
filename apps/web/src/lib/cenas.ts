@@ -35,6 +35,7 @@ export type {
 type Tomada = CenaTomada;
 export type IngredientePapel = Cena["ingredientes"][number]["papel"];
 export type CenaAssetRef = NonNullable<Cena["avatar"]>;
+export type CenaProdutoRef = NonNullable<Cena["produto"]>;
 
 // Campos editáveis (CenaIn / CenaPatch), como o formulário os guarda.
 export type Duracao = 4 | 6 | 8;
@@ -58,6 +59,8 @@ export type CenaCampos = { duracaoS: Duracao } & Pick<
   | "quadroFinal"
   | "produtoNome"
   | "produtoImagemId"
+  | "produtoId"
+  | "produtoVarianteId"
   | "negative"
   | "tags"
   | "notas"
@@ -70,6 +73,7 @@ export interface CenaFiltros {
   avatarId?: string;
   cenarioId?: string;
   produtoImagemId?: string;
+  produtoId?: string;
   tag?: string;
   arquivadas?: boolean;
 }
@@ -162,6 +166,8 @@ export const CAMPOS_PROMPT: (keyof CenaCampos)[] = [
   "quadroFinal",
   "produtoNome",
   "produtoImagemId",
+  "produtoId",
+  "produtoVarianteId",
   "negative",
 ];
 
@@ -189,6 +195,8 @@ export const camposVazios = (): CenaCampos => ({
   quadroFinal: null,
   produtoNome: null,
   produtoImagemId: null,
+  produtoId: null,
+  produtoVarianteId: null,
   negative: null,
   tags: [],
   notas: "",
@@ -222,6 +230,9 @@ export const campoCenaLabel: Record<string, string> = {
   cenarioId: "Cenário ativo (o escolhido está arquivado)",
   cenarioArquivoId: "Imagem do cenário ativa",
   produtoImagemId: "Foto do produto ativa",
+  // spec 012
+  produtoId: "Produto aprovado do catálogo",
+  produtoVarianteId: "Variante ativa, com recorte",
 };
 
 // Histórico (snapshot em snake_case).
@@ -245,6 +256,8 @@ export const cenaFieldLabel: Record<string, string> = {
   quadro_final: "Quadro final",
   produto_nome: "Produto",
   produto_imagem_id: "Foto do produto",
+  produto_id: "Produto do catálogo",
+  produto_variante_id: "Variante do produto",
   negative: "Negative prompt",
   tags: "Tags",
   notas: "Notas",
@@ -307,6 +320,7 @@ const paraQuery = (f: CenaFiltros): CenaFilters => ({
   avatarId: f.avatarId || undefined,
   cenarioId: f.cenarioId || undefined,
   produtoImagemId: f.produtoImagemId || undefined,
+  produtoId: f.produtoId || undefined,
   tag: f.tag ? [f.tag] : undefined,
   arquivadas: f.arquivadas ? "all" : "false",
 });

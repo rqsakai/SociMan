@@ -15,7 +15,7 @@ Rota nova da API nunca vira tool sozinha.
 """
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 Escopo = Literal["leitura", "propostas"]
 
@@ -29,6 +29,8 @@ class Tool:
     limite_padrao: int | None = None  # listas: `limit`/`limite` quando o agente não manda
     entidade: str | None = None  # escritas: o tipo do item alterado (registro, R8)
     ocultar: tuple[str, ...] = ()  # campos do corpo/query fora do alcance do agente
+    # Spec 012: valores da query quando o agente não manda (ex.: só produtos aprovados).
+    padroes: tuple[tuple[str, Any], ...] = ()
 
 
 def _l(titulo: str, descricao: str, limite_padrao: int | None = None,
@@ -209,6 +211,18 @@ TOOLS: dict[str, Tool] = {
     "cenas_padroes_versions": _versoes("os padrões das cenas"),
     "conteudos_cenas_get": _l("Cenas de um conteúdo", "Cenas que compõem um conteúdo de vídeo "
                               "próprio."),
+    # ---- produtos do Shop (spec 012, R14: só leitura) ----
+    "produtos_listar": Tool(
+        "Listar produtos", "Produtos do TikTok Shop do perfil. Por padrão, só os aprovados "
+        "(`status=aprovado`): é o que vale para usar em cenas e roteiros. Filtre por estado, "
+        "busca (`q`) e arquivados; paginação por `cursor`.", limite_padrao=50,
+        padroes=(("status", ["aprovado"]),)),
+    "produtos_ver": _l("Ver produto", "Detalhe de um produto: a ficha técnica (as palavras "
+                       "exatas em inglês para os prompts, os cuidados e a descrição de venda), "
+                       "as variantes (cor, foto original, recorte e flat por link), o estado, "
+                       "as pendências e onde é usado. Para sugerir algo, grave uma "
+                       "`observacao` no produto com `anotacoes_create`."),
+    "produtos_versoes": _versoes("um produto"),
     # ---- anotações (leitura) ----
     "anotacoes_list": _l("Listar anotações e propostas", "Anotações e propostas presas aos itens, "
                          "com filtros (alvo, perfil, situação, tipo, cliente) e paginação "
@@ -312,6 +326,14 @@ _PROIBIDAS_DONO |= {op: "aprendizado: decisão do dono (spec 023)" for op in (
 _PROIBIDAS_DONO |= {op: "geração local: ato humano (spec 021)" for op in (
     "geracoes_criar", "geracoes_escolher", "geracoes_cancelar", "geracoes_tentar_de_novo",
     "geracoes_gerar_outras", "audios_enviar")}
+
+# Spec 012 (R14, R15): toda escrita de produto é de um humano (dono ou membro).
+_PROIBIDAS_DONO |= {op: "produtos: cadastro humano (spec 012)" for op in (
+    "produtos_criar", "produtos_editar", "produtos_salvar_ficha", "produtos_pedir_ficha",
+    "produtos_aprovar", "produtos_arquivar", "produtos_restaurar", "produtos_reverter",
+    "produtos_variante_criar", "produtos_variantes_ordenar", "produtos_variante_editar",
+    "produtos_variante_arquivar", "produtos_variante_restaurar", "produtos_refazer_flat",
+    "produtos_refazer_recorte")}
 
 PROIBIDAS: dict[str, str] = {**_PROIBIDAS_I, **_PROIBIDAS_II, **_PROIBIDAS_VII,
                              **_PROIBIDAS_DONO, **_PROIBIDAS_PESSOAS, **_PROIBIDAS_MCP}

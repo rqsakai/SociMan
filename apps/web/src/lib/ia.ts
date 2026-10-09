@@ -80,6 +80,8 @@ export const formatoLabel: Record<TipoCampo["formato"], string> = {
   taxonomia: "Temas do perfil",
   classificacao: "Tema e estilo do gancho de um post",
   analise: "Hipóteses sobre os melhores posts",
+  // spec 012
+  ficha_produto: "Ficha técnica do produto",
 };
 
 export const IA_AUSENTE_TEXTO = "IA não configurada: falta a chave do Claude (ANTHROPIC_API_KEY no .env). O campo continua editável à mão.";

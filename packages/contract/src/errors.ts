@@ -191,6 +191,12 @@ export const errorCodes = [
   "candidato_invalido",
   "geracao_indisponivel",
   "audio_invalido",
+  // 012-produtos-shop (estado_invalido e candidato_invalido já estão acima)
+  "invalid_produto",
+  "limite_variantes",
+  "produto_incompleto",
+  "produto_arquivado",
+  "ficha_existente",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

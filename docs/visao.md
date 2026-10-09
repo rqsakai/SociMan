@@ -18,7 +18,9 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 - **Cenas:** fundos e ambientes reutilizáveis, com imagem de referência e prompt.
 - **Scripts:** roteiros por cena e por avatar (falas, ações, duração de até 8 s por cena para o Veo/Flow), com status.
 - **Canais-fonte e vídeos:** canais de onde se tiram cortes (com status de direito `autorizado`, `programa-de-cortes`, `pendente` e evidência), vídeos cadastrados e **padrões/configurações de corte** por conta (duração, layout, estilo de legenda e gancho, hashtags).
-- **Produtos (TikTok Shop):** cadastro e descrição de produtos, que a IA escreve via MCP.
+- **Produtos (TikTok Shop):** cadastro e descrição de produtos, que a IA escreve via MCP; e, desde 2026-10-08, a
+  **inteligência de mercado** (cockpit do TikTok Shop: produtos mais vendidos, GMV estimado, novos em alta, alto
+  retorno com poucos afiliados, vídeos virais por nicho e recomendações da IA), coletada pelo próprio SociMan.
 
 ## Integrações
 - **MCP:** ferramentas para a IA cadastrar e buscar (criar descrição de produto, buscar vídeos, cadastrar vídeo para corte, ler o kit de marca). Os limites de escrita ainda precisam ser definidos.
@@ -98,8 +100,16 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    prompt em inglês montado na ordem do shop-diretor (ao vivo em rascunho, congelado em pronta, "Remontar"),
    ingredientes para baixar, tomadas no HD, vínculo com o vídeo próprio (`usada`), 5 tipos de IA `cena.*` e a
    `proposta_cena` do agente pelo MCP (o humano aceita).
-11. `011-scripts`: roteiros por cena e avatar.
-12. `012-produtos-shop` 📋 **spec pronta** (`specs/012-produtos-shop/`, 2026-10-07; 49 tarefas; depende da 021): catálogo de
+11. `011-roteiros-video-local` 📋 **spec pronta** (`specs/011-roteiros-video-local/`, 2026-10-08; 59 tarefas; depende da
+   012, da 025 e da 021; implementar na ordem 012 → 025 → 011, migration `0024`): roteiro de vídeo de produto com
+   avatar, em voice over, tudo local. Plano pelo Claude (frases, posições, cenas novas ou reaproveitadas da 010),
+   narração contínua no shop-tts com o dicionário de pronúncias do perfil (X3), keyframes e clipes no ComfyUI
+   (MiniMax, Wan, Wan qualidade, LTX), montagem com ffmpeg fora da trava da GPU e acabamento HD (SeedVR2 + 1080×1920
+   24 fps −14 LUFS); 4 portões (narração, keyframes, clipes, final, mais o texto) ou modo automático (opção 1, autor
+   `system:roteiro`). Entrega como conteúdo da 014 marcado como gerado por IA, sem destino. Até 8 cenas
+   (`ROTEIRO_MAX_CENAS`); intermediários não usados limpos após 90 dias (emenda 4.4.0); revogar voz/avatar só
+   proíbe gerações novas. Dependências do dono: X1, X2, X3 e `DOCKERCTL_TOKEN`.
+12. `012-produtos-shop` ✅ **implementada** (`specs/012-produtos-shop/`, 2026-10-08; migration `0022_produtos_shop`; falta com o dono o quickstart na GPU real, que depende de X1 e do `DOCKERCTL_TOKEN`): catálogo de
    produtos do perfil (`produtos`, `produto_variantes`), com fotos, recorte direto, flat lay com 2 opções e
    escolha humana, ficha técnica pelo Claude (editável, registro da 008), aprovação por dono ou membro,
    `url_loja` opcional (preço e comissão ficam para uma spec de afiliados) e a ponte com as cenas da 010.
@@ -155,3 +165,25 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    em par, corpo-base e checagem de identidade), vozes do perfil (`vozes`, gravação ou sintética, teste e voz
    padrão do avatar), pessoa real só com consentimento (menor recusado, famoso avisado), looks, poses e
    cenários gerados, e o "Revogar" LGPD só do dono (apaga arquivos e textos, também nas versões antigas).
+26. `026-mercado-shop` 📋 **insumo pronto** (`docs/insumos/026-mercado-shop.md`, 2026-10-08; brainstorm com o dono; exige a
+   emenda IX da constitution (4.5.0) antes do `/speckit-specify`; depende da 012 só pela coluna `produtos.mercado_produto_id`):
+   o cockpit do TikTok Shop coletado pelo próprio SociMan ("Kalodata caseiro"). Um serviço `coletor` no desktop do dono
+   (Chrome real, perfil dedicado logado na **conta de afiliado do dono**, risco aceito e registrado) navega como pessoa
+   (~300 páginas/dia, 08h-23h, pausas de 5 a 40 s), intercepta a API interna e devolve tudo por uma API de ingestão com
+   token (`scol_`). Lago **global e permanente** (sem perfil, nada apagado, neutro de tenant) com ficha completa, fotos
+   diárias só de inserção (2/dia para quentes e manuais), lojas, rankings, avaliações e vídeos top; interesse por perfil
+   (acompanhamentos com origem, categorias do nicho, vitrine para todos); cálculo na leitura (vendas/dia, GMV estimado,
+   crescimento, novo em alta, retorno por afiliado); telas `/app/mercado`, detalhe do produto, aba Mercado do perfil e
+   `/app/configuracoes/coleta`; "Adotar do mercado" cria o produto da 012.
+27. `027-virais` (futura; depende da 026): vídeos virais por assunto e nicho do perfil (TikTok com a mesma fila e o mesmo
+   coletor, mais o YouTube da 006), velocidade em views/hora, "o que o produto X tem de vídeo", você contra a mediana dos
+   criadores do produto; vídeo viral com produto marcado vira interesse `video`.
+28. `028-recomendacoes-mercado` (futura; depende da 026 e da 027): recomendações da IA (o que gravar, argumentos a partir das
+   avaliações e dos vídeos top) pelo registro da 008 e as tools MCP de leitura `mercado_*`, sempre como proposta (009);
+   alertas na aba Alertas da 019 (comissão mudou, preço caiu, estoque esgotou, produto novo em loja acompanhada, produto
+   promovido em queda, concorrente com poucos afiliados subindo) e a notificação `mercado_novo_em_alta`.
+
+**Multi-tenant (spec futura, sem número ainda; decisão do dono em 2026-10-08):** usuários terão suas contas e itens
+separados. A camada de mercado da 026 nasce neutra de tenant (um lago coletado uma vez, lido por todos); a camada de
+interesse, perfis e contas é a que ganhará `tenant_id`. Hoje qualquer usuário autenticado lê qualquer entidade (padrão do
+repo, com um dono só); essa spec introduz a checagem de acesso por tenant em todas as leituras.

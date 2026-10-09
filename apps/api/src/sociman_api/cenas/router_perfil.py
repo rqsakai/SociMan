@@ -32,6 +32,7 @@ def list_(
     avatar_id: Annotated[UUID | None, Query(alias="avatarId")] = None,
     cenario_id: Annotated[UUID | None, Query(alias="cenarioId")] = None,
     produto_imagem_id: Annotated[UUID | None, Query(alias="produtoImagemId")] = None,
+    produto_id: Annotated[UUID | None, Query(alias="produtoId")] = None,
     tag: Annotated[list[str] | None, Query(description="Tags (E)")] = None,
     arquivadas: Annotated[Literal["false", "true", "all"], Query()] = "false",
     cursor: Annotated[str | None, Query(max_length=200)] = None,
@@ -39,6 +40,7 @@ def list_(
 ) -> schemas.CenasList:
     return svc.listar(db, perfil_id, q=q, status=status or (), avatar_id=avatar_id,
                       cenario_id=cenario_id, produto_imagem_id=produto_imagem_id,
+                      produto_id=produto_id,
                       tags=tag or (), arquivadas=arquivadas, cursor=cursor, limit=limit)
 
 

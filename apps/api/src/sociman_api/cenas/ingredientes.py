@@ -1,7 +1,8 @@
 """Ingredientes da cena para o Flow (research R3): até 3 imagens, nesta ordem.
 
 1. o arquivo do avatar (o look ou a pose escolhidos; padrão: a imagem principal);
-2. a foto do produto (arquivo principal do asset `imagem`);
+2. a foto do produto (arquivo principal do asset `imagem`) ou, com o produto do catálogo (spec
+   012), o **recorte** da variante (sem variante: o da primeira variante ativa);
 3. a imagem do cenário (a escolhida ou a principal).
 
 Cada item leva o link de mídia `imagem` da 007 (sem validade) para baixar o original. A cena tem
@@ -17,6 +18,7 @@ from sociman_api import imaging, midia
 from sociman_api.assets.models import Asset, AssetFile
 from sociman_api.cenas import schemas
 from sociman_api.perfis.models import Image
+from sociman_api.produtos.models import Produto, ProdutoVariante
 
 
 @dataclass(frozen=True)
@@ -26,6 +28,18 @@ class Assets:
     avatar: Asset | None = None
     cenario: Asset | None = None
     produto: Asset | None = None
+    catalogo: Produto | None = None  # spec 012
+    variante: ProdutoVariante | None = None
+
+
+def variante_do_ingrediente(assets: Assets) -> ProdutoVariante | None:
+    """A variante escolhida na cena ou, sem ela, a primeira ativa do produto."""
+    if assets.catalogo is None:
+        return None
+    if assets.variante is not None:
+        return assets.variante
+    ativas = assets.catalogo.ativas()
+    return ativas[0] if ativas else None
 
 
 def arquivo(asset: Asset | None, arquivo_id: uuid.UUID | None) -> AssetFile | None:
@@ -62,4 +76,16 @@ def listar(db: Session, assets: Assets, avatar_arquivo_id: uuid.UUID | None,
             papel=papel, asset_id=asset.id, arquivo_id=f.id, nome=_nome(asset, f),
             largura=image.width, altura=image.height, download_url=f"{link}?download=1",
             thumb_url=thumb_url(image)))
+    v = variante_do_ingrediente(assets)
+    if v is not None and v.recorte_image_id is not None:
+        image = db.get(Image, v.recorte_image_id)
+        if image is not None:
+            p = assets.catalogo
+            nome = p.nome_comercial or p.name  # type: ignore[union-attr]
+            link = midia.link("imagem", image.id, ttl=None).url
+            out.insert(1 if out and out[0].papel == "avatar" else 0, schemas.Ingrediente(
+                papel="produto", produto_id=p.id,  # type: ignore[union-attr]
+                produto_variante_id=v.id, nome=f"{nome}, {v.cor_pt}" if v.cor_pt else nome,
+                largura=image.width, altura=image.height, download_url=f"{link}?download=1",
+                thumb_url=thumb_url(image)))
     return out

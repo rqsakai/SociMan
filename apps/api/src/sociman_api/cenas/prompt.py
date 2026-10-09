@@ -5,7 +5,10 @@ Ordem fixa, uma parte depois da outra separadas por espaço:
    do prompt começa com ela, byte a byte);
 2. `regras` — as regras de imagem do avatar, como estão;
 3. `acao` — com foto do produto, "<produto> exactly as in the reference image" (regra do
-   shop-diretor), só quando a ação ainda não fala em "reference image";
+   shop-diretor), só quando a ação ainda não fala em "reference image"; com o produto do
+   catálogo (spec 012), "the product exactly as in the reference image";
+3a. `produto` — só com o catálogo: a `descricao_prompt` da ficha **literal**, seguida de
+   "Color: <cor_en>." quando a cena aponta uma variante;
 4. `cenario` — o prompt do ambiente do cenário;
 5. `camera` — plano e movimento por tabela fixa, mais o detalhe livre;
 6. `estilo` — o da cena ou, vazio, o padrão do perfil;
@@ -73,6 +76,9 @@ class Entrada:
     quadro_final: str | None = None
     produto_nome: str | None = None
     produto_com_foto: bool = False
+    # Spec 012 (R13): produto do catálogo — a `descricao_prompt` literal e a cor da variante.
+    produto_prompt: str | None = None
+    produto_cor: str | None = None
     negative: str | None = None
 
 
@@ -115,6 +121,10 @@ def pronome(avatar: AvatarIn | None) -> str:
 
 def _acao(e: Entrada) -> str:
     acao = e.acao.strip()
+    if not _vazio(e.produto_prompt):  # spec 012: catálogo
+        if "reference image" not in acao.lower():
+            acao = f"{acao.rstrip('.!? ')}, with the product {REFERENCIA}"
+        return _frase(acao)
     if e.produto_com_foto and not _vazio(e.produto_nome) and "reference image" not in acao.lower():
         acao = f"{acao.rstrip('.!? ')}, with the {e.produto_nome.strip()} {REFERENCIA}"  # type: ignore[union-attr]
     return _frase(acao)
@@ -143,6 +153,11 @@ def montar(e: Entrada) -> PromptMontado:
     if e.avatar is not None and not _vazio(e.avatar.image_rules):
         partes.append(Parte("regras", _frase(e.avatar.image_rules)))  # type: ignore[arg-type]
     partes.append(Parte("acao", _acao(e)))
+    if not _vazio(e.produto_prompt):  # spec 012: a frase da ficha, literal, e a cor
+        texto = e.produto_prompt  # type: ignore[assignment]
+        if not _vazio(e.produto_cor):
+            texto = f"{texto} Color: {e.produto_cor}."
+        partes.append(Parte("produto", texto))  # type: ignore[arg-type]
     if e.cenario is not None and not _vazio(e.cenario.prompt):
         partes.append(Parte("cenario", _frase(e.cenario.prompt)))  # type: ignore[arg-type]
     camera = _camera(e)

@@ -436,6 +436,33 @@ def _aprendizado(props: list[str], user: str) -> dict | None:
     return None
 
 
+# Spec 012 (T012): a ficha do produto, igual ao `tests/fakes/anthropic_fake.py` (o
+# `shorts_canelado`, uma cor por foto enviada; "sem flat" na <instrucao> → precisa_flat = false).
+CORES_FICHA = (("black", "preto"), ("heather grey", "cinza mescla"), ("navy blue", "azul-marinho"),
+               ("off-white", "off-white"), ("olive green", "verde-oliva"), ("wine red", "vinho"))
+
+
+def _ficha_produto(body: dict, instrucao: str) -> dict:
+    conteudo = (body.get("messages") or [{}])[0].get("content") or []
+    n = sum(1 for b in conteudo if isinstance(b, dict) and b.get("type") == "image") or 1
+    return {
+        "nome_comercial": "Short canelado cintura alta", "categoria": "roupa > shorts",
+        "material_en": "ribbed knit", "material_pt": "malha canelada",
+        "cores": [{"foto": i, "en": CORES_FICHA[(i - 1) % 6][0], "pt": CORES_FICHA[(i - 1) % 6][1]}
+                  for i in range(1, n + 1)],
+        "formato_corte": "high-waisted biker-style shorts, mid-thigh length",
+        "detalhes_visiveis": ["small white 'LS' logo on the left leg hem",
+                              "wide elastic waistband"],
+        "tamanho_relativo": "all variants are identical in size and cut",
+        "descricao_prompt": "High-waisted ribbed knit biker shorts with a small 'LS' logo on the "
+                            "left leg.",
+        "cuidados": ["O tecido é malha canelada, não jeans", "O logo LS fica na perna esquerda"],
+        "descricao_venda": "Short canelado de cintura alta, confortável para o dia a dia. Tem "
+                           "logo LS discreto na perna.",
+        "precisa_flat": "sem flat" not in instrucao.lower(),
+    }
+
+
 def claude(body: dict) -> tuple[int, dict]:
     system = "\n".join(_textos(body.get("system")))
     user = "\n".join(_textos(body.get("messages")))
@@ -456,6 +483,8 @@ def claude(body: dict) -> tuple[int, dict]:
     avisos = ["Mantive as regras do campo."] if "system prompt" in instrucao.lower() else []
     if (aprendizado := _aprendizado(props, user)) is not None:  # spec 023
         dados = aprendizado
+    elif "material_en" in props:  # spec 012
+        dados = _ficha_produto(body, instrucao)
     elif "titulo" in props:  # textos_postagem
         dados = {"titulo": f"Título sugerido pela IA {n}{emoji}",
                  "descricao": f"Descrição sugerida pela IA, versão {n}.",

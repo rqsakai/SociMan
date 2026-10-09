@@ -7,7 +7,8 @@
  * - ação (obrigatória, em inglês), fala (pt-BR), texto na tela (guia de edição, fora do prompt);
  * - iluminação e estilo, áudio e negative (vazios = padrão do perfil);
  * - duração 4/6/8 s e modo do Flow (quadros inicial e final só no modo "Frames to Video");
- * - produto: nome curto e foto opcional da biblioteca (asset tipo imagem).
+ * - produto: do catálogo (spec 012: aprovado, com a variante) ou a referência leve da 010 (nome curto
+ *   e foto opcional da biblioteca, asset tipo imagem). Escolher do catálogo limpa a referência leve.
  *
  * `bloquearPrompt` (cena usada) deixa só nome, tags e notas editáveis. `iaCampo` decora os 4 campos
  * de texto com o "Melhorar com IA" (spec 008).
@@ -20,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Field, NativeSelect } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { SeletorProduto } from "./SeletorProduto";
 import { api } from "@/lib/api";
 import { activeFiles, assetKey, parseTags, roleLabel } from "@/lib/assets";
 import {
@@ -33,6 +35,7 @@ import {
   type CenaAssetRef,
   type CenaCampos,
   type CenaModo,
+  type CenaProdutoRef,
   type CenaMovimento,
   type CenaPlano,
   type Duracao,
@@ -44,6 +47,7 @@ export interface CenaFormRefs {
   avatar?: CenaAssetRef | null;
   cenario?: CenaAssetRef | null;
   produtoImagem?: CenaAssetRef | null;
+  produto?: CenaProdutoRef | null;
 }
 
 const vazio = (v: string) => (v === "" ? null : v);
@@ -346,45 +350,58 @@ export function CenaForm({
 
       <fieldset className="space-y-4" disabled={travado}>
         <legend className="text-sm font-semibold">Produto em cena</legend>
-        <Field label="Produto" hint="Nome curto (o catálogo de produtos vem depois).">
-          {({ id, describedBy }) => (
-            <Input
-              id={id}
-              maxLength={LIM.produtoNome}
-              aria-describedby={describedBy}
-              value={v.produtoNome ?? ""}
-              onChange={(e) => onChange({ produtoNome: vazio(e.target.value) })}
-            />
-          )}
-        </Field>
-        <div className="flex flex-wrap items-center gap-3" role="group" aria-label="Foto do produto">
-          {foto ? (
-            <span className="flex min-w-0 items-center gap-2 text-sm">
-              {foto.thumb && <img src={foto.thumb} alt="" className="size-10 rounded border object-cover" />}
-              <span className="truncate" data-testid="produto-foto">
-                Foto: {foto.nome}
-              </span>
-              {!travado && (
-                <Button type="button" size="sm" variant="ghost" aria-label="Tirar a foto do produto" onClick={() => onChange({ produtoImagemId: null })}>
-                  <X aria-hidden="true" />
-                </Button>
+        <SeletorProduto
+          perfilId={perfilId}
+          valor={{ produtoId: v.produtoId, produtoVarianteId: v.produtoVarianteId }}
+          atual={refs?.produto}
+          disabled={travado}
+          onChange={(e) =>
+            onChange(e.produtoId ? { ...e, produtoNome: null, produtoImagemId: null } : { produtoId: null, produtoVarianteId: null })
+          }
+        />
+        {!v.produtoId && (
+          <>
+            <Field label="Produto" hint="Referência leve: nome curto, sem a ficha. Para usar a ficha e o recorte, escolha um produto do catálogo.">
+              {({ id, describedBy }) => (
+                <Input
+                  id={id}
+                  maxLength={LIM.produtoNome}
+                  aria-describedby={describedBy}
+                  value={v.produtoNome ?? ""}
+                  onChange={(e) => onChange({ produtoNome: vazio(e.target.value) })}
+                />
               )}
-            </span>
-          ) : (
-            <span className="text-sm text-muted-foreground">Sem foto do produto.</span>
-          )}
-          {!travado && (
-            <LibraryImageDialog
-              perfilId={perfilId}
-              tipos={["imagem"]}
-              value={null}
-              onPick={(image, item) => {
-                setFoto({ id: item.assetId, nome: item.label ? `${item.assetName}: ${item.label}` : item.assetName, thumb: image.urls.thumb });
-                onChange({ produtoImagemId: item.assetId, produtoNome: v.produtoNome ?? item.assetName.slice(0, LIM.produtoNome) });
-              }}
-            />
-          )}
-        </div>
+            </Field>
+            <div className="flex flex-wrap items-center gap-3" role="group" aria-label="Foto do produto">
+              {foto ? (
+                <span className="flex min-w-0 items-center gap-2 text-sm">
+                  {foto.thumb && <img src={foto.thumb} alt="" className="size-10 rounded border object-cover" />}
+                  <span className="truncate" data-testid="produto-foto">
+                    Foto: {foto.nome}
+                  </span>
+                  {!travado && (
+                    <Button type="button" size="sm" variant="ghost" aria-label="Tirar a foto do produto" onClick={() => onChange({ produtoImagemId: null })}>
+                      <X aria-hidden="true" />
+                    </Button>
+                  )}
+                </span>
+              ) : (
+                <span className="text-sm text-muted-foreground">Sem foto do produto.</span>
+              )}
+              {!travado && (
+                <LibraryImageDialog
+                  perfilId={perfilId}
+                  tipos={["imagem"]}
+                  value={null}
+                  onPick={(image, item) => {
+                    setFoto({ id: item.assetId, nome: item.label ? `${item.assetName}: ${item.label}` : item.assetName, thumb: image.urls.thumb });
+                    onChange({ produtoImagemId: item.assetId, produtoNome: v.produtoNome ?? item.assetName.slice(0, LIM.produtoNome) });
+                  }}
+                />
+              )}
+            </div>
+          </>
+        )}
       </fieldset>
 
       <fieldset className="space-y-4" disabled={disabled}>

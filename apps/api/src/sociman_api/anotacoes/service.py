@@ -39,6 +39,7 @@ from sociman_api.errors import ApiError
 from sociman_api.perfis.models import Conta, Perfil
 from sociman_api.perfis.schemas import Autor, UserRef
 from sociman_api.postagem.models import Postagem
+from sociman_api.produtos.models import Produto
 
 ENTITY = "anotacao"
 LABEL = "Esta anotação"
@@ -51,11 +52,13 @@ _MODELOS: dict[AnotacaoAlvo, Any] = {
     AnotacaoAlvo.video_fonte: VideoFonte, AnotacaoAlvo.corte: Corte,
     AnotacaoAlvo.conteudo: Conteudo, AnotacaoAlvo.destino: Postagem,
     AnotacaoAlvo.cena: Cena,  # spec 010
+    AnotacaoAlvo.produto: Produto,  # spec 012
 }
 _NOMES = {AnotacaoAlvo.perfil: "Perfil", AnotacaoAlvo.conta: "Conta",
           AnotacaoAlvo.canal: "Canal-fonte", AnotacaoAlvo.video_fonte: "Vídeo-fonte",
           AnotacaoAlvo.corte: "Corte", AnotacaoAlvo.conteudo: "Conteúdo",
-          AnotacaoAlvo.destino: "Destino", AnotacaoAlvo.cena: "Cena"}
+          AnotacaoAlvo.destino: "Destino", AnotacaoAlvo.cena: "Cena",
+          AnotacaoAlvo.produto: "Produto"}
 
 
 @dataclass(frozen=True)
@@ -103,6 +106,9 @@ def _alvo(db: Session, tipo: AnotacaoAlvo, alvo_id: uuid.UUID) -> _Alvo | None:
             return _Alvo(obj.perfil_id, titulo, f"/app/conteudos/{obj.id}", arquivado)
         case AnotacaoAlvo.cena:  # spec 010
             return _Alvo(obj.perfil_id, titulo, f"/app/cenas/{obj.id}", arquivado)
+        case AnotacaoAlvo.produto:  # spec 012
+            return _Alvo(obj.perfil_id, obj.nome_comercial or titulo,
+                         f"/app/produtos/{obj.id}", arquivado)
         case AnotacaoAlvo.destino:
             conteudo = db.get(Conteudo, obj.conteudo_id)
             if titulo == _NOMES[tipo] and conteudo is not None:

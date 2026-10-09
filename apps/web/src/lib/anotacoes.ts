@@ -45,6 +45,8 @@ export const alvoTipoLabel: Record<AlvoTipo, string> = {
   destino: "Destino",
   // spec 010
   cena: "Cena",
+  // spec 012
+  produto: "Produto",
 };
 
 // `campos` é uma união pelo `tipo` (spec 010): texto do destino ou campos de uma cena.

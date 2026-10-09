@@ -76,3 +76,7 @@ def midia_em_uso(db: Session, *, image_id: uuid.UUID | None = None,
         if fn(db, image_id, audio_id):
             return nome
     return None
+
+
+# Spec 012: as imagens das variantes do produto (o provedor se registra ao importar).
+from sociman_api.produtos import uso as _produtos_uso  # noqa: F401

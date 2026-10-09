@@ -6,6 +6,8 @@ limites, idioma exigido e segurança) fica em `prompt.py` e não é editável; e
 como escrever.
 """
 
+from sociman_api.produtos.ficha import SYSTEM as _FICHA_PRODUTO
+
 PADROES: dict[str, tuple[int, str]] = {
     "avatar.descricao_prompt": (1, """\
 Escreva a descrição do avatar para prompts de geração de imagem e vídeo (Flow/Veo), em inglês.
@@ -140,4 +142,6 @@ próximo post: gancho, edição, ritmo, assunto, legenda, horário.
 comparáveis fazem diferente (até 160 caracteres); n: quantos posts sustentam.
 - Use o resumo estatístico como contexto, sem repetir o que ele já diz; nada é comprovado: \
 são hipóteses a conferir."""),
+    # Spec 012 (R5): o texto do pipeline (`produtos.py`), adaptado; não é editável.
+    "produto.ficha": (1, _FICHA_PRODUTO),
 }

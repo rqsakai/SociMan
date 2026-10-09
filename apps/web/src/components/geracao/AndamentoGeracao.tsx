@@ -1,9 +1,9 @@
 import { Loader2 } from "lucide-react";
-import { statusGeracaoLabel, type Geracao, type GeracaoResumo } from "../../lib/geracoes";
+import { statusGeracaoLabel, type GeracaoResumo } from "../../lib/geracoes";
 
 // Andamento (spec 021, T027): porcentagem com barra e a mensagem da etapa. O polling de 2 s fica no
-// `useGeracao`; aqui só a apresentação.
-export function AndamentoGeracao({ geracao }: { geracao: Geracao | GeracaoResumo }) {
+// `useGeracao` (no produto da 012, no `useProduto`); aqui só a apresentação.
+export function AndamentoGeracao({ geracao }: { geracao: Pick<GeracaoResumo, "status" | "progress" | "etapaMensagem"> }) {
   const pct = Math.max(0, Math.min(100, Math.round(geracao.progress)));
   const mensagem = geracao.etapaMensagem ?? (geracao.status === "na_fila" ? "Esperando a vez na fila" : statusGeracaoLabel[geracao.status]);
   return (

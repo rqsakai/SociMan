@@ -69,6 +69,8 @@ def _direto(client, h, op: ferramentas.Operacao, args: dict):
     for p in op.path_params:
         caminho = caminho.replace("{" + p + "}", args[p])
     query = {k: args[k] for k in op.query_params if k in args}
+    for nome, valor in op.tool.padroes:  # spec 012: o padrão do mapa, como a ponte
+        query.setdefault(nome, valor)
     if op.limite_param:
         query.setdefault(op.limite_param,
                          op.definicao["inputSchema"]["properties"][op.limite_param]["default"])
@@ -80,8 +82,8 @@ def test_cada_leitura_igual_a_do_membro(client, cenario, db):
     token, ids, hm = cenario
     cat = ferramentas.catalogo(app)
     # spec 010: +8 leituras de cena; spec 013: +2 da agência; spec 022: +1 (público);
-    # spec 023: +7 do aprendizado
-    assert len(LEITURA) == 62 + 8 + 2 + 1 + 7
+    # spec 023: +7 do aprendizado; spec 012: +3 dos produtos
+    assert len(LEITURA) == 62 + 8 + 2 + 1 + 7 + 3
     chamadas = {nome: _args(cat[nome], ids) for nome in LEITURA}
 
     async def todas(c):

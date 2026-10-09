@@ -446,6 +446,8 @@ def gerar(db: Session, actor: Actor, body: schemas.GerarIn,
         raise invalid("Use as rotas do guia de comunicação (montar e testar)")
     if tipo.entidade == "aprendizado":  # spec 023: pedidos montados pelo aprendizado
         raise invalid("Use as rotas do aprendizado")
+    if tipo.entidade == "produto":  # spec 012: a ficha sai das ações do produto
+        raise invalid("Use as ações do produto")
     perfil = get_perfil_or_404(db, body.perfil_id)
     if perfil.archived:
         raise _arquivado("Este perfil")

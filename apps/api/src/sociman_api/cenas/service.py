@@ -48,6 +48,7 @@ from sociman_api.perfis.service_perfis import (
     target_state,
     versions_out,
 )
+from sociman_api.produtos.models import Produto, ProdutoStatus, ProdutoVariante
 
 ENTITY = "cena"
 LABEL = "Esta cena"
@@ -56,11 +57,12 @@ CENA_USADA = "Esta cena já foi usada num vídeo; duplique para variar o prompt"
 DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
 _UUIDS = ("avatar_id", "avatar_arquivo_id", "cenario_id", "cenario_arquivo_id",
-          "produto_imagem_id")
+          "produto_imagem_id", "produto_id", "produto_variante_id")
 _ENUMS = {"plano": CenaPlano, "movimento": CenaMovimento, "modo": CenaModo}
 _CAMEL = {"avatar_id": "avatarId", "avatar_arquivo_id": "avatarArquivoId",
           "cenario_id": "cenarioId", "cenario_arquivo_id": "cenarioArquivoId",
           "produto_imagem_id": "produtoImagemId", "produto_nome": "produtoNome",
+          "produto_id": "produtoId", "produto_variante_id": "produtoVarianteId",
           "quadro_inicial": "quadroInicial", "quadro_final": "quadroFinal",
           "duracao_s": "duracaoS", "texto_tela": "textoTela"}
 _ACENTOS = ("áàâãäéèêëíìîïóòôõöúùûüç", "aaaaaeeeeiiiiooooouuuuc")
@@ -108,8 +110,13 @@ def assets_da(db: Session, cena: Any) -> ingredientes.Assets:
     """`cena` pode ser a linha ou qualquer objeto com os três ids."""
     def _get(asset_id: uuid.UUID | None) -> Asset | None:
         return db.get(Asset, asset_id) if asset_id is not None else None
-    return ingredientes.Assets(avatar=_get(cena.avatar_id), cenario=_get(cena.cenario_id),
-                               produto=_get(cena.produto_imagem_id))
+    produto_id = getattr(cena, "produto_id", None)
+    variante_id = getattr(cena, "produto_variante_id", None)
+    return ingredientes.Assets(
+        avatar=_get(cena.avatar_id), cenario=_get(cena.cenario_id),
+        produto=_get(cena.produto_imagem_id),
+        catalogo=db.get(Produto, produto_id) if produto_id is not None else None,
+        variante=db.get(ProdutoVariante, variante_id) if variante_id is not None else None)
 
 
 _TIPOS = {"avatar_id": (AssetTipo.avatar, "um avatar"),
@@ -144,6 +151,34 @@ def validar_refs(db: Session, perfil_id: uuid.UUID, valores: dict[str, Any],
             raise erro(campo, "o arquivo está arquivado")
     if valores.get("produto_imagem_id") is not None and not (valores.get("produto_nome") or ""):
         raise erro("produto_nome", "informe o nome do produto da foto")
+    _validar_catalogo(db, perfil_id, valores, novos, erro)
+
+
+def _validar_catalogo(db: Session, perfil_id: uuid.UUID, valores: dict[str, Any],
+                      novos: set[str], erro) -> None:
+    """Spec 012 (R13): o produto do catálogo é do perfil e, **ao ligar**, está aprovado e não
+    arquivado; a variante é ativa, desse produto e tem recorte. Ou a referência leve, ou o
+    catálogo (`ck_cenas_produto_modo`)."""
+    produto_id, variante_id = valores.get("produto_id"), valores.get("produto_variante_id")
+    if produto_id is None:
+        if variante_id is not None:
+            raise erro("produto_id", "escolha o produto da variante")
+        return
+    if valores.get("produto_nome") or valores.get("produto_imagem_id") is not None:
+        raise erro("produto_id", "use o produto do catálogo ou o nome e a foto, não os dois")
+    produto = db.get(Produto, produto_id)
+    if produto is None or produto.perfil_id != perfil_id:
+        raise erro("produto_id", "escolha um produto deste perfil")
+    if "produto_id" in novos and (produto.status != ProdutoStatus.aprovado or produto.archived):
+        raise erro("produto_id", "só produtos aprovados")
+    if variante_id is None:
+        return
+    variante = produto.variante(variante_id)
+    if variante is None:
+        raise erro("produto_variante_id", "escolha uma variante deste produto")
+    if novos & {"produto_id", "produto_variante_id"} and (
+            variante.archived or variante.recorte_image_id is None):
+        raise erro("produto_variante_id", "a variante está arquivada ou sem recorte")
 
 
 # ---- prompt, avisos e saída ----
@@ -162,6 +197,8 @@ def entrada(cena: Any, assets: ingredientes.Assets, estilo_padrao: str,
         estilo=cena.estilo, audio=cena.audio, modo=cena.modo,
         quadro_inicial=cena.quadro_inicial, quadro_final=cena.quadro_final,
         produto_nome=cena.produto_nome, produto_com_foto=assets.produto is not None,
+        produto_prompt=assets.catalogo.descricao_prompt if assets.catalogo else None,
+        produto_cor=assets.variante.cor_en if assets.variante else None,
         negative=cena.negative)
 
 
@@ -214,7 +251,9 @@ def avisos(db: Session, cena: Cena, assets: ingredientes.Assets) -> list[schemas
         texto_tela=cena.texto_tela, produto_nome=cena.produto_nome,
         produto_com_foto=assets.produto is not None,
         proibidas=proibidas_do_perfil(db, cena.perfil_id),
-        mudancas=_mudancas(db, cena, assets), arquivados=arquivados))
+        mudancas=_mudancas(db, cena, assets), arquivados=arquivados,
+        catalogo_fora=assets.catalogo is not None and (
+            assets.catalogo.status != ProdutoStatus.aprovado or assets.catalogo.archived)))
     return [schemas.Aviso(codigo=a.codigo, mensagem=a.mensagem, campo=a.campo,
                           detalhe=a.detalhe) for a in lista]
 
@@ -230,6 +269,21 @@ def prompt_out(db: Session, cena: Cena, assets: ingredientes.Assets) -> schemas.
         texto=m.texto, negative=m.negative,
         partes=[schemas.ParteOut(parte=p.parte, texto=p.texto) for p in m.partes],
         congelado=False, avatar_version=m.avatar_version, cenario_version=m.cenario_version)
+
+
+def produto_ref(db: Session, assets: ingredientes.Assets) -> schemas.ProdutoRef | None:
+    p = assets.catalogo
+    if p is None:
+        return None
+    v = assets.variante
+    thumb = None
+    if v is not None and v.recorte_image_id is not None:
+        image = db.get(Image, v.recorte_image_id)
+        thumb = ingredientes.thumb_url(image) if image is not None else None
+    return schemas.ProdutoRef(
+        id=p.id, nome_comercial=p.nome_comercial, nome=p.name, status=p.status.value,
+        estado=p.estado, variante=schemas.VarianteRef(id=v.id, cor_pt=v.cor_pt, cor_en=v.cor_en,
+                                                      thumb_url=thumb) if v else None)
 
 
 def _ref(asset: Asset | None) -> schemas.AssetRef | None:
@@ -301,7 +355,7 @@ def resumos_out(db: Session, cenas: Sequence[Cena]) -> list[schemas.CenaResumo]:
         out.append(schemas.CenaResumo(
             id=c.id, perfil_id=c.perfil_id, nome=c.nome, status=c.status,
             duracao_s=c.duracao_s, modo=c.modo, avatar=_ref(assets.avatar),
-            cenario=_ref(assets.cenario), produto_nome=c.produto_nome,
+            cenario=_ref(assets.cenario), produto_nome=c.produto_nome, produto_id=c.produto_id,
             thumb_url=_thumb(db, c, assets, escolhidas.get(c.tomada_escolhida_id)),
             tags=list(c.tags), arquivada=c.archived, tomadas=tomadas.get(c.id, 0),
             usos=usos.get(c.id, 0), updated_at=c.updated_at))
@@ -330,7 +384,8 @@ def cena_out(db: Session, cena: Cena, actor: Actor | None = None) -> schemas.Cen
         **{f: getattr(cena, f) for f in CAMPOS_EDITAVEIS}, id=cena.id, perfil_id=cena.perfil_id,
         status=cena.status, version=cena.version, arquivada=cena.archived,
         avatar=_ref(assets.avatar), cenario=_ref(assets.cenario),
-        produto_imagem=_ref(assets.produto), prompt=prompt_out(db, cena, assets),
+        produto_imagem=_ref(assets.produto), produto=produto_ref(db, assets),
+        prompt=prompt_out(db, cena, assets),
         ingredientes=ingredientes.listar(db, assets, cena.avatar_arquivo_id,
                                          cena.cenario_arquivo_id),
         avisos=avisos(db, cena, assets),
@@ -379,7 +434,7 @@ def _termo(q: str) -> str:
 def listar(db: Session, perfil_id: uuid.UUID, *, q: str | None = None,
            status: Sequence[CenaStatus] = (), avatar_id: uuid.UUID | None = None,
            cenario_id: uuid.UUID | None = None, produto_imagem_id: uuid.UUID | None = None,
-           tags: Sequence[str] = (), arquivadas: str = "false", cursor: str | None = None,
+           produto_id: uuid.UUID | None = None, tags: Sequence[str] = (), arquivadas: str = "false", cursor: str | None = None,
            limit: int = DEFAULT_LIMIT) -> schemas.CenasList:
     get_perfil_or_404(db, perfil_id)
     stmt = select(Cena).where(Cena.perfil_id == perfil_id)
@@ -395,6 +450,8 @@ def listar(db: Session, perfil_id: uuid.UUID, *, q: str | None = None,
         stmt = stmt.where(Cena.cenario_id == cenario_id)
     if produto_imagem_id is not None:
         stmt = stmt.where(Cena.produto_imagem_id == produto_imagem_id)
+    if produto_id is not None:  # spec 012
+        stmt = stmt.where(Cena.produto_id == produto_id)
     wanted = [t.strip().lower() for t in tags if t.strip()]
     if wanted:
         stmt = stmt.where(Cena.tags.contains(wanted))

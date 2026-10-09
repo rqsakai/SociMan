@@ -21,6 +21,12 @@ Spec 023 (R15): a resposta padrão cobre `taxonomia` (os nomes mais frequentes d
 com os 2 primeiros posts enviados). "id inválido" na `<instrucao>` devolve um id fora do conjunto;
 `anthropic_fake.imagens` conta os blocos `image` de cada chamada.
 
+Spec 012 (T012): a resposta padrão cobre a ficha do produto (`ficha(...)`, o `shorts_canelado`
+determinístico, uma cor por foto enviada). Na `<instrucao>`: "sem flat" devolve
+`precisa_flat = false`; "recusa" devolve `stop_reason = refusal`; "ficha inválida" devolve um
+`material_en` de 6 palavras (fora do limite, nas duas tentativas). `anthropic_fake.fichas` conta
+as chamadas de ficha (SC-002).
+
 Spec 017: a resposta padrão cobre os formatos `guia` (`guia(...)`) e `variacoes`
 (`variacoes(...)`, 3 textos de postagem **sem** hashtags fixas: quem inclui é o servidor);
 `anthropic_fake.systems` devolve o `system` enviado em cada chamada (texto dos blocos) e
@@ -100,6 +106,48 @@ def campos_cena(explicacao: str = "Ajustei a cena.", avisos: list[str] | None = 
     return mensagem(dados | {"explicacao": explicacao, "avisos": avisos or []})
 
 
+CORES_FICHA = (("black", "preto"), ("heather grey", "cinza mescla"), ("navy blue", "azul-marinho"),
+               ("off-white", "off-white"), ("olive green", "verde-oliva"), ("wine red", "vinho"))
+
+
+def ficha(n_fotos: int = 1, precisa_flat: bool = True, material_en: str = "ribbed knit",
+          **campos: Any) -> dict[str, Any]:
+    """Spec 012: a ficha do `shorts_canelado` (como no teste do pipeline)."""
+    dados = {
+        "nome_comercial": "Short canelado cintura alta",
+        "categoria": "roupa > shorts",
+        "material_en": material_en,
+        "material_pt": "malha canelada",
+        "cores": [{"foto": i, "en": CORES_FICHA[(i - 1) % 6][0],
+                   "pt": CORES_FICHA[(i - 1) % 6][1]} for i in range(1, n_fotos + 1)],
+        "formato_corte": "high-waisted biker-style shorts, mid-thigh length",
+        "detalhes_visiveis": ["small white 'LS' logo on the left leg hem",
+                              "wide elastic waistband"],
+        "tamanho_relativo": "all variants are identical in size and cut",
+        "descricao_prompt": "High-waisted ribbed knit biker shorts with a small 'LS' logo on "
+                            "the left leg.",
+        "cuidados": ["O tecido é malha canelada, não jeans",
+                     "O logo LS fica na perna esquerda"],
+        "descricao_venda": "Short canelado de cintura alta, confortável para o dia a dia. "
+                           "Tem logo LS discreto na perna.",
+        "precisa_flat": precisa_flat,
+        "explicacao": "Ficha a partir das fotos.", "avisos": [],
+    } | campos
+    return mensagem(dados)
+
+
+def _ficha(body: dict[str, Any]) -> dict[str, Any]:
+    texto = _texto_user(body)
+    pedido = texto.split("<instrucao>")[-1].split("</instrucao>")[0].lower()
+    n = sum(b.get("type") == "image" for b in body["messages"][0]["content"]
+            if isinstance(b, dict))
+    if "recusa" in pedido:
+        return fixture("recusa")
+    if "ficha inválida" in pedido:
+        return ficha(n or 1, material_en="soft stretchy ribbed cotton knit fabric")
+    return ficha(n or 1, precisa_flat="sem flat" not in pedido)
+
+
 def _texto_user(body: dict[str, Any]) -> str:
     conteudo = body["messages"][0]["content"]
     if isinstance(conteudo, str):
@@ -167,6 +215,8 @@ def _padrao(body: dict[str, Any]) -> dict[str, Any]:
              .get("properties", {}))
     if (resposta := _aprendizado(props, body)) is not None:  # spec 023
         return resposta
+    if "material_en" in props:  # spec 012
+        return _ficha(body)
     if "proposta" in props:
         return texto("Texto proposto pela IA.")
     if "variacoes" in props:
@@ -214,6 +264,13 @@ class AnthropicFake:
             out.append(0 if isinstance(conteudo, str)
                        else sum(x.get("type") == "image" for x in conteudo))
         return out
+
+    @property
+    def fichas(self) -> int:
+        """Spec 012 (SC-002): quantas chamadas pediram a ficha do produto."""
+        return sum("material_en" in (b.get("output_config", {}).get("format", {})
+                                     .get("schema", {}).get("properties", {}))
+                   for b in self.bodies)
 
     @property
     def system_blocos(self) -> list[list[dict[str, Any]]]:

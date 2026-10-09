@@ -62,6 +62,7 @@ class ImageKind(enum.StrEnum):
     fundo = "fundo"  # imagem de fundo do gancho e do card final (spec 004, FR-005b)
     avatar = "avatar"  # referência e pose de avatar (spec 007)
     imagem = "imagem"  # imagem genérica da biblioteca (spec 007)
+    produto = "produto"  # foto, recorte e flat de produto do Shop (spec 012)
 
 
 class _Versioned:

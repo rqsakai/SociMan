@@ -127,8 +127,9 @@ class Aplicador:
         """A foto de referência antes de subir ao ComfyUI (padrão: como está no MinIO)."""
         return data
 
-    def mensagem_claude(self, db: Session, geracao: Geracao) -> str:
-        """A mensagem do usuário dos passos de texto (a entrada vai em tags de dado)."""
+    def mensagem_claude(self, db: Session, geracao: Geracao) -> str | list[dict[str, Any]]:
+        """A mensagem do usuário dos passos de texto (a entrada vai em tags de dado): texto ou
+        blocos de conteúdo (a ficha do produto manda as fotos, spec 012)."""
         raise NotImplementedError
 
     def pedido_tts(self, db: Session, geracao: Geracao) -> dict[str, Any]:

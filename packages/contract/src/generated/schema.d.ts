@@ -4330,6 +4330,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/perfis/{perfil_id}/produtos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar */
+        get: operations["produtos_listar"];
+        put?: never;
+        /** Criar */
+        post: operations["produtos_criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/perfis/{perfil_id}/restore": {
         parameters: {
             query?: never;
@@ -4373,6 +4391,262 @@ export interface paths {
         };
         /** Perfil Versions */
         get: operations["perfis_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ver */
+        get: operations["produtos_ver"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Editar */
+        patch: operations["produtos_editar"];
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/aprovar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Aprovar */
+        post: operations["produtos_aprovar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/arquivar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Arquivar */
+        post: operations["produtos_arquivar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/ficha": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Salvar Ficha */
+        put: operations["produtos_salvar_ficha"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/ficha/pedir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pedir Ficha */
+        post: operations["produtos_pedir_ficha"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/restaurar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restaurar */
+        post: operations["produtos_restaurar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverter */
+        post: operations["produtos_reverter"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/variantes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Variante Criar */
+        post: operations["produtos_variante_criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/variantes/ordem": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Variantes Ordenar */
+        put: operations["produtos_variantes_ordenar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/variantes/{variante_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Variante Editar */
+        patch: operations["produtos_variante_editar"];
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/variantes/{variante_id}/arquivar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Variante Arquivar */
+        post: operations["produtos_variante_arquivar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/variantes/{variante_id}/refazer-flat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refazer Flat */
+        post: operations["produtos_refazer_flat"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/variantes/{variante_id}/refazer-recorte": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refazer Recorte */
+        post: operations["produtos_refazer_recorte"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/variantes/{variante_id}/restaurar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Variante Restaurar */
+        post: operations["produtos_variante_restaurar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/produtos/{produto_id}/versoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versoes */
+        get: operations["produtos_versoes"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5131,7 +5405,7 @@ export interface components {
          * AnotacaoAlvo
          * @enum {string}
          */
-        AnotacaoAlvo: "perfil" | "conta" | "canal" | "video_fonte" | "corte" | "conteudo" | "destino" | "cena";
+        AnotacaoAlvo: "perfil" | "conta" | "canal" | "video_fonte" | "corte" | "conteudo" | "destino" | "cena" | "produto";
         /** AnotacaoOut */
         AnotacaoOut: {
             anotacao: components["schemas"]["Anotacao"];
@@ -6081,6 +6355,16 @@ export interface components {
             /** Totalbytes */
             totalBytes: number | null;
         };
+        /** ArquivarIn */
+        ArquivarIn: {
+            /**
+             * Cancelargeracoes
+             * @default false
+             */
+            cancelarGeracoes: boolean;
+            /** Version */
+            version: number;
+        };
         /** ArquivoPrevia */
         ArquivoPrevia: {
             /** Handle */
@@ -6471,6 +6755,30 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** Body_produtos_criar */
+        Body_produtos_criar: {
+            /**
+             * Fotos
+             * @description 1 a 6 fotos (PNG, JPG ou WebP, ≥ 512×512, até 20 MB)
+             */
+            fotos?: string[] | null;
+            /** Name */
+            name: string;
+            /** Obs */
+            obs?: string | null;
+            /** Urlloja */
+            urlLoja?: string | null;
+        };
+        /** Body_produtos_variante_criar */
+        Body_produtos_variante_criar: {
+            /**
+             * Foto
+             * @description PNG, JPG ou WebP, ≥ 512×512, até 20 MB
+             */
+            foto: string;
+            /** Version */
+            version: number;
+        };
         /** Body_studio_previa */
         Body_studio_previa: {
             /**
@@ -6620,10 +6928,14 @@ export interface components {
             /** Nome */
             nome?: string | null;
             plano?: components["schemas"]["CenaPlano"] | null;
+            /** Produtoid */
+            produtoId?: string | null;
             /** Produtoimagemid */
             produtoImagemId?: string | null;
             /** Produtonome */
             produtoNome?: string | null;
+            /** Produtovarianteid */
+            produtoVarianteId?: string | null;
             /** Quadrofinal */
             quadroFinal?: string | null;
             /** Quadroinicial */
@@ -6896,11 +7208,16 @@ export interface components {
              */
             perfilId: string;
             plano: components["schemas"]["CenaPlano"] | null;
+            produto?: components["schemas"]["ProdutoRef"] | null;
+            /** Produtoid */
+            produtoId: string | null;
             produtoImagem: components["schemas"]["AssetRef"] | null;
             /** Produtoimagemid */
             produtoImagemId: string | null;
             /** Produtonome */
             produtoNome: string | null;
+            /** Produtovarianteid */
+            produtoVarianteId: string | null;
             prompt: components["schemas"]["PromptOut"];
             /** Quadrofinal */
             quadroFinal: string | null;
@@ -6988,10 +7305,14 @@ export interface components {
              */
             notas: string;
             plano?: components["schemas"]["CenaPlano"] | null;
+            /** Produtoid */
+            produtoId?: string | null;
             /** Produtoimagemid */
             produtoImagemId?: string | null;
             /** Produtonome */
             produtoNome?: string | null;
+            /** Produtovarianteid */
+            produtoVarianteId?: string | null;
             /** Propostaid */
             propostaId?: string | null;
             /** Quadrofinal */
@@ -7072,10 +7393,14 @@ export interface components {
             /** Notas */
             notas?: string | null;
             plano?: components["schemas"]["CenaPlano"] | null;
+            /** Produtoid */
+            produtoId?: string | null;
             /** Produtoimagemid */
             produtoImagemId?: string | null;
             /** Produtonome */
             produtoNome?: string | null;
+            /** Produtovarianteid */
+            produtoVarianteId?: string | null;
             /** Propostaid */
             propostaId?: string | null;
             /** Quadrofinal */
@@ -7115,6 +7440,8 @@ export interface components {
              * Format: uuid
              */
             perfilId: string;
+            /** Produtoid */
+            produtoId?: string | null;
             /** Produtonome */
             produtoNome: string | null;
             status: components["schemas"]["CenaStatus"];
@@ -7776,6 +8103,18 @@ export interface components {
             nome: string;
             /** Valor */
             valor: string;
+        };
+        /** CorIn */
+        CorIn: {
+            /** Coren */
+            corEn: string;
+            /** Corpt */
+            corPt: string;
+            /**
+             * Varianteid
+             * Format: uuid
+             */
+            varianteId: string;
         };
         /** Correlacao */
         Correlacao: {
@@ -8592,6 +8931,13 @@ export interface components {
             /** Motivo */
             motivo: string;
         };
+        /** ErroPasso */
+        ErroPasso: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
         /** ErrorBody */
         ErrorBody: {
             /** Code */
@@ -8759,6 +9105,59 @@ export interface components {
              * @constant
              */
             fonte: "studio";
+        };
+        /** Ficha */
+        Ficha: {
+            /** Categoria */
+            categoria: string | null;
+            /** Cuidados */
+            cuidados: string[];
+            /** Descricaoprompt */
+            descricaoPrompt: string | null;
+            /** Descricaovenda */
+            descricaoVenda: string | null;
+            /** Detalhesvisiveis */
+            detalhesVisiveis: string[];
+            /** Formatocorte */
+            formatoCorte: string | null;
+            /** Materialen */
+            materialEn: string | null;
+            /** Materialpt */
+            materialPt: string | null;
+            /** Nomecomercial */
+            nomeComercial: string | null;
+            /** Precisaflat */
+            precisaFlat: boolean | null;
+            /** Tamanhorelativo */
+            tamanhoRelativo: string | null;
+        };
+        /**
+         * FichaIn
+         * @description A ficha inteira (R9). Os limites finos ficam em `ficha.problemas_campos`.
+         */
+        FichaIn: {
+            /** Categoria */
+            categoria: string;
+            /** Cuidados */
+            cuidados: string[];
+            /** Descricaoprompt */
+            descricaoPrompt: string;
+            /** Descricaovenda */
+            descricaoVenda: string;
+            /** Detalhesvisiveis */
+            detalhesVisiveis: string[];
+            /** Formatocorte */
+            formatoCorte: string;
+            /** Materialen */
+            materialEn: string;
+            /** Materialpt */
+            materialPt: string;
+            /** Nomecomercial */
+            nomeComercial: string;
+            /** Precisaflat */
+            precisaFlat: boolean;
+            /** Tamanhorelativo */
+            tamanhoRelativo: string;
         };
         /** FilePatch */
         FilePatch: {
@@ -9279,7 +9678,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha";
             valorAtual?: components["schemas"]["Valor"];
         };
         /** Guia */
@@ -9459,7 +9858,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha";
         };
         /** IaChamada */
         IaChamada: {
@@ -9612,6 +10011,24 @@ export interface components {
             /** Width */
             width: number;
         };
+        /** ImagemRef */
+        ImagemRef: {
+            /** Altura */
+            altura: number;
+            /** Downloadurl */
+            downloadUrl: string;
+            /**
+             * Imageid
+             * Format: uuid
+             */
+            imageId: string;
+            /** Largura */
+            largura: number;
+            /** Thumburl */
+            thumbUrl: string;
+            /** Url */
+            url: string;
+        };
         /** Importacao */
         Importacao: {
             /**
@@ -9713,16 +10130,10 @@ export interface components {
         Ingrediente: {
             /** Altura */
             altura: number;
-            /**
-             * Arquivoid
-             * Format: uuid
-             */
-            arquivoId: string;
-            /**
-             * Assetid
-             * Format: uuid
-             */
-            assetId: string;
+            /** Arquivoid */
+            arquivoId?: string | null;
+            /** Assetid */
+            assetId?: string | null;
             /** Downloadurl */
             downloadUrl: string;
             /** Largura */
@@ -9734,6 +10145,10 @@ export interface components {
              * @enum {string}
              */
             papel: "avatar" | "produto" | "cenario";
+            /** Produtoid */
+            produtoId?: string | null;
+            /** Produtovarianteid */
+            produtoVarianteId?: string | null;
             /** Thumburl */
             thumbUrl: string;
         };
@@ -10628,6 +11043,13 @@ export interface components {
          * @enum {string}
          */
         OrdemConteudos: "recentes" | "agenda";
+        /** OrdemIn */
+        OrdemIn: {
+            /** Ids */
+            ids: string[];
+            /** Version */
+            version: number;
+        };
         /** PadraoIn */
         PadraoIn: {
             /** Version */
@@ -10712,6 +11134,36 @@ export interface components {
             /** Texto */
             texto: string;
         };
+        /**
+         * PassoProduto
+         * @description Uma geração `produto.*` (a 021 mostra o resto pelo `GET /api/geracoes/{id}`).
+         */
+        PassoProduto: {
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            erro: components["schemas"]["ErroPasso"] | null;
+            /** Etapamensagem */
+            etapaMensagem: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nopcoes */
+            nOpcoes: number;
+            /** Passo */
+            passo: string;
+            /** Progress */
+            progress: number;
+            status: components["schemas"]["GeracaoStatus"];
+            /** Varianteid */
+            varianteId: string | null;
+            /** Version */
+            version: number;
+        };
         /** Pedido */
         Pedido: {
             /**
@@ -10729,6 +11181,16 @@ export interface components {
             nota?: string | null;
             /** Version */
             version: number;
+        };
+        /** Pendencia */
+        Pendencia: {
+            /**
+             * Motivo
+             * @enum {string}
+             */
+            motivo: "ficha_incompleta" | "sem_variante" | "sem_recorte" | "sem_flat" | "sem_cor" | "geracao_em_andamento";
+            /** Varianteid */
+            varianteId: string | null;
         };
         /** Perda */
         Perda: {
@@ -10957,6 +11419,136 @@ export interface components {
             publico?: components["schemas"]["SecaoPublicoPrevia"][];
             /** Secoes */
             secoes: components["schemas"]["SecaoPrevia"][];
+        };
+        /** Produto */
+        Produto: {
+            /** Archivedat */
+            archivedAt: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "rascunho" | "gerando" | "revisao" | "aprovado" | "arquivado";
+            ficha: components["schemas"]["Ficha"] | null;
+            fichaPor: components["schemas"]["ProdutoFichaPor"] | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Obs */
+            obs: string;
+            /** Passos */
+            passos: components["schemas"]["PassoProduto"][];
+            /** Pendencias */
+            pendencias: components["schemas"]["Pendencia"][];
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            status: components["schemas"]["ProdutoStatus"];
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Urlloja */
+            urlLoja: string | null;
+            /** Usos */
+            usos: components["schemas"]["UsoProduto"][];
+            /** Variantes */
+            variantes: components["schemas"]["Variante"][];
+            /** Version */
+            version: number;
+        };
+        /**
+         * ProdutoFichaPor
+         * @enum {string}
+         */
+        ProdutoFichaPor: "ia" | "ia_editada" | "humano";
+        /** ProdutoPatch */
+        ProdutoPatch: {
+            /** Name */
+            name?: string | null;
+            /** Obs */
+            obs?: string | null;
+            /** Urlloja */
+            urlLoja?: string | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * ProdutoRef
+         * @description Spec 012: o produto do catálogo ligado à cena.
+         */
+        ProdutoRef: {
+            /** Estado */
+            estado: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nome */
+            nome: string;
+            /** Nomecomercial */
+            nomeComercial: string | null;
+            /** Status */
+            status: string;
+            variante: components["schemas"]["VarianteRef"] | null;
+        };
+        /** ProdutoResumo */
+        ProdutoResumo: {
+            /** Categoria */
+            categoria: string | null;
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "rascunho" | "gerando" | "revisao" | "aprovado" | "arquivado";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Nomecomercial */
+            nomeComercial: string | null;
+            status: components["schemas"]["ProdutoStatus"];
+            /** Thumburl */
+            thumbUrl: string | null;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Variantesativas */
+            variantesAtivas: number;
+            /** Version */
+            version: number;
+        };
+        /**
+         * ProdutoStatus
+         * @enum {string}
+         */
+        ProdutoStatus: "rascunho" | "gerando" | "revisao" | "aprovado";
+        /** ProdutosLista */
+        ProdutosLista: {
+            /** Itens */
+            itens: components["schemas"]["ProdutoResumo"][];
+            /** Proximocursor */
+            proximoCursor: string | null;
         };
         /** PromptOut */
         PromptOut: {
@@ -11470,6 +12062,14 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** SalvarFichaIn */
+        SalvarFichaIn: {
+            /** Cores */
+            cores?: components["schemas"]["CorIn"][];
+            ficha: components["schemas"]["FichaIn"];
+            /** Version */
+            version: number;
+        };
         /** ScoreDetail */
         ScoreDetail: {
             /**
@@ -11931,17 +12531,17 @@ export interface components {
              * Entidade
              * @enum {string}
              */
-            entidade: "asset" | "perfil" | "kit" | "postagem" | "guia" | "cena" | "aprendizado";
+            entidade: "asset" | "perfil" | "kit" | "postagem" | "guia" | "cena" | "aprendizado" | "produto";
             /**
              * Formato
              * @enum {string}
              */
-            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes" | "campos_cena" | "taxonomia" | "classificacao" | "analise";
+            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes" | "campos_cena" | "taxonomia" | "classificacao" | "analise" | "ficha_produto";
             /**
              * Id
              * @enum {string}
              */
-            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise";
+            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha";
             /**
              * Idioma
              * @enum {string}
@@ -12260,6 +12860,23 @@ export interface components {
             /** Titulo */
             titulo: string;
         };
+        /** UsoProduto */
+        UsoProduto: {
+            /**
+             * Bloqueia
+             * @default false
+             */
+            bloqueia: boolean;
+            /** Href */
+            href: string;
+            /**
+             * Origem
+             * @constant
+             */
+            origem: "cena";
+            /** Rotulo */
+            rotulo: string;
+        };
         /** UsosIn */
         UsosIn: {
             /** Cenaids */
@@ -12321,6 +12938,52 @@ export interface components {
             hashtags: string[];
             /** Titulo */
             titulo: string;
+        };
+        /** Variante */
+        Variante: {
+            /** Archivedat */
+            archivedAt: string | null;
+            /** Avisos */
+            avisos: ("flat_desatualizado" | "sem_cor")[];
+            /** Coren */
+            corEn: string | null;
+            /** Corpt */
+            corPt: string | null;
+            flat: components["schemas"]["ImagemRef"] | null;
+            /** Flatgeracaoid */
+            flatGeracaoId: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            original: components["schemas"]["ImagemRef"];
+            /** Position */
+            position: number;
+            recorte: components["schemas"]["ImagemRef"] | null;
+        };
+        /** VarianteEditarIn */
+        VarianteEditarIn: {
+            /** Coren */
+            corEn?: string | null;
+            /** Corpt */
+            corPt?: string | null;
+            /** Version */
+            version: number;
+        };
+        /** VarianteRef */
+        VarianteRef: {
+            /** Coren */
+            corEn: string | null;
+            /** Corpt */
+            corPt: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Thumburl */
+            thumbUrl: string | null;
         };
         /** VerifyIn */
         VerifyIn: {
@@ -28659,6 +29322,7 @@ export interface operations {
                 avatarId?: string | null;
                 cenarioId?: string | null;
                 produtoImagemId?: string | null;
+                produtoId?: string | null;
                 /** @description Tags (E) */
                 tag?: string[] | null;
                 arquivadas?: "false" | "true" | "all";
@@ -31124,6 +31788,161 @@ export interface operations {
             };
         };
     };
+    produtos_listar: {
+        parameters: {
+            query?: {
+                /** @description Estados (OU) */
+                status?: components["schemas"]["ProdutoStatus"][] | null;
+                arquivados?: "false" | "true" | "so";
+                /** @description Nome interno ou comercial */
+                q?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutosLista"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_produtos_criar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     perfis_restore: {
         parameters: {
             query?: never;
@@ -31272,6 +32091,1139 @@ export interface operations {
             header?: never;
             path: {
                 perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_ver: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_editar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProdutoPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_aprovar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_arquivar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ArquivarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_salvar_ficha: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalvarFichaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_pedir_ficha: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracaoResumo"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_restaurar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_reverter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_variante_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_produtos_variante_criar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_variantes_ordenar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrdemIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_variante_editar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+                variante_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VarianteEditarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_variante_arquivar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+                variante_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_refazer_flat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+                variante_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracaoResumo"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_refazer_recorte: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+                variante_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GeracaoResumo"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_variante_restaurar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+                variante_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__perfis__schemas__VersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Produto"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    produtos_versoes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
             };
             cookie?: never;
         };

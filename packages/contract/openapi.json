@@ -1682,7 +1682,8 @@
           "corte",
           "conteudo",
           "destino",
-          "cena"
+          "cena",
+          "produto"
         ],
         "title": "AnotacaoAlvo",
         "type": "string"
@@ -4651,6 +4652,25 @@
         "title": "Armazenamento",
         "type": "object"
       },
+      "ArquivarIn": {
+        "properties": {
+          "cancelarGeracoes": {
+            "default": false,
+            "title": "Cancelargeracoes",
+            "type": "boolean"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "ArquivarIn",
+        "type": "object"
+      },
       "ArquivoPrevia": {
         "properties": {
           "handle": {
@@ -5814,6 +5834,81 @@
         "title": "Body_perfis_upload_logo",
         "type": "object"
       },
+      "Body_produtos_criar": {
+        "properties": {
+          "fotos": {
+            "anyOf": [
+              {
+                "items": {
+                  "contentMediaType": "application/octet-stream",
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1 a 6 fotos (PNG, JPG ou WebP, ≥ 512×512, até 20 MB)",
+            "title": "Fotos"
+          },
+          "name": {
+            "maxLength": 200,
+            "title": "Name",
+            "type": "string"
+          },
+          "obs": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obs"
+          },
+          "urlLoja": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Urlloja"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "Body_produtos_criar",
+        "type": "object"
+      },
+      "Body_produtos_variante_criar": {
+        "properties": {
+          "foto": {
+            "contentMediaType": "application/octet-stream",
+            "description": "PNG, JPG ou WebP, ≥ 512×512, até 20 MB",
+            "title": "Foto",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "foto"
+        ],
+        "title": "Body_produtos_variante_criar",
+        "type": "object"
+      },
       "Body_studio_previa": {
         "properties": {
           "arquivos": {
@@ -6399,6 +6494,18 @@
               }
             ]
           },
+          "produtoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoid"
+          },
           "produtoImagemId": {
             "anyOf": [
               {
@@ -6422,6 +6529,18 @@
               }
             ],
             "title": "Produtonome"
+          },
+          "produtoVarianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtovarianteid"
           },
           "quadroFinal": {
             "anyOf": [
@@ -7304,6 +7423,28 @@
               }
             ]
           },
+          "produto": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProdutoRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "produtoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoid"
+          },
           "produtoImagem": {
             "anyOf": [
               {
@@ -7336,6 +7477,18 @@
               }
             ],
             "title": "Produtonome"
+          },
+          "produtoVarianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtovarianteid"
           },
           "prompt": {
             "$ref": "#/components/schemas/PromptOut"
@@ -7447,6 +7600,8 @@
           "quadroFinal",
           "produtoNome",
           "produtoImagemId",
+          "produtoId",
+          "produtoVarianteId",
           "negative",
           "tags",
           "notas",
@@ -7750,6 +7905,18 @@
               }
             ]
           },
+          "produtoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoid"
+          },
           "produtoImagemId": {
             "anyOf": [
               {
@@ -7773,6 +7940,18 @@
               }
             ],
             "title": "Produtonome"
+          },
+          "produtoVarianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtovarianteid"
           },
           "propostaId": {
             "anyOf": [
@@ -8121,6 +8300,18 @@
               }
             ]
           },
+          "produtoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoid"
+          },
           "produtoImagemId": {
             "anyOf": [
               {
@@ -8144,6 +8335,18 @@
               }
             ],
             "title": "Produtonome"
+          },
+          "produtoVarianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtovarianteid"
           },
           "propostaId": {
             "anyOf": [
@@ -8277,6 +8480,18 @@
             "format": "uuid",
             "title": "Perfilid",
             "type": "string"
+          },
+          "produtoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoid"
           },
           "produtoNome": {
             "anyOf": [
@@ -10158,6 +10373,32 @@
           "valor"
         ],
         "title": "Cor",
+        "type": "object"
+      },
+      "CorIn": {
+        "properties": {
+          "corEn": {
+            "maxLength": 40,
+            "title": "Coren",
+            "type": "string"
+          },
+          "corPt": {
+            "maxLength": 40,
+            "title": "Corpt",
+            "type": "string"
+          },
+          "varianteId": {
+            "format": "uuid",
+            "title": "Varianteid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "varianteId",
+          "corEn",
+          "corPt"
+        ],
+        "title": "CorIn",
         "type": "object"
       },
       "Correlacao": {
@@ -12750,6 +12991,24 @@
         "title": "ErroColeta",
         "type": "object"
       },
+      "ErroPasso": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErroPasso",
+        "type": "object"
+      },
       "ErrorBody": {
         "properties": {
           "code": {
@@ -13236,6 +13495,220 @@
           "fonte"
         ],
         "title": "FaixaFonte",
+        "type": "object"
+      },
+      "Ficha": {
+        "properties": {
+          "categoria": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoria"
+          },
+          "cuidados": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cuidados",
+            "type": "array"
+          },
+          "descricaoPrompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricaoprompt"
+          },
+          "descricaoVenda": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricaovenda"
+          },
+          "detalhesVisiveis": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Detalhesvisiveis",
+            "type": "array"
+          },
+          "formatoCorte": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Formatocorte"
+          },
+          "materialEn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Materialen"
+          },
+          "materialPt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Materialpt"
+          },
+          "nomeComercial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nomecomercial"
+          },
+          "precisaFlat": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precisaflat"
+          },
+          "tamanhoRelativo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tamanhorelativo"
+          }
+        },
+        "required": [
+          "nomeComercial",
+          "categoria",
+          "materialEn",
+          "materialPt",
+          "formatoCorte",
+          "detalhesVisiveis",
+          "tamanhoRelativo",
+          "descricaoPrompt",
+          "cuidados",
+          "descricaoVenda",
+          "precisaFlat"
+        ],
+        "title": "Ficha",
+        "type": "object"
+      },
+      "FichaIn": {
+        "description": "A ficha inteira (R9). Os limites finos ficam em `ficha.problemas_campos`.",
+        "properties": {
+          "categoria": {
+            "maxLength": 120,
+            "title": "Categoria",
+            "type": "string"
+          },
+          "cuidados": {
+            "items": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Cuidados",
+            "type": "array"
+          },
+          "descricaoPrompt": {
+            "maxLength": 500,
+            "title": "Descricaoprompt",
+            "type": "string"
+          },
+          "descricaoVenda": {
+            "maxLength": 600,
+            "title": "Descricaovenda",
+            "type": "string"
+          },
+          "detalhesVisiveis": {
+            "items": {
+              "maxLength": 200,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Detalhesvisiveis",
+            "type": "array"
+          },
+          "formatoCorte": {
+            "maxLength": 300,
+            "title": "Formatocorte",
+            "type": "string"
+          },
+          "materialEn": {
+            "maxLength": 60,
+            "title": "Materialen",
+            "type": "string"
+          },
+          "materialPt": {
+            "maxLength": 60,
+            "title": "Materialpt",
+            "type": "string"
+          },
+          "nomeComercial": {
+            "maxLength": 120,
+            "title": "Nomecomercial",
+            "type": "string"
+          },
+          "precisaFlat": {
+            "title": "Precisaflat",
+            "type": "boolean"
+          },
+          "tamanhoRelativo": {
+            "maxLength": 300,
+            "title": "Tamanhorelativo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nomeComercial",
+          "categoria",
+          "materialEn",
+          "materialPt",
+          "formatoCorte",
+          "detalhesVisiveis",
+          "tamanhoRelativo",
+          "descricaoPrompt",
+          "cuidados",
+          "descricaoVenda",
+          "precisaFlat"
+        ],
+        "title": "FichaIn",
         "type": "object"
       },
       "FilePatch": {
@@ -14875,7 +15348,8 @@
               "cena.ajustar",
               "aprendizado.taxonomia",
               "aprendizado.classificacao",
-              "aprendizado.analise"
+              "aprendizado.analise",
+              "produto.ficha"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -15348,7 +15822,8 @@
               "cena.ajustar",
               "aprendizado.taxonomia",
               "aprendizado.classificacao",
-              "aprendizado.analise"
+              "aprendizado.analise",
+              "produto.ficha"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -15885,6 +16360,45 @@
         "title": "ImagemCandidato",
         "type": "object"
       },
+      "ImagemRef": {
+        "properties": {
+          "altura": {
+            "title": "Altura",
+            "type": "integer"
+          },
+          "downloadUrl": {
+            "title": "Downloadurl",
+            "type": "string"
+          },
+          "imageId": {
+            "format": "uuid",
+            "title": "Imageid",
+            "type": "string"
+          },
+          "largura": {
+            "title": "Largura",
+            "type": "integer"
+          },
+          "thumbUrl": {
+            "title": "Thumburl",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "imageId",
+          "largura",
+          "altura",
+          "thumbUrl",
+          "url",
+          "downloadUrl"
+        ],
+        "title": "ImagemRef",
+        "type": "object"
+      },
       "Importacao": {
         "properties": {
           "anoOrigem": {
@@ -16196,14 +16710,28 @@
             "type": "integer"
           },
           "arquivoId": {
-            "format": "uuid",
-            "title": "Arquivoid",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arquivoid"
           },
           "assetId": {
-            "format": "uuid",
-            "title": "Assetid",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assetid"
           },
           "downloadUrl": {
             "title": "Downloadurl",
@@ -16226,6 +16754,30 @@
             "title": "Papel",
             "type": "string"
           },
+          "produtoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtoid"
+          },
+          "produtoVarianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtovarianteid"
+          },
           "thumbUrl": {
             "title": "Thumburl",
             "type": "string"
@@ -16233,8 +16785,6 @@
         },
         "required": [
           "papel",
-          "assetId",
-          "arquivoId",
           "nome",
           "largura",
           "altura",
@@ -18677,6 +19227,31 @@
         "title": "OrdemConteudos",
         "type": "string"
       },
+      "OrdemIn": {
+        "properties": {
+          "ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Ids",
+            "type": "array"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "ids"
+        ],
+        "title": "OrdemIn",
+        "type": "object"
+      },
       "PadraoIn": {
         "properties": {
           "version": {
@@ -18929,6 +19504,87 @@
         "title": "ParteOut",
         "type": "object"
       },
+      "PassoProduto": {
+        "description": "Uma geração `produto.*` (a 021 mostra o resto pelo `GET /api/geracoes/{id}`).",
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErroPasso"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "etapaMensagem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etapamensagem"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "nOpcoes": {
+            "title": "Nopcoes",
+            "type": "integer"
+          },
+          "passo": {
+            "title": "Passo",
+            "type": "string"
+          },
+          "progress": {
+            "title": "Progress",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/GeracaoStatus"
+          },
+          "varianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Varianteid"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "passo",
+          "varianteId",
+          "status",
+          "progress",
+          "etapaMensagem",
+          "erro",
+          "nOpcoes",
+          "version",
+          "createdAt"
+        ],
+        "title": "PassoProduto",
+        "type": "object"
+      },
       "Pedido": {
         "properties": {
           "em": {
@@ -18983,6 +19639,40 @@
           "version"
         ],
         "title": "PedirAprovacaoIn",
+        "type": "object"
+      },
+      "Pendencia": {
+        "properties": {
+          "motivo": {
+            "enum": [
+              "ficha_incompleta",
+              "sem_variante",
+              "sem_recorte",
+              "sem_flat",
+              "sem_cor",
+              "geracao_em_andamento"
+            ],
+            "title": "Motivo",
+            "type": "string"
+          },
+          "varianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Varianteid"
+          }
+        },
+        "required": [
+          "varianteId",
+          "motivo"
+        ],
+        "title": "Pendencia",
         "type": "object"
       },
       "Perda": {
@@ -19621,6 +20311,409 @@
           "podeConfirmar"
         ],
         "title": "PreviaStudio",
+        "type": "object"
+      },
+      "Produto": {
+        "properties": {
+          "archivedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archivedat"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estado": {
+            "enum": [
+              "rascunho",
+              "gerando",
+              "revisao",
+              "aprovado",
+              "arquivado"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "ficha": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Ficha"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fichaPor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProdutoFichaPor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "obs": {
+            "title": "Obs",
+            "type": "string"
+          },
+          "passos": {
+            "items": {
+              "$ref": "#/components/schemas/PassoProduto"
+            },
+            "title": "Passos",
+            "type": "array"
+          },
+          "pendencias": {
+            "items": {
+              "$ref": "#/components/schemas/Pendencia"
+            },
+            "title": "Pendencias",
+            "type": "array"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProdutoStatus"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "urlLoja": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Urlloja"
+          },
+          "usos": {
+            "items": {
+              "$ref": "#/components/schemas/UsoProduto"
+            },
+            "title": "Usos",
+            "type": "array"
+          },
+          "variantes": {
+            "items": {
+              "$ref": "#/components/schemas/Variante"
+            },
+            "title": "Variantes",
+            "type": "array"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "name",
+          "obs",
+          "urlLoja",
+          "status",
+          "estado",
+          "fichaPor",
+          "ficha",
+          "variantes",
+          "passos",
+          "pendencias",
+          "usos",
+          "version",
+          "archivedAt",
+          "createdAt",
+          "createdBy",
+          "updatedAt",
+          "updatedBy"
+        ],
+        "title": "Produto",
+        "type": "object"
+      },
+      "ProdutoFichaPor": {
+        "enum": [
+          "ia",
+          "ia_editada",
+          "humano"
+        ],
+        "title": "ProdutoFichaPor",
+        "type": "string"
+      },
+      "ProdutoPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "obs": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obs"
+          },
+          "urlLoja": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "pattern": "^https://\\S+$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Urlloja"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "ProdutoPatch",
+        "type": "object"
+      },
+      "ProdutoRef": {
+        "description": "Spec 012: o produto do catálogo ligado à cena.",
+        "properties": {
+          "estado": {
+            "title": "Estado",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "nomeComercial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nomecomercial"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "variante": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VarianteRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "nomeComercial",
+          "nome",
+          "status",
+          "estado",
+          "variante"
+        ],
+        "title": "ProdutoRef",
+        "type": "object"
+      },
+      "ProdutoResumo": {
+        "properties": {
+          "categoria": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoria"
+          },
+          "estado": {
+            "enum": [
+              "rascunho",
+              "gerando",
+              "revisao",
+              "aprovado",
+              "arquivado"
+            ],
+            "title": "Estado",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "nomeComercial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nomecomercial"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProdutoStatus"
+          },
+          "thumbUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumburl"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "variantesAtivas": {
+            "title": "Variantesativas",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "nomeComercial",
+          "categoria",
+          "status",
+          "estado",
+          "variantesAtivas",
+          "thumbUrl",
+          "updatedAt",
+          "version"
+        ],
+        "title": "ProdutoResumo",
+        "type": "object"
+      },
+      "ProdutoStatus": {
+        "enum": [
+          "rascunho",
+          "gerando",
+          "revisao",
+          "aprovado"
+        ],
+        "title": "ProdutoStatus",
+        "type": "string"
+      },
+      "ProdutosLista": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ProdutoResumo"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "proximoCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proximocursor"
+          }
+        },
+        "required": [
+          "itens",
+          "proximoCursor"
+        ],
+        "title": "ProdutosLista",
         "type": "object"
       },
       "PromptOut": {
@@ -21265,6 +22358,32 @@
         "title": "RevertIn",
         "type": "object"
       },
+      "SalvarFichaIn": {
+        "properties": {
+          "cores": {
+            "items": {
+              "$ref": "#/components/schemas/CorIn"
+            },
+            "maxItems": 12,
+            "title": "Cores",
+            "type": "array"
+          },
+          "ficha": {
+            "$ref": "#/components/schemas/FichaIn"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "ficha"
+        ],
+        "title": "SalvarFichaIn",
+        "type": "object"
+      },
       "ScoreDetail": {
         "properties": {
           "componente": {
@@ -22579,7 +23698,8 @@
               "postagem",
               "guia",
               "cena",
-              "aprendizado"
+              "aprendizado",
+              "produto"
             ],
             "title": "Entidade",
             "type": "string"
@@ -22595,7 +23715,8 @@
               "campos_cena",
               "taxonomia",
               "classificacao",
-              "analise"
+              "analise",
+              "ficha_produto"
             ],
             "title": "Formato",
             "type": "string"
@@ -22624,7 +23745,8 @@
               "cena.ajustar",
               "aprendizado.taxonomia",
               "aprendizado.classificacao",
-              "aprendizado.analise"
+              "aprendizado.analise",
+              "produto.ficha"
             ],
             "title": "Id",
             "type": "string"
@@ -23676,6 +24798,35 @@
         "title": "UsoOut",
         "type": "object"
       },
+      "UsoProduto": {
+        "properties": {
+          "bloqueia": {
+            "default": false,
+            "title": "Bloqueia",
+            "type": "boolean"
+          },
+          "href": {
+            "title": "Href",
+            "type": "string"
+          },
+          "origem": {
+            "const": "cena",
+            "title": "Origem",
+            "type": "string"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "origem",
+          "rotulo",
+          "href"
+        ],
+        "title": "UsoProduto",
+        "type": "object"
+      },
       "UsosIn": {
         "additionalProperties": false,
         "properties": {
@@ -23922,6 +25073,201 @@
           "hashtags"
         ],
         "title": "Variacao",
+        "type": "object"
+      },
+      "Variante": {
+        "properties": {
+          "archivedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archivedat"
+          },
+          "avisos": {
+            "items": {
+              "enum": [
+                "flat_desatualizado",
+                "sem_cor"
+              ],
+              "type": "string"
+            },
+            "title": "Avisos",
+            "type": "array"
+          },
+          "corEn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coren"
+          },
+          "corPt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corpt"
+          },
+          "flat": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImagemRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "flatGeracaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Flatgeracaoid"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "original": {
+            "$ref": "#/components/schemas/ImagemRef"
+          },
+          "position": {
+            "title": "Position",
+            "type": "integer"
+          },
+          "recorte": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImagemRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "corEn",
+          "corPt",
+          "original",
+          "recorte",
+          "flat",
+          "flatGeracaoId",
+          "avisos",
+          "archivedAt"
+        ],
+        "title": "Variante",
+        "type": "object"
+      },
+      "VarianteEditarIn": {
+        "properties": {
+          "corEn": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coren"
+          },
+          "corPt": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corpt"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "VarianteEditarIn",
+        "type": "object"
+      },
+      "VarianteRef": {
+        "properties": {
+          "corEn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coren"
+          },
+          "corPt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corpt"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "thumbUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumburl"
+          }
+        },
+        "required": [
+          "id",
+          "corPt",
+          "corEn",
+          "thumbUrl"
+        ],
+        "title": "VarianteRef",
         "type": "object"
       },
       "VerifyIn": {
@@ -47247,6 +48593,23 @@
             }
           },
           {
+            "in": "query",
+            "name": "produtoId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Produtoid"
+            }
+          },
+          {
             "description": "Tags (E)",
             "in": "query",
             "name": "tag",
@@ -50534,6 +51897,268 @@
         "summary": "Padroes Versions"
       }
     },
+    "/api/perfis/{perfil_id}/produtos": {
+      "get": {
+        "operationId": "produtos_listar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Estados (OU)",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/ProdutoStatus"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Estados (OU)",
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "arquivados",
+            "required": false,
+            "schema": {
+              "default": "false",
+              "enum": [
+                "false",
+                "true",
+                "so"
+              ],
+              "title": "Arquivados",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Nome interno ou comercial",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Nome interno ou comercial",
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 48,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutosLista"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Listar"
+      },
+      "post": {
+        "operationId": "produtos_criar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_produtos_criar"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Criar"
+      }
+    },
     "/api/perfis/{perfil_id}/restore": {
       "post": {
         "operationId": "perfis_restore",
@@ -50782,6 +52407,1474 @@
           }
         },
         "summary": "Perfil Versions"
+      }
+    },
+    "/api/produtos/{produto_id}": {
+      "get": {
+        "operationId": "produtos_ver",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Ver"
+      },
+      "patch": {
+        "operationId": "produtos_editar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProdutoPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Editar"
+      }
+    },
+    "/api/produtos/{produto_id}/aprovar": {
+      "post": {
+        "operationId": "produtos_aprovar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Aprovar"
+      }
+    },
+    "/api/produtos/{produto_id}/arquivar": {
+      "post": {
+        "operationId": "produtos_arquivar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ArquivarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Arquivar"
+      }
+    },
+    "/api/produtos/{produto_id}/ficha": {
+      "put": {
+        "operationId": "produtos_salvar_ficha",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SalvarFichaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Salvar Ficha"
+      }
+    },
+    "/api/produtos/{produto_id}/ficha/pedir": {
+      "post": {
+        "operationId": "produtos_pedir_ficha",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracaoResumo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Pedir Ficha"
+      }
+    },
+    "/api/produtos/{produto_id}/restaurar": {
+      "post": {
+        "operationId": "produtos_restaurar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Restaurar"
+      }
+    },
+    "/api/produtos/{produto_id}/revert": {
+      "post": {
+        "operationId": "produtos_reverter",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevertIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Reverter"
+      }
+    },
+    "/api/produtos/{produto_id}/variantes": {
+      "post": {
+        "operationId": "produtos_variante_criar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_produtos_variante_criar"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Variante Criar"
+      }
+    },
+    "/api/produtos/{produto_id}/variantes/ordem": {
+      "put": {
+        "operationId": "produtos_variantes_ordenar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrdemIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Variantes Ordenar"
+      }
+    },
+    "/api/produtos/{produto_id}/variantes/{variante_id}": {
+      "patch": {
+        "operationId": "produtos_variante_editar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "variante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Variante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VarianteEditarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Variante Editar"
+      }
+    },
+    "/api/produtos/{produto_id}/variantes/{variante_id}/arquivar": {
+      "post": {
+        "operationId": "produtos_variante_arquivar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "variante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Variante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Variante Arquivar"
+      }
+    },
+    "/api/produtos/{produto_id}/variantes/{variante_id}/refazer-flat": {
+      "post": {
+        "operationId": "produtos_refazer_flat",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "variante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Variante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracaoResumo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Refazer Flat"
+      }
+    },
+    "/api/produtos/{produto_id}/variantes/{variante_id}/refazer-recorte": {
+      "post": {
+        "operationId": "produtos_refazer_recorte",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "variante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Variante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeracaoResumo"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Refazer Recorte"
+      }
+    },
+    "/api/produtos/{produto_id}/variantes/{variante_id}/restaurar": {
+      "post": {
+        "operationId": "produtos_variante_restaurar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "variante_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Variante Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__perfis__schemas__VersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Produto"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Variante Restaurar"
+      }
+    },
+    "/api/produtos/{produto_id}/versoes": {
+      "get": {
+        "operationId": "produtos_versoes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "produto_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Produto Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Versoes"
       }
     },
     "/api/publicacao/config": {

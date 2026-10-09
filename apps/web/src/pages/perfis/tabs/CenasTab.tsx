@@ -3,8 +3,8 @@
  * filtros por status, avatar, cenário, produto e tag, busca por nome, ação, fala e produto, "Nova
  * cena", "Duplicar" e "Arquivadas". Também os "Padrões das cenas" (iluminação e estilo e negative que
  * valem quando a cena deixa o campo vazio). Os filtros ficam na URL (spec 024: `q`, `status`, `tag`,
- * `arquivadas=1`, `avatarId`, `cenarioId` e `produtoImagemId`; o "onde é usado" dos assets abre a aba
- * já filtrada) e valem ao mudar.
+ * `arquivadas=1`, `avatarId`, `cenarioId`, `produtoImagemId` e `produtoId`, este da spec 012; o "onde é
+ * usado" dos assets e dos produtos abre a aba já filtrada) e valem ao mudar.
  */
 import type { Perfil } from "@sociman/contract";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -40,6 +40,7 @@ import {
   type CenaStatus,
 } from "@/lib/cenas";
 import { useFiltroUrl } from "@/lib/filtros";
+import { produtosKey } from "@/lib/produtos";
 import { formatDateTime } from "@/lib/tz";
 
 type AssetFiltro = "avatarId" | "cenarioId" | "produtoImagemId";
@@ -108,7 +109,7 @@ function Miniatura({ cena }: { cena: CenaResumo }) {
   );
 }
 
-function colunas(perfilId: string) {
+function colunas(perfilId: string, nomeProduto: (id: string) => string) {
   const col = dataTableColumns<CenaResumo>();
   return col.columns([
     col.accessor("nome", {
@@ -151,7 +152,20 @@ function colunas(perfilId: string) {
         </span>
       ),
     }),
-    col.accessor((c) => c.produtoNome ?? "", { id: "produto", header: "Produto", meta: { className: "hidden md:table-cell" }, cell: (c) => c.getValue() || "—" }),
+    col.accessor((c) => (c.produtoId ? nomeProduto(c.produtoId) : (c.produtoNome ?? "")), {
+      id: "produto",
+      header: "Produto",
+      meta: { className: "hidden md:table-cell" },
+      cell: (c) => {
+        const id = c.row.original.produtoId;
+        if (!id) return c.getValue() || "—";
+        return (
+          <Link to={`/app/produtos/${id}`} className="underline-offset-2 hover:underline">
+            {c.getValue()}
+          </Link>
+        );
+      },
+    }),
     col.accessor((c) => `${c.tomadas} / ${c.usos}`, {
       id: "tomadas",
       header: "Tomadas / usos",
@@ -179,18 +193,29 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
     cenarioId: params.get("cenarioId") ?? "",
     produtoImagemId: params.get("produtoImagemId") ?? "",
   };
+  const produtoId = params.get("produtoId") ?? "";
   const filtros: CenaFiltros = {
     q: q || undefined,
     status: status || undefined,
     avatarId: ids.avatarId || undefined,
     cenarioId: ids.cenarioId || undefined,
     produtoImagemId: ids.produtoImagemId || undefined,
+    produtoId: produtoId || undefined,
     tag: tag || undefined,
     arquivadas: arquivadas || undefined,
   };
   const cenas = useCenas(perfil.id, filtros);
   const itens = useMemo(() => cenas.data?.pages.flatMap((p) => p.items), [cenas.data]);
-  const columns = useMemo(() => colunas(perfil.id), [perfil.id]);
+  // Produtos do catálogo (spec 012): nomes da coluna e opções do filtro, inclusive fora de aprovado.
+  const produtos = useQuery({
+    queryKey: [...produtosKey(perfil.id), "cena-opcoes"],
+    queryFn: () => api.produtos.listar(perfil.id, { arquivados: "true", limit: 100 }),
+  });
+  const produtosLista = useMemo(() => produtos.data?.itens ?? [], [produtos.data]);
+  const columns = useMemo(() => {
+    const nomes = new Map(produtosLista.map((p) => [p.id, p.nomeComercial ?? p.name]));
+    return colunas(perfil.id, (id) => nomes.get(id) ?? "Produto do catálogo");
+  }, [perfil.id, produtosLista]);
 
   const opcoes = (tipo: "avatar" | "cenario" | "imagem") => ({
     queryKey: ["assets", perfil.id, "cena-opcoes", tipo],
@@ -233,6 +258,17 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
       : []),
     ...(ids.produtoImagemId
       ? [{ chave: "produtoImagemId", rotulo: "Foto do produto", valor: nomeAsset("produtoImagemId"), limpar: () => set({ produtoImagemId: null }), mais: true }]
+      : []),
+    ...(produtoId
+      ? [
+          {
+            chave: "produtoId",
+            rotulo: "Produto do catálogo",
+            valor: produtosLista.find((p) => p.id === produtoId)?.nomeComercial ?? produtosLista.find((p) => p.id === produtoId)?.name ?? "Produto escolhido",
+            limpar: () => set({ produtoId: null }),
+            mais: true,
+          },
+        ]
       : []),
     ...(tag ? [{ chave: "tag", rotulo: "Tag", valor: `#${tag}`, limpar: () => set({ tag: null }), mais: true }] : []),
   ];
@@ -294,11 +330,24 @@ export function CenasTab({ perfil }: { perfil: Perfil }) {
                 <>
                   {selectAsset("cenarioId")}
                   {selectAsset("produtoImagemId")}
+                  <Field label="Produto do catálogo">
+                    {({ id }) => (
+                      <NativeSelect id={id} value={produtoId} onChange={(e) => set({ produtoId: e.target.value })}>
+                        <option value="">Todos</option>
+                        {produtoId && !produtosLista.some((p) => p.id === produtoId) && <option value={produtoId}>Produto escolhido</option>}
+                        {produtosLista.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.nomeComercial ?? p.name}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    )}
+                  </Field>
                   <Field label="Tag">{({ id }) => <TagFiltro id={id} valor={tag} onChange={(v) => set({ tag: v || null })} />}</Field>
                 </>
               }
               ativos={ativos}
-              onLimpar={() => set({ q: null, status: null, tag: null, arquivadas: null, avatarId: null, cenarioId: null, produtoImagemId: null })}
+              onLimpar={() => set({ q: null, status: null, tag: null, arquivadas: null, avatarId: null, cenarioId: null, produtoImagemId: null, produtoId: null })}
             />
           }
           pagination={{ hasMore: cenas.hasNextPage, onLoadMore: () => void cenas.fetchNextPage(), loadingMore: cenas.isFetchingNextPage }}

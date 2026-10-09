@@ -21,6 +21,7 @@ import { CenaForm } from "@/components/cenas/CenaForm";
 import { AjustarCenaIa, iaCenaDecorador, type IaCtx } from "@/components/cenas/IaCena";
 import { AnotacoesCard } from "@/components/anotacoes/AnotacoesDoItem";
 import { Ingredientes } from "@/components/cenas/Ingredientes";
+import { LigarCatalogo } from "@/components/cenas/LigarCatalogo";
 import { PromptPainel } from "@/components/cenas/PromptPainel";
 import { Tomadas } from "@/components/cenas/Tomadas";
 import { ConfirmButton } from "@/components/ConfirmButton";
@@ -344,7 +345,17 @@ function CenaEditor({
             </Badge>
             {cena.arquivada && <Badge className="bg-dark text-dark-foreground">Arquivada</Badge>}
             <span>{cena.duracaoS} s</span>
-            {cena.produtoNome && <span>· {cena.produtoNome}</span>}
+            {cena.produto ? (
+              <span data-testid="cena-produto">
+                ·{" "}
+                <Link to={`/app/produtos/${cena.produto.id}`} className="underline-offset-2 hover:underline">
+                  {cena.produto.nomeComercial ?? cena.produto.nome}
+                </Link>
+                {cena.produto.variante?.corPt && ` (${cena.produto.variante.corPt})`}
+              </span>
+            ) : (
+              cena.produtoNome && <span>· {cena.produtoNome}</span>
+            )}
             <span>· alterada em {formatDateTime(cena.updatedAt)}</span>
           </CardDescription>
         </CardHeader>
@@ -418,6 +429,22 @@ function CenaEditor({
                 )
               }
             />
+            {cena.produtoNome && !cena.produtoId && !usada && !cena.arquivada && (
+              <LigarCatalogo
+                perfilId={cena.perfilId}
+                produtoNome={cena.produtoNome}
+                pronta={cena.status === "pronta"}
+                disabled={busy !== null || sujo}
+                title={sujo ? "Salve as alterações antes" : undefined}
+                onLigar={(e) =>
+                  run(
+                    "salvar",
+                    () => api.cenas.update(cena.id, { version: cena.version, ...e, produtoNome: null, produtoImagemId: null }),
+                    "Cena ligada ao catálogo.",
+                  )
+                }
+              />
+            )}
             <Button type="button" variant="ghost" asChild>
               <Link to={`/app/cenas/${cena.id}/historico`}>
                 <History aria-hidden="true" />
@@ -485,7 +512,7 @@ function CenaEditor({
                   perfilId={cena.perfilId}
                   valores={valores}
                   onChange={set}
-                  refs={{ avatar: cena.avatar, cenario: cena.cenario, produtoImagem: cena.produtoImagem }}
+                  refs={{ avatar: cena.avatar, cenario: cena.cenario, produtoImagem: cena.produtoImagem, produto: cena.produto }}
                   padroes={padroes.data}
                   bloquearPrompt={usada}
                   disabled={cena.arquivada || busy === "salvar"}

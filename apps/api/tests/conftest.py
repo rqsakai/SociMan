@@ -99,6 +99,8 @@ _TABLES += ("aprendizado_fonte_temas", "aprendizado_conferencias", "aprendizado_
 # Spec 021: gerações, opções e áudios (o CASCADE cobre o ciclo `escolhido_id` e a FK de
 # `ia_chamadas.geracao_id`).
 _TABLES += ("geracao_candidatos", "geracoes", "audios")
+# Spec 012: produtos e variantes (o CASCADE cobre as FKs de `cenas` e `images`).
+_TABLES += ("produto_variantes", "produtos")
 
 
 @pytest.fixture(autouse=True)

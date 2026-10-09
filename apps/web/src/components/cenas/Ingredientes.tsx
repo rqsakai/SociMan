@@ -18,12 +18,12 @@ export function Ingredientes({ itens }: { itens: Ingrediente[] }) {
         {itens.length === 0 ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <ImageOff className="size-4" aria-hidden="true" />
-            Nenhuma imagem: escolha um avatar, uma foto de produto ou um cenário com imagem.
+            Nenhuma imagem: escolha um avatar, um produto (do catálogo ou uma foto) ou um cenário com imagem.
           </p>
         ) : (
           <ul aria-label="Ingredientes" className="grid grid-cols-3 gap-3">
             {itens.map((i) => (
-              <li key={`${i.papel}-${i.arquivoId}`} className="min-w-0 space-y-1">
+              <li key={`${i.papel}-${i.arquivoId ?? i.produtoVarianteId ?? i.produtoId ?? ""}`} className="min-w-0 space-y-1">
                 <div className="aspect-square overflow-hidden rounded-md border bg-muted">
                   {i.thumbUrl ? <img src={i.thumbUrl} alt="" loading="lazy" className="size-full object-cover" /> : null}
                 </div>

@@ -66,15 +66,19 @@ class IaClient:
         return f"IaClient(model={self.model!r})"
 
     def _chamar(self, schema: type[BaseModel], system: list[dict[str, Any]],
-                user: str | list[dict[str, Any]]) -> Any:
-        """`user` é o texto ou, na spec 023, os blocos (`text` e `image` base64 JPEG)."""
-        return self._client.beta.messages.parse(
+                user: str | list[dict[str, Any]], tipo: TipoCampo | None = None) -> Any:
+        """`user` é o texto ou, na spec 023, os blocos (`text` e `image` base64 JPEG). O tipo
+        pode pedir mais tokens, mais esforço e mais tempo (a ficha do produto, spec 012)."""
+        client = self._client
+        if tipo is not None and tipo.timeout_s is not None:
+            client = client.with_options(timeout=tipo.timeout_s)
+        return client.beta.messages.parse(
             model=self.model,
-            max_tokens=MAX_TOKENS,
+            max_tokens=(tipo.max_tokens if tipo and tipo.max_tokens else MAX_TOKENS),
             system=system,
             messages=[{"role": "user", "content": user}],
             output_format=schema,
-            output_config={"effort": "low"},
+            output_config={"effort": (tipo.esforco if tipo and tipo.esforco else "low")},
             betas=[FALLBACK_BETA],
             fallbacks="default",
         )
@@ -95,7 +99,7 @@ class IaClient:
             for tentativa in (1, 2):
                 t0 = time.monotonic()
                 try:
-                    resposta = self._chamar(schema, system, user(erro_anterior))
+                    resposta = self._chamar(schema, system, user(erro_anterior), tipo)
                 except (pydantic.ValidationError, ValueError):
                     resposta = None  # o parse do SDK recusou o JSON: resposta inválida
                 somar(res.uso, resposta, self.model)

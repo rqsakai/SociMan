@@ -648,6 +648,7 @@ def _registrar_modelos() -> None:
     from sociman_api.assets import models as _assets  # noqa: F401
     from sociman_api.geracao import models as _geracao  # noqa: F401
     from sociman_api.ia import models as _ia  # noqa: F401
+    from sociman_api.produtos import aplicadores as _produtos  # noqa: F401 — spec 012
 
     base()
 

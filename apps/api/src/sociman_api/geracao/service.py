@@ -115,6 +115,18 @@ def _nova(db: Session, actor: Actor, perfil_id: uuid.UUID, passo: passos.Passo,
     return g
 
 
+def criar_para_alvo(db: Session, actor: Actor, perfil_id: uuid.UUID, passo_id: str,
+                    alvo_tipo: GeracaoAlvo, alvo_id: uuid.UUID,
+                    params: dict[str, Any]) -> Geracao:
+    """Pedido montado pelo cadastro do próprio alvo (o produto da 012, R1): o `params` já vem
+    pronto do fluxo do alvo, que validou as referências. Seeds novas como no `pedir` (R7)."""
+    passo = _passo(passo_id)
+    if passo.alvo_tipo != alvo_tipo:
+        raise aplicadores.alvo_incompativel()
+    _aplicador(passo)
+    return _nova(db, actor, perfil_id, passo, alvo_tipo, alvo_id, params, passo.n_padrao)
+
+
 # ---- pedir ----
 
 def pedir(db: Session, actor: Actor, perfil_id: uuid.UUID, body: schemas.GeracaoIn) -> Geracao:
@@ -302,6 +314,14 @@ def _resumo_campos(db: Session, g: Geracao, refs: dict[uuid.UUID, Image], users:
 def _refs(db: Session, gs: list[Geracao]) -> dict[uuid.UUID, Image]:
     ids = {uuid.UUID(r) for g in gs for r in (g.params or {}).get("referencias") or []}
     return {i.id: i for i in db.scalars(select(Image).where(Image.id.in_(ids)))} if ids else {}
+
+
+def resumo_out(db: Session, g: Geracao) -> schemas.GeracaoResumo:
+    """O resumo de uma geração (as rotas do produto devolvem o pedido que criaram, 012)."""
+    n = db.scalar(select(func.count()).select_from(GeracaoCandidato)
+                  .where(GeracaoCandidato.geracao_id == g.id)) or 0
+    users = user_refs(db, [g.created_by])
+    return schemas.GeracaoResumo(**_resumo_campos(db, g, _refs(db, [g]), users, n, None))
 
 
 def detalhe(db: Session, geracao_id: uuid.UUID) -> schemas.GeracaoDetalhe:

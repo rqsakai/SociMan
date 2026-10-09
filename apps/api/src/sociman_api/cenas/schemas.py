@@ -56,6 +56,9 @@ class _CamposCena(CamelModel):
     quadro_final: Texto500 | None = None
     produto_nome: ProdutoNome | None = None
     produto_imagem_id: UUID | None = None
+    # Spec 012 (R13): o produto do catálogo; com ele, `produtoNome`/`produtoImagemId` ficam nulos.
+    produto_id: UUID | None = None
+    produto_variante_id: UUID | None = None
     negative: Texto500 | None = None
 
 
@@ -147,8 +150,10 @@ class PromptOut(CamelModel):
 
 class Ingrediente(CamelModel):
     papel: Literal["avatar", "produto", "cenario"]
-    asset_id: UUID
-    arquivo_id: UUID
+    asset_id: UUID | None = None  # nulo no produto do catálogo (spec 012)
+    arquivo_id: UUID | None = None
+    produto_id: UUID | None = None  # spec 012: o recorte da variante
+    produto_variante_id: UUID | None = None
     nome: str
     largura: int
     altura: int
@@ -201,12 +206,31 @@ class CenaResumo(CamelModel):
     avatar: AssetRef | None
     cenario: AssetRef | None
     produto_nome: str | None
+    produto_id: UUID | None = None  # spec 012
     thumb_url: str | None
     tags: list[str]
     arquivada: bool
     tomadas: int
     usos: int
     updated_at: datetime
+
+
+class VarianteRef(CamelModel):
+    id: UUID
+    cor_pt: str | None
+    cor_en: str | None
+    thumb_url: str | None
+
+
+class ProdutoRef(CamelModel):
+    """Spec 012: o produto do catálogo ligado à cena."""
+
+    id: UUID
+    nome_comercial: str | None
+    nome: str
+    status: str
+    estado: str
+    variante: VarianteRef | None
 
 
 class Cena(CamelModel):
@@ -231,6 +255,8 @@ class Cena(CamelModel):
     quadro_final: str | None
     produto_nome: str | None
     produto_imagem_id: UUID | None
+    produto_id: UUID | None
+    produto_variante_id: UUID | None
     negative: str | None
     tags: list[str]
     notas: str
@@ -240,6 +266,7 @@ class Cena(CamelModel):
     avatar: AssetRef | None
     cenario: AssetRef | None
     produto_imagem: AssetRef | None
+    produto: ProdutoRef | None = None  # spec 012
     prompt: PromptOut
     ingredientes: list[Ingrediente]
     avisos: list[Aviso]

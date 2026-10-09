@@ -118,7 +118,8 @@ def test_escopos():
     # spec 022: +1 leitura (analytics_publico)
     # spec 023: +7 leituras do aprendizado (temas, classificações, análise, recomendações,
     # preferências e os dois diagnósticos)
-    assert len(leitura) == 80 and len(propostas) == 85 and leitura < propostas
+    # spec 012: +3 leituras de produto (lista, detalhe e histórico)
+    assert len(leitura) == 83 and len(propostas) == 88 and leitura < propostas
     exportado = ferramentas.exportar_json(app)
     assert {d["name"] for d in exportado["leitura"]} == leitura
     assert {d["name"] for d in exportado["propostas"]} == propostas - leitura

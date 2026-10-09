@@ -14,6 +14,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClie
 import { api } from "./api";
 import { assetKey, assetsKey, assetVersionsKey } from "./assets";
 import { uploadMultipart } from "./marcaApi";
+import { produtoKey, produtosKey, produtoVersoesKey } from "./produtos";
 
 // Geração local (spec 021): pedidos ao ComfyUI e ao shop-tts que a API enfileira e o gerador roda.
 // A tela pede, acompanha (polling de 2 s enquanto não termina), compara as opções e escolhe uma;
@@ -139,8 +140,16 @@ async function invalidarGeracao(qc: QueryClient, g: { id: string; perfilId: stri
   ]);
 }
 
-// O resultado escolhido vai para o alvo: no asset, o detalhe, a lista e o histórico.
+// O resultado escolhido vai para o alvo: no asset e no produto (012), o detalhe, a lista e o histórico.
 async function invalidarAlvo(qc: QueryClient, perfilId: string, alvo: { tipo: GeracaoAlvo; id: string }) {
+  if (alvo.tipo === "produto") {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: produtoKey(alvo.id) }),
+      qc.invalidateQueries({ queryKey: produtoVersoesKey(alvo.id) }),
+      qc.invalidateQueries({ queryKey: produtosKey(perfilId) }),
+    ]);
+    return;
+  }
   if (alvo.tipo !== "asset") return;
   await Promise.all([
     qc.invalidateQueries({ queryKey: assetKey(alvo.id) }),
@@ -178,7 +187,9 @@ export function useAcaoGeracao(acao: Acao) {
     mutationFn: (g: Geracao) => geracoesApi[acao](g.id, g.version),
     onSuccess: async (nova, antiga) => {
       qc.setQueryData(geracaoKey(nova.id), nova);
-      await Promise.all([invalidarGeracao(qc, antiga), nova.id !== antiga.id ? invalidarGeracao(qc, nova) : null]);
+      // no produto (012), cancelar, tentar de novo e gerar outras mudam os passos e o estado
+      const produto = antiga.alvoTipo === "produto" ? invalidarAlvo(qc, antiga.perfilId, { tipo: "produto", id: antiga.alvoId }) : null;
+      await Promise.all([invalidarGeracao(qc, antiga), nova.id !== antiga.id ? invalidarGeracao(qc, nova) : null, produto]);
     },
   });
 }

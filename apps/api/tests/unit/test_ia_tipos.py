@@ -38,10 +38,10 @@ def _aceita(adapter: TypeAdapter, valor) -> bool:
     return True
 
 
-def test_os_23_ids_e_o_literal():
+def test_os_24_ids_e_o_literal():
     # 13 da 008 + guia.montar e guia.testar (spec 017) + 5 da cena (spec 010) + 3 do aprendizado
-    # (spec 023); o testar usa as regras de outro tipo.
-    assert len(TIPOS) == 23
+    # (spec 023) + a ficha do produto (spec 012); o testar usa as regras de outro tipo.
+    assert len(TIPOS) == 24
     assert set(get_args(TipoCampoId)) == set(TIPOS)
     assert set(PADROES) == set(TIPOS) - {"guia.testar"}
     for tid, tipo in TIPOS.items():
@@ -54,7 +54,8 @@ def test_os_23_ids_e_o_literal():
 
 def test_so_os_prompts_de_imagem_sao_em_ingles():
     ingles = {t.id for t in TIPOS.values() if t.idioma == "en"}
-    assert ingles == {"avatar.descricao_prompt", "cenario.prompt_ambiente"} | CENA
+    assert ingles == {"avatar.descricao_prompt", "cenario.prompt_ambiente",
+                      "produto.ficha"} | CENA
     assert TIPOS["avatar.regras_imagem"].idioma == "perfil"  # Q2 = B
 
 
@@ -112,6 +113,8 @@ def test_campos_existem_no_modelo_e_no_schema():
             continue  # sem entidade salva com esses campos (spec 017; o montar é cruzado abaixo)
         if tipo.entidade == "aprendizado":
             continue  # spec 023: não aplica em formulário (o serviço do aprendizado grava)
+        if tipo.entidade == "produto":
+            continue  # spec 012: o aplicador da 021 grava (cruzado em test_produto_ficha)
         for campo in tipo.campos:
             assert campo in modelos[tipo.entidade].__versioned_fields__, (tipo.id, campo)
             assert campo in SCHEMAS[tipo.entidade].model_fields, (tipo.id, campo)
@@ -192,3 +195,22 @@ def test_os_3_tipos_do_aprendizado_tem_regra_editavel():
     assert {TIPOS[t].formato for t in ids} == {"taxonomia", "classificacao", "analise"}
     assert TIPOS["aprendizado.taxonomia"].limites.max_itens == 15
     assert TIPOS["aprendizado.analise"].limites.max_itens == 6
+
+
+def test_produto_ficha():
+    """Spec 012 (T011): o tipo existe, fora das regras editáveis e do `gerar`, com os campos da
+    ficha do produto e do `PUT …/ficha`, a regra padrão = o `SYSTEM` da ficha e mais tokens."""
+    from sociman_api.produtos import ficha
+    from sociman_api.produtos.models import CAMPOS_FICHA, Produto
+    from sociman_api.produtos.schemas import FichaIn
+
+    tipo = TIPOS["produto.ficha"]
+    assert tipo.entidade == "produto" and tipo.formato == "ficha_produto"
+    assert not tipo.listar_regras and tipo.regras_de is None
+    assert tipo.padrao == ficha.SYSTEM
+    assert tipo.campos == CAMPOS_FICHA
+    for campo in tipo.campos:
+        assert campo in Produto.__versioned_fields__
+        assert campo in FichaIn.model_fields
+    assert tipo.max_tokens == 8000 and tipo.timeout_s and tipo.timeout_s > 20
+

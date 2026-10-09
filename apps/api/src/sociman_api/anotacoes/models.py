@@ -26,6 +26,7 @@ class AnotacaoAlvo(enum.StrEnum):
     conteudo = "conteudo"
     destino = "destino"
     cena = "cena"  # spec 010
+    produto = "produto"  # spec 012: só `observacao`
 
 
 class AnotacaoTipo(enum.StrEnum):

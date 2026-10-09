@@ -11,11 +11,12 @@ from typing import Literal
 
 from sociman_api.ia.regras_padrao import PADROES
 
-Entidade = Literal["asset", "perfil", "kit", "postagem", "guia", "cena", "aprendizado"]
+Entidade = Literal["asset", "perfil", "kit", "postagem", "guia", "cena", "aprendizado",
+                   "produto"]
 Idioma = Literal["en", "perfil"]
 UsaGuia = Literal["completo", "so_proibidas"]
 Formato = Literal["texto", "lista", "sugestoes", "textos_postagem", "guia", "variacoes",
-                  "campos_cena", "taxonomia", "classificacao", "analise"]
+                  "campos_cena", "taxonomia", "classificacao", "analise", "ficha_produto"]
 TipoCampoId = Literal[
     "avatar.descricao_prompt", "avatar.tom_de_voz", "avatar.regras_imagem",
     "cenario.prompt_ambiente", "asset.nome", "asset.descricao", "perfil.bio", "kit.bordoes",
@@ -23,6 +24,7 @@ TipoCampoId = Literal[
     "postagem.textos", "guia.montar", "guia.testar",
     "cena.acao", "cena.camera", "cena.estilo", "cena.audio", "cena.ajustar",  # spec 010
     "aprendizado.taxonomia", "aprendizado.classificacao", "aprendizado.analise",  # spec 023
+    "produto.ficha",  # spec 012
 ]
 
 MAX_SUGESTOES = 10
@@ -60,6 +62,10 @@ class TipoCampo:
     usa_guia: UsaGuia = "completo"
     regras_de: str | None = None  # usa as regras de outro tipo (não tem regra própria)
     listar_regras: bool = True  # False: não aparece em "Assistente de IA › Regras"
+    # Spec 012: a chamada com fotos pede mais (o pipeline usava 8000 tokens e esforço alto).
+    max_tokens: int | None = None
+    esforco: Literal["low", "medium", "high"] | None = None
+    timeout_s: float | None = None
 
     @property
     def padrao(self) -> str:
@@ -153,6 +159,14 @@ _LISTA: tuple[TipoCampo, ...] = (
     TipoCampo("aprendizado.analise", "Análise dos melhores posts (hipóteses)", "aprendizado",
               ("hipoteses",), "Aprendizado › Análises da IA", "perfil", "analise",
               Limites(max_itens=6, max_chars=240)),
+    # Spec 012 (R5): a ficha técnica do produto, pedida pelo passo `produto.ficha` da 021 (motor
+    # `claude`, fotos numeradas). Não passa pelo `gerar` nem aparece nas regras editáveis.
+    TipoCampo("produto.ficha", "Ficha técnica do produto", "produto",
+              ("nome_comercial", "categoria", "material_en", "material_pt", "formato_corte",
+               "detalhes_visiveis", "tamanho_relativo", "descricao_prompt", "cuidados",
+               "descricao_venda", "precisa_flat"),
+              "Produtos › Produto › Ficha", "en", "ficha_produto", Limites(trim=False),
+              listar_regras=False, max_tokens=8000, esforco="medium", timeout_s=120.0),
 )
 
 TIPOS: dict[str, TipoCampo] = {t.id: t for t in _LISTA}

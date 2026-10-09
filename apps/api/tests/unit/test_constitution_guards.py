@@ -1435,3 +1435,52 @@ def test_docker_sock_so_no_dockerctl():
     assert servicos["dockerctl"].get("read_only") is True
     assert servicos["dockerctl"].get("cap_drop") == ["ALL"]
     assert "ports" not in servicos["dockerctl"]
+
+
+# ---- spec 012 (produtos): sem rede social, sem delete, escritas de humano ----
+
+PRODUTOS = SRC / "produtos"
+
+
+def test_produtos_nao_importa_publicacao_nem_mcp_nem_delete():
+    fontes = sorted(PRODUTOS.rglob("*.py"))
+    assert (PRODUTOS / "service.py") in fontes and (PRODUTOS / "fluxo.py") in fontes  # vivo
+    for path in fontes:
+        mods = _imports(path)
+        ruins = [m for m in mods if m.startswith(("sociman_api.publicacao", "sociman_api.mcp",
+                                                  "httpx", "requests", "urllib"))]
+        assert not ruins, f"{path.name} importa {ruins}"
+        assert not _referencias(path, "apagar_por_excecao"), f"{path.name} apaga arquivo"
+        tree = ast.parse(path.read_text())
+        deletes = [n.lineno for n in ast.walk(tree) if isinstance(n, ast.Call)
+                   and getattr(n.func, "id", getattr(n.func, "attr", "")) == "delete"]
+        assert not deletes, f"{path.name} usa delete nas linhas {deletes}"
+
+
+def test_rotas_de_produto_neutras_humanas_e_sem_delete():
+    from sociman_api.auth.deps import require_human, require_human_owner, require_user
+    from sociman_api.produtos.router import router as produto_router
+    from sociman_api.produtos.router_perfil import router as perfil_router
+
+    def chamadas(dependant) -> set:
+        out = set()
+        for d in dependant.dependencies:
+            out.add(d.call)
+            out |= chamadas(d)
+        return out
+
+    rotas = [r for rt in (produto_router, perfil_router) for r in rt.routes
+             if hasattr(r, "dependant")]
+    assert len(rotas) == 18
+    for r in rotas:
+        texto = f"{r.path} {r.operation_id}".lower()
+        assert r.operation_id.startswith("produtos_"), r.operation_id
+        assert "tiktok" not in texto and "youtube" not in texto, texto
+        assert "DELETE" not in r.methods, r.path
+        deps = chamadas(r.dependant)
+        if r.methods == {"GET"}:
+            assert require_user in deps and require_human not in deps, r.path
+        elif r.path.endswith("/revert"):
+            assert require_human_owner in deps, r.path
+        else:
+            assert require_human in deps, r.path

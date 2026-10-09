@@ -305,6 +305,25 @@ export type AprendizadoDiagnostico = S["AprendizadoDiagnostico"];
 export type AprendizadoPostDiagnostico = S["AprendizadoPostDiagnostico"];
 export type AprendizadoAfinidade = S["AprendizadoAfinidade"];
 export type AnalyticsMercadoFiltros = NonNullable<paths["/api/analytics/mercado"]["get"]["parameters"]["query"]>;
+// 012-produtos-shop
+export type Produto = components["schemas"]["Produto"];
+export type ProdutoResumo = components["schemas"]["ProdutoResumo"];
+export type ProdutosLista = components["schemas"]["ProdutosLista"];
+export type ProdutoStatus = components["schemas"]["ProdutoStatus"];
+export type ProdutoEstado = Produto["estado"];
+export type ProdutoFichaPor = components["schemas"]["ProdutoFichaPor"];
+export type ProdutoVariante = components["schemas"]["Variante"];
+export type ProdutoImagem = components["schemas"]["ImagemRef"];
+export type ProdutoFicha = components["schemas"]["Ficha"];
+export type ProdutoFichaIn = components["schemas"]["FichaIn"];
+export type ProdutoCorIn = components["schemas"]["CorIn"];
+export type ProdutoSalvarFichaRequest = components["schemas"]["SalvarFichaIn"];
+export type ProdutoPasso = components["schemas"]["PassoProduto"];
+export type ProdutoPendencia = components["schemas"]["Pendencia"];
+export type ProdutoUso = components["schemas"]["UsoProduto"];
+export type ProdutoPatchRequest = components["schemas"]["ProdutoPatch"];
+export type ProdutoVarianteEditarRequest = components["schemas"]["VarianteEditarIn"];
+export type ProdutoFilters = NonNullable<paths["/api/perfis/{perfil_id}/produtos"]["get"]["parameters"]["query"]>;
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -1201,6 +1220,68 @@ export function createApiClient(options: ApiClientOptions = {}) {
       gerarOutras: (geracaoId: string, version: number) =>
         unwrap(client.POST("/api/geracoes/{geracao_id}/gerar-outras", { params: { path: { geracao_id: geracaoId } }, body: { version } })),
       audio: (audioId: string) => unwrap(client.GET("/api/audios/{audio_id}", { params: { path: { audio_id: audioId } } })),
+    },
+    // Produtos do TikTok Shop (spec 012): cadastro, ficha, variantes e aprovação (escritas só de
+    // humano). Criar e variante nova são multipart e ficam no app, por XHR, para ter o progresso.
+    // Escolher, cancelar e tentar de novo as gerações são as rotas de `geracoes`. Nenhuma rota DELETE.
+    produtos: {
+      listar: (perfilId: string, query: ProdutoFilters = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/produtos", { params: { path: { perfil_id: perfilId }, query } })),
+      ver: (produtoId: string) => unwrap(client.GET("/api/produtos/{produto_id}", { params: { path: { produto_id: produtoId } } })),
+      editar: (produtoId: string, body: ProdutoPatchRequest) =>
+        unwrap(client.PATCH("/api/produtos/{produto_id}", { params: { path: { produto_id: produtoId } }, body })),
+      salvarFicha: (produtoId: string, body: ProdutoSalvarFichaRequest) =>
+        unwrap(client.PUT("/api/produtos/{produto_id}/ficha", { params: { path: { produto_id: produtoId } }, body })),
+      pedirFicha: (produtoId: string, version: number) =>
+        unwrap(client.POST("/api/produtos/{produto_id}/ficha/pedir", { params: { path: { produto_id: produtoId } }, body: { version } })),
+      aprovar: (produtoId: string, version: number) =>
+        unwrap(client.POST("/api/produtos/{produto_id}/aprovar", { params: { path: { produto_id: produtoId } }, body: { version } })),
+      arquivar: (produtoId: string, version: number, cancelarGeracoes: boolean) =>
+        unwrap(
+          client.POST("/api/produtos/{produto_id}/arquivar", { params: { path: { produto_id: produtoId } }, body: { version, cancelarGeracoes } }),
+        ),
+      restaurar: (produtoId: string, version: number) =>
+        unwrap(client.POST("/api/produtos/{produto_id}/restaurar", { params: { path: { produto_id: produtoId } }, body: { version } })),
+      versoes: (produtoId: string) => unwrap(client.GET("/api/produtos/{produto_id}/versoes", { params: { path: { produto_id: produtoId } } })),
+      reverter: (produtoId: string, version: number, toVersion: number) =>
+        unwrap(client.POST("/api/produtos/{produto_id}/revert", { params: { path: { produto_id: produtoId } }, body: { version, toVersion } })),
+      varianteEditar: (produtoId: string, varianteId: string, body: ProdutoVarianteEditarRequest) =>
+        unwrap(
+          client.PATCH("/api/produtos/{produto_id}/variantes/{variante_id}", {
+            params: { path: { produto_id: produtoId, variante_id: varianteId } },
+            body,
+          }),
+        ),
+      varianteArquivar: (produtoId: string, varianteId: string, version: number) =>
+        unwrap(
+          client.POST("/api/produtos/{produto_id}/variantes/{variante_id}/arquivar", {
+            params: { path: { produto_id: produtoId, variante_id: varianteId } },
+            body: { version },
+          }),
+        ),
+      varianteRestaurar: (produtoId: string, varianteId: string, version: number) =>
+        unwrap(
+          client.POST("/api/produtos/{produto_id}/variantes/{variante_id}/restaurar", {
+            params: { path: { produto_id: produtoId, variante_id: varianteId } },
+            body: { version },
+          }),
+        ),
+      variantesOrdenar: (produtoId: string, version: number, ids: string[]) =>
+        unwrap(client.PUT("/api/produtos/{produto_id}/variantes/ordem", { params: { path: { produto_id: produtoId } }, body: { version, ids } })),
+      refazerRecorte: (produtoId: string, varianteId: string, version: number) =>
+        unwrap(
+          client.POST("/api/produtos/{produto_id}/variantes/{variante_id}/refazer-recorte", {
+            params: { path: { produto_id: produtoId, variante_id: varianteId } },
+            body: { version },
+          }),
+        ),
+      refazerFlat: (produtoId: string, varianteId: string, version: number) =>
+        unwrap(
+          client.POST("/api/produtos/{produto_id}/variantes/{variante_id}/refazer-flat", {
+            params: { path: { produto_id: produtoId, variante_id: varianteId } },
+            body: { version },
+          }),
+        ),
     },
     config: () => unwrap(client.GET("/api/config")),
     health: () => unwrap(client.GET("/api/health")),
