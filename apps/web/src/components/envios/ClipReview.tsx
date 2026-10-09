@@ -6,6 +6,7 @@
  *   1 a 120 caracteres e até 3 linhas), título e pontuação do OpenShorts, status da marca,
  *   "Aplicar marca", "Arquivar"/"Restaurar" e o link para o corte.
  */
+import { VideoEstavel } from "../midia/VideoEstavel";
 import { ApiError } from "@sociman/contract";
 import { Archive, ArchiveRestore, ExternalLink, Loader2, Save, Stamp } from "lucide-react";
 import { useState } from "react";
@@ -118,12 +119,12 @@ export function ClipReview({
       </div>
 
       {videoUrl ? (
-        <video
-          key={videoUrl}
+        <VideoEstavel
+          chave={corte.id}
+          url={videoUrl}
           controls
           playsInline
           preload="metadata"
-          src={videoUrl}
           poster={corte.posterUrl ?? undefined}
           aria-label={`Vídeo do clipe ${(corte.clipIndex ?? 0) + 1}`}
           className="mx-auto aspect-[9/16] max-h-[60vh] w-full rounded-lg bg-black object-contain"
