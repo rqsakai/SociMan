@@ -97,6 +97,7 @@ def trilhas_padrao() -> list[Trilha]:
     from sociman_api.canais import sync
     from sociman_api.envios import acompanhamento, importacao
     from sociman_api.geracao import limpeza as geracao_limpeza
+    from sociman_api.mercado import trilha as mercado_trilha
     from sociman_api.metricas import coleta as metricas
     from sociman_api.postagem import lembretes
     from sociman_api.publicacao import trilha as publicacao
@@ -115,6 +116,9 @@ def trilhas_padrao() -> list[Trilha]:
         # Spec 021 (R12): a limpeza de 90 dias das opções não escolhidas (exceção 1 da 4.3.0).
         Trilha("geracao_limpeza", s.agendador_geracao_limpeza_s, geracao_limpeza.rodar,
                _sem_hd_limpeza),
+        # Spec 026 (FR-041): cadência, interesses automáticos, fila do dia, reservas vencidas,
+        # rodadas sem batimento e o aviso "coleta parada". Nunca apaga; nunca fala com a rede.
+        Trilha("mercado", s.agendador_mercado_s, mercado_trilha.rodar, mercado_trilha.ociosa),
     ]
 
 
@@ -125,11 +129,13 @@ def _registrar_modelos() -> None:
     from sociman_api.aprendizado import models as _aprendizado  # noqa: F401 — spec 023
     from sociman_api.auth import models as _auth  # noqa: F401
     from sociman_api.canais import models as _canais  # noqa: F401
+    from sociman_api.coleta import models as _coleta  # noqa: F401 — spec 026
     from sociman_api.conteudos import models as _conteudos  # noqa: F401 — spec 014
     from sociman_api.cortes import models as _cortes  # noqa: F401
     from sociman_api.envios import models as _envios  # noqa: F401
     from sociman_api.geracao import models as _geracao  # noqa: F401 — spec 021
     from sociman_api.marca import models as _marca  # noqa: F401
+    from sociman_api.mercado import models as _mercado  # noqa: F401 — spec 026
     from sociman_api.metricas import models as _metricas  # noqa: F401 — spec 016
     from sociman_api.notificacoes import models as _notificacoes  # noqa: F401
     from sociman_api.perfis import models as _perfis  # noqa: F401

@@ -21,7 +21,9 @@ from minio.datatypes import Object
 from sociman_api import datadir
 from sociman_api.config import get_settings
 
-Bucket = Literal["imagens", "fontes", "videos", "audios"]
+# Spec 026: `mercado` guarda o bruto gzip da coleta (as imagens do lago ficam em `imagens`, com
+# o prefixo `mercado/`, para o imgproxy servir). Nenhum delete novo: o lago é permanente.
+Bucket = Literal["imagens", "fontes", "videos", "audios", "mercado"]
 Excecao = Literal["candidatos_90d", "lgpd_revogacao"]  # constitution 4.3.0, princípio VII
 
 PART_SIZE = 16 * 1024 * 1024
@@ -38,7 +40,8 @@ def get_client() -> Minio:
 def bucket_name(bucket: Bucket) -> str:
     s = get_settings()
     return {"imagens": s.s3_bucket, "fontes": s.s3_fonts_bucket,
-            "videos": s.s3_videos_bucket, "audios": s.s3_audios_bucket}[bucket]
+            "videos": s.s3_videos_bucket, "audios": s.s3_audios_bucket,
+            "mercado": s.s3_mercado_bucket}[bucket]
 
 
 def ensure_bucket(name: str) -> None:
@@ -48,7 +51,7 @@ def ensure_bucket(name: str) -> None:
 
 
 def ensure_buckets() -> None:
-    for bucket in ("imagens", "fontes", "videos", "audios"):
+    for bucket in ("imagens", "fontes", "videos", "audios", "mercado"):
         ensure_bucket(bucket_name(bucket))
 
 

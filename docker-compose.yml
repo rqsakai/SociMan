@@ -87,6 +87,12 @@ services:
       # Spec 009: servidor MCP dos agentes (`/mcp`). false = desligado no servidor (padrão).
       MCP_HABILITADO: ${MCP_HABILITADO:-false}
       MCP_ORIGENS_PERMITIDAS: ${MCP_ORIGENS_PERMITIDAS:-}
+      # Spec 026: coleta de mercado (princípio IX). false = fila do coletor vazia. O pepper é
+      # segredo do .env da raiz, gerado pelo dono.
+      COLETA_HABILITADA: ${COLETA_HABILITADA:-false}
+      MERCADO_HASH_PEPPER: ${MERCADO_HASH_PEPPER:-}
+      MERCADO_URL_PUBLICA: ${MERCADO_URL_PUBLICA:-}
+      MERCADO_URL_AFFILIATE: ${MERCADO_URL_AFFILIATE:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"   # OpenShorts roda no host (:8000)
     volumes:
@@ -184,6 +190,12 @@ services:
       AGENDADOR_METRICAS_S: ${AGENDADOR_METRICAS_S:-60}
       # Spec 023: classificação dos posts (≤ 50 por perfil por dia) e análises pedidas pelo dono.
       AGENDADOR_APRENDIZADO_S: ${AGENDADOR_APRENDIZADO_S:-300}
+      # Spec 026: a trilha `mercado` (cadência, fila do dia, interesses automáticos).
+      COLETA_HABILITADA: ${COLETA_HABILITADA:-false}
+      MERCADO_HASH_PEPPER: ${MERCADO_HASH_PEPPER:-}
+      MERCADO_URL_PUBLICA: ${MERCADO_URL_PUBLICA:-}
+      MERCADO_URL_AFFILIATE: ${MERCADO_URL_AFFILIATE:-}
+      AGENDADOR_MERCADO_S: ${AGENDADOR_MERCADO_S:-300}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

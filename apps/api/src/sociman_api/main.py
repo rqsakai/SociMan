@@ -18,6 +18,8 @@ from sociman_api.canais.router import router as canais_router
 from sociman_api.cenas import usos_assets as _cenas_usos  # noqa: F401 — spec 010: "onde é usado"
 from sociman_api.cenas.router import router as cenas_router  # spec 010
 from sociman_api.cenas.router_perfil import router as cenas_perfil_router  # spec 010
+from sociman_api.coleta import portao as coleta_portao  # spec 026
+from sociman_api.coleta.router import router as coleta_router  # spec 026
 from sociman_api.conteudos.router import router as conteudos_router
 from sociman_api.conteudos.router_video import router as conteudos_video_router
 from sociman_api.cortes.router import router as cortes_router
@@ -37,6 +39,8 @@ from sociman_api.mcp import portao as mcp_portao  # spec 009
 from sociman_api.mcp import servidor as mcp_servidor  # spec 009
 from sociman_api.mcp.registro import RegistroMiddleware as RegistroMcpMiddleware  # spec 009
 from sociman_api.mcp.router import router as mcp_router  # spec 009
+from sociman_api.mercado.router import router as mercado_router  # spec 026
+from sociman_api.mercado.router_perfil import router as mercado_router_perfil  # spec 026
 from sociman_api.metricas.router import router as metricas_router  # spec 016
 from sociman_api.metricas.studio.router import router as studio_router  # spec 020
 from sociman_api.notificacoes.router import router as notificacoes_router
@@ -51,8 +55,9 @@ from sociman_api.router_midia import router as midia_router
 datadir.pin_tempdir()  # spool de upload no HD, nunca no /tmp do container
 
 # Spec 009 (R5): todo token MCP passa pelo portão, em qualquer rota e antes da validação.
+# Spec 026: idem para o token do coletor (`scol_`), pelo portão da coleta.
 app = FastAPI(title="SociMan API", version="0.1.0", openapi_url="/api/openapi.json", docs_url="/api/docs",
-              dependencies=[Depends(mcp_portao.dependencia)])
+              dependencies=[Depends(mcp_portao.dependencia), Depends(coleta_portao.dependencia)])
 register_error_handlers(app)
 app.include_router(auth_router)
 app.include_router(users_router)
@@ -91,6 +96,9 @@ app.include_router(agencia_router)  # spec 013: importação da agência (só do
 app.include_router(aprendizado_router)  # spec 023: aprender com o desempenho
 app.include_router(geracao_router)  # spec 021: geração local com candidatos
 app.include_router(audios_router)  # spec 021: áudios do perfil
+app.include_router(coleta_router)  # spec 026: ingestão do coletor de mercado
+app.include_router(mercado_router)  # spec 026: leitura do mercado (cockpit)
+app.include_router(mercado_router_perfil)  # spec 026: interesses e nicho por perfil
 install_openapi_error_contract(app)
 
 

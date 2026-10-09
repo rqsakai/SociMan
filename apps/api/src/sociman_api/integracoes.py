@@ -51,12 +51,28 @@ class IntegracaoGeracao(CamelModel):
     gerador: Literal["ativo", "parado"]
 
 
+class IntegracaoColeta(CamelModel):
+    """Spec 026 (FR-036): o estado da coleta de mercado, calculado na hora, sem segredo."""
+
+    servidor_habilitado: bool
+    habilitada: bool
+    risco_aceito: bool
+    situacao: str
+    clientes: int
+    ultimo_contato_em: datetime | None
+    paginas_hoje: int
+    imagens_hoje: int
+    rodada_atual: str | None
+    hd: Literal["ok", "indisponivel"]
+
+
 class Integracoes(CamelModel):
     youtube: Literal["ok", "ausente", "invalida"]
     openshorts: Literal["ok", "fora"]
     claude: Literal["ok", "ausente"]
     cota_youtube: CotaYoutube
     geracao: IntegracaoGeracao  # spec 021
+    coleta: IntegracaoColeta  # spec 026
 
 
 def geracao_status() -> IntegracaoGeracao:
@@ -73,6 +89,12 @@ def geracao_status() -> IntegracaoGeracao:
         memoria_comfyui=e.get("memoriaComfyui") or ("ok" if memoria.configurado() else nao_cfg),
         gpu=e.get("gpu") or "desconhecida",
         gerador="ativo" if e else "parado")
+
+
+def coleta_status(db: Session) -> IntegracaoColeta:
+    from sociman_api.coleta import service as coleta
+
+    return IntegracaoColeta(**coleta.bloco_integracoes(db))
 
 
 # ---- OpenShorts (/health com cache) ----
@@ -138,4 +160,5 @@ def get_integracoes(actor: RequireUser, db: DbSession) -> Integracoes:
         claude="ok" if s.anthropic_api_key.get_secret_value() else "ausente",
         cota_youtube=cota_youtube(db),
         geracao=geracao_status(),
+        coleta=coleta_status(db),
     )

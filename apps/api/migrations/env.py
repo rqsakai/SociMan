@@ -9,6 +9,7 @@ from sociman_api.assets import models as _assets_models  # noqa: F401
 from sociman_api.auth import models as _auth_models  # noqa: F401
 from sociman_api.canais import models as _canais_models  # noqa: F401
 from sociman_api.cenas import models as _cenas_models  # noqa: F401 — spec 010
+from sociman_api.coleta import models as _coleta_models  # noqa: F401 — spec 026
 from sociman_api.config import get_settings
 from sociman_api.conteudos import models as _conteudos_models  # noqa: F401 — spec 014
 from sociman_api.cortes import models as _cortes_models  # noqa: F401
@@ -17,6 +18,7 @@ from sociman_api.envios import models as _envios_models  # noqa: F401
 from sociman_api.geracao import models as _geracao_models  # noqa: F401 — spec 021
 from sociman_api.ia import models as _ia_models  # noqa: F401
 from sociman_api.marca import models as _marca_models  # noqa: F401
+from sociman_api.mercado import models as _mercado_models  # noqa: F401 — spec 026
 from sociman_api.metricas import models as _metricas_models  # noqa: F401 — spec 016
 from sociman_api.metricas.studio import models as _studio_models  # noqa: F401 — spec 020
 from sociman_api.notificacoes import models as _notificacoes_models  # noqa: F401

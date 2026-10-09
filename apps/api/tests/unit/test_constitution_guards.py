@@ -344,12 +344,13 @@ def executor(p, db):
 
 def test_agendador_sem_trilha_nova():
     """Guarda 6 (R16.6): as trilhas novas são a `publicacao` da 015, a `metricas` da 016, a
-    `aprendizado` da 023 e a `geracao_limpeza` da 021 (R12) (a lista só cresce por spec)."""
+    `aprendizado` da 023, a `geracao_limpeza` da 021 (R12) e a `mercado` da 026 (a lista só
+    cresce por spec)."""
     from sociman_api.agendador import trilhas_padrao
 
     assert {t.nome for t in trilhas_padrao()} == {"sync", "openshorts", "importacao",
                                                   "lembretes", "publicacao", "metricas",
-                                                  "aprendizado", "geracao_limpeza"}
+                                                  "aprendizado", "geracao_limpeza", "mercado"}
 
 
 # ---- spec 015 (publicação no TikTok), parte 1: R16.1, R16.2, R16.3 e R16.8 ----
@@ -1435,3 +1436,200 @@ def test_docker_sock_so_no_dockerctl():
     assert servicos["dockerctl"].get("read_only") is True
     assert servicos["dockerctl"].get("cap_drop") == ["ALL"]
     assert "ports" not in servicos["dockerctl"]
+
+
+# ---- spec 026 (coleta de mercado): princípio IX, sem rede, sem perfil no lago, sem delete ----
+
+MERCADO = SRC / "mercado"
+COLETA = SRC / "coleta"
+COLETOR_DIR = API_DIR.parents[0] / "coletor"  # apps/coletor (fora da API)
+# Nada de HTTP de saída, automação de navegador nem publicação nos dois pacotes (FR-057).
+IMPORTS_PROIBIDOS_026 = ("httpx", "requests", "urllib.request", "playwright", "selenium",
+                         "pyppeteer", "sociman_api.publicacao")
+AUTOMACAO_NAVEGADOR = ("playwright", "selenium", "pyppeteer", "undetected-chromedriver")
+# Um endereço da rede num literal: só o coletor (host) conhece URLs do TikTok Shop.
+_HOST_DA_REDE = re.compile(r"https?://[^\s\"']*(tiktok|affiliate|tiktokv|tiktokcdn)",
+                           re.IGNORECASE)
+# Colunas que dariam dono ao dado (FR-001); as exceções nominais do data-model.
+COLUNAS_DE_DONO_026 = {"perfil_id", "conta_id", "tenant_id", "created_by", "user_id",
+                       "updated_by"}
+TABELAS_COM_DONO_026 = {"mercado_interesses", "mercado_perfil_config", "coleta_clientes",
+                        "coleta_config"}
+EXCECOES_026 = {("mercado_fila", "perfil_id")}
+SO_INSERCAO_026 = {"mercado_loja_fotos", "mercado_produto_fichas", "mercado_imagens",
+                   "mercado_produto_imagens", "mercado_produto_fotos", "mercado_ranking_fotos",
+                   "mercado_ranking_foto_itens", "mercado_avaliacoes", "mercado_produto_videos",
+                   "mercado_coleta_itens", "coleta_eventos"}
+ROTAS_C_026 = {"coleta_fila", "coleta_coletas_abrir", "coleta_itens_enviar",
+               "coleta_imagens_enviar", "coleta_batimento", "coleta_coletas_fechar",
+               "coleta_eventos_enviar", "coleta_bruto_link"}
+# Leituras **U** que o token do coletor também alcança (`reprocessar --desde`, FR-012): o ator
+# `coletor` passa por `require_user_ou_coletor` e o service o restringe às próprias rodadas.
+ROTAS_C_LEITURA_026 = {"coleta_coletas_listar", "coleta_coletas_detalhe"}
+
+
+def _fontes_026() -> list[Path]:
+    return sorted(MERCADO.rglob("*.py")) + sorted(COLETA.rglob("*.py"))
+
+
+def test_api_sem_automacao_de_navegador():
+    """Princípio IX: a API nunca contém Playwright, Selenium nem parente; só o `apps/coletor/`
+    (fora do Docker) automatiza o navegador."""
+    data = tomllib.loads(PYPROJECT.read_text())
+    deps = list(data["project"].get("dependencies", []))
+    for group in data.get("dependency-groups", {}).values():
+        deps += [d for d in group if isinstance(d, str)]
+    ruins = [d for d in deps if any(a in d.lower() for a in AUTOMACAO_NAVEGADOR)]
+    assert not ruins, f"a API ganhou automação de navegador (princípio IX): {ruins}"
+    for path in _fontes():
+        mods = _imports(path)
+        ruins = [m for m in mods if m.split(".")[0] in ("playwright", "selenium", "pyppeteer")]
+        assert not ruins, f"{path.relative_to(SRC)} importa {ruins}"
+
+
+def test_mercado_e_coleta_sem_rede_nem_publicacao():
+    """FR-057: `mercado/` e `coleta/` não têm HTTP de saída, não importam a publicação e não
+    citam endereço da rede em literal (isso vive só em `apps/coletor/`)."""
+    fontes = _fontes_026()
+    assert (COLETA / "ingestao.py") in fontes and (MERCADO / "models.py") in fontes  # vivo
+    achados = []
+    for path in fontes:
+        rel = str(path.relative_to(SRC))
+        mods = _imports(path)
+        achados += [f"{rel}: import {m}" for m in mods if m.startswith(IMPORTS_PROIBIDOS_026)]
+        for texto in _strings_de_codigo(ast.parse(path.read_text())):
+            if _HOST_DA_REDE.search(texto):
+                achados.append(f"{rel}: {texto[:50]}")
+    assert not achados, f"mercado/coleta falam com a rede (princípio IX): {achados}"
+
+
+def test_mercado_lago_sem_perfil_conta_ou_tenant():
+    """FR-001: nenhuma tabela do lago nem da operação tem dono; a exceção nominal é
+    `mercado_fila.perfil_id` (operacional, revezamento). As camadas de interesse e de infra do
+    dono são as únicas com `perfil_id`/auditoria."""
+    from sociman_api.db import Base
+    from sociman_api.mercado import models as mm
+
+    assert set(mm.SO_INSERCAO) == SO_INSERCAO_026
+    ruins = []
+    for tabela in Base.metadata.sorted_tables:
+        if not tabela.name.startswith(("mercado_", "coleta_")):
+            continue
+        if tabela.name in TABELAS_COM_DONO_026:
+            continue
+        for col in tabela.columns:
+            if col.name in COLUNAS_DE_DONO_026 and (tabela.name, col.name) not in EXCECOES_026:
+                ruins.append(f"{tabela.name}.{col.name}")
+    assert not ruins, f"o lago ganhou dono (FR-001): {ruins}"
+    nomes = {t.name for t in Base.metadata.sorted_tables}
+    assert set(mm.LAGO) <= nomes and "mercado_fila" in nomes and "coleta_eventos" in nomes
+
+
+def test_mercado_e_coleta_sem_delete():
+    """FR-002 (lago permanente): nenhum `.delete(`, `delete(`/`DELETE`/`TRUNCATE` nem
+    `apagar_por_excecao` em `mercado/` e `coleta/`. A limpeza de 90 dias da 021 não se aplica."""
+    achados = []
+    for path in _fontes_026():
+        rel = str(path.relative_to(SRC))
+        tree = ast.parse(path.read_text())
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                f = node.func
+                if isinstance(f, ast.Attribute) and f.attr in ("delete", "apagar_por_excecao",
+                                                               "remove_object", "truncate"):
+                    achados.append(f"{rel}:{node.lineno} .{f.attr}(")
+                elif isinstance(f, ast.Name) and f.id in ("delete", "apagar_por_excecao"):
+                    achados.append(f"{rel}:{node.lineno} {f.id}(")
+            elif isinstance(node, ast.ImportFrom) and node.module and \
+                    node.module.split(".")[0] == "sqlalchemy":
+                achados += [f"{rel}: import {a.name}" for a in node.names if a.name == "delete"]
+        for texto in _strings_de_codigo(tree):
+            if re.search(r"\b(DELETE\s+FROM|TRUNCATE)\b", texto, re.IGNORECASE):
+                achados.append(f"{rel}: {texto.strip()[:40]}")
+    assert not achados, f"mercado/coleta apagam (FR-002): {achados}"
+    # O único delete do storage continua restrito (4.3.0): a 026 não entrou na lista.
+    assert not any(p.parent.name in ("mercado", "coleta") for p in DELETE_PERMITIDO)
+
+
+def test_coleta_portao_global_e_rotas_c():
+    """FR-025: o portão do `scol_` é dependência global do app e as rotas C existem com o
+    `RequireColetor`; as de gestão são de dono humano (ficam em PROIBIDAS no MCP)."""
+    from sociman_api.auth.deps import require_coletor, require_human_owner
+    from sociman_api.coleta import portao
+    from sociman_api.mcp import mapa
+
+    deps = {d.dependency for d in app.router.dependencies}
+    assert portao.dependencia in deps
+    assert set(portao.ROTAS_C) == ROTAS_C_026 | ROTAS_C_LEITURA_026
+    rotas = {r.operation_id: r for r in _rotas_026(app.routes)
+             if getattr(r, "operation_id", None)}
+    for op in ROTAS_C_026:
+        assert op in rotas, op
+        assert require_coletor in _deps_026(rotas[op]), op
+        assert op in mapa.FORA, op
+    from sociman_api.auth.deps import require_user_ou_coletor
+
+    for op in ROTAS_C_LEITURA_026:
+        assert require_user_ou_coletor in _deps_026(rotas[op]), op
+        assert op in mapa.FORA, op
+    for op in mapa.PROIBIDAS:
+        if op.startswith("coleta_"):
+            assert require_human_owner in _deps_026(rotas[op]), op
+
+
+def _rotas_026(rotas) -> list:
+    out = []
+    for r in rotas:
+        if hasattr(r, "original_router"):
+            out += _rotas_026(r.original_router.routes)
+        elif hasattr(r, "dependant"):
+            out.append(r)
+        elif hasattr(r, "routes"):
+            out += _rotas_026(r.routes)
+    return out
+
+
+def _deps_026(rota) -> set:
+    def arvore(dependant) -> set:
+        calls = set()
+        for d in dependant.dependencies:
+            calls.add(d.call)
+            calls |= arvore(d)
+        return calls
+    return arvore(rota.dependant)
+
+
+def test_coleta_token_so_hash():
+    """FR-024: o token do coletor só existe como SHA-256 no banco; nunca entra no histórico nem
+    numa saída da API."""
+    from sociman_api.coleta import schemas
+    from sociman_api.coleta.models import ColetaCliente
+
+    colunas = {c.name for c in ColetaCliente.__table__.columns}
+    assert "token_hash" in colunas and "token" not in colunas
+    assert "token_hash" not in ColetaCliente.__versioned_fields__
+    assert "token" not in schemas.ColetaCliente.model_fields
+    assert set(schemas.ColetaClienteComToken.model_fields) == {"cliente", "token"}
+    texto = (COLETA / "credenciais.py").read_text()
+    assert "sha256" in texto and "compare_digest" in texto
+
+
+def test_mercado_leitura_so_get_e_sem_escrita():
+    """FR-042: as leituras do mercado são GET e os módulos de leitura não gravam (reuso do guarda
+    da 019). Os módulos entram na US1; até lá a lista pode estar vazia."""
+    leitura = [MERCADO / n for n in ("consulta.py", "consulta_detalhe.py", "calculo.py", "filtros.py")
+               if (MERCADO / n).is_file()]
+    for path in leitura:
+        tree = ast.parse(path.read_text())
+        assert not _escritas(tree), f"{path.name} escreve: {_escritas(tree)}"
+        mods = _imports(path)
+        assert not [m for m in mods if m.startswith("sociman_api.history")], path.name
+    rotas = {op.get("operationId", ""): m.upper()
+             for path, ops in app.openapi()["paths"].items() for m, op in ops.items()
+             if path.startswith("/api/mercado") or "/mercado/" in path}
+    escritas = {"mercado_interesses_criar", "mercado_interesses_editar",
+                "mercado_interesses_revert", "mercado_perfil_config_put",
+                "mercado_perfil_config_revert", "mercado_lojas_seguir",
+                "mercado_lojas_deixar_de_seguir", "mercado_produtos_adotar"}
+    outras = {op for op, m in rotas.items() if m != "GET"} - escritas
+    assert not outras, f"rota de mercado que escreve fora da lista (FR-042): {outras}"

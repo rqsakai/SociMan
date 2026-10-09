@@ -99,6 +99,15 @@ _TABLES += ("aprendizado_fonte_temas", "aprendizado_conferencias", "aprendizado_
 # Spec 021: gerações, opções e áudios (o CASCADE cobre o ciclo `escolhido_id` e a FK de
 # `ia_chamadas.geracao_id`).
 _TABLES += ("geracao_candidatos", "geracoes", "audios")
+# Spec 026: o lago, a operação e a infra da coleta (o CASCADE cobre as FKs e os ciclos; os
+# triggers só de inserção não disparam no TRUNCATE). A linha única de `coleta_config` some com o
+# TRUNCATE (sem linha = padrões, desligada).
+_TABLES += ("mercado_perfil_config", "mercado_interesses", "coleta_eventos",
+            "mercado_coleta_itens", "mercado_fila", "mercado_produto_videos", "mercado_avaliacoes",
+            "mercado_ranking_foto_itens", "mercado_ranking_fotos", "mercado_loja_fotos",
+            "mercado_produto_fotos", "mercado_produto_imagens", "mercado_imagens",
+            "mercado_produto_fichas", "mercado_produtos", "mercado_coletas", "mercado_lojas",
+            "mercado_categorias", "coleta_config", "coleta_clientes")
 
 
 @pytest.fixture(autouse=True)
@@ -281,5 +290,18 @@ def mcp_habilitado(monkeypatch: pytest.MonkeyPatch) -> Callable[[bool], None]:
 
     def _set(valor: bool = True) -> None:
         monkeypatch.setattr(get_settings(), "mcp_habilitado", valor)
+
+    return _set
+
+
+# ---- spec 026 ----
+
+@pytest.fixture
+def coleta_habilitada(monkeypatch: pytest.MonkeyPatch) -> Callable[[bool], None]:
+    """Override do nível do servidor do interruptor da coleta (`COLETA_HABILITADA`, FR-033): a
+    stack de teste sobe com `false`; `coleta_habilitada(True)` liga só neste teste."""
+
+    def _set(valor: bool = True) -> None:
+        monkeypatch.setattr(get_settings(), "coleta_habilitada", valor)
 
     return _set

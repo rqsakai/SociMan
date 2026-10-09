@@ -18,7 +18,9 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 - **Cenas:** fundos e ambientes reutilizáveis, com imagem de referência e prompt.
 - **Scripts:** roteiros por cena e por avatar (falas, ações, duração de até 8 s por cena para o Veo/Flow), com status.
 - **Canais-fonte e vídeos:** canais de onde se tiram cortes (com status de direito `autorizado`, `programa-de-cortes`, `pendente` e evidência), vídeos cadastrados e **padrões/configurações de corte** por conta (duração, layout, estilo de legenda e gancho, hashtags).
-- **Produtos (TikTok Shop):** cadastro e descrição de produtos, que a IA escreve via MCP.
+- **Produtos (TikTok Shop):** cadastro e descrição de produtos, que a IA escreve via MCP; e, desde 2026-10-08, a
+  **inteligência de mercado** (cockpit do TikTok Shop: produtos mais vendidos, GMV estimado, novos em alta, alto
+  retorno com poucos afiliados, vídeos virais por nicho e recomendações da IA), coletada pelo próprio SociMan.
 
 ## Integrações
 - **MCP:** ferramentas para a IA cadastrar e buscar (criar descrição de produto, buscar vídeos, cadastrar vídeo para corte, ler o kit de marca). Os limites de escrita ainda precisam ser definidos.
@@ -155,3 +157,24 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    em par, corpo-base e checagem de identidade), vozes do perfil (`vozes`, gravação ou sintética, teste e voz
    padrão do avatar), pessoa real só com consentimento (menor recusado, famoso avisado), looks, poses e
    cenários gerados, e o "Revogar" LGPD só do dono (apaga arquivos e textos, também nas versões antigas).
+26. `026-mercado-shop` 🚧 **implementada na API, no coletor e na SPA** (`specs/026-mercado-shop/`, 2026-10-09; constitution 4.4.0 aplicada; falta com o dono: X1 perfil de Chrome logado, X3 token no desktop, X4 aceite do risco na tela, X6 `uma-vez --limite 1` e a sonda dos campos reais (`INTERCEPTAR`/parsers, `MERCADO_URL_*` no `.env`), X5 systemd; "Adotar no catálogo" fica `passo_indisponivel` até a 012 estar mesclada):
+   o cockpit do TikTok Shop coletado pelo próprio SociMan ("Kalodata caseiro"). Um serviço `coletor` no desktop do dono
+   (Chrome real, perfil dedicado logado na **conta de afiliado do dono**, risco aceito e registrado) navega como pessoa
+   (~300 páginas/dia, 08h-23h, pausas de 5 a 40 s), intercepta a API interna e devolve tudo por uma API de ingestão com
+   token (`scol_`). Lago **global e permanente** (sem perfil, nada apagado, neutro de tenant) com ficha completa, fotos
+   diárias só de inserção (2/dia para quentes e manuais), lojas, rankings, avaliações e vídeos top; interesse por perfil
+   (acompanhamentos com origem, categorias do nicho, vitrine para todos); cálculo na leitura (vendas/dia, GMV estimado,
+   crescimento, novo em alta, retorno por afiliado); telas `/app/mercado`, detalhe do produto, aba Mercado do perfil e
+   `/app/configuracoes/coleta`; "Adotar do mercado" cria o produto da 012.
+27. `027-virais` (futura; depende da 026): vídeos virais por assunto e nicho do perfil (TikTok com a mesma fila e o mesmo
+   coletor, mais o YouTube da 006), velocidade em views/hora, "o que o produto X tem de vídeo", você contra a mediana dos
+   criadores do produto; vídeo viral com produto marcado vira interesse `video`.
+28. `028-recomendacoes-mercado` (futura; depende da 026 e da 027): recomendações da IA (o que gravar, argumentos a partir das
+   avaliações e dos vídeos top) pelo registro da 008 e as tools MCP de leitura `mercado_*`, sempre como proposta (009);
+   alertas na aba Alertas da 019 (comissão mudou, preço caiu, estoque esgotou, produto novo em loja acompanhada, produto
+   promovido em queda, concorrente com poucos afiliados subindo) e a notificação `mercado_novo_em_alta`.
+
+**Multi-tenant (spec futura, sem número ainda; decisão do dono em 2026-10-08):** usuários terão suas contas e itens
+separados. A camada de mercado da 026 nasce neutra de tenant (um lago coletado uma vez, lido por todos); a camada de
+interesse, perfis e contas é a que ganhará `tenant_id`. Hoje qualquer usuário autenticado lê qualquer entidade (padrão do
+repo, com um dono só); essa spec introduz a checagem de acesso por tenant em todas as leituras.

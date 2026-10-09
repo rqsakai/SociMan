@@ -70,7 +70,7 @@ export const abaLabel: Record<AbaAnalytics, string> = {
   curvas: "Curvas",
   contas: "Contas",
   funil: "Funil",
-  mercado: "Mercado",
+  mercado: "Fontes", // spec 026: o YouTube de origem; "Mercado de produtos" é o TikTok Shop
   alertas: "Alertas",
 };
 

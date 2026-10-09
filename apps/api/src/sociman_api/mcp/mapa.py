@@ -46,6 +46,62 @@ _FILTROS_ANALYTICS = ("Filtros opcionais: período (`de`, `ate`), perfil, conta,
                       "Os números são os mesmos da tela de analytics para um membro.")
 
 TOOLS: dict[str, Tool] = {
+    # ---- coleta de mercado (spec 026) ----
+    "coleta_estado": _l("Coleta: estado", "Estado da coleta de mercado do TikTok Shop: ligada "
+                        "ou não, situação (coletando, pausada, fora da janela…), orçamento de "
+                        "páginas e imagens de hoje, rodada atual e eventos recentes. Só informa; "
+                        "ligar, pausar e aceitar o risco são atos do dono."),
+    "mercado_produtos_listar": _l(
+        "Mercado: produtos", "Os produtos do TikTok Shop acompanhados pelo SociMan, com o cartão "
+        "de cada um: preço, comissão, vendas e GMV no período, crescimento, vendas totais, retorno "
+        "por afiliado e nº de criadores. Tudo estimado a partir de fotos diárias das páginas. "
+        "Filtros: período (`de`, `ate`), perfil, categoria, loja, origem, `soAcompanhados`, "
+        "`q`, `ordenar`.", limite_padrao=50),
+    "mercado_produtos_detalhe": _l(
+        "Mercado: detalhe do produto", "A ficha atual (título, descrição, atributos, variantes, "
+        "argumentos, selos), a galeria e o cartão com os números do período."),
+    "mercado_produtos_serie": _l(
+        "Mercado: série do produto", "As fotos diárias de um produto no período e a série de "
+        "vendidos, vendas/dia, preço e criadores. Dias sem foto não aparecem."),
+    "mercado_resumo": _l(
+        "Mercado: resumo", "Os cards do cockpit: mais vendidos, novos em alta, alto retorno com "
+        "poucos afiliados, estado da coleta e totais do período."),
+    "mercado_produtos_fichas": _l(
+        "Mercado: versões da ficha", "As versões da ficha de um produto (título, descrição, "
+        "atributos, variantes, argumentos, selos), da mais nova para a mais antiga, com o que mudou."),
+    "mercado_produtos_rankings": _l(
+        "Mercado: rankings do produto", "As posições do produto nos rankings do Affiliate Center "
+        "no período e, por ranking, posição atual, melhor posição, dias no topo e variação em 7 dias."),
+    "mercado_produtos_videos": _l(
+        "Mercado: vídeos top do produto", "Os vídeos que mais venderam o produto: só o @ público "
+        "do criador e os contadores (views, likes, comentários, compartilhamentos) e a legenda."),
+    "mercado_produtos_avaliacoes": _l(
+        "Mercado: avaliações do produto", "As avaliações públicas: texto, nota, data, variante e "
+        "fotos de clientes; nunca o autor. Resumo por nota. Filtros `nota` e `comFotos`."),
+    "mercado_rankings_listar": _l(
+        "Mercado: rankings", "As fotos dos rankings por categoria do nicho (tipo e janela) e, com "
+        "`categoriaId`, o ranking atual com a variação de posição de cada produto e quem saiu."),
+    "mercado_lojas_listar": _l(
+        "Mercado: lojas", "As lojas dos produtos do lago: nota, seguidores, envio no prazo, nº de "
+        "produtos, GMV estimado, concentração no nº 1, lançamentos em 30 dias e comissão média. "
+        "Filtros: `q`, `oficial`, `seguidaPor`, `ordenarLoja`.", limite_padrao=50),
+    "mercado_lojas_detalhe": _l(
+        "Mercado: detalhe da loja", "O cartão da loja, as fotos diárias, os produtos do lago "
+        "ordenados por GMV e os novos em 30 dias."),
+    "mercado_interesses_listar": _l(
+        "Mercado: acompanhamentos do perfil", "O que um perfil acompanha no TikTok Shop: cada "
+        "interesse com origem (manual, vitrine, ranking, loja, categoria), situação, motivo, nota "
+        "e o cartão do produto. Os de vitrine valem para todos os perfis. Só leitura: acompanhar, "
+        "pausar e encerrar são atos humanos; proponha pela anotação `proposta` no perfil."),
+    "mercado_interesses_listar_todos": _l(
+        "Mercado: acompanhamentos de todos os perfis", "Os interesses de todos os perfis, com "
+        "filtros por perfil, origem e situação.", limite_padrao=100),
+    "mercado_perfil_config_get": _l(
+        "Mercado: configuração do perfil", "As categorias do nicho do perfil, as lojas seguidas, "
+        "o teto diário de acompanhamentos automáticos e quantos nasceram hoje. Só o dono edita."),
+    "mercado_categorias_listar": _l(
+        "Mercado: categorias", "A taxonomia observada na rede (níveis 1 a 3, com o caminho e o "
+        "nº de produtos no lago), para escolher as categorias do nicho."),
     # ---- perfis e contas ----
     "perfis_list": _l("Listar perfis", "Lista os perfis da agência (nicho, idioma, situação e "
                       "redes das contas ativas). Filtre por texto (`q`), situação ou arquivados."),
@@ -313,8 +369,25 @@ _PROIBIDAS_DONO |= {op: "geração local: ato humano (spec 021)" for op in (
     "geracoes_criar", "geracoes_escolher", "geracoes_cancelar", "geracoes_tentar_de_novo",
     "geracoes_gerar_outras", "audios_enviar")}
 
+# Spec 026: a gestão da coleta de mercado (clientes, aceite de risco, interruptor, pausar,
+# continuar, reverts) é só do dono humano (FR-035).
+_PROIBIDAS_COLETA = {op: "gestão da coleta de mercado (só o dono humano, spec 026)" for op in (
+    "coleta_clientes_listar", "coleta_clientes_criar", "coleta_clientes_detalhe",
+    "coleta_clientes_editar", "coleta_clientes_rotacionar", "coleta_clientes_suspender",
+    "coleta_clientes_reativar", "coleta_clientes_revogar", "coleta_clientes_versions",
+    "coleta_config_get", "coleta_config_put", "coleta_config_aceitar_risco",
+    "coleta_config_pausar", "coleta_config_continuar", "coleta_config_versions",
+    "coleta_config_revert")}
+# Spec 026 (FR-039): acompanhar, pausar, encerrar, seguir loja e configurar o nicho são atos
+# humanos; o agente lê e propõe pela anotação. Reverts só do dono.
+_PROIBIDAS_COLETA |= {op: "interesses e configuração de mercado (só humano, spec 026)" for op in (
+    "mercado_interesses_criar", "mercado_interesses_editar", "mercado_interesses_revert",
+    "mercado_perfil_config_put", "mercado_perfil_config_revert", "mercado_lojas_seguir",
+    "mercado_lojas_deixar_de_seguir", "mercado_produtos_adotar")}
+
 PROIBIDAS: dict[str, str] = {**_PROIBIDAS_I, **_PROIBIDAS_II, **_PROIBIDAS_VII,
-                             **_PROIBIDAS_DONO, **_PROIBIDAS_PESSOAS, **_PROIBIDAS_MCP}
+                             **_PROIBIDAS_DONO, **_PROIBIDAS_PESSOAS, **_PROIBIDAS_MCP,
+                             **_PROIBIDAS_COLETA}
 
 _FORA_UPLOAD = {op: "upload ou binário (só pela interface)" for op in (
     "assets_upload", "assets_file_upload", "envios_arquivo", "conteudos_video_proprio",
@@ -360,8 +433,19 @@ _FORA_DONO |= {op: "IA paga ou dado de dono" for op in (
 _FORA_DONO |= {op: "geração local só pela interface no primeiro corte (spec 021)" for op in (
     "geracoes_listar", "geracoes_detalhe", "geracoes_versoes", "audios_detalhe")}
 
+# Spec 026: o protocolo do coletor é do serviço `sociman-coletor` (token `scol_`, nunca MCP);
+# as leituras operacionais da coleta (rodadas, eventos, fila) não têm valor para o agente.
+_FORA_COLETA = {op: "serviço do coletor de mercado (spec 026)" for op in (
+    "coleta_fila", "coleta_coletas_abrir", "coleta_itens_enviar", "coleta_imagens_enviar",
+    "coleta_batimento", "coleta_coletas_fechar", "coleta_eventos_enviar", "coleta_bruto_link")}
+_FORA_COLETA |= {op: "operação da coleta (dado de dono, spec 026)" for op in (
+    "coleta_coletas_listar", "coleta_coletas_detalhe", "coleta_eventos_listar",
+    "coleta_fila_hoje")}
+_FORA_COLETA |= {op: "histórico de versões (spec 026)" for op in (
+    "mercado_interesses_versions", "mercado_perfil_config_versions")}
+
 FORA: dict[str, str] = {**_FORA_UPLOAD, **_FORA_DEPRECATED, **_FORA_INFRA, **_FORA_ESCRITAS,
-                        **_FORA_DONO}
+                        **_FORA_DONO, **_FORA_COLETA}
 
 
 def classificar(operation_id: str) -> Literal["tool", "fora", "proibida"] | None:

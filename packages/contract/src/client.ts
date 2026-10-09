@@ -305,6 +305,49 @@ export type AprendizadoDiagnostico = S["AprendizadoDiagnostico"];
 export type AprendizadoPostDiagnostico = S["AprendizadoPostDiagnostico"];
 export type AprendizadoAfinidade = S["AprendizadoAfinidade"];
 export type AnalyticsMercadoFiltros = NonNullable<paths["/api/analytics/mercado"]["get"]["parameters"]["query"]>;
+// 026-mercado-shop: leitura do mercado (cockpit) e gestão/estado da coleta
+export type MercadoFiltros = NonNullable<paths["/api/mercado/produtos"]["get"]["parameters"]["query"]>;
+export type MercadoSerieFiltros = NonNullable<paths["/api/mercado/produtos/{produto_id}/serie"]["get"]["parameters"]["query"]>;
+export type MercadoNumero = components["schemas"]["Numero"];
+export type MercadoCartaoProduto = components["schemas"]["CartaoProdutoOut"];
+export type MercadoListaProdutos = components["schemas"]["ListaProdutosOut"];
+export type MercadoProdutoDetalhe = components["schemas"]["ProdutoMercadoOut"];
+export type MercadoSerie = components["schemas"]["SerieOut"];
+export type MercadoResumo = components["schemas"]["ResumoOut"];
+export type MercadoContexto = components["schemas"]["ContextoMercado"];
+export type MercadoFicha = components["schemas"]["FichaOut"];
+export type MercadoImagem = components["schemas"]["ImagemOut"];
+export type ColetaEstado = components["schemas"]["EstadoColetaMercado"];
+export type MercadoInteresse = components["schemas"]["InteresseOut"];
+export type MercadoInteressesList = components["schemas"]["InteressesList"];
+export type MercadoInteresseCriarIn = components["schemas"]["InteresseCriarIn"];
+export type MercadoInteresseEditarIn = components["schemas"]["InteresseAtualizarIn"];
+export type MercadoPerfilConfig = components["schemas"]["PerfilConfigOut"];
+export type MercadoPerfilConfigIn = components["schemas"]["PerfilConfigIn"];
+export type MercadoCategoria = components["schemas"]["CategoriaOut"];
+export type MercadoInteressesFiltros = NonNullable<paths["/api/mercado/interesses"]["get"]["parameters"]["query"]>;
+export type MercadoCategoriasFiltros = NonNullable<paths["/api/mercado/categorias"]["get"]["parameters"]["query"]>;
+export type MercadoRankingsProduto = components["schemas"]["RankingsProdutoOut"];
+export type MercadoVideo = components["schemas"]["VideoOut"];
+export type MercadoAvaliacao = components["schemas"]["AvaliacaoOut"];
+export type MercadoAvaliacoesList = components["schemas"]["AvaliacoesList"];
+export type MercadoRankingsListar = components["schemas"]["RankingsListarOut"];
+export type MercadoRankingItem = components["schemas"]["RankingItemOut"];
+export type MercadoCartaoLoja = components["schemas"]["CartaoLojaOut"];
+export type MercadoLojaDetalhe = components["schemas"]["LojaDetalheOut"];
+export type MercadoVideosFiltros = NonNullable<paths["/api/mercado/produtos/{produto_id}/videos"]["get"]["parameters"]["query"]>;
+export type MercadoAvaliacoesFiltros = NonNullable<paths["/api/mercado/produtos/{produto_id}/avaliacoes"]["get"]["parameters"]["query"]>;
+export type MercadoRankingsFiltros = NonNullable<paths["/api/mercado/rankings"]["get"]["parameters"]["query"]>;
+export type MercadoLojasFiltros = NonNullable<paths["/api/mercado/lojas"]["get"]["parameters"]["query"]>;
+export type ColetaConfig = components["schemas"]["ColetaConfig"];
+export type ColetaConfigIn = components["schemas"]["ColetaConfigIn"];
+export type ColetaCliente = components["schemas"]["ColetaCliente"];
+export type ColetaClienteComToken = components["schemas"]["ColetaClienteComToken"];
+export type ColetaCriarClienteIn = components["schemas"]["CriarClienteIn"];
+export type ColetaResumoRodada = components["schemas"]["ColetaResumo"];
+export type ColetaEvento = components["schemas"]["ColetaEventoOut"];
+export type ColetaColetasFiltros = NonNullable<paths["/api/coleta/coletas"]["get"]["parameters"]["query"]>;
+export type ColetaEventosFiltros = NonNullable<paths["/api/coleta/eventos"]["get"]["parameters"]["query"]>;
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -1201,6 +1244,80 @@ export function createApiClient(options: ApiClientOptions = {}) {
       gerarOutras: (geracaoId: string, version: number) =>
         unwrap(client.POST("/api/geracoes/{geracao_id}/gerar-outras", { params: { path: { geracao_id: geracaoId } }, body: { version } })),
       audio: (audioId: string) => unwrap(client.GET("/api/audios/{audio_id}", { params: { path: { audio_id: audioId } } })),
+    },
+    // Mercado do TikTok Shop (spec 026): leitura calculada na hora, só GET, dono e membro.
+    mercado: {
+      produtos: (query: MercadoFiltros = {}) => unwrap(client.GET("/api/mercado/produtos", { params: { query } })),
+      produto: (produtoId: string, query: MercadoFiltros = {}) =>
+        unwrap(client.GET("/api/mercado/produtos/{produto_id}", { params: { path: { produto_id: produtoId }, query } })),
+      serie: (produtoId: string, query: MercadoSerieFiltros = {}) =>
+        unwrap(client.GET("/api/mercado/produtos/{produto_id}/serie", { params: { path: { produto_id: produtoId }, query } })),
+      resumo: (query: MercadoFiltros = {}) => unwrap(client.GET("/api/mercado/resumo", { params: { query } })),
+      // US5: ficha versionada, rankings, vídeos, avaliações, lojas
+      fichas: (produtoId: string) => unwrap(client.GET("/api/mercado/produtos/{produto_id}/fichas", { params: { path: { produto_id: produtoId } } })),
+      rankingsProduto: (produtoId: string, query: MercadoFiltros = {}) =>
+        unwrap(client.GET("/api/mercado/produtos/{produto_id}/rankings", { params: { path: { produto_id: produtoId }, query } })),
+      videos: (produtoId: string, query: MercadoVideosFiltros = {}) =>
+        unwrap(client.GET("/api/mercado/produtos/{produto_id}/videos", { params: { path: { produto_id: produtoId }, query } })),
+      avaliacoes: (produtoId: string, query: MercadoAvaliacoesFiltros = {}) =>
+        unwrap(client.GET("/api/mercado/produtos/{produto_id}/avaliacoes", { params: { path: { produto_id: produtoId }, query } })),
+      rankings: (query: MercadoRankingsFiltros = {}) => unwrap(client.GET("/api/mercado/rankings", { params: { query } })),
+      lojas: (query: MercadoLojasFiltros = {}) => unwrap(client.GET("/api/mercado/lojas", { params: { query } })),
+      loja: (lojaId: string, query: MercadoFiltros = {}) =>
+        unwrap(client.GET("/api/mercado/lojas/{loja_id}", { params: { path: { loja_id: lojaId }, query } })),
+      // US6: adotar no catálogo (só humano; 409 passo_indisponivel sem a spec 012)
+      adotar: (produtoId: string, perfilId: string) =>
+        unwrap(client.POST("/api/mercado/produtos/{produto_id}/adotar", { params: { path: { produto_id: produtoId } }, body: { perfilId } })),
+      // US4: interesses (acompanhamentos), configuração do nicho e categorias
+      interesses: (query: MercadoInteressesFiltros = {}) => unwrap(client.GET("/api/mercado/interesses", { params: { query } })),
+      interesseEditar: (interesseId: string, body: MercadoInteresseEditarIn) =>
+        unwrap(client.PATCH("/api/mercado/interesses/{interesse_id}", { params: { path: { interesse_id: interesseId } }, body })),
+      interesseVersions: (interesseId: string) =>
+        unwrap(client.GET("/api/mercado/interesses/{interesse_id}/versions", { params: { path: { interesse_id: interesseId } } })),
+      interesseRevert: (interesseId: string, body: { version: number; toVersion: number }) =>
+        unwrap(client.POST("/api/mercado/interesses/{interesse_id}/revert", { params: { path: { interesse_id: interesseId } }, body })),
+      categorias: (query: MercadoCategoriasFiltros = {}) => unwrap(client.GET("/api/mercado/categorias", { params: { query } })),
+      perfilInteresses: (perfilId: string, query: { origem?: MercadoInteresse["origem"]; situacao?: MercadoInteresse["situacao"]; limite?: number } = {}) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/mercado/interesses", { params: { path: { perfil_id: perfilId }, query } })),
+      perfilInteresseCriar: (perfilId: string, body: MercadoInteresseCriarIn) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/mercado/interesses", { params: { path: { perfil_id: perfilId } }, body })),
+      perfilConfig: (perfilId: string) => unwrap(client.GET("/api/perfis/{perfil_id}/mercado/config", { params: { path: { perfil_id: perfilId } } })),
+      perfilConfigSalvar: (perfilId: string, body: MercadoPerfilConfigIn) =>
+        unwrap(client.PUT("/api/perfis/{perfil_id}/mercado/config", { params: { path: { perfil_id: perfilId } }, body })),
+      perfilConfigVersions: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/mercado/config/versions", { params: { path: { perfil_id: perfilId } } })),
+      perfilConfigRevert: (perfilId: string, body: { version: number; toVersion: number }) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/mercado/config/revert", { params: { path: { perfil_id: perfilId } }, body })),
+      lojaSeguir: (perfilId: string, lojaId: string, version: number) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/mercado/lojas/{loja_id}/seguir", { params: { path: { perfil_id: perfilId, loja_id: lojaId } }, body: { version } })),
+      lojaDeixarDeSeguir: (perfilId: string, lojaId: string, version: number) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/mercado/lojas/{loja_id}/deixar-de-seguir", { params: { path: { perfil_id: perfilId, loja_id: lojaId } }, body: { version } })),
+    },
+    // Coleta de mercado (spec 026): o estado para todos; a gestão (aceite, interruptor, tokens) só o dono humano.
+    coleta: {
+      estado: () => unwrap(client.GET("/api/coleta/estado")),
+      coletas: (query: ColetaColetasFiltros = {}) => unwrap(client.GET("/api/coleta/coletas", { params: { query } })),
+      coleta: (coletaId: string) =>
+        unwrap(client.GET("/api/coleta/coletas/{coleta_id}", { params: { path: { coleta_id: coletaId } } })),
+      eventos: (query: ColetaEventosFiltros = {}) => unwrap(client.GET("/api/coleta/eventos", { params: { query } })),
+      filaHoje: () => unwrap(client.GET("/api/coleta/fila/hoje")),
+      config: () => unwrap(client.GET("/api/coleta/config")),
+      salvarConfig: (body: ColetaConfigIn) => unwrap(client.PUT("/api/coleta/config", { body })),
+      aceitarRisco: (body: { version: number; textoVersao: string; confirmo: boolean }) =>
+        unwrap(client.POST("/api/coleta/config/aceitar-risco", { body })),
+      pausar: (body: { version: number; horas: number }) => unwrap(client.POST("/api/coleta/config/pausar", { body })),
+      continuar: (version: number) => unwrap(client.POST("/api/coleta/config/continuar", { body: { version } })),
+      configVersions: () => unwrap(client.GET("/api/coleta/config/versions")),
+      clientes: () => unwrap(client.GET("/api/coleta/clientes")),
+      criarCliente: (body: ColetaCriarClienteIn) => unwrap(client.POST("/api/coleta/clientes", { body })),
+      rotacionarCliente: (clienteId: string, version: number) =>
+        unwrap(client.POST("/api/coleta/clientes/{cliente_id}/rotacionar", { params: { path: { cliente_id: clienteId } }, body: { version } })),
+      suspenderCliente: (clienteId: string, version: number) =>
+        unwrap(client.POST("/api/coleta/clientes/{cliente_id}/suspender", { params: { path: { cliente_id: clienteId } }, body: { version } })),
+      reativarCliente: (clienteId: string, version: number) =>
+        unwrap(client.POST("/api/coleta/clientes/{cliente_id}/reativar", { params: { path: { cliente_id: clienteId } }, body: { version } })),
+      revogarCliente: (clienteId: string, version: number) =>
+        unwrap(client.POST("/api/coleta/clientes/{cliente_id}/revogar", { params: { path: { cliente_id: clienteId } }, body: { version } })),
     },
     config: () => unwrap(client.GET("/api/config")),
     health: () => unwrap(client.GET("/api/health")),

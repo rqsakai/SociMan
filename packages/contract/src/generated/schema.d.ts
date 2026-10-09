@@ -1544,6 +1544,443 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/coleta/clientes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clientes Listar */
+        get: operations["coleta_clientes_listar"];
+        put?: never;
+        /**
+         * Clientes Criar
+         * @description Cria o cliente e devolve o token **uma única vez**.
+         */
+        post: operations["coleta_clientes_criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/clientes/{cliente_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clientes Detalhe */
+        get: operations["coleta_clientes_detalhe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Clientes Editar */
+        patch: operations["coleta_clientes_editar"];
+        trace?: never;
+    };
+    "/api/coleta/clientes/{cliente_id}/reativar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clientes Reativar */
+        post: operations["coleta_clientes_reativar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/clientes/{cliente_id}/revogar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clientes Revogar
+         * @description Final: o cliente fica na lista como revogado e nunca volta.
+         */
+        post: operations["coleta_clientes_revogar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/clientes/{cliente_id}/rotacionar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clientes Rotacionar */
+        post: operations["coleta_clientes_rotacionar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/clientes/{cliente_id}/suspender": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clientes Suspender */
+        post: operations["coleta_clientes_suspender"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/clientes/{cliente_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clientes Versions */
+        get: operations["coleta_clientes_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/coletas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coletas Listar */
+        get: operations["coleta_coletas_listar"];
+        put?: never;
+        /** Coletas Abrir */
+        post: operations["coleta_coletas_abrir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/coletas/{coleta_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Coletas Detalhe */
+        get: operations["coleta_coletas_detalhe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/coletas/{coleta_id}/batimento": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Batimento */
+        post: operations["coleta_batimento"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/coletas/{coleta_id}/bruto/{tarefa_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bruto Link */
+        get: operations["coleta_bruto_link"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/coletas/{coleta_id}/fim": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Coletas Fechar */
+        post: operations["coleta_coletas_fechar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/coletas/{coleta_id}/imagens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Imagens Enviar
+         * @description Até 10 arquivos (cada ≤ 5 MB) e o `manifesto` JSON `[{sha256, tarefaId, origem}]`.
+         */
+        post: operations["coleta_imagens_enviar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/coletas/{coleta_id}/itens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Itens Enviar */
+        post: operations["coleta_itens_enviar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Config Get */
+        get: operations["coleta_config_get"];
+        /**
+         * Config Put
+         * @description Ligar sem aceite de risco → 409 `risco_nao_aceito`.
+         */
+        put: operations["coleta_config_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/config/aceitar-risco": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Config Aceitar Risco */
+        post: operations["coleta_config_aceitar_risco"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/config/continuar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Config Continuar
+         * @description Depois de resolver o captcha ou o login na janela do Chrome (FR-018).
+         */
+        post: operations["coleta_config_continuar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/config/pausar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Config Pausar */
+        post: operations["coleta_config_pausar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/config/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Config Revert */
+        post: operations["coleta_config_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/config/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Config Versions */
+        get: operations["coleta_config_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/estado": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Estado
+         * @description O estado da coleta, calculado na hora (o que o membro vê e o card do cockpit).
+         */
+        get: operations["coleta_estado"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/eventos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Eventos Listar */
+        get: operations["coleta_eventos_listar"];
+        put?: never;
+        /** Eventos Enviar */
+        post: operations["coleta_eventos_enviar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/fila": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fila
+         * @description Entrega e reserva as tarefas do dia; com a coleta desligada responde vazia.
+         */
+        get: operations["coleta_fila"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/coleta/fila/hoje": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fila Hoje
+         * @description A fila do dia (o `perfilId` é o operacional da tarefa, não dono do dado).
+         */
+        get: operations["coleta_fila_hoje"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/conexoes/retorno": {
         parameters: {
             query?: never;
@@ -3344,6 +3781,349 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/mercado/categorias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Categorias Listar
+         * @description A taxonomia observada na rede (FR-008), com o nº de produtos no lago por categoria.
+         */
+        get: operations["mercado_categorias_listar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/interesses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Interesses Listar Todos
+         * @description Os acompanhamentos de todos os perfis (aba Acompanhamentos), com filtros.
+         */
+        get: operations["mercado_interesses_listar_todos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/interesses/{interesse_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Interesses Atualizar
+         * @description Pausar, reativar, encerrar ou anotar (qualquer humano; MCP → `somente_humano`).
+         */
+        patch: operations["mercado_interesses_editar"];
+        trace?: never;
+    };
+    "/api/mercado/interesses/{interesse_id}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Interesses Revert
+         * @description Só o dono humano (princípio VII).
+         */
+        post: operations["mercado_interesses_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/interesses/{interesse_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Interesses Versions */
+        get: operations["mercado_interesses_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/lojas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lojas Listar
+         * @description O cartão de cada loja: nota, seguidores, envio no prazo, produtos, GMV estimado,
+         *     concentração, lançamentos e comissão média (FR-049).
+         */
+        get: operations["mercado_lojas_listar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/lojas/{loja_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lojas Detalhe
+         * @description O cartão da loja, as fotos, os produtos do lago e os novos em 30 dias. (O filtro comum
+         *     não serve aqui: o `lojaId` dele colidiria com o parâmetro de caminho.)
+         */
+        get: operations["mercado_lojas_detalhe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/produtos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Produtos Listar
+         * @description O cartão mínimo de cada produto (vendas, GMV, crescimento, comissão, retorno), calculado na
+         *     leitura e marcado como estimado. Paginação no servidor (`cursor`).
+         */
+        get: operations["mercado_produtos_listar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/produtos/{produto_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Produtos Detalhe
+         * @description O cartão, a ficha atual, a galeria e os perfis do usuário para "Acompanhar neste perfil".
+         */
+        get: operations["mercado_produtos_detalhe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/produtos/{produto_id}/adotar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Produtos Adotar
+         * @description Copia a ficha e as imagens para um produto do catálogo do perfil (spec 012) e cria o
+         *     vínculo; 409 `passo_indisponivel` sem a 012, 409 `ja_adotado` com o id existente.
+         */
+        post: operations["mercado_produtos_adotar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/produtos/{produto_id}/avaliacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Produtos Avaliacoes
+         * @description As avaliações públicas, sem autor (FR-010), com as fotos de clientes.
+         */
+        get: operations["mercado_produtos_avaliacoes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/produtos/{produto_id}/fichas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Produtos Fichas
+         * @description As versões da ficha (uma por mudança de conteúdo), com o `diff` em relação à anterior.
+         */
+        get: operations["mercado_produtos_fichas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/produtos/{produto_id}/rankings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Produtos Rankings
+         * @description As posições do produto nos rankings do período e o resumo por ranking (FR-049).
+         */
+        get: operations["mercado_produtos_rankings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/produtos/{produto_id}/serie": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Produtos Serie
+         * @description As fotos do período e a série diária (vendidos, vendas/dia, preço, criadores).
+         */
+        get: operations["mercado_produtos_serie"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/produtos/{produto_id}/videos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Produtos Videos
+         * @description Os vídeos top do produto: só o @ público e contadores (FR-011).
+         */
+        get: operations["mercado_produtos_videos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/rankings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rankings Listar
+         * @description As fotos de ranking do período e, com `categoriaId`, a foto atual com a variação de
+         *     posição contra a anterior.
+         */
+        get: operations["mercado_rankings_listar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/mercado/resumo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Resumo
+         * @description Os cards do Cockpit: mais vendidos, novos em alta, alto retorno com poucos afiliados,
+         *     estado da coleta e totais.
+         */
+        get: operations["mercado_resumo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/metricas/export": {
         parameters: {
             query?: never;
@@ -4278,6 +5058,130 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/perfis/{perfil_id}/mercado/config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Config Ler
+         * @description Categorias do nicho, lojas seguidas e o teto de acompanhamentos automáticos.
+         */
+        get: operations["mercado_perfil_config_get"];
+        /**
+         * Config Atualizar
+         * @description Só o dono humano (FR-037): até 5 categorias da taxonomia observada.
+         */
+        put: operations["mercado_perfil_config_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/mercado/config/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Config Revert
+         * @description Só o dono humano (princípio VII).
+         */
+        post: operations["mercado_perfil_config_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/mercado/config/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Config Versions */
+        get: operations["mercado_perfil_config_versions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/mercado/interesses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Interesses Listar
+         * @description Os acompanhamentos do perfil (com os de vitrine, que valem para todos), com o cartão do
+         *     produto.
+         */
+        get: operations["mercado_interesses_listar"];
+        put?: never;
+        /**
+         * Interesses Criar
+         * @description Acompanhar por link (interesse `manual`) ou "Acompanhar neste perfil" um produto do lago.
+         */
+        post: operations["mercado_interesses_criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/mercado/lojas/{loja_id}/deixar-de-seguir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lojas Deixar */
+        post: operations["mercado_lojas_deixar_de_seguir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/mercado/lojas/{loja_id}/seguir": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Lojas Seguir
+         * @description Qualquer humano (FR-039): a loja entra nas seguidas do perfil; seus produtos novos viram
+         *     acompanhamentos automáticos.
+         */
+        post: operations["mercado_lojas_seguir"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/perfis/{perfil_id}/padroes-corte": {
         parameters: {
             query?: never;
@@ -4557,6 +5461,74 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AbrirColetaIn */
+        AbrirColetaIn: {
+            /** Chromeversao */
+            chromeVersao?: string | null;
+            /** Iniciadaem */
+            iniciadaEm?: string | null;
+            limitesLocais?: components["schemas"]["LimitesLocais"] | null;
+            /**
+             * Protocolo
+             * @default 1
+             */
+            protocolo: number;
+            /** Versaocoletor */
+            versaoColetor: string;
+        };
+        /** AceitarRiscoIn */
+        AceitarRiscoIn: {
+            /** Confirmo */
+            confirmo: boolean;
+            /** Textoversao */
+            textoVersao: string;
+            /** Version */
+            version: number;
+        };
+        /** AdotadoEm */
+        AdotadoEm: {
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /**
+             * Produtoid
+             * Format: uuid
+             */
+            produtoId: string;
+        };
+        /** AdotadoOut */
+        AdotadoOut: {
+            /**
+             * Interesseid
+             * Format: uuid
+             */
+            interesseId: string;
+            /**
+             * Mercadoprodutoid
+             * Format: uuid
+             */
+            mercadoProdutoId: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /**
+             * Produtoid
+             * Format: uuid
+             */
+            produtoId: string;
+        };
+        /** AdotarIn */
+        AdotarIn: {
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+        };
         /**
          * AfinidadeEstado
          * @description Spec 024 (R9): por que a afinidade está neutra (`motivo` null quando ativa).
@@ -6384,6 +7356,83 @@ export interface components {
              */
             tipo: "usuario" | "mcp_client" | "sistema";
         };
+        /**
+         * AvaliacaoOut
+         * @description Nunca `autor_hash`, nome, @ ou foto de perfil (FR-010).
+         */
+        AvaliacaoOut: {
+            /**
+             * Coletadoem
+             * Format: date-time
+             */
+            coletadoEm: string;
+            /** Curtidas */
+            curtidas: number | null;
+            /** Dataavaliacao */
+            dataAvaliacao: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Imagens */
+            imagens: components["schemas"]["ImagemOut"][];
+            /** Nota */
+            nota: number | null;
+            /** Texto */
+            texto: string | null;
+            /** Variante */
+            variante: string | null;
+        };
+        /** AvaliacoesList */
+        AvaliacoesList: {
+            /** Itens */
+            itens: components["schemas"]["AvaliacaoOut"][];
+            /** Proximo */
+            proximo: string | null;
+            resumo: components["schemas"]["AvaliacoesResumo"];
+        };
+        /** AvaliacoesResumo */
+        AvaliacoesResumo: {
+            /** Comfotos */
+            comFotos: number;
+            /** Comtexto */
+            comTexto: number;
+            /** Pornota */
+            porNota: {
+                [key: string]: number;
+            };
+            /** Total */
+            total: number;
+        };
+        /** BatimentoIn */
+        BatimentoIn: {
+            /** Estado */
+            estado?: string | null;
+            /** Imagenshoje */
+            imagensHoje?: number | null;
+            /** Memoriamb */
+            memoriaMb?: number | null;
+            /** Paginashoje */
+            paginasHoje?: number | null;
+            /** Proximaacaoem */
+            proximaAcaoEm?: string | null;
+            /** Tarefaatualid */
+            tarefaAtualId?: string | null;
+        };
+        /** BatimentoOut */
+        BatimentoOut: {
+            /** Continuarem */
+            continuarEm: string | null;
+            limites: components["schemas"]["LimitesColeta"];
+            /** Motivo */
+            motivo?: string | null;
+            orcamento: components["schemas"]["Orcamento"];
+            /** Parar */
+            parar: boolean;
+            /** Pausadaate */
+            pausadaAte: string | null;
+        };
         /** Body_assets_file_upload */
         Body_assets_file_upload: {
             /**
@@ -6424,6 +7473,13 @@ export interface components {
         Body_audios_enviar: {
             /** Arquivo */
             arquivo: string;
+        };
+        /** Body_coleta_imagens_enviar */
+        Body_coleta_imagens_enviar: {
+            /** Arquivos */
+            arquivos: string[];
+            /** Manifesto */
+            manifesto: string;
         };
         /** Body_fontes_upload */
         Body_fontes_upload: {
@@ -6479,6 +7535,21 @@ export interface components {
              * @default []
              */
             arquivos: string[];
+        };
+        /** BrutoLinkOut */
+        BrutoLinkOut: {
+            /** Bytes */
+            bytes: number | null;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Esquemaversao */
+            esquemaVersao: string | null;
+            link: components["schemas"]["ColetaLinkOut"];
+            /** Turno */
+            turno: string | null;
         };
         /** Busca */
         Busca: {
@@ -6587,6 +7658,11 @@ export interface components {
             /** Semdata */
             semData: components["schemas"]["SemData"][];
         };
+        /**
+         * Calor
+         * @enum {string}
+         */
+        Calor: "quente" | "morna" | "parada";
         /**
          * CamposCena
          * @description Os campos de uma proposta de cena (009): subconjunto não vazio de `CenaIn` sem tags nem
@@ -6825,6 +7901,167 @@ export interface components {
              * @default 0.45
              */
             opacidade_fundo: number;
+        };
+        /** CardOut */
+        CardOut: {
+            /** Criterio */
+            criterio?: {
+                [key: string]: unknown;
+            } | null;
+            /** Itens */
+            itens: components["schemas"]["CartaoProdutoOut"][];
+            /** Total */
+            total: number;
+        };
+        /** CartaoLojaOut */
+        CartaoLojaOut: {
+            comissaoMediaBp: components["schemas"]["Numero"];
+            concentracaoTop1: components["schemas"]["Numero"];
+            envioNoPrazoPct: components["schemas"]["Numero"];
+            gmvEstimadoCentavos: components["schemas"]["Numero"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lancamentos30D */
+            lancamentos30d: number;
+            /** Mercado */
+            mercado: string;
+            nProdutos: components["schemas"]["Numero"];
+            /** Nprodutosacompanhados */
+            nProdutosAcompanhados: number;
+            /** Nprodutosnolago */
+            nProdutosNoLago: number;
+            /** Nome */
+            nome: string;
+            nota: components["schemas"]["Numero"];
+            /** Oficial */
+            oficial: boolean;
+            /**
+             * Primeiravezem
+             * Format: date-time
+             */
+            primeiraVezEm: string;
+            rede: components["schemas"]["Platform"];
+            /** Redelojaid */
+            redeLojaId: string;
+            /** Seguidapor */
+            seguidaPor: string[];
+            seguidores: components["schemas"]["Numero"];
+            /** Ultimafotoem */
+            ultimaFotoEm: string | null;
+            /**
+             * Ultimovistoem
+             * Format: date-time
+             */
+            ultimoVistoEm: string;
+            /** Url */
+            url: string | null;
+            vendidosTotal: components["schemas"]["Numero"];
+        };
+        /** CartaoProdutoOut */
+        CartaoProdutoOut: {
+            /** Altoretornopoucosafiliados */
+            altoRetornoPoucosAfiliados: boolean;
+            calor: components["schemas"]["Calor"];
+            categoria: components["schemas"]["CategoriaRef"] | null;
+            comissaoBp: components["schemas"]["Numero"];
+            comissaoPorVendaCentavos: components["schemas"]["Numero"];
+            crescimento: components["schemas"]["Numero"];
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "coletando" | "amostra_pequena" | "ok";
+            /** Fotospordia */
+            fotosPorDia: number;
+            gmvPeriodoCentavos: components["schemas"]["Numero"];
+            gmvTotalCentavos: components["schemas"]["Numero"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Imagemurl */
+            imagemUrl: string | null;
+            /** Indisponiveldesde */
+            indisponivelDesde: string | null;
+            /** Interesses */
+            interesses?: components["schemas"]["InteresseResumo"][];
+            /** Lancadoem */
+            lancadoEm: string | null;
+            loja: components["schemas"]["LojaRef"] | null;
+            /** Mercado */
+            mercado: string;
+            nCriadores: components["schemas"]["Numero"];
+            /** Novoemalta */
+            novoEmAlta: boolean;
+            /** Poucosafiliados */
+            poucosAfiliados: boolean;
+            preco: components["schemas"]["PrecoOut"] | null;
+            /**
+             * Primeiravezem
+             * Format: date-time
+             */
+            primeiraVezEm: string;
+            /** Rankings */
+            rankings?: components["schemas"]["PosicaoRanking"][];
+            rede: components["schemas"]["Platform"];
+            /** Redeprodutoid */
+            redeProdutoId: string;
+            retornoAfiliadoCentavosDia: components["schemas"]["Numero"];
+            saturacao: components["schemas"]["Numero"];
+            /** Titulo */
+            titulo: string | null;
+            /** Ultimafotoaffiliateem */
+            ultimaFotoAffiliateEm: string | null;
+            /** Ultimafotoem */
+            ultimaFotoEm: string | null;
+            /** Urlcanonica */
+            urlCanonica: string;
+            vendasDia: components["schemas"]["Numero"];
+            vendasPeriodo: components["schemas"]["Numero"];
+            vendasTotais: components["schemas"]["Numero"];
+        };
+        /** CategoriaOut */
+        CategoriaOut: {
+            /** Ativa */
+            ativa: boolean;
+            /** Caminho */
+            caminho: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nprodutos */
+            nProdutos: number;
+            /** Nivel */
+            nivel: number;
+            /** Nome */
+            nome: string;
+            /** Paiid */
+            paiId: string | null;
+            /** Redecategoriaid */
+            redeCategoriaId: string;
+        };
+        /** CategoriaRef */
+        CategoriaRef: {
+            /** Caminho */
+            caminho: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nome */
+            nome: string;
+        };
+        /** CategoriasList */
+        CategoriasList: {
+            /** Itens */
+            itens: components["schemas"]["CategoriaOut"][];
         };
         /** CelulaMapa */
         CelulaMapa: {
@@ -7271,6 +8508,27 @@ export interface components {
             /** Nome */
             nome: string;
         };
+        /** ClienteResumo */
+        ClienteResumo: {
+            /** Chromeversao */
+            chromeVersao: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Mercado */
+            mercado: string;
+            /** Nome */
+            nome: string;
+            situacao: components["schemas"]["ColetaSituacao"];
+            /** Tokenid */
+            tokenId: string;
+            /** Ultimocontatoem */
+            ultimoContatoEm: string | null;
+            /** Versaocoletor */
+            versaoColetor: string | null;
+        };
         /** ClientesList */
         ClientesList: {
             /** Clientes */
@@ -7304,6 +8562,61 @@ export interface components {
             /** Vazias */
             vazias?: components["schemas"]["PublicoVaziaCobertura"][];
         };
+        /** ColetaCliente */
+        ColetaCliente: {
+            /** Chromeversao */
+            chromeVersao: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Descricao */
+            descricao: string;
+            /** Expiraem */
+            expiraEm: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Limiteporminuto */
+            limitePorMinuto: number;
+            /** Mercado */
+            mercado: string;
+            /** Nome */
+            nome: string;
+            rede: components["schemas"]["Platform"];
+            /** Revogadoem */
+            revogadoEm: string | null;
+            revogadoPor: components["schemas"]["UserRef"] | null;
+            situacao: components["schemas"]["ColetaSituacao"];
+            /**
+             * Tokenemitidoem
+             * Format: date-time
+             */
+            tokenEmitidoEm: string;
+            /** Tokenid */
+            tokenId: string;
+            /** Ultimocontatoem */
+            ultimoContatoEm: string | null;
+            /** Versaocoletor */
+            versaoColetor: string | null;
+            /** Version */
+            version: number;
+        };
+        /** ColetaClienteComToken */
+        ColetaClienteComToken: {
+            cliente: components["schemas"]["ColetaCliente"];
+            /** Token */
+            token: string;
+        };
+        /** ColetaClientesList */
+        ColetaClientesList: {
+            /** Itens */
+            itens: components["schemas"]["ColetaCliente"][];
+        };
         /** ColetaCobertura */
         ColetaCobertura: {
             /**
@@ -7316,6 +8629,348 @@ export interface components {
              * Format: date
              */
             primeiroDiaCoberto: string;
+        };
+        /** ColetaConfig */
+        ColetaConfig: {
+            /** Continuarem */
+            continuarEm: string | null;
+            /** Habilitada */
+            habilitada: boolean;
+            /** Imagensdia */
+            imagensDia: number;
+            /** Imagensporproduto */
+            imagensPorProduto: number;
+            /** Itensporcoleta */
+            itensPorColeta: number;
+            /** Janelafim */
+            janelaFim: number;
+            /** Janelainicio */
+            janelaInicio: number;
+            /** Paginasdia */
+            paginasDia: number;
+            /** Pausamaxs */
+            pausaMaxS: number;
+            /** Pausamins */
+            pausaMinS: number;
+            /** Pausadaate */
+            pausadaAte: string | null;
+            /** Riscoaceito */
+            riscoAceito: boolean;
+            /** Riscoaceitoem */
+            riscoAceitoEm: string | null;
+            riscoAceitoPor: components["schemas"]["UserRef"] | null;
+            /** Riscotextoversao */
+            riscoTextoVersao: string | null;
+            /** Servidorhabilitado */
+            servidorHabilitado: boolean;
+            /** Textorisco */
+            textoRisco: string;
+            /** Updatedat */
+            updatedAt: string | null;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Version */
+            version: number;
+        };
+        /** ColetaConfigIn */
+        ColetaConfigIn: {
+            /** Habilitada */
+            habilitada: boolean;
+            /**
+             * Imagensdia
+             * @default 1500
+             */
+            imagensDia: number;
+            /**
+             * Imagensporproduto
+             * @default 9
+             */
+            imagensPorProduto: number;
+            /**
+             * Itensporcoleta
+             * @default 40
+             */
+            itensPorColeta: number;
+            /**
+             * Janelafim
+             * @default 23
+             */
+            janelaFim: number;
+            /**
+             * Janelainicio
+             * @default 8
+             */
+            janelaInicio: number;
+            /**
+             * Paginasdia
+             * @default 300
+             */
+            paginasDia: number;
+            /**
+             * Pausamaxs
+             * @default 40
+             */
+            pausaMaxS: number;
+            /**
+             * Pausamins
+             * @default 5
+             */
+            pausaMinS: number;
+            /** Version */
+            version: number;
+        };
+        /** ColetaDetalhe */
+        ColetaDetalhe: {
+            /**
+             * Batimentoem
+             * Format: date-time
+             */
+            batimentoEm: string;
+            /** Chromeversao */
+            chromeVersao: string | null;
+            /**
+             * Clienteid
+             * Format: uuid
+             */
+            clienteId: string;
+            estado: components["schemas"]["ColetaEstado"];
+            /** Eventos */
+            eventos: components["schemas"]["ColetaEventoOut"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Imagens */
+            imagens: number;
+            /**
+             * Iniciadaem
+             * Format: date-time
+             */
+            iniciadaEm: string;
+            /** Itens */
+            itens: components["schemas"]["ColetaItemOut"][];
+            /** Itenserro */
+            itensErro: number;
+            /** Itensok */
+            itensOk: number;
+            /** Itensrepetidos */
+            itensRepetidos: number;
+            /** Mercado */
+            mercado: string;
+            /** Paginas */
+            paginas: number;
+            /** Protocolo */
+            protocolo: number;
+            rede: components["schemas"]["Platform"];
+            /** Resumo */
+            resumo: {
+                [key: string]: unknown;
+            };
+            /** Tarefaatualid */
+            tarefaAtualId: string | null;
+            /** Terminadaem */
+            terminadaEm: string | null;
+            /** Versaocoletor */
+            versaoColetor: string;
+        };
+        /**
+         * ColetaEstado
+         * @enum {string}
+         */
+        ColetaEstado: "ativa" | "pausada_captcha" | "pausada_login" | "interrompida" | "encerrada" | "abortada";
+        /** ColetaEventoOut */
+        ColetaEventoOut: {
+            /**
+             * Clienteid
+             * Format: uuid
+             */
+            clienteId: string;
+            /** Coletaid */
+            coletaId: string | null;
+            /** Detalhe */
+            detalhe: {
+                [key: string]: unknown;
+            };
+            /** Id */
+            id: number;
+            /** Notificado */
+            notificado: boolean;
+            /**
+             * Ocorreuem
+             * Format: date-time
+             */
+            ocorreuEm: string;
+            /**
+             * Recebidoem
+             * Format: date-time
+             */
+            recebidoEm: string;
+            /** Tarefaid */
+            tarefaId: string | null;
+            tipo: components["schemas"]["EventoTipo"];
+        };
+        /** ColetaItemOut */
+        ColetaItemOut: {
+            /** Brutobytes */
+            brutoBytes: number | null;
+            /** Brutopendente */
+            brutoPendente: boolean;
+            /**
+             * Coletadoem
+             * Format: date-time
+             */
+            coletadoEm: string;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Duracaoms */
+            duracaoMs: number | null;
+            /** Errocampo */
+            erroCampo: string | null;
+            /** Errocodigo */
+            erroCodigo: string | null;
+            /** Fonte */
+            fonte: string | null;
+            /** Id */
+            id: number;
+            /**
+             * Recebidoem
+             * Format: date-time
+             */
+            recebidoEm: string;
+            status: components["schemas"]["ItemStatus"];
+            /** Tarefaid */
+            tarefaId: string | null;
+            /** Tipo */
+            tipo: string;
+            /** Turno */
+            turno: string | null;
+        };
+        /** ColetaLinkOut */
+        ColetaLinkOut: {
+            /** Expiresat */
+            expiresAt: string | null;
+            /** Url */
+            url: string;
+        };
+        /** ColetaOut */
+        ColetaOut: {
+            /**
+             * Batimentoem
+             * Format: date-time
+             */
+            batimentoEm: string;
+            /** Chromeversao */
+            chromeVersao: string | null;
+            /**
+             * Clienteid
+             * Format: uuid
+             */
+            clienteId: string;
+            estado: components["schemas"]["ColetaEstado"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Imagens */
+            imagens: number;
+            /**
+             * Iniciadaem
+             * Format: date-time
+             */
+            iniciadaEm: string;
+            /** Itenserro */
+            itensErro: number;
+            /** Itensok */
+            itensOk: number;
+            /** Itensrepetidos */
+            itensRepetidos: number;
+            /** Mercado */
+            mercado: string;
+            /** Paginas */
+            paginas: number;
+            /** Protocolo */
+            protocolo: number;
+            rede: components["schemas"]["Platform"];
+            /** Resumo */
+            resumo: {
+                [key: string]: unknown;
+            };
+            /** Tarefaatualid */
+            tarefaAtualId: string | null;
+            /** Terminadaem */
+            terminadaEm: string | null;
+            /** Versaocoletor */
+            versaoColetor: string;
+        };
+        /** ColetaResumo */
+        ColetaResumo: {
+            /**
+             * Batimentoem
+             * Format: date-time
+             */
+            batimentoEm: string;
+            /**
+             * Clienteid
+             * Format: uuid
+             */
+            clienteId: string;
+            estado: components["schemas"]["ColetaEstado"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Imagens */
+            imagens: number;
+            /**
+             * Iniciadaem
+             * Format: date-time
+             */
+            iniciadaEm: string;
+            /** Itenserro */
+            itensErro: number;
+            /** Itensok */
+            itensOk: number;
+            /** Itensrepetidos */
+            itensRepetidos: number;
+            /** Paginas */
+            paginas: number;
+            /** Resumo */
+            resumo: {
+                [key: string]: unknown;
+            };
+            /** Terminadaem */
+            terminadaEm: string | null;
+            /** Versaocoletor */
+            versaoColetor: string;
+        };
+        /** ColetaRevertIn */
+        ColetaRevertIn: {
+            /** Toversion */
+            toVersion: number;
+            /** Version */
+            version: number;
+        };
+        /**
+         * ColetaSituacao
+         * @enum {string}
+         */
+        ColetaSituacao: "ativo" | "suspenso" | "revogado";
+        /** ColetaVersionIn */
+        ColetaVersionIn: {
+            /** Version */
+            version: number;
+        };
+        /** ColetasList */
+        ColetasList: {
+            /** Itens */
+            itens: components["schemas"]["ColetaResumo"][];
+            /** Proximo */
+            proximo: string | null;
         };
         /** Colunas */
         Colunas: {
@@ -7758,6 +9413,44 @@ export interface components {
             postsNoPeriodo: number;
             studio: components["schemas"]["ContextoStudio"];
         };
+        /** ContextoMercado */
+        ContextoMercado: {
+            /**
+             * Anteriorate
+             * Format: date
+             */
+            anteriorAte: string;
+            /**
+             * Anteriorde
+             * Format: date
+             */
+            anteriorDe: string;
+            /**
+             * Ate
+             * Format: date
+             */
+            ate: string;
+            /** Constantes */
+            constantes: {
+                [key: string]: unknown;
+            };
+            /**
+             * De
+             * Format: date
+             */
+            de: string;
+            /** Fuso */
+            fuso: string;
+            /**
+             * Geradoem
+             * Format: date-time
+             */
+            geradoEm: string;
+            /** Mercado */
+            mercado: string;
+            /** Perfilid */
+            perfilId: string | null;
+        };
         /**
          * ContextoStudio
          * @description Spec 020: dias distintos do período em que alguma série usou o histórico do Studio.
@@ -7767,6 +9460,11 @@ export interface components {
             dias: number;
             /** Series */
             series: number;
+        };
+        /** ContinuarIn */
+        ContinuarIn: {
+            /** Version */
+            version: number;
         };
         /** Cor */
         Cor: {
@@ -8066,6 +9764,30 @@ export interface components {
         CriadorOut: {
             criador: components["schemas"]["Criador"];
         };
+        /** CriarClienteIn */
+        CriarClienteIn: {
+            /**
+             * Descricao
+             * @default
+             */
+            descricao: string;
+            /** Expiraem */
+            expiraEm?: string | null;
+            /**
+             * Limiteporminuto
+             * @default 120
+             */
+            limitePorMinuto: number;
+            /**
+             * Mercado
+             * @default BR
+             */
+            mercado: string;
+            /** Nome */
+            nome: string;
+            /** @default tiktok */
+            rede: components["schemas"]["Platform"];
+        };
         /** Curva */
         Curva: {
             /** Conta */
@@ -8284,6 +10006,20 @@ export interface components {
             /** Porconta */
             porConta: components["schemas"]["ViewsConta"][];
         };
+        /** DiariaOut */
+        DiariaOut: {
+            comissaoBp: components["schemas"]["Numero"];
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            nCriadores: components["schemas"]["Numero"];
+            /** Precomincentavos */
+            precoMinCentavos: number | null;
+            vendasDia: components["schemas"]["Numero"];
+            vendidos: components["schemas"]["Numero"];
+        };
         /**
          * DireitoEnvio
          * @description O direito do canal no momento do envio, ou `avulso` (princípio II).
@@ -8335,6 +10071,19 @@ export interface components {
             q3: number | null;
             /** Rotulo */
             rotulo: string;
+        };
+        /** EditarClienteIn */
+        EditarClienteIn: {
+            /** Descricao */
+            descricao?: string | null;
+            /** Expiraem */
+            expiraEm?: string | null;
+            /** Limiteporminuto */
+            limitePorMinuto?: number | null;
+            /** Nome */
+            nome?: string | null;
+            /** Version */
+            version: number;
         };
         /** EixoRadar */
         EixoRadar: {
@@ -8644,6 +10393,41 @@ export interface components {
             /** Videos */
             videos: number;
         };
+        /** EstadoColetaMercado */
+        EstadoColetaMercado: {
+            /** Clientes */
+            clientes: components["schemas"]["ClienteResumo"][];
+            /** Continuarem */
+            continuarEm: string | null;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Eventosrecentes */
+            eventosRecentes: components["schemas"]["ColetaEventoOut"][];
+            /** Fuso */
+            fuso: string;
+            /** Habilitada */
+            habilitada: boolean;
+            hoje: components["schemas"]["HojeResumo"];
+            janela: components["schemas"]["Janela"];
+            orcamento: components["schemas"]["Orcamento"];
+            /** Pausadaate */
+            pausadaAte: string | null;
+            /** Riscoaceito */
+            riscoAceito: boolean;
+            rodadaAtual: components["schemas"]["ColetaResumo"] | null;
+            /** Servidorhabilitado */
+            servidorHabilitado: boolean;
+            /**
+             * Situacao
+             * @enum {string}
+             */
+            situacao: "desligada_no_servidor" | "desligada" | "aceite_pendente" | "pausada" | "aguardando_continuar" | "fora_da_janela" | "ociosa" | "coletando" | "pausada_captcha" | "pausada_login" | "sem_cliente" | "parada";
+            /** Ultimoresultadoem */
+            ultimoResultadoEm: string | null;
+        };
         /**
          * EstadoEfetivo
          * @enum {string}
@@ -8670,6 +10454,42 @@ export interface components {
             perdas: components["schemas"]["Perda"][];
             /** Tempomedianoh */
             tempoMedianoH: number | null;
+        };
+        /** EventoIn */
+        EventoIn: {
+            /** Coletaid */
+            coletaId?: string | null;
+            /** Detalhe */
+            detalhe?: {
+                [key: string]: unknown;
+            };
+            /** Ocorreuem */
+            ocorreuEm?: string | null;
+            /** Tarefaid */
+            tarefaId?: string | null;
+            tipo: components["schemas"]["EventoTipo"];
+        };
+        /** EventoOut */
+        EventoOut: {
+            coleta: components["schemas"]["ColetaOut"] | null;
+            /** Eventoid */
+            eventoId: number;
+            /** Notificado */
+            notificado: boolean;
+            /** Pausadaate */
+            pausadaAte: string | null;
+        };
+        /**
+         * EventoTipo
+         * @enum {string}
+         */
+        EventoTipo: "captcha" | "login_perdido" | "bloqueio_suspeito" | "layout_mudou" | "parar_local" | "retomou" | "iniciado" | "parado";
+        /** EventosList */
+        EventosList: {
+            /** Itens */
+            itens: components["schemas"]["ColetaEventoOut"][];
+            /** Proximo */
+            proximo: string | null;
         };
         /** Exemplo */
         Exemplo: {
@@ -8760,6 +10580,105 @@ export interface components {
              */
             fonte: "studio";
         };
+        /** FichaOut */
+        FichaOut: {
+            /** Argumentos */
+            argumentos: string[];
+            /** Atributos */
+            atributos: {
+                [key: string]: unknown;
+            }[];
+            categoria: components["schemas"]["CategoriaRef"] | null;
+            /**
+             * Coletadoem
+             * Format: date-time
+             */
+            coletadoEm: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Descricao */
+            descricao: string;
+            /** Diff */
+            diff?: {
+                [key: string]: unknown;
+            } | null;
+            /** Esquemaversao */
+            esquemaVersao: string;
+            /** Hashconteudo */
+            hashConteudo: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Imagens */
+            imagens: components["schemas"]["ImagemOut"][];
+            loja: components["schemas"]["LojaRef"] | null;
+            /** Selos */
+            selos: string[];
+            /** Titulo */
+            titulo: string;
+            /** Variantes */
+            variantes: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** FichasList */
+        FichasList: {
+            /** Itens */
+            itens: components["schemas"]["FichaOut"][];
+        };
+        /**
+         * FilaEstado
+         * @enum {string}
+         */
+        FilaEstado: "pendente" | "reservada" | "recebida" | "falhou" | "expirada";
+        /** FilaHojeOut */
+        FilaHojeOut: {
+            /** Itens */
+            itens: components["schemas"]["TarefaFila"][];
+            /** Porestado */
+            porEstado: {
+                [key: string]: number;
+            };
+            /** Pornivel */
+            porNivel: {
+                [key: string]: number;
+            };
+        };
+        /** FilaOut */
+        FilaOut: {
+            /**
+             * Agoraservidor
+             * Format: date-time
+             */
+            agoraServidor: string;
+            /** Continuarem */
+            continuarEm: string | null;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Desligadanoservidor */
+            desligadaNoServidor: boolean;
+            /** Fuso */
+            fuso: string;
+            /** Habilitada */
+            habilitada: boolean;
+            janela: components["schemas"]["Janela"];
+            limites: components["schemas"]["LimitesColeta"];
+            /** Motivovazia */
+            motivoVazia?: ("desligada" | "fora_da_janela" | "pausada" | "orcamento" | "nada_a_coletar" | "aguardando_continuar") | null;
+            orcamento: components["schemas"]["Orcamento"];
+            /** Pausadaate */
+            pausadaAte: string | null;
+            /** Tarefas */
+            tarefas: components["schemas"]["TarefaOut"][];
+        };
         /** FilePatch */
         FilePatch: {
             /** Label */
@@ -8780,6 +10699,24 @@ export interface components {
          * @enum {string}
          */
         FileRole: "referencia" | "pose" | "arquivo";
+        /** FimIn */
+        FimIn: {
+            /** Imagens */
+            imagens?: number | null;
+            /**
+             * Motivo
+             * @enum {string}
+             */
+            motivo: "fila_vazia" | "orcamento" | "fora_da_janela" | "parar_local" | "servico_parado" | "erro_interno" | "pausa_vencida" | "limite";
+            /** Paginas */
+            paginas?: number | null;
+            /** Portipo */
+            porTipo?: {
+                [key: string]: number;
+            };
+            /** Terminadaem */
+            terminadaEm?: string | null;
+        };
         /** FontOption */
         FontOption: {
             /** Family */
@@ -8882,6 +10819,101 @@ export interface components {
             videos: number | null;
             /** Views */
             views: number | null;
+        };
+        /** FotoLojaOut */
+        FotoLojaOut: {
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Envionoprazopct */
+            envioNoPrazoPct: number | null;
+            /** Fonte */
+            fonte: string;
+            /** Nprodutos */
+            nProdutos: number | null;
+            /** Nota */
+            nota: number | null;
+            /** Seguidores */
+            seguidores: number | null;
+            /** Temporespostapct */
+            tempoRespostaPct: number | null;
+            /** Vendidostotal */
+            vendidosTotal: number | null;
+            /** Vendidostotalexato */
+            vendidosTotalExato: boolean | null;
+            /** Vendidostotalmax */
+            vendidosTotalMax: number | null;
+            /** Vendidostotalmin */
+            vendidosTotalMin: number | null;
+        };
+        /** FotoOut */
+        FotoOut: {
+            /** Brutopendente */
+            brutoPendente: boolean;
+            /** Comissaobp */
+            comissaoBp: number | null;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Disponivel */
+            disponivel: boolean;
+            /** Estoquevisivel */
+            estoqueVisivel: number | null;
+            /** Fonte */
+            fonte: string;
+            /** Moeda */
+            moeda: string;
+            /** Navaliacoes */
+            nAvaliacoes: number | null;
+            /** Ncriadores */
+            nCriadores: number | null;
+            /** Nota */
+            nota: number | null;
+            /** Precomaxcentavos */
+            precoMaxCentavos: number | null;
+            /** Precomincentavos */
+            precoMinCentavos: number | null;
+            /** Precooriginalcentavos */
+            precoOriginalCentavos: number | null;
+            /** Turno */
+            turno: string;
+            /** Vendas30D */
+            vendas30d?: number | null;
+            /** Vendas7D */
+            vendas7d?: number | null;
+            /** Vendidos */
+            vendidos: number | null;
+            /** Vendidosexato */
+            vendidosExato: boolean | null;
+            /** Vendidosmax */
+            vendidosMax: number | null;
+            /** Vendidosmin */
+            vendidosMin: number | null;
+        };
+        /** FotoRankingOut */
+        FotoRankingOut: {
+            categoria: components["schemas"]["CategoriaRef"] | null;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Fonte */
+            fonte: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Janela */
+            janela: string;
+            /** Nitens */
+            nItens: number;
+            tipo: components["schemas"]["RankingTipo"];
         };
         /** FotoVideo */
         FotoVideo: {
@@ -9435,6 +11467,25 @@ export interface components {
         GuiaOut: {
             guia: components["schemas"]["Guia"];
         };
+        /** HojeResumo */
+        HojeResumo: {
+            /** Expiradas */
+            expiradas: number;
+            /** Falhadas */
+            falhadas: number;
+            /** Gravados */
+            gravados: number;
+            /** Invalidos */
+            invalidos: number;
+            /** Pendentes */
+            pendentes: number;
+            /** Recebidas */
+            recebidas: number;
+            /** Repetidos */
+            repetidos: number;
+            /** Tarefas */
+            tarefas: number;
+        };
         /** HookIn */
         HookIn: {
             /** Hooktext */
@@ -9612,6 +11663,46 @@ export interface components {
             /** Width */
             width: number;
         };
+        /** ImagemOut */
+        ImagemOut: {
+            /** Bytes */
+            bytes: number;
+            /** Contenttype */
+            contentType: string;
+            /** Height */
+            height: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            original: components["schemas"]["MercadoLinkOut"];
+            /** Posicao */
+            posicao: number;
+            /** Sha256 */
+            sha256: string;
+            /** Url */
+            url: string;
+            /** Width */
+            width: number;
+        };
+        /** ImagemRecusada */
+        ImagemRecusada: {
+            /** Motivo */
+            motivo: string;
+            /** Sha256 */
+            sha256: string;
+        };
+        /** ImagensOut */
+        ImagensOut: {
+            /** Aceitas */
+            aceitas: string[];
+            orcamento: components["schemas"]["OrcamentoImagens"];
+            /** Recusadas */
+            recusadas: components["schemas"]["ImagemRecusada"][];
+            /** Repetidas */
+            repetidas: string[];
+        };
         /** Importacao */
         Importacao: {
             /**
@@ -9764,6 +11855,35 @@ export interface components {
             /** Valor */
             valor: number | null;
         };
+        /**
+         * IntegracaoColeta
+         * @description Spec 026 (FR-036): o estado da coleta de mercado, calculado na hora, sem segredo.
+         */
+        IntegracaoColeta: {
+            /** Clientes */
+            clientes: number;
+            /** Habilitada */
+            habilitada: boolean;
+            /**
+             * Hd
+             * @enum {string}
+             */
+            hd: "ok" | "indisponivel";
+            /** Imagenshoje */
+            imagensHoje: number;
+            /** Paginashoje */
+            paginasHoje: number;
+            /** Riscoaceito */
+            riscoAceito: boolean;
+            /** Rodadaatual */
+            rodadaAtual: string | null;
+            /** Servidorhabilitado */
+            servidorHabilitado: boolean;
+            /** Situacao */
+            situacao: string;
+            /** Ultimocontatoem */
+            ultimoContatoEm: string | null;
+        };
         /** IntegracaoGeracao */
         IntegracaoGeracao: {
             /**
@@ -9799,6 +11919,7 @@ export interface components {
              * @enum {string}
              */
             claude: "ok" | "ausente";
+            coleta: components["schemas"]["IntegracaoColeta"];
             cotaYoutube: components["schemas"]["CotaYoutube"];
             geracao: components["schemas"]["IntegracaoGeracao"];
             /**
@@ -9811,6 +11932,185 @@ export interface components {
              * @enum {string}
              */
             youtube: "ok" | "ausente" | "invalida";
+        };
+        /** InteresseAtualizarIn */
+        InteresseAtualizarIn: {
+            /** Nota */
+            nota?: string | null;
+            situacao?: components["schemas"]["InteresseSituacao"] | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * InteresseCriarIn
+         * @description Um link colado (`url`) ou um produto do lago (`mercadoProdutoId`); um dos dois.
+         */
+        InteresseCriarIn: {
+            /** Mercadoprodutoid */
+            mercadoProdutoId?: string | null;
+            /**
+             * Nota
+             * @default
+             */
+            nota: string;
+            /** Url */
+            url?: string | null;
+        };
+        /** InteresseDoUsuario */
+        InteresseDoUsuario: {
+            /** Interesseid */
+            interesseId: string | null;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Perfilnome */
+            perfilNome: string;
+        };
+        /**
+         * InteresseOrigem
+         * @enum {string}
+         */
+        InteresseOrigem: "manual" | "vitrine" | "ranking" | "video" | "loja" | "categoria";
+        /** InteresseOut */
+        InteresseOut: {
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            createdBy: components["schemas"]["UserRef"] | null;
+            /** Encerradoem */
+            encerradoEm: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Mercadoprodutoid
+             * Format: uuid
+             */
+            mercadoProdutoId: string;
+            /** Motivo */
+            motivo: {
+                [key: string]: unknown;
+            };
+            /** Nota */
+            nota: string;
+            origem: components["schemas"]["InteresseOrigem"];
+            /** Pausadoem */
+            pausadoEm: string | null;
+            /** Perfilid */
+            perfilId: string | null;
+            produto: components["schemas"]["CartaoProdutoOut"] | null;
+            /** Produtoid */
+            produtoId: string | null;
+            situacao: components["schemas"]["InteresseSituacao"];
+            /** Temaid */
+            temaId: string | null;
+            /** Todososperfis */
+            todosOsPerfis: boolean;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Version */
+            version: number;
+        };
+        /** InteresseResumo */
+        InteresseResumo: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            origem: components["schemas"]["InteresseOrigem"];
+            /** Perfilid */
+            perfilId: string | null;
+            situacao: components["schemas"]["InteresseSituacao"];
+        };
+        /** InteresseRevertIn */
+        InteresseRevertIn: {
+            /** Toversion */
+            toVersion: number;
+            /** Version */
+            version: number;
+        };
+        /**
+         * InteresseSituacao
+         * @enum {string}
+         */
+        InteresseSituacao: "ativo" | "pausado" | "encerrado";
+        /** InteressesList */
+        InteressesList: {
+            /** Itens */
+            itens: components["schemas"]["InteresseOut"][];
+            /** Total */
+            total: number;
+        };
+        /** ItemIn */
+        ItemIn: {
+            /** Bruto */
+            bruto?: string | null;
+            /** Campos */
+            campos?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Coletadoem
+             * Format: date-time
+             */
+            coletadoEm: string;
+            /** Duracaoms */
+            duracaoMs?: number | null;
+            /** Errocodigo */
+            erroCodigo?: string | null;
+            /** Esquemaversao */
+            esquemaVersao?: string | null;
+            /** Fonte */
+            fonte?: ("pagina_publica" | "affiliate" | "ambas") | null;
+            /** Imagens */
+            imagens?: string[];
+            /** Reprocessadode */
+            reprocessadoDe?: number | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "erro" | "captcha";
+            /**
+             * Tarefaid
+             * Format: uuid
+             */
+            tarefaId: string;
+        };
+        /**
+         * ItemStatus
+         * @enum {string}
+         */
+        ItemStatus: "gravado" | "repetido" | "invalido" | "erro" | "captcha";
+        /** ItensIn */
+        ItensIn: {
+            /** Itens */
+            itens: components["schemas"]["ItemIn"][];
+        };
+        /** ItensOut */
+        ItensOut: {
+            /**
+             * Coletaid
+             * Format: uuid
+             */
+            coletaId: string;
+            orcamento: components["schemas"]["Orcamento"];
+            /** Parar */
+            parar: boolean;
+            /** Pausadaate */
+            pausadaAte: string | null;
+            /** Resultados */
+            resultados: components["schemas"]["ResultadoItem"][];
         };
         /** JaCortado */
         JaCortado: {
@@ -9841,6 +12141,15 @@ export interface components {
             importacaoId: string;
             /** Por */
             por: string;
+        };
+        /** Janela */
+        Janela: {
+            /** Dentro */
+            dentro: boolean;
+            /** Fim */
+            fim: number;
+            /** Inicio */
+            inicio: number;
         };
         /** Kit */
         Kit: {
@@ -10012,6 +12321,30 @@ export interface components {
             /** Umalinha */
             umaLinha: boolean;
         };
+        /** LimitesColeta */
+        LimitesColeta: {
+            /** Imagensdia */
+            imagensDia: number;
+            /** Imagensporproduto */
+            imagensPorProduto: number;
+            /** Itensporcoleta */
+            itensPorColeta: number;
+            /** Leasemin */
+            leaseMin: number;
+            /** Paginasdia */
+            paginasDia: number;
+            /** Pausamaxs */
+            pausaMaxS: number;
+            /** Pausamins */
+            pausaMinS: number;
+        };
+        /** LimitesLocais */
+        LimitesLocais: {
+            /** Imagensdia */
+            imagensDia?: number | null;
+            /** Paginasdia */
+            paginasDia?: number | null;
+        };
         /** LinhaAmostra */
         LinhaAmostra: {
             /** Comments */
@@ -10063,12 +12396,98 @@ export interface components {
             /** Url */
             url: string;
         };
+        /** ListaProdutosOut */
+        ListaProdutosOut: {
+            contexto: components["schemas"]["ContextoMercado"];
+            /** Itens */
+            itens: components["schemas"]["CartaoProdutoOut"][];
+            /** Proximo */
+            proximo: string | null;
+            /** Total */
+            total: number;
+        };
         /** LoginIn */
         LoginIn: {
             /** Email */
             email: string;
             /** Password */
             password: string;
+        };
+        /** LojaDetalheOut */
+        LojaDetalheOut: {
+            comissaoMediaBp: components["schemas"]["Numero"];
+            concentracaoTop1: components["schemas"]["Numero"];
+            contexto: components["schemas"]["ContextoMercado"];
+            envioNoPrazoPct: components["schemas"]["Numero"];
+            /** Fotos */
+            fotos: components["schemas"]["FotoLojaOut"][];
+            gmvEstimadoCentavos: components["schemas"]["Numero"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Lancamentos30D */
+            lancamentos30d: number;
+            /** Mercado */
+            mercado: string;
+            nProdutos: components["schemas"]["Numero"];
+            /** Nprodutosacompanhados */
+            nProdutosAcompanhados: number;
+            /** Nprodutosnolago */
+            nProdutosNoLago: number;
+            /** Nome */
+            nome: string;
+            nota: components["schemas"]["Numero"];
+            /** Novos30D */
+            novos30d: components["schemas"]["CartaoProdutoOut"][];
+            /** Oficial */
+            oficial: boolean;
+            /**
+             * Primeiravezem
+             * Format: date-time
+             */
+            primeiraVezEm: string;
+            /** Produtos */
+            produtos: components["schemas"]["CartaoProdutoOut"][];
+            rede: components["schemas"]["Platform"];
+            /** Redelojaid */
+            redeLojaId: string;
+            /** Seguidapor */
+            seguidaPor: string[];
+            seguidores: components["schemas"]["Numero"];
+            /** Ultimafotoem */
+            ultimaFotoEm: string | null;
+            /**
+             * Ultimovistoem
+             * Format: date-time
+             */
+            ultimoVistoEm: string;
+            /** Url */
+            url: string | null;
+            vendidosTotal: components["schemas"]["Numero"];
+        };
+        /** LojaRef */
+        LojaRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nome */
+            nome: string;
+            /** Oficial */
+            oficial: boolean;
+        };
+        /** LojasList */
+        LojasList: {
+            contexto: components["schemas"]["ContextoMercado"];
+            /** Itens */
+            itens: components["schemas"]["CartaoLojaOut"][];
+            /** Proximo */
+            proximo: string | null;
+            /** Total */
+            total: number;
         };
         /** LoteAprovarIn */
         LoteAprovarIn: {
@@ -10293,6 +12712,13 @@ export interface components {
             /** Valor */
             valor: number | null;
         };
+        /** MercadoLinkOut */
+        MercadoLinkOut: {
+            /** Expiresat */
+            expiresAt: string | null;
+            /** Url */
+            url: string;
+        };
         /** MercadoOut */
         MercadoOut: {
             /** Canais */
@@ -10340,7 +12766,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video" | "cena_tomada" | "audio";
+            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video" | "cena_tomada" | "audio" | "mercado_imagem" | "mercado_bruto";
         };
         /** MidiaLink */
         MidiaLink: {
@@ -10448,13 +12874,39 @@ export interface components {
          * NotificacaoTipo
          * @enum {string}
          */
-        NotificacaoTipo: "envio_pronto" | "envio_sem_clipes" | "envio_falhou" | "envio_confirmar_qualidade" | "envio_momentos" | "openshorts_fora" | "hora_de_postar" | "cota_youtube" | "canal_erro" | "aprovacao_pedida" | "aprovacao_respondida" | "rascunho_criado" | "envio_publicado" | "envio_rede_falhou" | "envio_aguardando_vaga" | "conexao_precisa_reconectar" | "post_detectado" | "vinculo_a_confirmar";
+        NotificacaoTipo: "envio_pronto" | "envio_sem_clipes" | "envio_falhou" | "envio_confirmar_qualidade" | "envio_momentos" | "openshorts_fora" | "hora_de_postar" | "cota_youtube" | "canal_erro" | "aprovacao_pedida" | "aprovacao_respondida" | "rascunho_criado" | "envio_publicado" | "envio_rede_falhou" | "envio_aguardando_vaga" | "conexao_precisa_reconectar" | "post_detectado" | "vinculo_a_confirmar" | "coleta_captcha" | "coleta_login" | "coleta_bloqueio" | "coleta_layout" | "coleta_parada" | "mercado_interesse_auto";
         /** NotificacoesList */
         NotificacoesList: {
             /** Items */
             items: components["schemas"]["Notificacao"][];
             /** Naolidas */
             naoLidas: number;
+        };
+        /** Numero */
+        Numero: {
+            /**
+             * Amostrapequena
+             * @default false
+             */
+            amostraPequena: boolean;
+            /**
+             * Estimado
+             * @default true
+             */
+            estimado: boolean;
+            /** Max */
+            max?: number | null;
+            /** Min */
+            min?: number | null;
+            /** Motivos */
+            motivos?: string[];
+            /**
+             * Nfotos
+             * @default 0
+             */
+            nFotos: number;
+            /** Valor */
+            valor: number | null;
         };
         /** OQueFuncionaOut */
         OQueFuncionaOut: {
@@ -10610,6 +13062,24 @@ export interface components {
             /** Views */
             views: number | null;
         };
+        /** Orcamento */
+        Orcamento: {
+            /** Imagenshoje */
+            imagensHoje: number;
+            /** Imagensrestantes */
+            imagensRestantes: number;
+            /** Paginashoje */
+            paginasHoje: number;
+            /** Paginasrestantes */
+            paginasRestantes: number;
+        };
+        /** OrcamentoImagens */
+        OrcamentoImagens: {
+            /** Imagenshoje */
+            imagensHoje: number;
+            /** Imagensrestantes */
+            imagensRestantes: number;
+        };
         /** Ordem */
         Ordem: {
             /** Fileids */
@@ -10712,6 +13182,13 @@ export interface components {
             /** Texto */
             texto: string;
         };
+        /** PausarIn */
+        PausarIn: {
+            /** Horas */
+            horas: number;
+            /** Version */
+            version: number;
+        };
         /** Pedido */
         Pedido: {
             /**
@@ -10791,6 +13268,54 @@ export interface components {
             name: string;
             /** Slug */
             slug: string;
+        };
+        /** PerfilConfigIn */
+        PerfilConfigIn: {
+            /**
+             * Avisarnovoemalta
+             * @default true
+             */
+            avisarNovoEmAlta: boolean;
+            /** Categoriaids */
+            categoriaIds?: string[];
+            /**
+             * Maxrelacionadosdia
+             * @default 10
+             */
+            maxRelacionadosDia: number;
+            /** Mercado */
+            mercado?: string | null;
+            /** Version */
+            version: number;
+        };
+        /** PerfilConfigOut */
+        PerfilConfigOut: {
+            /** Avisarnovoemalta */
+            avisarNovoEmAlta: boolean;
+            /** Categoriaids */
+            categoriaIds: string[];
+            /** Categorias */
+            categorias: components["schemas"]["CategoriaRef"][];
+            /** Lojasseguidas */
+            lojasSeguidas: components["schemas"]["LojaRef"][];
+            /** Maxrelacionadosdia */
+            maxRelacionadosDia: number;
+            /** Maximocategorias */
+            maximoCategorias: number;
+            /** Mercado */
+            mercado: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Relacionadoshoje */
+            relacionadosHoje: number;
+            /** Updatedat */
+            updatedAt: string | null;
+            updatedBy: components["schemas"]["UserRef"] | null;
+            /** Version */
+            version: number;
         };
         /** PerfilDetail */
         PerfilDetail: {
@@ -10880,6 +13405,48 @@ export interface components {
             /** Y */
             y: number;
         };
+        /** PosicaoRanking */
+        PosicaoRanking: {
+            /** Categoriaid */
+            categoriaId: string | null;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Janela */
+            janela: string;
+            /** Posicao */
+            posicao: number;
+            tipo: components["schemas"]["RankingTipo"];
+            /** Variacao7D */
+            variacao7d?: number | null;
+        };
+        /** PosicaoRankingItem */
+        PosicaoRankingItem: {
+            categoria: components["schemas"]["CategoriaRef"] | null;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Fonte */
+            fonte: string;
+            /** Janela */
+            janela: string;
+            /** Posicao */
+            posicao: number;
+            /**
+             * Rankingfotoid
+             * Format: uuid
+             */
+            rankingFotoId: string;
+            tipo: components["schemas"]["RankingTipo"];
+            /** Valorexibido */
+            valorExibido: string | null;
+            /** Valornum */
+            valorNum: number | null;
+        };
         /**
          * PostResumo
          * @description Um post analisado, resumido para listas (principais, alertas).
@@ -10920,6 +13487,22 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** PrecoOut */
+        PrecoOut: {
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Maxcentavos */
+            maxCentavos: number | null;
+            /** Mincentavos */
+            minCentavos: number | null;
+            /** Moeda */
+            moeda: string;
+            /** Originalcentavos */
+            originalCentavos: number | null;
+        };
         /** Previa */
         Previa: {
             /** Inelegiveis */
@@ -10957,6 +13540,80 @@ export interface components {
             publico?: components["schemas"]["SecaoPublicoPrevia"][];
             /** Secoes */
             secoes: components["schemas"]["SecaoPrevia"][];
+        };
+        /** ProdutoMercadoOut */
+        ProdutoMercadoOut: {
+            /** Adotadoem */
+            adotadoEm: components["schemas"]["AdotadoEm"][];
+            /** Altoretornopoucosafiliados */
+            altoRetornoPoucosAfiliados: boolean;
+            calor: components["schemas"]["Calor"];
+            categoria: components["schemas"]["CategoriaRef"] | null;
+            comissaoBp: components["schemas"]["Numero"];
+            comissaoPorVendaCentavos: components["schemas"]["Numero"];
+            contexto: components["schemas"]["ContextoMercado"];
+            crescimento: components["schemas"]["Numero"];
+            /**
+             * Estado
+             * @enum {string}
+             */
+            estado: "coletando" | "amostra_pequena" | "ok";
+            ficha: components["schemas"]["FichaOut"] | null;
+            /** Fotospordia */
+            fotosPorDia: number;
+            /** Galeria */
+            galeria: components["schemas"]["ImagemOut"][];
+            gmvPeriodoCentavos: components["schemas"]["Numero"];
+            gmvTotalCentavos: components["schemas"]["Numero"];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Imagemurl */
+            imagemUrl: string | null;
+            /** Indisponiveldesde */
+            indisponivelDesde: string | null;
+            /** Interesses */
+            interesses?: components["schemas"]["InteresseResumo"][];
+            /** Interessesdousuario */
+            interessesDoUsuario: components["schemas"]["InteresseDoUsuario"][];
+            /** Lancadoem */
+            lancadoEm: string | null;
+            loja: components["schemas"]["LojaRef"] | null;
+            /** Mercado */
+            mercado: string;
+            nCriadores: components["schemas"]["Numero"];
+            /** Nfichas */
+            nFichas: number;
+            /** Novoemalta */
+            novoEmAlta: boolean;
+            /** Poucosafiliados */
+            poucosAfiliados: boolean;
+            preco: components["schemas"]["PrecoOut"] | null;
+            /**
+             * Primeiravezem
+             * Format: date-time
+             */
+            primeiraVezEm: string;
+            /** Rankings */
+            rankings?: components["schemas"]["PosicaoRanking"][];
+            rede: components["schemas"]["Platform"];
+            /** Redeprodutoid */
+            redeProdutoId: string;
+            retornoAfiliadoCentavosDia: components["schemas"]["Numero"];
+            saturacao: components["schemas"]["Numero"];
+            /** Titulo */
+            titulo: string | null;
+            /** Ultimafotoaffiliateem */
+            ultimaFotoAffiliateEm: string | null;
+            /** Ultimafotoem */
+            ultimaFotoEm: string | null;
+            /** Urlcanonica */
+            urlCanonica: string;
+            vendasDia: components["schemas"]["Numero"];
+            vendasPeriodo: components["schemas"]["Numero"];
+            vendasTotais: components["schemas"]["Numero"];
         };
         /** PromptOut */
         PromptOut: {
@@ -11331,6 +13988,67 @@ export interface components {
             /** Rotulo */
             rotulo: string;
         };
+        /** RankingAtualOut */
+        RankingAtualOut: {
+            /** Anteriordatalocal */
+            anteriorDataLocal: string | null;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Itens */
+            itens: components["schemas"]["RankingItemOut"][];
+            /**
+             * Rankingfotoid
+             * Format: uuid
+             */
+            rankingFotoId: string;
+            /** Sairam */
+            sairam: components["schemas"]["RankingSaiuOut"][];
+        };
+        /** RankingItemOut */
+        RankingItemOut: {
+            /** Delta */
+            delta: number | null;
+            /** Posicao */
+            posicao: number;
+            produto: components["schemas"]["CartaoProdutoOut"];
+            /** Valorexibido */
+            valorExibido: string | null;
+            /** Valornum */
+            valorNum: number | null;
+            /**
+             * Variacao
+             * @enum {string}
+             */
+            variacao: "subiu" | "caiu" | "igual" | "novo";
+        };
+        /** RankingSaiuOut */
+        RankingSaiuOut: {
+            produto: components["schemas"]["CartaoProdutoOut"];
+            /** Ultimaposicao */
+            ultimaPosicao: number;
+        };
+        /**
+         * RankingTipo
+         * @enum {string}
+         */
+        RankingTipo: "mais_vendidos" | "em_alta" | "novos" | "alta_comissao";
+        /** RankingsListarOut */
+        RankingsListarOut: {
+            atual: components["schemas"]["RankingAtualOut"] | null;
+            contexto: components["schemas"]["ContextoMercado"];
+            /** Fotos */
+            fotos: components["schemas"]["FotoRankingOut"][];
+        };
+        /** RankingsProdutoOut */
+        RankingsProdutoOut: {
+            /** Itens */
+            itens: components["schemas"]["PosicaoRankingItem"][];
+            /** Resumo */
+            resumo: components["schemas"]["ResumoRankingOut"][];
+        };
         /** ReagendarIn */
         ReagendarIn: {
             /** Antecedenciamin */
@@ -11421,6 +14139,48 @@ export interface components {
             custo: number;
             existente: components["schemas"]["Existente"] | null;
         };
+        /** ResultadoItem */
+        ResultadoItem: {
+            /**
+             * Brutopendente
+             * @default false
+             */
+            brutoPendente: boolean;
+            /** Datalocal */
+            dataLocal?: string | null;
+            /** Errocampo */
+            erroCampo?: string | null;
+            /** Errocodigo */
+            erroCodigo?: string | null;
+            /**
+             * Fichanova
+             * @default false
+             */
+            fichaNova: boolean;
+            /** Imagenspendentes */
+            imagensPendentes?: string[];
+            status: components["schemas"]["ItemStatus"];
+            /**
+             * Tarefaid
+             * Format: uuid
+             */
+            tarefaId: string;
+            /** Tentativas */
+            tentativas?: number | null;
+            /** Turno */
+            turno?: string | null;
+            /** Voltaparafila */
+            voltaParaFila?: boolean | null;
+        };
+        /** ResumoOut */
+        ResumoOut: {
+            altoRetornoPoucosAfiliados: components["schemas"]["CardOut"];
+            contexto: components["schemas"]["ContextoMercado"];
+            estadoColeta: components["schemas"]["EstadoColetaMercado"];
+            maisVendidos: components["schemas"]["CardOut"];
+            novosEmAlta: components["schemas"]["CardOut"];
+            totais: components["schemas"]["TotaisOut"];
+        };
         /** ResumoPerfil */
         ResumoPerfil: {
             /** Chamadas */
@@ -11428,6 +14188,33 @@ export interface components {
             /** Custousd */
             custoUsd: number;
             perfil: components["schemas"]["PerfilRef"];
+        };
+        /** ResumoRankingOut */
+        ResumoRankingOut: {
+            categoria: components["schemas"]["CategoriaRef"] | null;
+            /** Categoriaid */
+            categoriaId: string | null;
+            /** Diasnotopo */
+            diasNoTopo: number;
+            /** Entrouem */
+            entrouEm: string | null;
+            /** Janela */
+            janela: string;
+            /** Melhorposicao */
+            melhorPosicao: number | null;
+            /** Posicaoatual */
+            posicaoAtual: number | null;
+            /** Saiuem */
+            saiuEm: string | null;
+            tipo: components["schemas"]["RankingTipo"];
+            /** Variacao7D */
+            variacao7d?: number | null;
+        };
+        /** ResumoSerie */
+        ResumoSerie: {
+            crescimento: components["schemas"]["Numero"];
+            gmvPeriodoCentavos: components["schemas"]["Numero"];
+            vendasPeriodo: components["schemas"]["Numero"];
         };
         /** ResumoTipo */
         ResumoTipo: {
@@ -11603,6 +14390,11 @@ export interface components {
             /** Nextcursor */
             nextCursor: string | null;
         };
+        /** SeguirLojaIn */
+        SeguirLojaIn: {
+            /** Version */
+            version: number;
+        };
         /**
          * Selecao
          * @description Só nas `sugestoes`: marcados e ainda não aplicados, e os mostrados e não marcados.
@@ -11720,6 +14512,29 @@ export interface components {
             inicio: string;
             modo: components["schemas"]["Modo"];
         };
+        /** SerieOut */
+        SerieOut: {
+            /**
+             * Ate
+             * Format: date
+             */
+            ate: string;
+            /**
+             * De
+             * Format: date
+             */
+            de: string;
+            /** Diaria */
+            diaria: components["schemas"]["DiariaOut"][];
+            /** Fotos */
+            fotos: components["schemas"]["FotoOut"][];
+            /**
+             * Produtoid
+             * Format: uuid
+             */
+            produtoId: string;
+            resumo: components["schemas"]["ResumoSerie"];
+        };
         /** SetPasswordIn */
         SetPasswordIn: {
             /** Provisionalpassword */
@@ -11817,6 +14632,85 @@ export interface components {
             count: number;
             /** Tag */
             tag: string;
+        };
+        /** TarefaFila */
+        TarefaFila: {
+            /** Chave */
+            chave: string;
+            /**
+             * Criadaem
+             * Format: date-time
+             */
+            criadaEm: string;
+            /** Errocodigo */
+            erroCodigo: string | null;
+            estado: components["schemas"]["FilaEstado"];
+            /** Extra */
+            extra: {
+                [key: string]: unknown;
+            };
+            /** Fonte */
+            fonte: string;
+            /** Mercado */
+            mercado: string;
+            /** Nivel */
+            nivel: number;
+            /** Perfilid */
+            perfilId: string | null;
+            /** Prioridade */
+            prioridade: number;
+            /** Produtoid */
+            produtoId: string | null;
+            /** Recebidaem */
+            recebidaEm: string | null;
+            rede: components["schemas"]["Platform"];
+            /** Reservadaate */
+            reservadaAte: string | null;
+            resultadoStatus: components["schemas"]["ItemStatus"] | null;
+            /**
+             * Tarefaid
+             * Format: uuid
+             */
+            tarefaId: string;
+            /** Tentativas */
+            tentativas: number;
+            /** Tipo */
+            tipo: string;
+            /** Turno */
+            turno: string | null;
+            /** Url */
+            url: string;
+        };
+        /** TarefaOut */
+        TarefaOut: {
+            /** Chave */
+            chave: string;
+            /** Extra */
+            extra: {
+                [key: string]: unknown;
+            };
+            /** Fonte */
+            fonte: string;
+            /** Mercado */
+            mercado: string;
+            /** Nivel */
+            nivel: number;
+            /** Prioridade */
+            prioridade: number;
+            rede: components["schemas"]["Platform"];
+            /** Reservadaate */
+            reservadaAte: string | null;
+            /**
+             * Tarefaid
+             * Format: uuid
+             */
+            tarefaId: string;
+            /** Tipo */
+            tipo: string;
+            /** Turno */
+            turno: string | null;
+            /** Url */
+            url: string;
         };
         /**
          * TemaCasado
@@ -12037,6 +14931,21 @@ export interface components {
         TomadasList: {
             /** Items */
             items: components["schemas"]["Tomada"][];
+        };
+        /** TotaisOut */
+        TotaisOut: {
+            /** Acompanhados */
+            acompanhados: number;
+            /** Amostrapequena */
+            amostraPequena: number;
+            /** Coletando */
+            coletando: number;
+            gmvPeriodoCentavos: components["schemas"]["Numero"];
+            /** Ok */
+            ok: number;
+            /** Produtos */
+            produtos: number;
+            vendasPeriodo: components["schemas"]["Numero"];
         };
         /** TotaisSeguidores */
         TotaisSeguidores: {
@@ -12512,6 +15421,37 @@ export interface components {
          * @enum {string}
          */
         VideoLive: "nenhum" | "ao_vivo" | "agendado";
+        /**
+         * VideoOut
+         * @description Só o @ público e contadores (FR-011): nada mais sobre a pessoa.
+         */
+        VideoOut: {
+            /** Autorhandle */
+            autorHandle: string;
+            /** Comentarios */
+            comentarios: number | null;
+            /** Compartilhamentos */
+            compartilhamentos: number | null;
+            /**
+             * Datalocal
+             * Format: date
+             */
+            dataLocal: string;
+            /** Legenda */
+            legenda: string | null;
+            /** Likes */
+            likes: number | null;
+            /** Posicao */
+            posicao: number | null;
+            /** Publicadoem */
+            publicadoEm: string | null;
+            /** Redevideoid */
+            redeVideoId: string;
+            /** Url */
+            url: string | null;
+            /** Views */
+            views: number | null;
+        };
         /** VideoResumo */
         VideoResumo: {
             conta: components["schemas"]["ContaRef"] | null;
@@ -12685,6 +15625,13 @@ export interface components {
         sociman_api__mcp__schemas__VersionIn: {
             /** Version */
             version: number;
+        };
+        /** VideosList */
+        sociman_api__mercado__schemas__VideosList: {
+            /** Itens */
+            itens: components["schemas"]["VideoOut"][];
+            /** Proximo */
+            proximo: string | null;
         };
         /** VideosList */
         sociman_api__metricas__schemas__VideosList: {
@@ -18815,6 +21762,1962 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_clientes_listar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaClientesList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_clientes_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CriarClienteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaClienteComToken"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_clientes_detalhe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaCliente"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_clientes_editar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EditarClienteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaCliente"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_clientes_reativar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColetaVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaCliente"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_clientes_revogar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColetaVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaCliente"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_clientes_rotacionar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColetaVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaClienteComToken"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_clientes_suspender: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColetaVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaCliente"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_clientes_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cliente_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_coletas_listar: {
+        parameters: {
+            query?: {
+                estado?: components["schemas"]["ColetaEstado"] | null;
+                de?: string | null;
+                ate?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetasList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_coletas_abrir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AbrirColetaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Upgrade Required */
+            426: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_coletas_detalhe: {
+        parameters: {
+            query?: {
+                itensLimite?: number;
+            };
+            header?: never;
+            path: {
+                coleta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaDetalhe"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_batimento: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coleta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatimentoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatimentoOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Upgrade Required */
+            426: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_bruto_link: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coleta_id: string;
+                tarefa_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrutoLinkOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Upgrade Required */
+            426: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_coletas_fechar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coleta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FimIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Upgrade Required */
+            426: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_imagens_enviar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coleta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_coleta_imagens_enviar"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImagensOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Upgrade Required */
+            426: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_itens_enviar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                coleta_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItensIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItensOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Upgrade Required */
+            426: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaConfig"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_config_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColetaConfigIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaConfig"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_config_aceitar_risco: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AceitarRiscoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaConfig"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_config_continuar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContinuarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaConfig"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_config_pausar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PausarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaConfig"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_config_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ColetaRevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ColetaConfig"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_config_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_estado: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstadoColetaMercado"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_eventos_listar: {
+        parameters: {
+            query?: {
+                tipo?: components["schemas"]["EventoTipo"] | null;
+                de?: string | null;
+                ate?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventosList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_eventos_enviar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EventoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Upgrade Required */
+            426: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_fila: {
+        parameters: {
+            query?: {
+                limite?: number;
+                simular?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilaOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Upgrade Required */
+            426: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    coleta_fila_hoje: {
+        parameters: {
+            query?: {
+                estado?: components["schemas"]["FilaEstado"] | null;
+                tipo?: string | null;
+                perfilId?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilaHojeOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -26144,6 +31047,1170 @@ export interface operations {
             };
         };
     };
+    mercado_categorias_listar: {
+        parameters: {
+            query?: {
+                mercado?: string;
+                nivel?: number | null;
+                q?: string | null;
+                soAtivas?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoriasList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_interesses_listar_todos: {
+        parameters: {
+            query?: {
+                perfilId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"] | null;
+                situacao?: components["schemas"]["InteresseSituacao"] | null;
+                limite?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InteressesList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_interesses_editar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interesse_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InteresseAtualizarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InteresseOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_interesses_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interesse_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InteresseRevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InteresseOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_interesses_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                interesse_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_lojas_listar: {
+        parameters: {
+            query?: {
+                oficial?: boolean | null;
+                seguidaPor?: string | null;
+                ordenarLoja?: string;
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                categoriaId?: string | null;
+                lojaId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"][] | null;
+                soAcompanhados?: boolean;
+                q?: string | null;
+                ordenar?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LojasList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_lojas_detalhe: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+            };
+            header?: never;
+            path: {
+                loja_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LojaDetalheOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_produtos_listar: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                categoriaId?: string | null;
+                lojaId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"][] | null;
+                soAcompanhados?: boolean;
+                q?: string | null;
+                ordenar?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListaProdutosOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_produtos_detalhe: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                categoriaId?: string | null;
+                lojaId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"][] | null;
+                soAcompanhados?: boolean;
+                q?: string | null;
+                ordenar?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProdutoMercadoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_produtos_adotar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdotarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdotadoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_produtos_avaliacoes: {
+        parameters: {
+            query?: {
+                nota?: number | null;
+                comFotos?: boolean | null;
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                categoriaId?: string | null;
+                lojaId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"][] | null;
+                soAcompanhados?: boolean;
+                q?: string | null;
+                ordenar?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvaliacoesList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_produtos_fichas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FichasList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_produtos_rankings: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                categoriaId?: string | null;
+                lojaId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"][] | null;
+                soAcompanhados?: boolean;
+                q?: string | null;
+                ordenar?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RankingsProdutoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_produtos_serie: {
+        parameters: {
+            query?: {
+                fonte?: ("pagina_publica" | "affiliate") | null;
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                categoriaId?: string | null;
+                lojaId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"][] | null;
+                soAcompanhados?: boolean;
+                q?: string | null;
+                ordenar?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SerieOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_produtos_videos: {
+        parameters: {
+            query?: {
+                todasObservacoes?: boolean;
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                categoriaId?: string | null;
+                lojaId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"][] | null;
+                soAcompanhados?: boolean;
+                q?: string | null;
+                ordenar?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                produto_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["sociman_api__mercado__schemas__VideosList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_rankings_listar: {
+        parameters: {
+            query?: {
+                tipo?: components["schemas"]["RankingTipo"] | null;
+                janela?: string | null;
+                fonte?: ("pagina_publica" | "affiliate") | null;
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                categoriaId?: string | null;
+                lojaId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"][] | null;
+                soAcompanhados?: boolean;
+                q?: string | null;
+                ordenar?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RankingsListarOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_resumo: {
+        parameters: {
+            query?: {
+                de?: string | null;
+                ate?: string | null;
+                perfilId?: string | null;
+                mercado?: string | null;
+                rede?: components["schemas"]["Platform"] | null;
+                categoriaId?: string | null;
+                lojaId?: string | null;
+                origem?: components["schemas"]["InteresseOrigem"][] | null;
+                soAcompanhados?: boolean;
+                q?: string | null;
+                ordenar?: string | null;
+                limite?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResumoOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     metricas_export: {
         parameters: {
             query?: {
@@ -30857,6 +36924,541 @@ export interface operations {
             };
             /** @description Insufficient Storage */
             507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_perfil_config_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilConfigOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_perfil_config_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PerfilConfigIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilConfigOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_perfil_config_revert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InteresseRevertIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilConfigOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_perfil_config_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_interesses_listar: {
+        parameters: {
+            query?: {
+                origem?: components["schemas"]["InteresseOrigem"] | null;
+                situacao?: components["schemas"]["InteresseSituacao"] | null;
+                limite?: number;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InteressesList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_interesses_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InteresseCriarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InteresseOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_lojas_deixar_de_seguir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+                loja_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeguirLojaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilConfigOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    mercado_lojas_seguir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+                loja_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SeguirLojaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilConfigOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

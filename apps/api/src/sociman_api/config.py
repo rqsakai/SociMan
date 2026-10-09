@@ -122,6 +122,21 @@ class Settings(BaseSettings):
     geracao_comfyui_teto_s: float = Field(1200, gt=0)
     agendador_geracao_limpeza_s: float = Field(3600, gt=0)
 
+    # Coleta de mercado (spec 026, princípio IX): o nível do servidor do interruptor (o outro é
+    # o botão da tela), a trilha `mercado`, o pepper do hash dos autores de avaliação (segredo
+    # do `.env` da raiz, gerado pelo dono, nunca impresso), o bucket do bruto e a versão do
+    # protocolo que a API fala com o `sociman-coletor`.
+    coleta_habilitada: bool = False
+    # Spec 026 (princípio IX): o servidor não cita endereços da rede em código; as bases das URLs
+    # das tarefas (rankings, vitrine, categorias, lojas, vídeos) vêm daqui, preenchidas pelo dono
+    # depois da sonda com o coletor. Vazias = essas tarefas não nascem (produtos continuam).
+    mercado_url_publica: str = ""
+    mercado_url_affiliate: str = ""
+    agendador_mercado_s: float = Field(300, gt=0)
+    mercado_hash_pepper: SecretStr = SecretStr("")
+    s3_mercado_bucket: str = "sociman-mercado"
+    coleta_protocolo: int = 1
+
     @field_validator("mcp_origens_permitidas", mode="before")
     @classmethod
     def _origens(cls, value: object) -> object:

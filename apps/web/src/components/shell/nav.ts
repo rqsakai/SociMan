@@ -1,4 +1,4 @@
-import { Bot, CalendarDays, ChartColumn, ChartLine, CircleUser, Clapperboard, Film, FolderInput, House, Inbox, LayoutGrid, Lightbulb, Scissors, Send, Settings, ShieldCheck, Sparkles, Tv, Users, WandSparkles, type LucideIcon } from "lucide-react";
+import { Bot, CalendarDays, ChartColumn, ChartLine, CircleUser, Clapperboard, Film, FolderInput, House, Inbox, LayoutGrid, Lightbulb, Radar, Scissors, Send, Settings, ShieldCheck, ShoppingBag, Sparkles, Tv, Users, WandSparkles, type LucideIcon } from "lucide-react";
 
 // Itens do menu lateral (spec 005, US1; agrupados na 024). `ownerOnly` some para o membro.
 // `end`: só fica ativo na rota exata (senão "Início" ficaria ativo em /app/*).
@@ -55,6 +55,8 @@ export const navTree: NavEntry[] = [
       { label: "Métricas", to: "/app/metricas", icon: ChartLine },
       // 023-aprendizado
       { label: "Aprendizado", to: "/app/aprendizado", icon: Lightbulb },
+      // 026-mercado-shop: o cockpit do TikTok Shop
+      { label: "Mercado de produtos", to: "/app/mercado", icon: ShoppingBag },
       // 013-importacao (o membro vê o estado e a lista)
       { label: "Importar da agência", to: "/app/configuracoes/importacao", icon: FolderInput },
     ],
@@ -72,6 +74,8 @@ export const navTree: NavEntry[] = [
       { label: "Publicação automática", to: "/app/configuracoes/publicacao", icon: Send, ownerOnly: true },
       // 009-mcp
       { label: "Agentes (MCP)", to: "/app/configuracoes/agentes", icon: Bot, ownerOnly: true },
+      // 026-mercado-shop
+      { label: "Coleta de mercado", to: "/app/configuracoes/coleta", icon: Radar, ownerOnly: true },
     ],
   },
   { label: "Minha conta", to: "/app/conta", icon: CircleUser },

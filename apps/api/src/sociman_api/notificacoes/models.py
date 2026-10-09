@@ -47,6 +47,13 @@ class NotificacaoTipo(enum.StrEnum):
     # 0011 (spec 016): vínculo do post, para os donos ativos (dedupe por destino).
     post_detectado = "post_detectado"
     vinculo_a_confirmar = "vinculo_a_confirmar"
+    # 0025 (spec 026): coleta de mercado, para os donos ativos (dedupe por tipo e dia local).
+    coleta_captcha = "coleta_captcha"
+    coleta_login = "coleta_login"
+    coleta_bloqueio = "coleta_bloqueio"
+    coleta_layout = "coleta_layout"
+    coleta_parada = "coleta_parada"
+    mercado_interesse_auto = "mercado_interesse_auto"
 
 
 class Notificacao(Base):

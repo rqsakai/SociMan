@@ -17,7 +17,7 @@ async function escolherMedida(page: Page, valor: "h1" | "h24" | "d7"): Promise<v
   await expect(gaveta).toBeHidden();
 }
 
-const ABAS = ["Visão geral", "Quando postar", "Público", "O que funciona", "Curvas", "Contas", "Funil", "Mercado", "Alertas"];
+const ABAS = ["Visão geral", "Quando postar", "Público", "O que funciona", "Curvas", "Contas", "Funil", "Fontes", "Alertas"];
 
 test("019 base: 8 abas, aba e período na URL", async ({ page }) => {
   await login(page, OWNER.email, OWNER.password);

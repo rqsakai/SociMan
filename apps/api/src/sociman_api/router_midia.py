@@ -92,6 +92,14 @@ def _corte_target(db: Session, corte: Corte, marked: bool) -> Target:
                   f"{stem}-original.{ext}")
 
 
+def _coleta_item(db: Session, entity_id: uuid.UUID):
+    """Spec 026: o id do `mercado_coleta_itens` é bigint; o token de mídia carrega um uuid, então
+    o id vai como `uuid.UUID(int=item_id)` e volta por `entity_id.int`."""
+    from sociman_api.mercado.models import ColetaItem
+
+    return db.get(ColetaItem, entity_id.int)
+
+
 def resolve(db: Session, kind: str, entity_id: uuid.UUID) -> Target:
     """O objeto de um item de mídia. 404 se não existe ou é de outro tipo; 409 `not_ready` para
     o marcado de um corte que ainda não está `pronto`."""
@@ -143,6 +151,21 @@ def resolve(db: Session, kind: str, entity_id: uuid.UUID) -> Target:
             raise _not_found()
         return Target("audios", audio.object_key, AUDIO_CONTENT_TYPES[audio.formato],
                       f"{_slug(db, audio.perfil_id)}-audio-{audio.id.hex[:8]}.{audio.formato}")
+    if kind == "mercado_imagem":  # spec 026: o original de uma imagem do lago (bucket imagens)
+        from sociman_api.mercado.models import Imagem
+
+        imagem = db.get(Imagem, entity_id)
+        if imagem is None:
+            raise _not_found()
+        ext = PurePath(imagem.object_key).suffix
+        return Target("imagens", imagem.object_key, imagem.content_type,
+                      f"mercado-{imagem.sha256[:12]}{ext}")
+    if kind == "mercado_bruto":  # spec 026: o bruto gzip de um item, para o `reprocessar`
+        item = _coleta_item(db, entity_id)
+        if item is None or not item.bruto_ref:
+            raise _not_found()
+        return Target("mercado", item.bruto_ref, "application/gzip",
+                      f"bruto-{item.tarefa_id}.json.gz")
     if kind in midia.VIDEO_KINDS:
         corte = db.get(Corte, entity_id)
         if corte is None:
