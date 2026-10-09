@@ -322,11 +322,10 @@ test("026 US4: nicho, link manual, pausar/reativar pelo membro, vitrine para tod
 // ---------------------------------------------------------------------------------------------
 // US5 (T062) e US6 (T066): o detalhe com ficha versionada, galeria, rankings com variação, vídeos
 // e avaliações sem nome; a aba Lojas → seguir loja para um perfil → aparece na aba Mercado do
-// perfil; "Adotar no catálogo" responde `passo_indisponivel` enquanto a 012 não está nesta
-// instalação.
+// perfil; "Adotar no catálogo" cria o produto da 012 e liga os dois (migration 0026).
 // ---------------------------------------------------------------------------------------------
 
-test("026 US5/US6: detalhe completo, lojas e seguir loja, adotar indisponível sem a 012", async ({ page, request }) => {
+test("026 US5/US6: detalhe completo, lojas e seguir loja, adotar no catálogo", async ({ page, request }) => {
   const token = await apiToken(request, OWNER.email, OWNER.password);
   const auth = { Authorization: `Bearer ${token}` };
   const sfx = randomUUID().slice(0, 6);
@@ -364,12 +363,25 @@ test("026 US5/US6: detalhe completo, lojas e seguir loja, adotar indisponível s
   await expect(page.getByRole("list", { name: "Fotos da avaliação" }).getByRole("img")).toHaveCount(1);
   await expect(page.getByText(/5 avaliações · 1 com foto · nunca mostramos quem escreveu/)).toBeVisible();
 
-  // Adotar: a 012 não está nesta instalação → passo_indisponivel (aviso na tela).
+  // Adotar no catálogo (US6, com a 012 e a migration 0026): cria o produto da 012 e mostra o link.
   await page.getByRole("button", { name: "Adotar no catálogo" }).click();
   const dialogo = page.getByRole("dialog", { name: "Adotar no catálogo" });
+  await dialogo.getByLabel("Perfil").selectOption({ label: `Mercado L ${sfx}` });
   await dialogo.getByRole("button", { name: "Adotar", exact: true }).click();
-  await expect(dialogo).toContainText(/cadastro de produtos \(spec 012\)/);
+  await expect(dialogo).toContainText("Adotado");
+  const linkCatalogo = dialogo.getByRole("link", { name: "Abrir o produto no catálogo" });
+  await expect(linkCatalogo).toHaveAttribute("href", /\/app\/produtos\/[0-9a-f-]+$/);
   await page.keyboard.press("Escape");
+  // De novo → o aviso de já adotado, sem segundo produto.
+  await page.reload();
+  await expect(page.getByTestId("acompanhado-por")).toContainText(`Mercado L ${sfx}`);
+  await page.getByRole("button", { name: "Adotar no catálogo" }).click();
+  const dialogo2 = page.getByRole("dialog", { name: "Adotar no catálogo" });
+  await dialogo2.getByLabel("Perfil").selectOption({ label: `Mercado L ${sfx}` });
+  await expect(dialogo2).toContainText("Já adotado neste perfil");
+  await page.keyboard.press("Escape");
+  const adotados = (await (await request.get(`/api/mercado/produtos/${produtoId}`, { headers: auth })).json()) as { adotadoEm: { perfilId: string }[] };
+  expect(adotados.adotadoEm.map((a) => a.perfilId)).toEqual([perfilId]);
 
   // Aba Lojas → seguir a Loja X para o perfil → aparece na aba Mercado do perfil.
   await nav(page, "Mercado de produtos");

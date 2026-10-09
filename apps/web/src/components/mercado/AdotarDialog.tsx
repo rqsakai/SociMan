@@ -70,7 +70,7 @@ export function AdotarDialog({ produto, open, onOpenChange }: { produto: Mercado
           <Alert>
             <AlertTitle>Já adotado neste perfil</AlertTitle>
             <AlertDescription>
-              <Link to={`/app/perfis/${perfilId}/produtos/${jaAdotado.produtoId}`} className="underline">
+              <Link to={`/app/produtos/${jaAdotado.produtoId}`} className="underline">
                 Abrir o produto no catálogo
               </Link>
             </AlertDescription>
@@ -80,7 +80,7 @@ export function AdotarDialog({ produto, open, onOpenChange }: { produto: Mercado
           <Alert>
             <AlertTitle>{resultado.existente ? "Este perfil já tinha adotado o produto" : "Adotado"}</AlertTitle>
             <AlertDescription>
-              <Link to={`/app/perfis/${perfilId}/produtos/${resultado.produtoId}`} className="underline">
+              <Link to={`/app/produtos/${resultado.produtoId}`} className="underline">
                 Abrir o produto no catálogo
               </Link>
             </AlertDescription>

@@ -40368,6 +40368,17 @@
             "format": "uuid",
             "type": "string"
           },
+          "mercadoProdutoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "name": {
             "type": "string"
           },
