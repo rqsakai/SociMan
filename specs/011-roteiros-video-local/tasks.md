@@ -35,10 +35,22 @@ Sem as duas últimas, **não comece** (T001).
 - **Ator:** `system:roteiro` (exibido "sistema (automático)").
 - **Entidades no histórico:** `roteiro`, `roteiro_padroes` e `pronuncia`.
 - **Rotas:** `roteiros_*`, `roteiro_padroes_*` e `pronuncias_*` (contracts/http-api.md).
-- **SPA:** `/app/roteiros`, `/app/roteiros/novo`, `/app/roteiros/:id`, e a aba `?aba=video-local` do
-  perfil.
+- **SPA** (FR-051): o item "Vídeos" do grupo AI Studio (`/app/estudio/videos`, `/app/estudio/videos/novo`,
+  `/app/roteiros/:id` para o detalhe) e a aba `?aba=video-local` do perfil (portões e pronúncias, como o Guia).
 
 `packages/contract/**` é gerado. Nunca edite `.specify/feature.json` nem `../comfyui-docker/`.
+
+
+**Ajustes da 029 e da 026 (analyze de 2026-10-09):**
+- **Perfil base:** os pedidos de geração do roteiro usam `geracao.service.criar_para_alvo(..., perfil_base=<perfil
+  do roteiro>)`; as cenas novas do plano nascem com o perfil base = o do roteiro (aparecem em AI Studio › Cenas).
+- **SPA:** as telas usam as listas da agência (`assets_listar_agencia`, `vozes_listar_agencia`,
+  `produtos_listar_agencia`, `cenas_listar_agencia`, `geracoes_listar_agencia` por alvo) e os componentes da 029
+  (`PerfilBaseFiltro`, `GeracaoAberta`); nada de rota por perfil marcada deprecated.
+- **Revogação (025):** revogar uma voz ou um avatar apaga as narrações e mídias de roteiros de **qualquer** perfil
+  que os usaram (cobrir um roteiro do perfil B com a voz do perfil A no `test_roteiro_revogacao`).
+- **MCP:** as contagens do `test_mcp_mapa`/`test_mcp_leitura`/`test_mcp_protocolo` partem dos valores da `main`
+  (108 leituras e 113 com propostas em 2026-10-09).
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -50,8 +62,8 @@ Sem as duas últimas, **não comece** (T001).
 ## Phase 1: Setup
 
 - [ ] T001 **Gate:**
-  - `docker compose exec api uv run alembic heads` mostra **`0023_cadastro_padronizado`** como único head, com
-    `0022_produtos_shop` e `0021_geracao_interrupcoes` antes dele. Com outro head, pare e corrija
+  - `docker compose exec api uv run alembic heads` mostra **`0026_uniao_mercado`** como único head (o mergepoint
+    de `0024_ai_studio` e `0025_mercado_shop`). Com outro head, pare e corrija
     `down_revision` no data-model, no plan e na T004 com o líder;
   - as tabelas `produtos`, `produto_variantes` e `vozes` existem, e `assets.voz_id` também;
   - os testes da 010, 012, 021 e 025 estão verdes: `npm run test:api -- -k "cenas or produtos or geracao
@@ -74,7 +86,7 @@ Sem as duas últimas, **não comece** (T001).
 usam.
 
 - [ ] T004 Migration `apps/api/migrations/versions/0027_roteiros_video_local.py` (`down_revision =
-  "0023_cadastro_padronizado"`), exatamente como o data-model §Migration: os enums (`ADD VALUE` em
+  "0026_uniao_mercado"`), exatamente como o data-model §Migration: os enums (`ADD VALUE` em
   `autocommit_block`), as 7 tabelas, as FKs `use_alter`, o trigger `roteiro_entregas_so_insercao`, as
   colunas em `cenas`/`cena_tomadas`/`geracoes`/`geracao_candidatos`/`conteudos`, o `ck_geracoes_passo`
   com os 21 passos, o `ck_candidatos_midia`, o trigger `geracao_candidatos_midia` atualizado e o downgrade
@@ -212,7 +224,8 @@ narração.
   - `RoteiroNovo.tsx` (perfil, nome, brief, produtos aprovados, avatar, voz);
   - `RoteiroDetalhe.tsx` com a etapa `etapas/Texto.tsx` (editar frases, trocar, reordenar, reaproveitar
     ou duplicar cena, atribuir frase → cena, aprovar);
-  - item "Roteiros" no `nav.ts`, rotas lazy e `Page` como raiz.
+  - item "Vídeos" no grupo AI Studio do `nav.ts` (o primeiro do grupo, FR-051), rotas lazy e `Page` como raiz;
+    a lista usa o `PerfilBaseFiltro` da 029 e o "Novo vídeo" começa pela escolha do perfil.
 
 **Checkpoint:** US1 funciona sozinha com o Claude falso.
 

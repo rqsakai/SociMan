@@ -196,3 +196,6 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
 separados. A camada de mercado da 026 nasce neutra de tenant (um lago coletado uma vez, lido por todos); a camada de
 interesse, perfis e contas é a que ganhará `tenant_id`. Hoje qualquer usuário autenticado lê qualquer entidade (padrão do
 repo, com um dono só); essa spec introduz a checagem de acesso por tenant em todas as leituras.
+**Requisito anotado (2026-10-09, clarify da 011):** os itens da biblioteca **sem perfil base** (cenas, avatares,
+cenários etc.) são os **modelos públicos da plataforma**; no multi-tenant, ficam visíveis a todos os clientes,
+enquanto os itens com perfil ficam do tenant.

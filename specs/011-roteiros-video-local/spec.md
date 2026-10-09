@@ -70,6 +70,12 @@ Perguntas do clarify (respondidas pelo dono):
   conteúdos não são apagados pela revogação). A revogação só **proíbe gerar coisa nova** com aquela voz
   ou aquele avatar.
 
+
+### Session 2026-10-09
+
+- Q: Quais cenas existentes o planejador pode reaproveitar, agora que a biblioteca é da agência (029)? → A: As do perfil do roteiro **e** as sem perfil base, com aquele avatar e aqueles produtos. As cenas sem perfil base são os **modelos públicos da plataforma**, disponíveis para todas as contas; no multi-tenant futuro, viram modelos da plataforma visíveis a todos os clientes (FR-013).
+- Q: Onde ficam os roteiros e vídeos no menu, com o grupo AI Studio da 029? → A: Item "Vídeos" no AI Studio (o primeiro do grupo), com filtro de perfil e "Novo vídeo" escolhendo o perfil/conta; portões e pronúncias do perfil na página do perfil, como o guia (FR-051).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Criar o roteiro e planejar com a IA (Priority: P1)
@@ -77,7 +83,7 @@ Perguntas do clarify (respondidas pelo dono):
 O operador (dono ou membro) cria um roteiro no perfil: dá um nome, escreve o **brief** (o que o vídeo deve
 mostrar), escolhe um ou mais **produtos** aprovados, o **avatar** (opcional; sem avatar o vídeo é só de
 produto) e a **voz** (já vem a voz padrão do avatar). Ao pedir o plano, a IA escreve as **frases de venda**
-em pt-BR e propõe a **lista de cenas**, **reaproveitando cenas da biblioteca do perfil** sempre que servem
+em pt-BR e propõe a **lista de cenas**, **reaproveitando cenas do perfil e os modelos públicos (cenas sem perfil base)** sempre que servem
 e criando as que faltam. Cada frase fica atribuída a exatamente uma cena. Com o portão TEXTO ligado, o
 roteiro para e o operador edita: inclui, remove ou reescreve frases; troca, reordena, reaproveita ou
 duplica cenas; muda qual frase vai em qual cena. Depois aprova e o roteiro segue.
@@ -117,7 +123,7 @@ plano e conferir que:
 
 ---
 
-### User Story 2 - Narração contínua com a voz do perfil (Priority: P1)
+### User Story 2 - Narração contínua com a voz do roteiro (Priority: P1)
 
 Depois do texto, o SociMan pede a **narração**: um take **contínuo** de todas as frases, com a voz do
 roteiro, na velocidade escolhida (padrão 1,08) e com o **dicionário de pronúncia** do perfil (ex.: "levinho"
@@ -434,14 +440,16 @@ ficou desatualizada.
 **Roteiro**
 
 - **FR-001**: O SociMan DEVE ter o **roteiro**, do perfil, com: nome (1..120), brief (texto livre),
-  avatar (asset `avatar` do perfil, opcional), voz (do perfil), formato, frases de venda (lista ordenada
+  avatar (asset `avatar` de qualquer perfil base, opcional; 029), voz (de qualquer perfil base), formato, frases de venda (lista ordenada
   em pt-BR), velocidade da narração (0,9..1,2, padrão 1,08), modo (`revisar` padrão ou `automatico`),
   portões (`texto`, `narracao`, `keyframes`, `clipes`, `final`, cada um ligado ou desligado), status e o
-  conteúdo entregue. O roteiro é versionado, arquivável e nunca muda de perfil.
+  conteúdo entregue. O roteiro é versionado, arquivável e nunca muda de perfil. O perfil do roteiro é o
+  **perfil base** de todas as gerações dele (guia, proibidas e padrões, `perfis.base.resolver` da 029).
 - **FR-002**: O **formato** DEVE ter um único valor nesta spec, `voice_over`. Fala na câmera e lip-sync
   ficam fora.
 - **FR-003**: A **voz** do roteiro DEVE vir, por padrão, da voz padrão do avatar (025) e DEVE ser uma voz
-  do perfil aprovada, não arquivada e, se for de gravação de pessoa real, com consentimento não revogado.
+  aprovada (de qualquer perfil base, 029), não arquivada e, se for de gravação de pessoa real, com
+  consentimento não revogado.
   Sem voz válida, o roteiro não pede narração.
 - **FR-004**: O roteiro DEVE ter **um ou mais produtos** (012), numa lista ordenada, cada um aprovado e não
   arquivado ao entrar, opcionalmente com a variante. Cada cena do roteiro aponta o seu produto pela ponte
@@ -479,8 +487,9 @@ ficou desatualizada.
 **Plano (texto)**
 
 - **FR-013**: O passo **`roteiro.plano`** (Claude, só texto) DEVE receber o brief, os produtos (com a ficha
-  da 012), o avatar (com a descrição fixa do kit da 025) e a lista de cenas do perfil daquele avatar e
-  daqueles produtos, e devolver as frases de venda em pt-BR, a lista de cenas (reaproveitadas ou novas) e
+  da 012), o avatar (com a descrição fixa do kit da 025) e a lista de cenas com aquele avatar e aqueles
+  produtos cujo perfil base é o perfil do roteiro **ou** que não têm perfil base (os modelos públicos da
+  plataforma, para todas as contas), e devolver as frases de venda em pt-BR, a lista de cenas (reaproveitadas ou novas) e
   a atribuição frase → cena. Ele DEVE **preferir reaproveitar** cenas existentes. Como passo só de texto
   (021, FR-010), o resultado vai direto para o roteiro e continua editável.
 - **FR-014**: As cenas **novas** do plano DEVEM ser criadas como cenas normais da 010 (em `rascunho`), com
@@ -516,7 +525,7 @@ ficou desatualizada.
     giro em que a física importa) e `ltx`;
   - a **resolução** do clipe (largura e altura, padrão **736×1280**, a nativa dos modelos);
   - o **keyframe inicial** (obrigatório para gerar clipe) e o **keyframe final** (opcional), como imagens
-    do perfil do tipo novo `keyframe`;
+    da biblioteca (qualquer perfil base) do tipo novo `keyframe`;
   - a **instrução do keyframe** (inglês, o que gerou o inicial) e as **referências do keyframe** (imagens
     do kit do avatar, do look, do recorte ou flat do produto e do cenário);
   - a **duração máxima** que a tomada local pode ter (o clipe é cortado na duração da cena no roteiro).
@@ -655,6 +664,10 @@ ficou desatualizada.
   escolhida de cada cena e a tomada atual de cada posição de roteiro não arquivado; as tomadas enviadas à
   mão (Flow, 010). A limpeza DEVE ser idempotente e DEVE registrar cada apagamento num evento (o que, quando,
   contagem e a exceção do princípio VII), como a limpeza da 021.
+- **FR-051** (Clarification 2026-10-09): os roteiros ficam no item **"Vídeos"** do grupo **AI Studio** do
+  menu (029), o primeiro do grupo: a lista tem o filtro de perfil e o "Novo vídeo" começa pela escolha do
+  perfil (e da conta) do vídeo. O padrão de portões e o dicionário de pronúncia do perfil ficam na página do
+  perfil, como o guia (são configuração, não criação). Nada de item "Roteiros" solto no menu.
 
 ### Key Entities
 
@@ -741,7 +754,7 @@ Detalhes técnicos do insumo que a spec não fixa como requisito de negócio, ma
 
 **`roteiros`** (nova, versionada, `entity_type = roteiro`):
 - `perfil_id` (imutável); `nome` 1..120; `brief` texto livre;
-- `avatar_id` asset `avatar` do perfil, null; `voz_id` → `vozes` (025), padrão `assets.voz_id` do avatar;
+- `avatar_id` asset `avatar` de qualquer perfil base (029), null; `voz_id` → `vozes` (025), padrão `assets.voz_id` do avatar;
 - `formato` enum `roteiro_formato` (`voice_over`, único); `frases` lista ordenada (pt-BR); `velocidade`
   0,9..1,2 padrão 1,08;
 - `modo` enum `roteiro_modo` (`revisar` padrão, `automatico`); `portoes` jsonb

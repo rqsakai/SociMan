@@ -199,7 +199,7 @@ apps/web/src/
 ├── pages/roteiros/RoteirosList.tsx, RoteiroNovo.tsx, RoteiroDetalhe.tsx, etapas/{Texto,Narracao,Keyframes,Clipes,Final}.tsx
 ├── pages/perfis/tabs/VideoLocalTab.tsx         # padrão de portões + pronúncias
 ├── components/roteiro/Portoes.tsx, PlayerVideo.tsx, LinhaTempos.tsx
-├── components/shell/nav.ts                     # item "Roteiros"
+├── components/shell/nav.ts                     # item "Vídeos" no grupo AI Studio (FR-051)
 └── lib/roteiros.ts                             # hooks (polling 2 s com geração aberta)
 ```
 
