@@ -126,7 +126,10 @@ test("US1 e US2: montar a cena, copiar o prompt, pronta, mudou/remontar, rascunh
   await expect(page).toHaveURL(/\/app\/estudio\/cenas$/);
   await page.getByTestId("filtro-perfil-base").selectOption(perfilId);
   await expect(page).toHaveURL(new RegExp(`perfil=${perfilId}`));
-  await page.getByRole("link", { name: "Nova cena" }).click();
+  // o link só leva o perfil depois que a lista lê o filtro da URL (com a máquina carregada, demora)
+  const novaCena = page.getByRole("link", { name: "Nova cena" });
+  await expect(novaCena).toHaveAttribute("href", new RegExp(`perfil=${perfilId}$`));
+  await novaCena.click();
   await expect(page).toHaveURL(new RegExp(`/app/estudio/cenas/nova\\?perfil=${perfilId}$`));
   await expect(page.getByTestId("perfil-base")).toHaveValue(perfilId);
 

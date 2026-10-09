@@ -338,6 +338,10 @@ test("US1: a central lista os conteúdos, filtra pela URL e pagina", async ({ pa
   await page.getByRole("button", { name: "Próxima página" }).click();
   await expect(page).toHaveURL(/pagina=2/);
   await expect(rodape("Página 2 de 3")).toBeVisible();
+  // o rodapé muda antes das linhas (a página anterior fica na tela até a nova chegar): espera o
+  // título do 1º item ("Item NN <sfx>") mudar
+  const primeiro = titulos[0]!.match(/Item \d+ \S+/)![0];
+  await expect(linhas.first()).not.toContainText(primeiro);
   await expect(linhas).toHaveCount(25);
   titulos.push(...(await linhas.allInnerTexts()));
   await page.getByRole("button", { name: "Próxima página" }).click();
