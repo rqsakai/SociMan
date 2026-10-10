@@ -1,4 +1,4 @@
-import { Bot, CalendarDays, ChartColumn, ChartLine, CircleUser, Clapperboard, Film, FolderInput, House, Image, Inbox, LayoutGrid, Lightbulb, Mic, Move, Package, Radar, Scissors, Send, Settings, ShieldCheck, ShoppingBag, Sparkles, Trees, Tv, UserRound, Users, Wand2, WandSparkles, type LucideIcon } from "lucide-react";
+import { Bot, CalendarDays, ChartColumn, ChartLine, CircleUser, Clapperboard, Film, FolderInput, House, Image, Inbox, LayoutGrid, Lightbulb, Mic, Move, Package, Radar, Scissors, Send, Settings, ShieldCheck, ShoppingBag, Sparkles, Trees, Tv, UserRound, Users, Video, Wand2, WandSparkles, type LucideIcon } from "lucide-react";
 
 // Itens do menu lateral (spec 005, US1; agrupados na 024). `ownerOnly` some para o membro.
 // `end`: só fica ativo na rota exata (senão "Início" ficaria ativo em /app/*).
@@ -40,6 +40,8 @@ export const navTree: NavEntry[] = [
     label: "AI Studio",
     icon: Wand2,
     itens: [
+      // 011-roteiros-video-local (FR-051): os vídeos montados a partir das peças, o primeiro do grupo
+      { label: "Vídeos", to: "/app/estudio/videos", icon: Video, prefixos: ["/app/roteiros"] },
       { label: "Avatares", to: "/app/estudio/avatares", icon: UserRound },
       { label: "Cenários", to: "/app/estudio/cenarios", icon: Trees },
       { label: "Vozes", to: "/app/estudio/vozes", icon: Mic, prefixos: ["/app/vozes"] },

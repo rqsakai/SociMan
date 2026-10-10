@@ -449,6 +449,15 @@ _PROIBIDAS_COLETA |= {op: "interesses e configuração de mercado (só humano, s
     "mercado_perfil_config_put", "mercado_perfil_config_revert", "mercado_lojas_seguir",
     "mercado_lojas_deixar_de_seguir", "mercado_produtos_adotar")}
 
+# Spec 011 (FR-046, R17): criar e editar roteiro, pedir etapa, aprovar portão, ligar o automático
+# e editar pronúncias e padrões são atos humanos; reverter, só do dono.
+_PROIBIDAS_DONO |= {op: "roteiros: ato humano (spec 011)" for op in (
+    "roteiros_criar", "roteiros_editar", "roteiros_planejar", "roteiros_aprovar",
+    "roteiros_controle", "roteiros_tentar_de_novo", "roteiros_arquivar", "roteiros_restaurar",
+    "roteiros_reverter", "roteiros_regerar_keyframe", "roteiros_enviar_keyframe",
+    "roteiros_regerar_clipe", "roteiros_escolher_tomada", "roteiro_padroes_salvar",
+    "pronuncias_criar", "pronuncias_editar", "pronuncias_arquivar", "pronuncias_restaurar")}
+
 PROIBIDAS: dict[str, str] = {**_PROIBIDAS_I, **_PROIBIDAS_II, **_PROIBIDAS_VII,
                              **_PROIBIDAS_DONO, **_PROIBIDAS_PESSOAS, **_PROIBIDAS_MCP,
                              **_PROIBIDAS_COLETA}
@@ -512,6 +521,12 @@ _FORA_COLETA |= {op: "operação da coleta (dado de dono, spec 026)" for op in (
     "coleta_fila_hoje")}
 _FORA_COLETA |= {op: "histórico de versões (spec 026)" for op in (
     "mercado_interesses_versions", "mercado_perfil_config_versions")}
+
+# Spec 011 (R17): as leituras do roteiro seguem as da 021 (fora do primeiro corte do MCP).
+_FORA_DONO |= {op: "roteiros só pela interface no primeiro corte (spec 011)" for op in (
+    "roteiros_listar", "roteiros_listar_agencia", "roteiros_detalhe", "roteiros_versoes",
+    "roteiro_padroes_ler", "roteiro_padroes_versoes", "pronuncias_listar",
+    "pronuncias_versoes")}
 
 FORA: dict[str, str] = {**_FORA_UPLOAD, **_FORA_DEPRECATED, **_FORA_INFRA, **_FORA_ESCRITAS,
                         **_FORA_DONO, **_FORA_COLETA}

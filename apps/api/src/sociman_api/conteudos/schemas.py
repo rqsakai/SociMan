@@ -95,6 +95,15 @@ class PropostaOpenshorts(CamelModel):
     score: int | None  # a nota do OpenShorts
 
 
+class RoteiroDoConteudo(CamelModel):
+    """Spec 011: de que roteiro veio e quais motores geraram as tomadas (atribuição do MiniMax)."""
+
+    id: UUID
+    nome: str
+    motores: list[str]
+    aviso_atribuicao: str | None
+
+
 class Conteudo(ConteudoItem):
     """O detalhe: a linha + o arquivo e os destinos completos."""
 
@@ -109,6 +118,10 @@ class Conteudo(ConteudoItem):
     destinos: list[Destino]  # type: ignore[assignment]  # todos, inclusive os arquivados
     proposta_openshorts: PropostaOpenshorts | None  # null fora da origem corte do OpenShorts
     cenas: list[CenaResumo] = Field(default_factory=list)  # spec 010: as cenas que compõem o vídeo próprio
+    # Spec 011 (R13): entregue por um roteiro (o `conteudoIa` do destino vem ligado por padrão).
+    gerado_ia: bool = False
+    roteiro: RoteiroDoConteudo | None = None
+
 
 
 class ConteudoOut(CamelModel):

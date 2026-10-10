@@ -18,12 +18,12 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import func, select, tuple_
+from sqlalchemy import func, select, text, tuple_
 from sqlalchemy.orm import Session
 
 from sociman_api import history, imaging, midia
 from sociman_api.assets.service import image_ref
-from sociman_api.auth.deps import Actor
+from sociman_api.auth.deps import ROTEIRO, Actor
 from sociman_api.config import get_settings
 from sociman_api.errors import ApiError
 from sociman_api.geracao import aplicadores, audios, passos, schemas, seeds
@@ -45,7 +45,11 @@ from sociman_api.perfis.service_perfis import get_perfil_or_404, user_refs, vers
 
 LABEL = "Esta geração"
 NOT_FOUND = "Geração não encontrada"
-CADASTRO = {GeracaoAlvo.asset: "avatar", GeracaoAlvo.voz: "voz", GeracaoAlvo.produto: "produto"}
+CADASTRO = {GeracaoAlvo.asset: "avatar", GeracaoAlvo.voz: "voz", GeracaoAlvo.produto: "produto",
+            GeracaoAlvo.cena: "roteiro", GeracaoAlvo.roteiro: "roteiro"}  # 011
+# Os alvos com rotas próprias: o produto (012, R16) e a cena e o roteiro (011, pelo roteiro).
+ALVOS_COM_ROTA_PROPRIA = frozenset({GeracaoAlvo.produto, GeracaoAlvo.cena, GeracaoAlvo.roteiro})
+PASSO_AUTOMATICO = "cena.keyframe"
 LIMITE_PADRAO = 20
 LIMITE_MAX = 50
 
@@ -152,7 +156,7 @@ def pedir(db: Session, actor: Actor, body: schemas.GeracaoIn,
             raise ApiError(409, "perfil_archived", "O perfil está arquivado")
         if pedido_base is base.AUSENTE:
             pedido_base = perfil_caminho
-    if body.alvo_tipo == GeracaoAlvo.produto:  # a 012 usa rotas próprias (R16)
+    if body.alvo_tipo in ALVOS_COM_ROTA_PROPRIA:  # 012 (R16) e 011: rotas próprias
         raise aplicadores.alvo_incompativel()
     passo = _passo(body.passo)
     if passo.alvo_tipo != body.alvo_tipo:
@@ -201,6 +205,71 @@ def escolher(db: Session, actor: Actor, geracao_id: uuid.UUID,
             {"acao": "escolher", "candidatoId": str(cand.id), "numero": cand.numero})
     db.flush()
     return g, alvo
+
+
+# ---- escolha automática (spec 011, R9) ----
+
+class EscolhaRecusada(Exception):
+    """A escolha automática não vale para esta geração (o motivo vai no log do chamador)."""
+
+
+_ROTEIRO_DA_POSICAO = text("""
+    SELECT r.modo::text AS modo, r.portoes AS portoes, r.status::text AS status
+      FROM roteiros r
+      JOIN roteiro_cenas rc ON rc.roteiro_id = r.id
+      JOIN cenas c ON c.id = rc.cena_id
+     WHERE r.id = :roteiro AND rc.cena_id = :cena AND r.archived_at IS NULL
+       AND (CAST(:ordem AS integer) IS NULL OR rc.ordem = CAST(:ordem AS integer))
+       AND c.archived_at IS NULL
+       AND (c.keyframe_geracao_id IS NULL OR c.keyframe_geracao_id <> :geracao)
+     LIMIT 1
+""")
+
+
+def escolher_automatico(db: Session, geracao: Geracao) -> Geracao:
+    """A **única** exceção à escolha humana da 021 (R9): a opção 1 do `cena.keyframe` pedido por
+    um roteiro em modo automático ou com o portão KEYFRAMES desligado. Só `roteiros/automatico.py`
+    chama (guarda AST), no gancho `rodando → revisao`, na mesma transação. Confere:
+    1. o passo é `cena.keyframe` e a geração está em `revisao`;
+    2. `params.extras.roteiroId` aponta um roteiro não arquivado com uma posição (a `ordem` do
+       pedido, se houver) daquela cena ainda pedindo o keyframe, num status de keyframes;
+    3. o roteiro está em `automatico` ou com `portoes.keyframes = false`.
+    Satisfeitas as três, escolhe o candidato `numero = 1` pelo mesmo caminho do `escolher` humano
+    (o aplicador grava a versão da cena; o autor é o ator `system:roteiro`, e a versão da geração
+    leva `details.automatico = true`). Senão, `EscolhaRecusada` (nada muda)."""
+    actor = ROTEIRO
+    if geracao.passo != PASSO_AUTOMATICO:
+        raise EscolhaRecusada("passo")
+    if geracao.status != GeracaoStatus.revisao:
+        raise EscolhaRecusada("status")
+    extras = (geracao.params or {}).get("extras") or {}
+    try:
+        roteiro_id = uuid.UUID(str(extras["roteiroId"]))
+        ordem = int(extras["ordem"]) if extras.get("ordem") is not None else None
+    except (KeyError, ValueError, TypeError):
+        raise EscolhaRecusada("fora_de_roteiro") from None
+    linha = db.execute(_ROTEIRO_DA_POSICAO, {"roteiro": roteiro_id, "cena": geracao.alvo_id,
+                                             "ordem": ordem, "geracao": geracao.id}).first()
+    if linha is None or linha.status not in ("gerando_keyframes", "aguardando_keyframes"):
+        raise EscolhaRecusada("roteiro")
+    if linha.modo != "automatico" and (linha.portoes or {}).get("keyframes", True):
+        raise EscolhaRecusada("portao")
+    cand = db.scalar(select(GeracaoCandidato).where(GeracaoCandidato.geracao_id == geracao.id,
+                                                    GeracaoCandidato.numero == 1))
+    if cand is None or cand.image_id is None:
+        raise EscolhaRecusada("sem_opcao_1")
+    aplicador = _aplicador(_passo(geracao.passo))
+    aplicador.validar_alvo(db, geracao.perfil_id, geracao.alvo_id, lock=True)
+    before = history.snapshot(geracao)
+    aplicador.aplicar(db, actor, geracao, cand)
+    geracao.escolhido_id = cand.id
+    geracao.etapa_mensagem = None
+    transicao(db, geracao, GeracaoStatus.escolhido)
+    _record(db, actor, geracao, "updated", before,
+            {"acao": "escolher", "candidatoId": str(cand.id), "numero": cand.numero,
+             "automatico": True, "roteiroId": str(roteiro_id)})
+    db.flush()
+    return geracao
 
 
 # ---- cancelar, tentar de novo, gerar outras (US3) ----
@@ -279,6 +348,16 @@ def _imagem_out(img: Image | None) -> schemas.ImagemCandidato | None:
                                    link=_link("imagem", img.id))
 
 
+def _video_out(c: GeracaoCandidato) -> schemas.VideoCandidato | None:
+    if not c.video_key:
+        return None
+    return schemas.VideoCandidato(
+        link=_link("geracao_video", c.id),
+        miniatura_url=imaging.image_urls(c.video_miniatura_key)["thumb"]
+        if c.video_miniatura_key else None,
+        duracao_ms=c.video_duracao_ms, largura=c.video_largura, altura=c.video_altura)
+
+
 def _candidatos_out(db: Session, cands: list[GeracaoCandidato]) -> list[schemas.CandidatoGeracao]:
     image_ids = {i for c in cands for i in (c.image_id, c.image_par_id) if i}
     imgs = {i.id: i for i in db.scalars(select(Image).where(Image.id.in_(image_ids)))} \
@@ -301,7 +380,8 @@ def _candidatos_out(db: Session, cands: list[GeracaoCandidato]) -> list[schemas.
             imagem_par=_imagem_out(imgs.get(c.image_par_id)) if c.image_par_id else None,
             audio=audios.audio_out(auds[c.audio_id], users) if c.audio_id in auds else None,
             metricas={k: v for k, v in (c.metricas or {}).items() if k != "teste_audio_id"},
-            teste_audio=audios.audio_out(teste_audio, users) if teste_audio else None))
+            teste_audio=audios.audio_out(teste_audio, users) if teste_audio else None,
+            video=_video_out(c)))
     return out
 
 

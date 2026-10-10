@@ -123,6 +123,8 @@ class Settings(BaseSettings):
     gerador_vozes_sync_s: float = Field(60, gt=0)
     geracao_comfyui_teto_s: float = Field(1200, gt=0)
     agendador_geracao_limpeza_s: float = Field(3600, gt=0)
+    # Spec 011 (R14): posições por roteiro (ao salvar e ao aplicar o plano da IA).
+    roteiro_max_cenas: int = Field(8, ge=1, le=20)
 
     # Coleta de mercado (spec 026, princípio IX): o nível do servidor do interruptor (o outro é
     # o botão da tela), a trilha `mercado`, o pepper do hash dos autores de avaliação (segredo

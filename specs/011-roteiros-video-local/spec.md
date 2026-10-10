@@ -74,7 +74,7 @@ Perguntas do clarify (respondidas pelo dono):
 ### Session 2026-10-09
 
 - Q: Quais cenas existentes o planejador pode reaproveitar, agora que a biblioteca é da agência (029)? → A: As do perfil do roteiro **e** as sem perfil base, com aquele avatar e aqueles produtos. As cenas sem perfil base são os **modelos públicos da plataforma**, disponíveis para todas as contas; no multi-tenant futuro, viram modelos da plataforma visíveis a todos os clientes (FR-013).
-- Q: Onde ficam os roteiros e vídeos no menu, com o grupo AI Studio da 029? → A: Item "Vídeos" no AI Studio (o primeiro do grupo), com filtro de perfil e "Novo vídeo" escolhendo o perfil/conta; portões e pronúncias do perfil na página do perfil, como o guia (FR-051).
+- Q: Onde ficam os roteiros e vídeos no menu, com o grupo AI Studio da 029? → A: Item "Vídeos" no AI Studio (o primeiro do grupo), com filtro de perfil e "Novo vídeo" escolhendo o perfil (a conta fica para o agendamento, 014); portões e pronúncias do perfil na página do perfil, como o guia (FR-051).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -665,8 +665,9 @@ ficou desatualizada.
   mão (Flow, 010). A limpeza DEVE ser idempotente e DEVE registrar cada apagamento num evento (o que, quando,
   contagem e a exceção do princípio VII), como a limpeza da 021.
 - **FR-051** (Clarification 2026-10-09): os roteiros ficam no item **"Vídeos"** do grupo **AI Studio** do
-  menu (029), o primeiro do grupo: a lista tem o filtro de perfil e o "Novo vídeo" começa pela escolha do
-  perfil (e da conta) do vídeo. O padrão de portões e o dicionário de pronúncia do perfil ficam na página do
+  menu (029), o primeiro do grupo: a lista é da agência, com o filtro de perfil (`GET /api/roteiros`), e o
+  "Novo vídeo" começa pela escolha do perfil do vídeo. A conta não entra no roteiro: o vídeo final vira um
+  conteúdo sem destino (014), e a conta é escolhida ao agendar. O padrão de portões e o dicionário de pronúncia do perfil ficam na página do
   perfil, como o guia (são configuração, não criação). Nada de item "Roteiros" solto no menu.
 
 ### Key Entities

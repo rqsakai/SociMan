@@ -4,7 +4,8 @@
 (pedir, cancelar, tentar de novo, gerar outras, escolher) gravam versão; o andamento, a espera,
 o erro e os candidatos são estado de job, como no envio da 006. `geracao_candidatos` são as
 opções (só INSERT pelo gerador; DELETE só pela limpeza de 90 dias, exceção 1 da 4.3.0) e
-`audios` é a irmã de `images` da 003 (imutável).
+`audios` é a irmã de `images` da 003 (imutável). A 011 soma os alvos `cena` e `roteiro`, o motor
+`ffmpeg` e a mídia de vídeo dos candidatos.
 """
 
 import enum
@@ -37,12 +38,15 @@ class GeracaoAlvo(enum.StrEnum):
     asset = "asset"
     voz = "voz"  # 025
     produto = "produto"  # 012
+    cena = "cena"  # 011: `cena.keyframe`, `cena.clipe`
+    roteiro = "roteiro"  # 011: `roteiro.plano`, `.narracao`, `.montagem`, `.acabamento`
 
 
 class GeracaoMotor(enum.StrEnum):
     comfyui = "comfyui"
     tts = "tts"
     claude = "claude"
+    ffmpeg = "ffmpeg"  # 011 (R2): a montagem, na `LinhaMontagem`, fora da trava de GPU
 
 
 class GeracaoStatus(enum.StrEnum):
@@ -61,7 +65,7 @@ FINAIS = frozenset({GeracaoStatus.escolhido, GeracaoStatus.descartada, GeracaoSt
                     GeracaoStatus.entregue})
 # Os que têm `finished_at` (e entram na limpeza de 90 dias).
 TERMINADOS = FINAIS | {GeracaoStatus.falhou}
-MOTORES_GPU = frozenset({GeracaoMotor.comfyui, GeracaoMotor.tts})
+MOTORES_GPU = frozenset({GeracaoMotor.comfyui, GeracaoMotor.tts})  # o `ffmpeg` fica fora (R2)
 
 
 class Geracao(AuditMixin, Base):
@@ -101,6 +105,8 @@ class Geracao(AuditMixin, Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     limpa_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Spec 011 (R12): quando a prévia ou o acabamento deixou de ser atual (técnico).
+    desuso_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1,
                                          server_default=text("1"))
 
@@ -116,6 +122,15 @@ class GeracaoCandidato(Base):
     image_par_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("images.id"))
     audio_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("audios.id"))
     seed: Mapped[int | None] = mapped_column(BigInteger)
+    # Spec 011 (R3): o vídeo no bucket `videos` (`geracoes/{geracao}/{numero}.mp4`) e a miniatura
+    # em `imagens`; a tomada local aponta o mesmo objeto, sem cópia.
+    video_key: Mapped[str | None] = mapped_column(Text, unique=True)
+    video_miniatura_key: Mapped[str | None] = mapped_column(Text)
+    video_duracao_ms: Mapped[int | None] = mapped_column(Integer)
+    video_largura: Mapped[int | None] = mapped_column(Integer)
+    video_altura: Mapped[int | None] = mapped_column(Integer)
+    video_fps: Mapped[int | None] = mapped_column(Integer)
+    video_bytes: Mapped[int | None] = mapped_column(BigInteger)
     metricas: Mapped[dict[str, Any]] = mapped_column(
         JSONB, nullable=False, default=dict, server_default=text("'{}'::jsonb"))
     created_at: Mapped[datetime] = mapped_column(

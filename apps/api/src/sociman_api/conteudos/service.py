@@ -255,7 +255,25 @@ def conteudo_out(db: Session, conteudo_id: uuid.UUID) -> s.Conteudo:
                                                  gancho=prop.gancho, score=prop.score)
         if prop is not None else None,
         cenas=conteudo_tem_cenas(db, conteudo),
+        gerado_ia=conteudo.gerado_ia, roteiro=_roteiro_do(db, conteudo.id),
     )
+
+
+def _roteiro_do(db: Session, conteudo_id: uuid.UUID) -> s.RoteiroDoConteudo | None:
+    """Spec 011 (R13): a entrega que criou o conteúdo (import tardio: o pacote dos roteiros
+    importa a 014)."""
+    from sociman_api.roteiros.entrega import ATRIBUICAO_MINIMAX
+    from sociman_api.roteiros.models import Roteiro, RoteiroEntrega
+
+    entrega = db.scalar(select(RoteiroEntrega).where(RoteiroEntrega.conteudo_id == conteudo_id))
+    if entrega is None:
+        return None
+    roteiro = db.get(Roteiro, entrega.roteiro_id)
+    motores = list(entrega.motores or [])
+    return s.RoteiroDoConteudo(id=entrega.roteiro_id, nome=roteiro.nome if roteiro else "",
+                               motores=motores,
+                               aviso_atribuicao=ATRIBUICAO_MINIMAX if "minimax" in motores
+                               else None)
 
 
 # ---- lista, atalhos e resumo ----

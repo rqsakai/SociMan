@@ -16,13 +16,20 @@ ainda não limpas:
 
 Nunca é disparada por IA, agente ou MCP: não há rota HTTP nem tool (teste-guarda). O escolhido
 nunca é apagado. Rodar de novo não apaga nada novo (`limpa_em`).
+
+**Fase 2** (spec 011, R12; exceção 1 ampliada da 4.5.0, `intermediarios_90d`): na mesma volta, os
+intermediários de roteiro com `desuso_em` há mais de 90 dias e não protegidos
+(`roteiros/retencao.py` seleciona): o vídeo e a miniatura das tomadas locais (e do candidato do
+`cena.clipe`, o mesmo objeto), o áudio das narrações e o vídeo das prévias e dos acabamentos. As
+linhas ficam, sem a mídia e com `limpa_em` ("arquivo removido"); a linha de `audios` sai (como na
+fase 1). Um evento `eliminacao_intermediarios` com as contagens; os objetos saem depois do commit.
 """
 
 import logging
 import uuid
 from dataclasses import dataclass, field
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select, update
 from sqlalchemy.orm import Session
 
 from sociman_api import storage
@@ -37,6 +44,8 @@ log = logging.getLogger("sociman.agendador")
 LOTE = 200
 EVENTO = "eliminacao_candidatos"
 EXCECAO = "candidatos_90d"
+EVENTO_INTERMEDIARIOS = "eliminacao_intermediarios"
+EXCECAO_INTERMEDIARIOS = "intermediarios_90d"
 AGENDADOR = Actor(kind="system:agendador")
 
 
@@ -49,6 +58,9 @@ class Resultado:
     bytes: int = 0
     mantidos: int = 0
     objetos: list[tuple[storage.Bucket, str]] = field(default_factory=list)
+    # Spec 011 (fase 2): os intermediários de roteiro.
+    tomadas: int = 0
+    narracoes: int = 0
 
 
 def _vencidas(db: Session, limite: int) -> list[Geracao]:
@@ -139,7 +151,92 @@ def limpar(db: Session, actor: Actor = AGENDADOR, *, dry_run: bool = False,
     if total.geracoes and not dry_run:
         log.info("limpeza de 90 dias: %d gerações, %d opções, %d bytes (%d mantidas)",
                  total.geracoes, total.candidatos, total.bytes, total.mantidos)
+    try:
+        f2 = _intermediarios(db, actor, dry_run, lote)
+    except Exception:
+        db.rollback()
+        log.exception("falha na fase 2 da limpeza (intermediários); segue na próxima volta")
+        return total
+    for campo in ("candidatos", "audios", "bytes", "mantidos", "tomadas", "narracoes"):
+        setattr(total, campo, getattr(total, campo) + getattr(f2, campo))
     return total
+
+
+def _intermediarios(db: Session, actor: Actor, dry_run: bool, lote: int) -> Resultado:
+    """Fase 2 (spec 011, R12). Uma transação; os objetos saem depois do commit."""
+    from sociman_api.cenas.models import CenaTomada
+    from sociman_api.roteiros import retencao
+    from sociman_api.roteiros.models import RoteiroNarracao
+
+    r = Resultado()
+    agora = db.scalar(select(func.now()))
+    sai, r.mantidos = retencao.filtrar(retencao.elegiveis(db, agora, lote),
+                                       retencao.protegidos(db))
+    objetos: list[tuple[storage.Bucket, str]] = []
+    video_keys: set[str] = set()
+    tomadas = list(db.scalars(select(CenaTomada).where(CenaTomada.id.in_(sai.tomadas))
+                              .with_for_update(skip_locked=True))) if sai.tomadas else []
+    for t in tomadas:
+        r.bytes += t.bytes or 0
+        objetos += [("videos", t.video_key), ("imagens", t.miniatura_key)]
+        video_keys.add(t.video_key)
+    cands = list(db.scalars(select(GeracaoCandidato).where(or_(
+        GeracaoCandidato.geracao_id.in_(sai.geracoes),
+        GeracaoCandidato.video_key.in_(video_keys)), GeracaoCandidato.video_key.is_not(None))))
+    for c in cands:
+        if c.video_key not in video_keys:
+            r.bytes += c.video_bytes or 0
+            objetos += [("videos", c.video_key), ("imagens", c.video_miniatura_key)]
+    narracoes, audios = [], []
+    for n in db.scalars(select(RoteiroNarracao).where(RoteiroNarracao.id.in_(sai.narracoes))
+                        .with_for_update(skip_locked=True)) if sai.narracoes else []:
+        a = db.get(Audio, n.audio_id) if n.audio_id else None
+        # O áudio da narração é sempre o escolhido da própria geração e aparece (pela chave) no
+        # `params` das prévias que o usaram: quem decide é a proteção do roteiro (`retencao`).
+        if a is not None and midia_em_uso(db, audio_id=a.id,
+                                          ignorar=frozenset({"escolhido", "params"})):
+            r.mantidos += 1
+            continue
+        narracoes.append(n)
+        if a is not None:
+            audios.append(a)
+            r.bytes += a.bytes
+            objetos.append(("audios", a.object_key))
+    r.tomadas, r.narracoes, r.candidatos, r.audios = (len(tomadas), len(narracoes), len(cands),
+                                                      len(audios))
+    if dry_run or not (tomadas or cands or narracoes):
+        db.rollback()
+        return r
+    for t in tomadas:
+        t.video_key = t.miniatura_key = t.bytes = None
+        t.limpa_em = agora
+    if cands:
+        db.execute(update(GeracaoCandidato).where(GeracaoCandidato.id.in_([c.id for c in cands]))
+                   .values(video_key=None, video_miniatura_key=None, video_bytes=None))
+    audio_ids = [a.id for a in audios]
+    for n in narracoes:
+        n.audio_id = None
+        n.limpa_em = agora
+    if audio_ids:
+        db.execute(update(GeracaoCandidato).where(GeracaoCandidato.audio_id.in_(audio_ids))
+                   .values(audio_id=None))
+        db.flush()
+        db.execute(delete(Audio).where(Audio.id.in_(audio_ids)))
+    record_event(db, EVENTO_INTERMEDIARIOS, "ok", actor, details={
+        "excecao": EXCECAO_INTERMEDIARIOS, "tomadas": r.tomadas, "narracoes": r.narracoes,
+        "candidatos": r.candidatos, "audios": r.audios, "bytes": r.bytes,
+        "mantidos": r.mantidos})
+    db.commit()
+    for bucket, key in objetos:
+        if not key:
+            continue
+        try:
+            storage.apagar_por_excecao(key, bucket=bucket, excecao=EXCECAO_INTERMEDIARIOS)
+        except Exception:  # objeto órfão é inofensivo; a linha já ficou sem a mídia
+            log.warning("objeto %s/%s não apagado (fica órfão)", bucket, key, exc_info=True)
+    log.info("limpeza de 90 dias (roteiros): %d tomadas, %d narrações, %d vídeos, %d bytes "
+             "(%d mantidos)", r.tomadas, r.narracoes, r.candidatos, r.bytes, r.mantidos)
+    return r
 
 
 def rodar(db: Session) -> None:

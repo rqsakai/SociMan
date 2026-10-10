@@ -9,12 +9,15 @@ export function PerfilBaseFiltro({
   onChange,
   className = "w-full sm:w-52",
   rotulo = "Perfil base",
+  semOpcaoSemPerfil = false,
 }: {
   valor: PerfilFiltro;
   onChange: (v: PerfilFiltro) => void;
   className?: string;
   // com dois filtros na mesma tela (fundo e marca d'água do kit), um rótulo próprio para cada
   rotulo?: string;
+  // listas em que todo item tem perfil (vídeos da 011): "Sem perfil" daria sempre vazio
+  semOpcaoSemPerfil?: boolean;
 }) {
   const perfis = usePerfisTodos();
   const conhecido = valor === "todos" || valor === "sem" || perfis.data?.some((p) => p.id === valor);
@@ -23,7 +26,7 @@ export function PerfilBaseFiltro({
       {({ id }) => (
         <NativeSelect id={id} value={valor} onChange={(e) => onChange(e.target.value)} data-testid="filtro-perfil-base">
           <option value="todos">Todos</option>
-          <option value="sem">{SEM_PERFIL}</option>
+          {!semOpcaoSemPerfil && <option value="sem">{SEM_PERFIL}</option>}
           {!conhecido && <option value={valor}>Perfil escolhido</option>}
           {perfis.data?.map((p) => (
             <option key={p.id} value={p.id}>

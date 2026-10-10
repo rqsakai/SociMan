@@ -9842,7 +9842,9 @@
             "enum": [
               "asset",
               "voz",
-              "produto"
+              "produto",
+              "cena",
+              "roteiro"
             ],
             "type": "string"
           },
@@ -9850,7 +9852,8 @@
             "enum": [
               "comfyui",
               "tts",
-              "claude"
+              "claude",
+              "ffmpeg"
             ],
             "type": "string"
           },
@@ -12559,6 +12562,16 @@
             ],
             "type": "string"
           },
+          "CenaMotor": {
+            "description": "O motor do clipe local (spec 011, FR-022).",
+            "enum": [
+              "minimax",
+              "wan",
+              "wan_qualidade",
+              "ltx"
+            ],
+            "type": "string"
+          },
           "CenaMovimento": {
             "enum": [
               "parada",
@@ -12587,6 +12600,45 @@
               "usada"
             ],
             "type": "string"
+          },
+          "ImageRef": {
+            "properties": {
+              "height": {
+                "type": "integer"
+              },
+              "id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "urls": {
+                "$ref": "#/$defs/ImageUrls"
+              },
+              "width": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "width",
+              "height",
+              "urls"
+            ],
+            "type": "object"
+          },
+          "ImageUrls": {
+            "properties": {
+              "medium": {
+                "type": "string"
+              },
+              "thumb": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "thumb",
+              "medium"
+            ],
+            "type": "object"
           },
           "Ingrediente": {
             "properties": {
@@ -12664,6 +12716,34 @@
               "largura",
               "altura",
               "downloadUrl",
+              "thumbUrl"
+            ],
+            "type": "object"
+          },
+          "KeyframeRef": {
+            "description": "Spec 011: uma referência do keyframe (id de `images` sem FK; a apagada vem `removida`).",
+            "properties": {
+              "imageId": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "removida": {
+                "type": "boolean"
+              },
+              "thumbUrl": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "imageId",
+              "removida",
               "thumbUrl"
             ],
             "type": "object"
@@ -12790,7 +12870,14 @@
                 "$ref": "#/$defs/Autor"
               },
               "bytes": {
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "cenaId": {
                 "format": "uuid",
@@ -12809,12 +12896,62 @@
               "escolhida": {
                 "type": "boolean"
               },
+              "fps": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "geracaoId": {
+                "anyOf": [
+                  {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "id": {
                 "format": "uuid",
                 "type": "string"
               },
+              "keyframeAntigo": {
+                "default": false,
+                "type": "boolean"
+              },
               "largura": {
                 "type": "integer"
+              },
+              "limpa": {
+                "default": false,
+                "type": "boolean"
+              },
+              "limpaEm": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "motor": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CenaMotor"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "naoVertical": {
                 "type": "boolean"
@@ -12832,7 +12969,14 @@
                 "type": "string"
               },
               "thumbUrl": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "version": {
                 "type": "integer"
@@ -12872,9 +13016,10 @@
             "type": "object"
           },
           "TomadaOrigem": {
-            "description": "Como a tomada nasceu. Ponto de extensão: a 021 (geração local) poderá acrescentar valores.",
+            "description": "Como a tomada nasceu: enviada à mão do Flow (010) ou gerada no ComfyUI pelo roteiro (011).",
             "enum": [
-              "flow_manual"
+              "flow_manual",
+              "geracao_local"
             ],
             "type": "string"
           },
@@ -12985,6 +13130,10 @@
         "properties": {
           "acao": {
             "type": "string"
+          },
+          "altura": {
+            "default": 1280,
+            "type": "integer"
           },
           "arquivada": {
             "type": "boolean"
@@ -13097,6 +13246,16 @@
               }
             ]
           },
+          "duracaoMaxS": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "duracaoS": {
             "type": "integer"
           },
@@ -13130,8 +13289,63 @@
             },
             "type": "array"
           },
+          "keyframeFinal": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ImageRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keyframeGeracaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keyframeInicial": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ImageRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keyframeInstrucao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keyframeRefs": {
+            "items": {
+              "$ref": "#/$defs/KeyframeRef"
+            },
+            "type": "array"
+          },
+          "largura": {
+            "default": 736,
+            "type": "integer"
+          },
           "modo": {
             "$ref": "#/$defs/CenaModo"
+          },
+          "motor": {
+            "$ref": "#/$defs/CenaMotor",
+            "default": "minimax"
           },
           "movimento": {
             "anyOf": [
@@ -14361,6 +14575,16 @@
             ],
             "type": "object"
           },
+          "CenaMotor": {
+            "description": "O motor do clipe local (spec 011, FR-022).",
+            "enum": [
+              "minimax",
+              "wan",
+              "wan_qualidade",
+              "ltx"
+            ],
+            "type": "string"
+          },
           "Tomada": {
             "properties": {
               "altura": {
@@ -14373,7 +14597,14 @@
                 "$ref": "#/$defs/Autor"
               },
               "bytes": {
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "cenaId": {
                 "format": "uuid",
@@ -14392,12 +14623,62 @@
               "escolhida": {
                 "type": "boolean"
               },
+              "fps": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "geracaoId": {
+                "anyOf": [
+                  {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "id": {
                 "format": "uuid",
                 "type": "string"
               },
+              "keyframeAntigo": {
+                "default": false,
+                "type": "boolean"
+              },
               "largura": {
                 "type": "integer"
+              },
+              "limpa": {
+                "default": false,
+                "type": "boolean"
+              },
+              "limpaEm": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "motor": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CenaMotor"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "naoVertical": {
                 "type": "boolean"
@@ -14415,7 +14696,14 @@
                 "type": "string"
               },
               "thumbUrl": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "version": {
                 "type": "integer"
@@ -14455,9 +14743,10 @@
             "type": "object"
           },
           "TomadaOrigem": {
-            "description": "Como a tomada nasceu. Ponto de extensão: a 021 (geração local) poderá acrescentar valores.",
+            "description": "Como a tomada nasceu: enviada à mão do Flow (010) ou gerada no ComfyUI pelo roteiro (011).",
             "enum": [
-              "flow_manual"
+              "flow_manual",
+              "geracao_local"
             ],
             "type": "string"
           }
@@ -16050,6 +16339,10 @@
                   }
                 ]
               },
+              "geradoIa": {
+                "default": false,
+                "type": "boolean"
+              },
               "height": {
                 "anyOf": [
                   {
@@ -16097,6 +16390,16 @@
                 "anyOf": [
                   {
                     "$ref": "#/$defs/PropostaOpenshorts"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "roteiro": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/RoteiroDoConteudo"
                   },
                   {
                     "type": "null"
@@ -16703,6 +17006,41 @@
               "por",
               "em",
               "motivo"
+            ],
+            "type": "object"
+          },
+          "RoteiroDoConteudo": {
+            "description": "Spec 011: de que roteiro veio e quais motores geraram as tomadas (atribuição do MiniMax).",
+            "properties": {
+              "avisoAtribuicao": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "id": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "motores": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "nome": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "nome",
+              "motores",
+              "avisoAtribuicao"
             ],
             "type": "object"
           },
@@ -25616,7 +25954,8 @@
                   "guia",
                   "cena",
                   "aprendizado",
-                  "produto"
+                  "produto",
+                  "roteiro"
                 ],
                 "type": "string"
               },
@@ -25633,7 +25972,8 @@
                   "classificacao",
                   "analise",
                   "ficha_produto",
-                  "identidade"
+                  "identidade",
+                  "plano_roteiro"
                 ],
                 "type": "string"
               },
@@ -25663,7 +26003,8 @@
                   "aprendizado.classificacao",
                   "aprendizado.analise",
                   "produto.ficha",
-                  "avatar.identidade"
+                  "avatar.identidade",
+                  "roteiro.plano"
                 ],
                 "type": "string"
               },
@@ -25891,7 +26232,8 @@
                   "guia",
                   "cena",
                   "aprendizado",
-                  "produto"
+                  "produto",
+                  "roteiro"
                 ],
                 "type": "string"
               },
@@ -25908,7 +26250,8 @@
                   "classificacao",
                   "analise",
                   "ficha_produto",
-                  "identidade"
+                  "identidade",
+                  "plano_roteiro"
                 ],
                 "type": "string"
               },
@@ -25938,7 +26281,8 @@
                   "aprendizado.classificacao",
                   "aprendizado.analise",
                   "produto.ficha",
-                  "avatar.identidade"
+                  "avatar.identidade",
+                  "roteiro.plano"
                 ],
                 "type": "string"
               },
@@ -37568,7 +37912,8 @@
                   "cena_tomada",
                   "audio",
                   "mercado_imagem",
-                  "mercado_bruto"
+                  "mercado_bruto",
+                  "geracao_video"
                 ],
                 "type": "string"
               }
@@ -41931,7 +42276,9 @@
             "enum": [
               "asset",
               "voz",
-              "produto"
+              "produto",
+              "cena",
+              "roteiro"
             ],
             "type": "string"
           },
@@ -41939,7 +42286,8 @@
             "enum": [
               "comfyui",
               "tts",
-              "claude"
+              "claude",
+              "ffmpeg"
             ],
             "type": "string"
           },

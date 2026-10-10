@@ -51,8 +51,9 @@ const VAZIO: Rascunho = {
   conteudoIa: false,
 };
 
-function deOpcoes(o: OpcoesTikTok | null | undefined): Rascunho {
-  if (!o) return VAZIO;
+// Spec 011 (T043): sem opções salvas, o conteúdo gerado por IA começa com "conteúdo gerado por IA" marcado.
+function deOpcoes(o: OpcoesTikTok | null | undefined, geradoIa = false): Rascunho {
+  if (!o) return { ...VAZIO, conteudoIa: geradoIa };
   return {
     privacidade: o.privacidade,
     permitirComentario: o.permitirComentario,
@@ -70,6 +71,7 @@ export function TikTokPostForm({
   posterUrl,
   legenda,
   inicial,
+  geradoIa,
   onChange,
 }: {
   contaId: string;
@@ -77,6 +79,7 @@ export function TikTokPostForm({
   posterUrl?: string | null;
   legenda: string;
   inicial?: OpcoesTikTok | null;
+  geradoIa?: boolean;
   onChange: (opcoes: OpcoesTikTok | null) => void;
 }) {
   // Sem cache: a TikTok exige os dados da conta consultados ao abrir a tela.
@@ -89,7 +92,7 @@ export function TikTokPostForm({
     refetchOnWindowFocus: false,
   });
   const c: Criador | undefined = criador.data?.criador;
-  const [r, setR] = useState<Rascunho>(() => deOpcoes(inicial));
+  const [r, setR] = useState<Rascunho>(() => deOpcoes(inicial, geradoIa));
   const set = (patch: Partial<Rascunho>) => setR((x) => ({ ...x, ...patch }));
 
   // A conta desligou uma interação: fica desmarcada e bloqueada.

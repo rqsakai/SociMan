@@ -4830,6 +4830,33 @@
         "title": "Aprovacao",
         "type": "object"
       },
+      "AprovarIn": {
+        "additionalProperties": false,
+        "properties": {
+          "portao": {
+            "enum": [
+              "texto",
+              "narracao",
+              "keyframes",
+              "clipes",
+              "final"
+            ],
+            "title": "Portao",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "portao"
+        ],
+        "title": "AprovarIn",
+        "type": "object"
+      },
       "Armazenamento": {
         "description": "O HD de dados (R5): a aba Cortes mostra uso e espaço livre e desabilita o envio.",
         "properties": {
@@ -6286,6 +6313,42 @@
         "title": "AvaliacoesResumo",
         "type": "object"
       },
+      "AvatarRef": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kitStatus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kitstatus"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "revogado": {
+            "title": "Revogado",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "kitStatus",
+          "revogado"
+        ],
+        "title": "AvatarRef",
+        "type": "object"
+      },
       "AvisoDerivados": {
         "properties": {
           "codigo": {
@@ -6307,6 +6370,35 @@
           "itens"
         ],
         "title": "AvisoDerivados",
+        "type": "object"
+      },
+      "AvisoRoteiro": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "ordem": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ordem"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "AvisoRoteiro",
         "type": "object"
       },
       "BatimentoIn": {
@@ -6948,6 +7040,27 @@
           "foto"
         ],
         "title": "Body_produtos_variante_criar",
+        "type": "object"
+      },
+      "Body_roteiros_enviar_keyframe": {
+        "properties": {
+          "arquivo": {
+            "contentMediaType": "application/octet-stream",
+            "description": "PNG, JPG ou WebP, até 20 MB, na proporção da cena",
+            "title": "Arquivo",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "arquivo"
+        ],
+        "title": "Body_roteiros_enviar_keyframe",
         "type": "object"
       },
       "Body_studio_previa": {
@@ -8178,6 +8291,16 @@
                 "type": "null"
               }
             ]
+          },
+          "video": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VideoCandidato"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -8822,6 +8945,11 @@
             "title": "Acao",
             "type": "string"
           },
+          "altura": {
+            "default": 1280,
+            "title": "Altura",
+            "type": "integer"
+          },
           "arquivada": {
             "title": "Arquivada",
             "type": "boolean"
@@ -8943,6 +9071,17 @@
             ],
             "title": "Duplicadade"
           },
+          "duracaoMaxS": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaomaxs"
+          },
           "duracaoS": {
             "title": "Duracaos",
             "type": "integer"
@@ -8981,8 +9120,67 @@
             "title": "Ingredientes",
             "type": "array"
           },
+          "keyframeFinal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keyframeGeracaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframegeracaoid"
+          },
+          "keyframeInicial": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImageRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "keyframeInstrucao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframeinstrucao"
+          },
+          "keyframeRefs": {
+            "items": {
+              "$ref": "#/components/schemas/KeyframeRef"
+            },
+            "title": "Keyframerefs",
+            "type": "array"
+          },
+          "largura": {
+            "default": 736,
+            "title": "Largura",
+            "type": "integer"
+          },
           "modo": {
             "$ref": "#/components/schemas/CenaModo"
+          },
+          "motor": {
+            "$ref": "#/components/schemas/CenaMotor",
+            "default": "minimax"
           },
           "movimento": {
             "anyOf": [
@@ -9952,6 +10150,17 @@
         "title": "CenaModo",
         "type": "string"
       },
+      "CenaMotor": {
+        "description": "O motor do clipe local (spec 011, FR-022).",
+        "enum": [
+          "minimax",
+          "wan",
+          "wan_qualidade",
+          "ltx"
+        ],
+        "title": "CenaMotor",
+        "type": "string"
+      },
       "CenaMovimento": {
         "enum": [
           "parada",
@@ -10016,7 +10225,7 @@
       },
       "CenaPatch": {
         "additionalProperties": false,
-        "description": "Qualquer subconjunto dos campos. Nulo limpa os opcionais; em nome, ação, duração, modo,\ntags e notas, é ignorado.",
+        "description": "Qualquer subconjunto dos campos. Nulo limpa os opcionais; em nome, ação, duração, modo,\ntags e notas (e, na 011, motor, largura, altura e referências do keyframe), é ignorado.",
         "properties": {
           "acao": {
             "anyOf": [
@@ -10030,6 +10239,20 @@
               }
             ],
             "title": "Acao"
+          },
+          "altura": {
+            "anyOf": [
+              {
+                "maximum": 1920.0,
+                "minimum": 256.0,
+                "multipleOf": 16.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Altura"
           },
           "audio": {
             "anyOf": [
@@ -10103,6 +10326,23 @@
             ],
             "title": "Cenarioid"
           },
+          "duracaoMaxS": {
+            "anyOf": [
+              {
+                "maximum": 30.0,
+                "minimum": 1.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,3}|(?=[\\d.]{1,5}0*$)\\d{0,3}\\.\\d{0,1}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaomaxs"
+          },
           "duracaoS": {
             "anyOf": [
               {
@@ -10159,10 +10399,86 @@
             ],
             "title": "Ia"
           },
+          "keyframeFinalId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframefinalid"
+          },
+          "keyframeInicialId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframeinicialid"
+          },
+          "keyframeInstrucao": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframeinstrucao"
+          },
+          "keyframeRefs": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 6,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframerefs"
+          },
+          "largura": {
+            "anyOf": [
+              {
+                "maximum": 1920.0,
+                "minimum": 256.0,
+                "multipleOf": 16.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Largura"
+          },
           "modo": {
             "anyOf": [
               {
                 "$ref": "#/components/schemas/CenaModo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "motor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaMotor"
               },
               {
                 "type": "null"
@@ -10514,6 +10830,124 @@
           "updatedAt"
         ],
         "title": "CenaResumo",
+        "type": "object"
+      },
+      "CenaRoteiro": {
+        "properties": {
+          "altura": {
+            "title": "Altura",
+            "type": "integer"
+          },
+          "arquivada": {
+            "title": "Arquivada",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "keyframeGeracaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframegeracaoid"
+          },
+          "keyframeImageId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframeimageid"
+          },
+          "keyframeInstrucao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframeinstrucao"
+          },
+          "keyframeRefs": {
+            "items": {
+              "$ref": "#/components/schemas/KeyframeRef"
+            },
+            "title": "Keyframerefs",
+            "type": "array"
+          },
+          "keyframeUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyframeurl"
+          },
+          "largura": {
+            "title": "Largura",
+            "type": "integer"
+          },
+          "motor": {
+            "$ref": "#/components/schemas/CenaMotor"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "perfilId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perfilid"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CenaStatus"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "status",
+          "motor",
+          "largura",
+          "altura",
+          "arquivada",
+          "perfilId",
+          "keyframeImageId",
+          "keyframeUrl",
+          "keyframeGeracaoId",
+          "keyframeInstrucao",
+          "keyframeRefs",
+          "version"
+        ],
+        "title": "CenaRoteiro",
         "type": "object"
       },
       "CenaStatus": {
@@ -13159,6 +13593,11 @@
             ],
             "title": "Envioid"
           },
+          "geradoIa": {
+            "default": false,
+            "title": "Geradoia",
+            "type": "boolean"
+          },
           "height": {
             "anyOf": [
               {
@@ -13211,6 +13650,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/PropostaOpenshorts"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "roteiro": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoteiroDoConteudo"
               },
               {
                 "type": "null"
@@ -13675,6 +14124,29 @@
           "version"
         ],
         "title": "ContinuarIn",
+        "type": "object"
+      },
+      "ControleIn": {
+        "additionalProperties": false,
+        "properties": {
+          "modo": {
+            "$ref": "#/components/schemas/RoteiroModo"
+          },
+          "portoes": {
+            "$ref": "#/components/schemas/Portoes"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "modo",
+          "portoes"
+        ],
+        "title": "ControleIn",
         "type": "object"
       },
       "Cor": {
@@ -16513,6 +16985,24 @@
         "title": "ErroPasso",
         "type": "object"
       },
+      "ErroRoteiro": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErroRoteiro",
+        "type": "object"
+      },
       "ErrorBody": {
         "properties": {
           "code": {
@@ -16577,6 +17067,27 @@
           "alvoVersion"
         ],
         "title": "EscolherIn",
+        "type": "object"
+      },
+      "EscolherTomadaIn": {
+        "additionalProperties": false,
+        "properties": {
+          "tomadaId": {
+            "format": "uuid",
+            "title": "Tomadaid",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "tomadaId"
+        ],
+        "title": "EscolherTomadaIn",
         "type": "object"
       },
       "EstadoColeta": {
@@ -18868,11 +19379,54 @@
         "title": "Gancho",
         "type": "object"
       },
+      "GeracaoAberta": {
+        "properties": {
+          "etapaMensagem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Etapamensagem"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "passo": {
+            "title": "Passo",
+            "type": "string"
+          },
+          "progress": {
+            "title": "Progress",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "passo",
+          "status",
+          "progress",
+          "etapaMensagem"
+        ],
+        "title": "GeracaoAberta",
+        "type": "object"
+      },
       "GeracaoAlvo": {
         "enum": [
           "asset",
           "voz",
-          "produto"
+          "produto",
+          "cena",
+          "roteiro"
         ],
         "title": "GeracaoAlvo",
         "type": "string"
@@ -19560,7 +20114,8 @@
         "enum": [
           "comfyui",
           "tts",
-          "claude"
+          "claude",
+          "ffmpeg"
         ],
         "title": "GeracaoMotor",
         "type": "string"
@@ -19980,7 +20535,8 @@
               "aprendizado.classificacao",
               "aprendizado.analise",
               "produto.ficha",
-              "avatar.identidade"
+              "avatar.identidade",
+              "roteiro.plano"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -20502,7 +21058,8 @@
               "aprendizado.classificacao",
               "aprendizado.analise",
               "produto.ficha",
-              "avatar.identidade"
+              "avatar.identidade",
+              "roteiro.plano"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -22541,6 +23098,38 @@
         "title": "Janela",
         "type": "object"
       },
+      "KeyframeRef": {
+        "description": "Spec 011: uma referência do keyframe (id de `images` sem FK; a apagada vem `removida`).",
+        "properties": {
+          "imageId": {
+            "format": "uuid",
+            "title": "Imageid",
+            "type": "string"
+          },
+          "removida": {
+            "title": "Removida",
+            "type": "boolean"
+          },
+          "thumbUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumburl"
+          }
+        },
+        "required": [
+          "imageId",
+          "removida",
+          "thumbUrl"
+        ],
+        "title": "KeyframeRef",
+        "type": "object"
+      },
       "Kit": {
         "additionalProperties": false,
         "properties": {
@@ -24421,7 +25010,8 @@
               "cena_tomada",
               "audio",
               "mercado_imagem",
-              "mercado_bruto"
+              "mercado_bruto",
+              "geracao_video"
             ],
             "title": "Kind",
             "type": "string"
@@ -24647,6 +25237,77 @@
           "naoLidas"
         ],
         "title": "NaoLidasOut",
+        "type": "object"
+      },
+      "NarracaoOut": {
+        "properties": {
+          "audioUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audiourl"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "desatualizada": {
+            "title": "Desatualizada",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "limpa": {
+            "title": "Limpa",
+            "type": "boolean"
+          },
+          "similaridade": {
+            "title": "Similaridade",
+            "type": "number"
+          },
+          "tempos": {
+            "items": {
+              "$ref": "#/components/schemas/TempoFrase"
+            },
+            "title": "Tempos",
+            "type": "array"
+          },
+          "totalS": {
+            "title": "Totals",
+            "type": "number"
+          },
+          "velocidade": {
+            "title": "Velocidade",
+            "type": "number"
+          },
+          "vozId": {
+            "format": "uuid",
+            "title": "Vozid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "audioUrl",
+          "tempos",
+          "totalS",
+          "similaridade",
+          "velocidade",
+          "vozId",
+          "desatualizada",
+          "limpa",
+          "createdAt"
+        ],
+        "title": "NarracaoOut",
         "type": "object"
       },
       "NotaIn": {
@@ -26359,6 +27020,161 @@
         "title": "PontoDispersao",
         "type": "object"
       },
+      "Portoes": {
+        "additionalProperties": false,
+        "properties": {
+          "clipes": {
+            "default": true,
+            "title": "Clipes",
+            "type": "boolean"
+          },
+          "final": {
+            "default": true,
+            "title": "Final",
+            "type": "boolean"
+          },
+          "keyframes": {
+            "default": true,
+            "title": "Keyframes",
+            "type": "boolean"
+          },
+          "narracao": {
+            "default": true,
+            "title": "Narracao",
+            "type": "boolean"
+          },
+          "texto": {
+            "default": true,
+            "title": "Texto",
+            "type": "boolean"
+          }
+        },
+        "title": "Portoes",
+        "type": "object"
+      },
+      "PosicaoIn": {
+        "additionalProperties": false,
+        "properties": {
+          "cenaId": {
+            "format": "uuid",
+            "title": "Cenaid",
+            "type": "string"
+          },
+          "frases": {
+            "items": {
+              "minimum": 0.0,
+              "type": "integer"
+            },
+            "maxItems": 60,
+            "minItems": 1,
+            "title": "Frases",
+            "type": "array"
+          },
+          "tomadaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tomadaid"
+          }
+        },
+        "required": [
+          "cenaId",
+          "frases"
+        ],
+        "title": "PosicaoIn",
+        "type": "object"
+      },
+      "PosicaoOut": {
+        "properties": {
+          "aviso": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aviso"
+          },
+          "cena": {
+            "$ref": "#/components/schemas/CenaRoteiro"
+          },
+          "duracaoS": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaos"
+          },
+          "frases": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Frases",
+            "type": "array"
+          },
+          "geracoesAbertas": {
+            "items": {
+              "$ref": "#/components/schemas/GeracaoAberta"
+            },
+            "title": "Geracoesabertas",
+            "type": "array"
+          },
+          "inicioS": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inicios"
+          },
+          "ordem": {
+            "title": "Ordem",
+            "type": "integer"
+          },
+          "reaproveitada": {
+            "title": "Reaproveitada",
+            "type": "boolean"
+          },
+          "tomada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TomadaRoteiro"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "ordem",
+          "cena",
+          "frases",
+          "inicioS",
+          "duracaoS",
+          "tomada",
+          "aviso",
+          "reaproveitada",
+          "geracoesAbertas"
+        ],
+        "title": "PosicaoOut",
+        "type": "object"
+      },
       "PosicaoRanking": {
         "properties": {
           "categoriaId": {
@@ -26703,6 +27519,49 @@
           "inelegiveis"
         ],
         "title": "Previa",
+        "type": "object"
+      },
+      "PreviaOut": {
+        "properties": {
+          "atual": {
+            "title": "Atual",
+            "type": "boolean"
+          },
+          "duracaoMs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaoms"
+          },
+          "geracaoId": {
+            "format": "uuid",
+            "title": "Geracaoid",
+            "type": "string"
+          },
+          "videoUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Videourl"
+          }
+        },
+        "required": [
+          "geracaoId",
+          "videoUrl",
+          "duracaoMs",
+          "atual"
+        ],
+        "title": "PreviaOut",
         "type": "object"
       },
       "PreviaRevogacao": {
@@ -27538,6 +28397,94 @@
         "title": "ProdutoResumo",
         "type": "object"
       },
+      "ProdutoRoteiro": {
+        "properties": {
+          "aprovado": {
+            "title": "Aprovado",
+            "type": "boolean"
+          },
+          "cor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cor"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "nomeComercial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nomecomercial"
+          },
+          "produtoId": {
+            "format": "uuid",
+            "title": "Produtoid",
+            "type": "string"
+          },
+          "varianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Varianteid"
+          }
+        },
+        "required": [
+          "produtoId",
+          "nomeComercial",
+          "nome",
+          "varianteId",
+          "cor",
+          "aprovado"
+        ],
+        "title": "ProdutoRoteiro",
+        "type": "object"
+      },
+      "ProdutoRoteiroIn": {
+        "additionalProperties": false,
+        "properties": {
+          "produtoId": {
+            "format": "uuid",
+            "title": "Produtoid",
+            "type": "string"
+          },
+          "varianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Varianteid"
+          }
+        },
+        "required": [
+          "produtoId"
+        ],
+        "title": "ProdutoRoteiroIn",
+        "type": "object"
+      },
       "ProdutoStatus": {
         "enum": [
           "rascunho",
@@ -27629,6 +28576,136 @@
           "cenarioVersion"
         ],
         "title": "PromptOut",
+        "type": "object"
+      },
+      "Pronuncia": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "escrita": {
+            "title": "Escrita",
+            "type": "string"
+          },
+          "falada": {
+            "title": "Falada",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "escrita",
+          "falada",
+          "archived",
+          "version",
+          "updatedAt"
+        ],
+        "title": "Pronuncia",
+        "type": "object"
+      },
+      "PronunciaIn": {
+        "additionalProperties": false,
+        "properties": {
+          "escrita": {
+            "maxLength": 60,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n]*$",
+            "title": "Escrita",
+            "type": "string"
+          },
+          "falada": {
+            "maxLength": 60,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n]*$",
+            "title": "Falada",
+            "type": "string"
+          }
+        },
+        "required": [
+          "escrita",
+          "falada"
+        ],
+        "title": "PronunciaIn",
+        "type": "object"
+      },
+      "PronunciaPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "escrita": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "minLength": 1,
+                "pattern": "^[^\\r\\n]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Escrita"
+          },
+          "falada": {
+            "anyOf": [
+              {
+                "maxLength": 60,
+                "minLength": 1,
+                "pattern": "^[^\\r\\n]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Falada"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "PronunciaPatch",
+        "type": "object"
+      },
+      "PronunciasList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Pronuncia"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "PronunciasList",
         "type": "object"
       },
       "PropostaOpenshorts": {
@@ -29162,6 +30239,74 @@
         "title": "RecusarIn",
         "type": "object"
       },
+      "RegerarClipeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "motor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaMotor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "RegerarClipeIn",
+        "type": "object"
+      },
+      "RegerarKeyframeIn": {
+        "additionalProperties": false,
+        "properties": {
+          "instrucao": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instrucao"
+          },
+          "referencias": {
+            "anyOf": [
+              {
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "maxItems": 6,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referencias"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "RegerarKeyframeIn",
+        "type": "object"
+      },
       "Regras": {
         "properties": {
           "padrao": {
@@ -29820,6 +30965,702 @@
           "version"
         ],
         "title": "RevogarIn",
+        "type": "object"
+      },
+      "RoteiroDetalhe": {
+        "properties": {
+          "acabamento": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreviaOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "arquivado": {
+            "title": "Arquivado",
+            "type": "boolean"
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AvatarRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "avisos": {
+            "items": {
+              "$ref": "#/components/schemas/AvisoRoteiro"
+            },
+            "title": "Avisos",
+            "type": "array"
+          },
+          "brief": {
+            "title": "Brief",
+            "type": "string"
+          },
+          "conteudoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conteudoid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "erro": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErroRoteiro"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "etapaFalhou": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoteiroEtapa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "formato": {
+            "$ref": "#/components/schemas/RoteiroFormato"
+          },
+          "frases": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Frases",
+            "type": "array"
+          },
+          "geracoesAbertas": {
+            "items": {
+              "$ref": "#/components/schemas/GeracaoAberta"
+            },
+            "title": "Geracoesabertas",
+            "type": "array"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "maxCenas": {
+            "title": "Maxcenas",
+            "type": "integer"
+          },
+          "modo": {
+            "$ref": "#/components/schemas/RoteiroModo"
+          },
+          "narracao": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NarracaoOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "narracoesAnteriores": {
+            "title": "Narracoesanteriores",
+            "type": "integer"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "perfilNome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perfilnome"
+          },
+          "portoes": {
+            "$ref": "#/components/schemas/Portoes"
+          },
+          "posicoes": {
+            "items": {
+              "$ref": "#/components/schemas/PosicaoOut"
+            },
+            "title": "Posicoes",
+            "type": "array"
+          },
+          "previa": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PreviaOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "produtos": {
+            "items": {
+              "$ref": "#/components/schemas/ProdutoRoteiro"
+            },
+            "title": "Produtos",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RoteiroStatus"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "velocidade": {
+            "title": "Velocidade",
+            "type": "number"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "voz": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VozRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "perfilNome",
+          "nome",
+          "brief",
+          "avatar",
+          "voz",
+          "formato",
+          "frases",
+          "velocidade",
+          "modo",
+          "portoes",
+          "status",
+          "etapaFalhou",
+          "erro",
+          "avisos",
+          "produtos",
+          "posicoes",
+          "narracao",
+          "narracoesAnteriores",
+          "previa",
+          "acabamento",
+          "conteudoId",
+          "geracoesAbertas",
+          "maxCenas",
+          "arquivado",
+          "version",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "RoteiroDetalhe",
+        "type": "object"
+      },
+      "RoteiroDoConteudo": {
+        "description": "Spec 011: de que roteiro veio e quais motores geraram as tomadas (atribuição do MiniMax).",
+        "properties": {
+          "avisoAtribuicao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avisoatribuicao"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "motores": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Motores",
+            "type": "array"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "motores",
+          "avisoAtribuicao"
+        ],
+        "title": "RoteiroDoConteudo",
+        "type": "object"
+      },
+      "RoteiroEtapa": {
+        "description": "A etapa em que o roteiro falhou (o \"Tentar de novo\" retoma dela, FR-011).",
+        "enum": [
+          "plano",
+          "narracao",
+          "keyframes",
+          "clipes",
+          "montagem",
+          "acabamento"
+        ],
+        "title": "RoteiroEtapa",
+        "type": "string"
+      },
+      "RoteiroFormato": {
+        "enum": [
+          "voice_over"
+        ],
+        "title": "RoteiroFormato",
+        "type": "string"
+      },
+      "RoteiroIn": {
+        "additionalProperties": false,
+        "properties": {
+          "avatarId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarid"
+          },
+          "brief": {
+            "default": "",
+            "maxLength": 4000,
+            "title": "Brief",
+            "type": "string"
+          },
+          "nome": {
+            "maxLength": 120,
+            "minLength": 1,
+            "pattern": "^[^\\r\\n]*$",
+            "title": "Nome",
+            "type": "string"
+          },
+          "produtos": {
+            "items": {
+              "$ref": "#/components/schemas/ProdutoRoteiroIn"
+            },
+            "maxItems": 6,
+            "minItems": 1,
+            "title": "Produtos",
+            "type": "array"
+          },
+          "vozId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vozid"
+          }
+        },
+        "required": [
+          "nome",
+          "produtos"
+        ],
+        "title": "RoteiroIn",
+        "type": "object"
+      },
+      "RoteiroModo": {
+        "enum": [
+          "revisar",
+          "automatico"
+        ],
+        "title": "RoteiroModo",
+        "type": "string"
+      },
+      "RoteiroPadroes": {
+        "properties": {
+          "modo": {
+            "$ref": "#/components/schemas/RoteiroModo"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "portoes": {
+            "$ref": "#/components/schemas/Portoes"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "perfilId",
+          "modo",
+          "portoes",
+          "version"
+        ],
+        "title": "RoteiroPadroes",
+        "type": "object"
+      },
+      "RoteiroPadroesIn": {
+        "additionalProperties": false,
+        "properties": {
+          "modo": {
+            "$ref": "#/components/schemas/RoteiroModo"
+          },
+          "portoes": {
+            "$ref": "#/components/schemas/Portoes"
+          },
+          "version": {
+            "minimum": 0.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "modo",
+          "portoes"
+        ],
+        "title": "RoteiroPadroesIn",
+        "type": "object"
+      },
+      "RoteiroPatch": {
+        "additionalProperties": false,
+        "description": "Qualquer subconjunto. `avatarId`/`vozId` nulos tiram o avatar ou a voz.",
+        "properties": {
+          "avatarId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Avatarid"
+          },
+          "brief": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brief"
+          },
+          "frases": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 300,
+                  "minLength": 1,
+                  "pattern": "^[^\\r\\n]*$",
+                  "type": "string"
+                },
+                "maxItems": 60,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frases"
+          },
+          "nome": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "pattern": "^[^\\r\\n]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "posicoes": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PosicaoIn"
+                },
+                "maxItems": 20,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Posicoes"
+          },
+          "produtos": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ProdutoRoteiroIn"
+                },
+                "maxItems": 6,
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produtos"
+          },
+          "velocidade": {
+            "anyOf": [
+              {
+                "maximum": 1.2,
+                "minimum": 0.9,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,1}|(?=[\\d.]{1,4}0*$)\\d{0,1}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Velocidade"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          },
+          "vozId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vozid"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "RoteiroPatch",
+        "type": "object"
+      },
+      "RoteiroResumo": {
+        "properties": {
+          "arquivado": {
+            "title": "Arquivado",
+            "type": "boolean"
+          },
+          "cenas": {
+            "title": "Cenas",
+            "type": "integer"
+          },
+          "conteudoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conteudoid"
+          },
+          "etapaFalhou": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoteiroEtapa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "miniaturaUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Miniaturaurl"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "perfilNome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perfilnome"
+          },
+          "produtos": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Produtos",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RoteiroStatus"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "perfilId",
+          "perfilNome",
+          "nome",
+          "status",
+          "etapaFalhou",
+          "produtos",
+          "cenas",
+          "miniaturaUrl",
+          "arquivado",
+          "conteudoId",
+          "updatedAt"
+        ],
+        "title": "RoteiroResumo",
+        "type": "object"
+      },
+      "RoteiroStatus": {
+        "enum": [
+          "rascunho",
+          "planejando",
+          "aguardando_texto",
+          "narrando",
+          "aguardando_narracao",
+          "gerando_keyframes",
+          "aguardando_keyframes",
+          "gerando_clipes",
+          "aguardando_clipes",
+          "montando",
+          "aguardando_final",
+          "finalizando",
+          "pronto",
+          "falhou"
+        ],
+        "title": "RoteiroStatus",
+        "type": "string"
+      },
+      "RoteiroVersionIn": {
+        "additionalProperties": false,
+        "properties": {
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "RoteiroVersionIn",
+        "type": "object"
+      },
+      "RoteirosPagina": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/RoteiroResumo"
+            },
+            "title": "Itens",
+            "type": "array"
+          },
+          "proximo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proximo"
+          }
+        },
+        "required": [
+          "itens",
+          "proximo"
+        ],
+        "title": "RoteirosPagina",
         "type": "object"
       },
       "SalvarFichaIn": {
@@ -31258,6 +33099,29 @@
         "title": "TemaCasado",
         "type": "object"
       },
+      "TempoFrase": {
+        "properties": {
+          "fimS": {
+            "title": "Fims",
+            "type": "number"
+          },
+          "frase": {
+            "title": "Frase",
+            "type": "integer"
+          },
+          "inicioS": {
+            "title": "Inicios",
+            "type": "number"
+          }
+        },
+        "required": [
+          "frase",
+          "inicioS",
+          "fimS"
+        ],
+        "title": "TempoFrase",
+        "type": "object"
+      },
       "TentarDeNovoIn": {
         "properties": {
           "confirmoQueNaoChegou": {
@@ -31548,7 +33412,8 @@
               "guia",
               "cena",
               "aprendizado",
-              "produto"
+              "produto",
+              "roteiro"
             ],
             "title": "Entidade",
             "type": "string"
@@ -31566,7 +33431,8 @@
               "classificacao",
               "analise",
               "ficha_produto",
-              "identidade"
+              "identidade",
+              "plano_roteiro"
             ],
             "title": "Formato",
             "type": "string"
@@ -31597,7 +33463,8 @@
               "aprendizado.classificacao",
               "aprendizado.analise",
               "produto.ficha",
-              "avatar.identidade"
+              "avatar.identidade",
+              "roteiro.plano"
             ],
             "title": "Id",
             "type": "string"
@@ -31714,8 +33581,15 @@
             "$ref": "#/components/schemas/Autor"
           },
           "bytes": {
-            "title": "Bytes",
-            "type": "integer"
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bytes"
           },
           "cenaId": {
             "format": "uuid",
@@ -31739,14 +33613,69 @@
             "title": "Escolhida",
             "type": "boolean"
           },
+          "fps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fps"
+          },
+          "geracaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geracaoid"
+          },
           "id": {
             "format": "uuid",
             "title": "Id",
             "type": "string"
           },
+          "keyframeAntigo": {
+            "default": false,
+            "title": "Keyframeantigo",
+            "type": "boolean"
+          },
           "largura": {
             "title": "Largura",
             "type": "integer"
+          },
+          "limpa": {
+            "default": false,
+            "title": "Limpa",
+            "type": "boolean"
+          },
+          "limpaEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limpaem"
+          },
+          "motor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaMotor"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "naoVertical": {
             "title": "Naovertical",
@@ -31768,8 +33697,15 @@
             "type": "string"
           },
           "thumbUrl": {
-            "title": "Thumburl",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumburl"
           },
           "version": {
             "title": "Version",
@@ -31812,12 +33748,81 @@
         "type": "object"
       },
       "TomadaOrigem": {
-        "description": "Como a tomada nasceu. Ponto de extensão: a 021 (geração local) poderá acrescentar valores.",
+        "description": "Como a tomada nasceu: enviada à mão do Flow (010) ou gerada no ComfyUI pelo roteiro (011).",
         "enum": [
-          "flow_manual"
+          "flow_manual",
+          "geracao_local"
         ],
         "title": "TomadaOrigem",
         "type": "string"
+      },
+      "TomadaRoteiro": {
+        "properties": {
+          "duracaoMs": {
+            "title": "Duracaoms",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "keyframeAntigo": {
+            "title": "Keyframeantigo",
+            "type": "boolean"
+          },
+          "limpa": {
+            "title": "Limpa",
+            "type": "boolean"
+          },
+          "miniaturaUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Miniaturaurl"
+          },
+          "motor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CenaMotor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "origem": {
+            "$ref": "#/components/schemas/TomadaOrigem"
+          },
+          "videoUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Videourl"
+          }
+        },
+        "required": [
+          "id",
+          "origem",
+          "motor",
+          "duracaoMs",
+          "videoUrl",
+          "miniaturaUrl",
+          "keyframeAntigo",
+          "limpa"
+        ],
+        "title": "TomadaRoteiro",
+        "type": "object"
       },
       "TomadasList": {
         "properties": {
@@ -33334,6 +35339,67 @@
           "items"
         ],
         "title": "VersionsList",
+        "type": "object"
+      },
+      "VideoCandidato": {
+        "description": "Spec 011 (R3): o vídeo de um candidato (clipe, prévia ou acabamento).",
+        "properties": {
+          "altura": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Altura"
+          },
+          "duracaoMs": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaoms"
+          },
+          "largura": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Largura"
+          },
+          "link": {
+            "$ref": "#/components/schemas/Link"
+          },
+          "miniaturaUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Miniaturaurl"
+          }
+        },
+        "required": [
+          "link",
+          "miniaturaUrl",
+          "duracaoMs",
+          "largura",
+          "altura"
+        ],
+        "title": "VideoCandidato",
         "type": "object"
       },
       "VideoDetalhe": {
@@ -34978,6 +37044,35 @@
           "version"
         ],
         "title": "VozPatch",
+        "type": "object"
+      },
+      "VozRef": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "nome": {
+            "title": "Nome",
+            "type": "string"
+          },
+          "origem": {
+            "title": "Origem",
+            "type": "string"
+          },
+          "revogada": {
+            "title": "Revogada",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "nome",
+          "origem",
+          "revogada"
+        ],
+        "title": "VozRef",
         "type": "object"
       },
       "VozResumo": {
@@ -68938,6 +71033,174 @@
         "summary": "Criar"
       }
     },
+    "/api/perfis/{perfil_id}/pronuncias": {
+      "get": {
+        "operationId": "pronuncias_listar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "arquivadas",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Arquivadas",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PronunciasList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Pronuncias Listar"
+      },
+      "post": {
+        "operationId": "pronuncias_criar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PronunciaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pronuncia"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Pronuncias Criar"
+      }
+    },
     "/api/perfis/{perfil_id}/restore": {
       "post": {
         "operationId": "perfis_restore",
@@ -69116,6 +71379,486 @@
           }
         },
         "summary": "Revert Perfil"
+      }
+    },
+    "/api/perfis/{perfil_id}/roteiro-padroes": {
+      "get": {
+        "operationId": "roteiro_padroes_ler",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroPadroes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Padroes Ler"
+      },
+      "put": {
+        "operationId": "roteiro_padroes_salvar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroPadroesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroPadroes"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Padroes Salvar"
+      }
+    },
+    "/api/perfis/{perfil_id}/roteiro-padroes/versoes": {
+      "get": {
+        "operationId": "roteiro_padroes_versoes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Padroes Versoes"
+      }
+    },
+    "/api/perfis/{perfil_id}/roteiros": {
+      "get": {
+        "operationId": "roteiros_listar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Estados (OU)",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/RoteiroStatus"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Estados (OU)",
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "produtoId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Produtoid"
+            }
+          },
+          {
+            "in": "query",
+            "name": "arquivados",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Arquivados",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limite",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limite",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteirosPagina"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Listar"
+      },
+      "post": {
+        "operationId": "roteiros_criar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "perfil_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Perfil Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Criar"
       }
     },
     "/api/perfis/{perfil_id}/versions": {
@@ -71130,6 +73873,346 @@
         "summary": "Versoes"
       }
     },
+    "/api/pronuncias/{pronuncia_id}": {
+      "patch": {
+        "operationId": "pronuncias_editar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pronuncia_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Pronuncia Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PronunciaPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pronuncia"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Pronuncia Editar"
+      }
+    },
+    "/api/pronuncias/{pronuncia_id}/arquivar": {
+      "post": {
+        "operationId": "pronuncias_arquivar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pronuncia_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Pronuncia Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pronuncia"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Pronuncia Arquivar"
+      }
+    },
+    "/api/pronuncias/{pronuncia_id}/restaurar": {
+      "post": {
+        "operationId": "pronuncias_restaurar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pronuncia_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Pronuncia Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pronuncia"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Pronuncia Restaurar"
+      }
+    },
+    "/api/pronuncias/{pronuncia_id}/versoes": {
+      "get": {
+        "operationId": "pronuncias_versoes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pronuncia_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Pronuncia Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Pronuncia Versoes"
+      }
+    },
     "/api/publicacao/config": {
       "get": {
         "operationId": "publicacao_config_get",
@@ -71270,6 +74353,1495 @@
           }
         },
         "summary": "Config Versions"
+      }
+    },
+    "/api/roteiros": {
+      "get": {
+        "description": "O perfil do vídeo: ausente = todos; `sem` = nenhum (o roteiro sempre tem perfil); um id.",
+        "operationId": "roteiros_listar_agencia",
+        "parameters": [
+          {
+            "description": "Perfil base: ausente = todos; `sem` = sem perfil; ou o id de um perfil",
+            "in": "query",
+            "name": "perfilId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Perfil base: ausente = todos; `sem` = sem perfil; ou o id de um perfil",
+              "title": "Perfilid"
+            }
+          },
+          {
+            "description": "Estados (OU)",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/components/schemas/RoteiroStatus"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Estados (OU)",
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "produtoId",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Produtoid"
+            }
+          },
+          {
+            "description": "true = só os arquivados",
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "description": "true = só os arquivados",
+              "title": "Archived",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteirosPagina"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Listar Agencia"
+      }
+    },
+    "/api/roteiros/{roteiro_id}": {
+      "get": {
+        "operationId": "roteiros_detalhe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Detalhe"
+      },
+      "patch": {
+        "operationId": "roteiros_editar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Editar"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/aprovar": {
+      "post": {
+        "operationId": "roteiros_aprovar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprovarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Aprovar"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/arquivar": {
+      "post": {
+        "operationId": "roteiros_arquivar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Arquivar"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/controle": {
+      "put": {
+        "operationId": "roteiros_controle",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ControleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Controle"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/planejar": {
+      "post": {
+        "operationId": "roteiros_planejar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Planejar"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/clipe/regerar": {
+      "post": {
+        "operationId": "roteiros_regerar_clipe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ordem",
+            "required": true,
+            "schema": {
+              "title": "Ordem",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegerarClipeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Regerar Clipe"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/keyframe": {
+      "post": {
+        "operationId": "roteiros_enviar_keyframe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ordem",
+            "required": true,
+            "schema": {
+              "title": "Ordem",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_roteiros_enviar_keyframe"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Request Entity Too Large"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "507": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Insufficient Storage"
+          }
+        },
+        "summary": "Enviar Keyframe"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/keyframe/regerar": {
+      "post": {
+        "operationId": "roteiros_regerar_keyframe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ordem",
+            "required": true,
+            "schema": {
+              "title": "Ordem",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegerarKeyframeIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Regerar Keyframe"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/tomada": {
+      "put": {
+        "operationId": "roteiros_escolher_tomada",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ordem",
+            "required": true,
+            "schema": {
+              "title": "Ordem",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EscolherTomadaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Escolher Tomada"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/restaurar": {
+      "post": {
+        "operationId": "roteiros_restaurar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Restaurar"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/tentar-de-novo": {
+      "post": {
+        "operationId": "roteiros_tentar_de_novo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Tentar De Novo"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/versoes": {
+      "get": {
+        "operationId": "roteiros_versoes",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionsList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Versoes"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/versoes/{versao}/reverter": {
+      "post": {
+        "operationId": "roteiros_reverter",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versao",
+            "required": true,
+            "schema": {
+              "title": "Versao",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Reverter"
       }
     },
     "/api/security-events": {

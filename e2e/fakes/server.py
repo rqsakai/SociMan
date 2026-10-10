@@ -16,7 +16,7 @@ tem o ffmpeg) e atende, na porta 8000:
   prompt e devolve um JSON válido e determinístico. Palavras na instrução: "lento" dorme além do
   timeout do cliente; "fora do limite" devolve um texto acima de qualquer limite. Nas sugestões,
   os itens nunca repetem um texto que já esteja no pedido (lista, aceitos e rejeitados). O e2e
-  nunca chama a Anthropic.
+  nunca chama a Anthropic. Spec 011 (T057): o plano do roteiro (`_plano_roteiro`).
 - `/tiktok/v2/...` (spec 015, T039): uma TikTok de mentira, apontada por `TIKTOK_API_URL`, com
   exatamente os pedidos do cliente (`ALLOWED`, research R21): OAuth (token e revoke),
   `user/info`, `creator_info`, os dois `init`, `status/fetch`, o `PUT` das partes em
@@ -463,6 +463,30 @@ def _ficha_produto(body: dict, instrucao: str) -> dict:
     }
 
 
+# Spec 011 (T057): o plano do roteiro, como o `plano(...)` do `tests/fakes/anthropic_fake.py`: uma
+# frase por cena, a 1ª cena de <cenas> reaproveitada na 1ª posição ("sem reuso" na <instrucao>
+# cria todas) e as outras novas, com o produto 1. Três frases curtas: cabem nos 6 s do
+# `narracao.wav` fixo do `geracao_fake.py`.
+FRASES_ROTEIRO = ("Gente, achei o short perfeito!", "Olha esse canelado confortável.",
+                  "Corre no link aqui embaixo!")
+_CENA_ROTEIRO = re.compile(r'<cena id="([0-9a-f-]{36})"')
+
+
+def _plano_roteiro(user: str, instrucao: str) -> dict:
+    reusar = [] if "sem reuso" in instrucao.lower() else _CENA_ROTEIRO.findall(user)[:1]
+    posicoes = []
+    for i in range(len(FRASES_ROTEIRO)):
+        if i < len(reusar):
+            posicoes.append({"cena_id": reusar[i], "nova": None, "frases": [i + 1]})
+            continue
+        posicoes.append({"cena_id": None, "frases": [i + 1], "nova": {
+            "nome": f"Cena nova {i + 1}", "acao": "The shorts rotate slowly on a white table",
+            "plano": "detalhe_produto", "movimento": "parada", "camera": None,
+            "motor": "minimax", "keyframe_instrucao": "The shorts lie on a white table",
+            "produto": 1}})
+    return {"frases": list(FRASES_ROTEIRO), "posicoes": posicoes}
+
+
 DESCRICAO_IDENTIDADE = (  # spec 025: 40 a 80 palavras, em inglês, sem nada de proibido
     "Adult woman in her early thirties with warm medium-brown skin, an oval face, almond-shaped "
     "dark brown eyes under softly arched eyebrows, a straight medium nose, full lips, shoulder-"
@@ -497,6 +521,8 @@ def claude(body: dict) -> tuple[int, dict]:
                  "descricao_prompt": DESCRICAO_IDENTIDADE}
     elif "material_en" in props:  # spec 012
         dados = _ficha_produto(body, instrucao)
+    elif "posicoes" in props and "frases" in props:  # spec 011: o plano do roteiro
+        dados = _plano_roteiro(user, instrucao)
     elif "titulo" in props:  # textos_postagem
         dados = {"titulo": f"Título sugerido pela IA {n}{emoji}",
                  "descricao": f"Descrição sugerida pela IA, versão {n}.",

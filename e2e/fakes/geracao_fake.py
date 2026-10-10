@@ -16,6 +16,16 @@ dos fakes do pytest (`apps/api/tests/fakes/`):
   `GET /geracao-e2e/memoria` (os limites depois de cada ação) e `GET /geracao-e2e/pedidos`
   (os prompts recebidos, com a seed e o bloco), `GET /geracao-e2e/vozes-tts` (as vozes do
   shop-tts falso, as importadas e as apagadas).
+
+Spec 011 (T057, research R18), sem ffmpeg:
+- os 5 blocos de vídeo (`clipe_minimax`, `clipe_wan`, `clipe_wan_qualidade`, `clipe_ltx` e
+  `upscale_video`), reconhecidos pelos nós, devolvem no nó `SaveVideo` o mp4 fixo
+  `e2e/fixtures/geracao/clipe_8s.mp4` (8 s, 736×1280, 24 fps, cor sólida; montado em
+  `/fixtures/geracao`), e os clipes também um PNG no `last_frame`. O pedido guarda a largura, a
+  altura e os quadros (`GET /geracao-e2e/pedidos`);
+- `/shop-tts/v2/tts_paragraph` devolve o `narracao.wav` fixo (`NARRACAO_S` segundos) e os tempos
+  de cada frase proporcionais ao tamanho dela, em `frases` **e** `sentences`, com as `attempts`;
+  o `pronuncias` recebido (`None` = ausente) fica em `GET /geracao-e2e/pronuncias`.
 """
 
 import hashlib
@@ -32,6 +42,7 @@ import wave
 import zlib
 from email.parser import BytesParser
 from email.policy import HTTP
+from pathlib import Path
 
 GiB = 1024**3
 NORMAL, JOB = 12 * GiB, 28 * GiB
@@ -44,6 +55,38 @@ MEMORIA: list[int] = []
 PROMPTS: dict[str, dict] = {}  # id → {inicio, workflow, seed, bloco, interrompido}
 PEDIDOS: list[dict] = []
 _PNG_CACHE: dict[int, bytes] = {}
+FIXTURES = Path("/fixtures/geracao")
+_ARQUIVOS: dict[str, bytes] = {}
+
+
+def _fixture(nome: str) -> bytes:
+    if nome not in _ARQUIVOS:
+        _ARQUIVOS[nome] = (FIXTURES / nome).read_bytes()
+    return _ARQUIVOS[nome]
+
+
+def _bloco(wf: dict) -> str:
+    """O bloco pelos nós (spec 011: os de vídeo; o resto como na 021)."""
+    classes = {n.get("class_type") for n in wf.values()}
+    if "LoadVideo" in classes:
+        return "upscale_video"
+    if "SaveVideo" in classes:
+        if "MiniMaxH3ImageToVideo" in classes:
+            return "clipe_minimax"
+        if "EmptyLTXVLatentVideo" in classes:
+            return "clipe_ltx"
+        return "clipe_wan" if "LoraLoaderModelOnly" in classes else "clipe_wan_qualidade"
+    return "keyframe" if "LoadImage" in classes else "cena"
+
+
+# Nós dos parâmetros nos contratos (`geracao/workflows/*.params.json`).
+_PARAMS_VIDEO = {"upscale_video": {"width": "3", "height": "4", "seed": "5"}}
+_PARAMS_CLIPE = {"width": "4", "height": "5", "frames": "6", "seed": "7"}
+
+
+def _params(bloco: str, wf: dict) -> dict:
+    nos = _PARAMS_VIDEO.get(bloco, _PARAMS_CLIPE if bloco.startswith("clipe_") else {})
+    return {k: wf.get(nid, {}).get("inputs", {}).get("value") for k, nid in nos.items()}
 
 
 def _png(seed: int) -> bytes:
@@ -72,8 +115,8 @@ def _seed(wf: dict) -> int:
     return candidatos[0] if candidatos else 0
 
 
-def _saida(wf: dict) -> str:
-    return next((nid for nid, n in wf.items() if n.get("class_type") == "SaveImage"), "9")
+def _saida(wf: dict, classe: str = "SaveImage") -> str:
+    return next((nid for nid, n in wf.items() if n.get("class_type") == classe), "9")
 
 
 def comfyui(metodo: str, caminho: str, corpo: bytes, query: str = ""
@@ -90,12 +133,14 @@ def comfyui(metodo: str, caminho: str, corpo: bytes, query: str = ""
     if metodo == "POST" and caminho == "/prompt":
         wf = json.loads(corpo or b"{}").get("prompt") or {}
         pid = str(uuid.uuid4())
-        bloco = "keyframe" if any(n.get("class_type") == "LoadImage" for n in wf.values()) \
-            else "cena"
+        bloco = _bloco(wf)
+        params = _params(bloco, wf)
+        seed = params.pop("seed", None)
+        seed = seed if isinstance(seed, int) else _seed(wf)
         with _lock:
-            PROMPTS[pid] = {"inicio": time.monotonic(), "workflow": wf, "seed": _seed(wf),
+            PROMPTS[pid] = {"inicio": time.monotonic(), "workflow": wf, "seed": seed,
                             "bloco": bloco, "interrompido": False}
-            PEDIDOS.append({"prompt_id": pid, "seed": _seed(wf), "bloco": bloco})
+            PEDIDOS.append({"prompt_id": pid, "seed": seed, "bloco": bloco, **params})
         return 200, {"prompt_id": pid, "number": len(PEDIDOS)}, "json"
     if metodo == "GET" and caminho.startswith("/history/"):
         pid = caminho.rsplit("/", 1)[-1]
@@ -106,10 +151,22 @@ def comfyui(metodo: str, caminho: str, corpo: bytes, query: str = ""
         if p["interrompido"]:
             return 200, {pid: {"status": {"status_str": "error", "messages": [
                 ["execution_interrupted", {}]]}, "outputs": {}}}, "json"
+        if p["bloco"] in ("clipe_minimax", "clipe_wan", "clipe_wan_qualidade", "clipe_ltx",
+                          "upscale_video"):
+            # O SaveVideo também devolve o arquivo em `images`; o `last_frame` é um PNG.
+            saidas = {_saida(p["workflow"], "SaveVideo"): {"images": [
+                {"filename": f"{pid}.mp4", "subfolder": "", "type": "output"}]}}
+            if p["bloco"] != "upscale_video":
+                saidas[_saida(p["workflow"])] = {"images": [
+                    {"filename": f"{pid}.png", "subfolder": "", "type": "output"}]}
+            return 200, {pid: {"status": {"status_str": "success", "messages": []},
+                               "outputs": saidas}}, "json"
         return 200, {pid: {"status": {"status_str": "success", "messages": []}, "outputs": {
             _saida(p["workflow"]): {"images": [{"filename": f"{pid}.png", "subfolder": "",
                                                 "type": "output"}]}}}}, "json"
     if metodo == "GET" and caminho == "/view":
+        if re.search(r"filename=[0-9a-f-]+\.mp4", query):
+            return 200, _fixture("clipe_8s.mp4"), "video/mp4"
         m = re.search(r"filename=([0-9a-f-]+)\.png", query)
         pid = m.group(1) if m else ""
         seed = PROMPTS.get(pid, {}).get("seed", 0)
@@ -138,6 +195,24 @@ VOZES: dict[str, dict] = {n: {"file": f"/vozes/ref_{n}.wav", "text": "ref", "sha
 IMPORTADAS: list[dict] = []
 VOZES_APAGADAS: list[str] = []
 LOTES: dict[str, dict[str, bytes]] = {}
+PRONUNCIAS: list[dict | None] = []
+NARRACAO_S = 6.0  # a duração de `narracao.wav` (+ 0,45 s ainda cabe no clipe de 8 s)
+CAMPOS_TTS = {"sentences", "voice", "seed", "max_attempts", "min_similarity", "language",
+              "pronuncias"}
+
+
+def _tempos(frases: list[str]) -> list[dict]:
+    """Início e fim de cada frase, proporcionais ao tamanho dela, dentro do wav fixo (com 0,3 s
+    de pausa entre elas e 0,1 s de sobra no fim)."""
+    pausa = 0.3
+    util = NARRACAO_S - 0.1 - pausa * (len(frases) - 1)
+    pesos = [max(len(f.strip()), 1) for f in frases]
+    t, tempos = 0.0, []
+    for i, (f, peso) in enumerate(zip(frases, pesos, strict=True), 1):
+        fim = t + util * peso / sum(pesos)
+        tempos.append({"index": i, "text": f, "start": round(t, 2), "end": round(fim, 2)})
+        t = fim + pausa
+    return tempos
 
 
 def _wav(segundos: float = 1.0, freq: float = 440.0) -> bytes:
@@ -250,20 +325,29 @@ def shop_tts(metodo: str, caminho: str, corpo: bytes = b"", content_type: str = 
     if metodo == "POST" and caminho in ("/v2/tts", "/v2/tts_paragraph"):
         dados = json.loads(corpo or b"{}")
         frases = dados.get("sentences")
-        if "out_dir" in dados or not isinstance(frases, list) or not frases:
+        if set(dados) - CAMPOS_TTS or not isinstance(frases, list) or not frases:
             return 422, {"detail": "pedido inválido"}, "json"
+        pronuncias = dados.get("pronuncias")
+        if pronuncias is not None and not (isinstance(pronuncias, dict) and len(pronuncias) <= 500
+                                           and all(isinstance(k, str) and isinstance(v, str)
+                                                   and 1 <= len(k) <= 60 and 1 <= len(v) <= 60
+                                                   for k, v in pronuncias.items())):
+            return 422, {"detail": "pronuncias inválidas"}, "json"
         voz = dados.get("voice", "animada")
         if voz not in VOZES:
             return 404, {"detail": f"voz desconhecida: {voz}"}, "json"
         seed = int(dados.get("seed", 1))
         if caminho.endswith("paragraph"):
-            total = float(len(frases))
-            tempos = [{"index": i, "text": f, "start": float(i - 1), "end": float(i)}
-                      for i, f in enumerate(frases, 1)]
+            with _lock:
+                PRONUNCIAS.append(pronuncias)
+            tempos = _tempos(frases)
             return (*_lote({"voice": voz, "arquivo": "narracao.wav", "frases": tempos,
-                            "sample_rate": TAXA, "seconds": total, "similarity": 0.97,
+                            "sentences": tempos,
+                            "attempts": [{"seed": seed, "similarity": 0.97,
+                                          "seconds": NARRACAO_S}],
+                            "sample_rate": TAXA, "seconds": NARRACAO_S, "similarity": 0.97,
                             "seed": seed, "transcript": " ".join(frases), "ok": True},
-                           {"narracao.wav": _wav(total)}), "json")
+                           {"narracao.wav": _fixture("narracao.wav")}), "json")
         saida, arquivos = [], {}
         for i, f in enumerate(frases, 1):
             nome = f"frase_{i:02d}.wav"
@@ -325,6 +409,9 @@ def controle(metodo: str, caminho: str, corpo: bytes) -> tuple[int, dict]:
         return 200, {"historico": list(MEMORIA), **_estado_memoria()}
     if metodo == "GET" and caminho == "/geracao-e2e/pedidos":
         return 200, {"pedidos": list(PEDIDOS)}
+    if metodo == "GET" and caminho == "/geracao-e2e/pronuncias":
+        return 200, {"recebidas": list(PRONUNCIAS),
+                     "ultimo": PRONUNCIAS[-1] if PRONUNCIAS else None}
     if metodo == "GET" and caminho == "/geracao-e2e/vozes-tts":
         return 200, {"vozes": sorted(VOZES), "importadas": list(IMPORTADAS),
                      "apagadas": list(VOZES_APAGADAS)}

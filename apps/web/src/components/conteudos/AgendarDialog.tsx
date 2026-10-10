@@ -65,6 +65,8 @@ export interface AgendarConteudo {
   proposta?: PropostaOpenshorts | null;
   // spec 015 (US3): para a prévia do vídeo na tela de "Publicar"
   origem?: Origem;
+  // spec 011 (T043): conteúdo feito por um roteiro com vídeo local; "conteúdo gerado por IA" vem marcado
+  geradoIa?: boolean;
   posterUrl?: string | null;
 }
 
@@ -394,6 +396,7 @@ export function AgendarDialog({
                   posterUrl={conteudo.posterUrl}
                   legenda={legenda}
                   inicial={destino?.opcoesRede}
+                  geradoIa={conteudo.geradoIa}
                   onChange={setOpcoes}
                 />
               )}

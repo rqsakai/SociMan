@@ -44,6 +44,9 @@ class Actor:
 
 ANONYMOUS = Actor(kind="anonymous")
 CLI = Actor(kind="system:cli")
+# Spec 011 (R9): a escolha automática da opção 1 do keyframe, só dentro do roteiro em modo
+# automático ou com o portão KEYFRAMES desligado. O histórico mostra "sistema (automático)".
+ROTEIRO = Actor(kind="system:roteiro")
 
 
 def bearer_token(request: Request) -> str | None:

@@ -1760,3 +1760,147 @@ def test_mercado_leitura_so_get_e_sem_escrita():
                 "mercado_lojas_deixar_de_seguir", "mercado_produtos_adotar"}
     outras = {op for op, m in rotas.items() if m != "GET"} - escritas
     assert not outras, f"rota de mercado que escreve fora da lista (FR-042): {outras}"
+
+
+# ---- spec 011 (roteiros com vídeo local): escolha automática contida, sem rede social, limpeza
+# só nas exceções da 4.5.0 ----
+
+ROTEIROS = SRC / "roteiros"
+AUTOMATICO = ROTEIROS / "automatico.py"
+PASSOS_011 = ("roteiro.plano", "roteiro.narracao", "cena.keyframe", "cena.clipe",
+              "roteiro.montagem", "roteiro.acabamento")
+OPS_011 = ("roteiros_", "roteiro_padroes_", "pronuncias_")
+
+
+def test_so_o_automatico_do_roteiro_chama_a_escolha_automatica():
+    """R9: a única exceção à escolha humana da 021 fica num módulo só (`roteiros/automatico.py`);
+    a definição mora em `geracao/service.py`, que não a chama."""
+    for path in SRC.rglob("*.py"):
+        if path in (AUTOMATICO, GERACAO / "service.py"):
+            continue
+        assert not _referencias(path, "escolher_automatico"), f"{path} escolhe sozinho"
+    servico = ast.parse((GERACAO / "service.py").read_text())
+    chamadas = [n for n in ast.walk(servico) if isinstance(n, ast.Call)
+                and getattr(n.func, "id", getattr(n.func, "attr", "")) == "escolher_automatico"]
+    assert not chamadas, "geracao/service.py chama a escolha automática"
+    from sociman_api.geracao import service as geracao_service
+
+    texto = ast.unparse(ast.parse((GERACAO / "service.py").read_text()))
+    assert geracao_service.PASSO_AUTOMATICO == "cena.keyframe"
+    assert "geracao.passo != PASSO_AUTOMATICO" in texto  # recusa qualquer outro passo
+
+
+def test_roteiros_sem_rede_social_mcp_nem_http():
+    """Princípio I: o `roteiros/` não importa `publicacao`, `mcp` nem cliente HTTP, e não cita
+    host de rede social."""
+    for path in sorted(ROTEIROS.rglob("*.py")):
+        mods = _imports(path)
+        ruins = [m for m in mods if m.startswith(("sociman_api.publicacao", "sociman_api.mcp",
+                                                  "httpx", "requests", "urllib"))]
+        assert not ruins, f"{path.name} importa {ruins}"
+        texto = path.read_text().lower()
+        hosts = [h for h in PUBLISH_ENDPOINTS if h in texto]
+        assert not hosts, f"{path.name} cita {hosts}"
+        assert not _referencias(path, "apagar_por_excecao"), f"{path.name} apaga arquivo"
+
+
+_IMPORTA_ROTEIROS = {("gerador.py", "_registrar_modelos"), ("limpeza.py", "_intermediarios")}
+
+
+def test_geracao_nao_importa_roteiros_fora_do_registro():
+    """A seta é `roteiros → geracao`: o pacote `geracao/` só importa `roteiros` no
+    `_registrar_modelos` do gerador (o registro dos aplicadores, como a 012 e a 025) e na fase 2
+    da limpeza (a seleção dos intermediários, R12), dentro da função."""
+    for path in GERACAO.rglob("*.py"):
+        arvore = ast.parse(path.read_text())
+        pais: dict[ast.AST, ast.AST] = {}
+        for node in ast.walk(arvore):
+            for filho in ast.iter_child_nodes(node):
+                pais[filho] = node
+        for node in ast.walk(arvore):
+            if not (isinstance(node, ast.ImportFrom) and node.module
+                    and node.module.startswith("sociman_api.roteiros")):
+                continue
+            dono = node
+            while dono in pais and not isinstance(dono, ast.FunctionDef):
+                dono = pais[dono]
+            assert isinstance(dono, ast.FunctionDef) and \
+                (path.name, dono.name) in _IMPORTA_ROTEIROS, \
+                f"{path.name}:{node.lineno} importa roteiros"
+
+
+def _rotas_011() -> list:
+    rotas = []
+    for path in sorted(ROTEIROS.glob("router*.py")):
+        modulo = __import__(f"sociman_api.roteiros.{path.stem}", fromlist=["router"])
+        rotas += [r for r in modulo.router.routes if hasattr(r, "dependant")]
+    return rotas
+
+
+def test_rotas_do_roteiro_humanas_neutras_e_sem_delete():
+    """FR-046 e R17: toda rota do `roteiros/` exige um usuário (leitura) ou um humano (escrita;
+    reverter só o dono humano), sem "youtube"/"tiktok" e sem DELETE. Os routers chegam na US1;
+    até lá a lista pode estar vazia. No OpenAPI, os `operationId` da 011 seguem a mesma regra."""
+    from sociman_api.auth.deps import require_human, require_human_owner, require_user
+
+    def chamadas(dependant) -> set:
+        out = set()
+        for d in dependant.dependencies:
+            out.add(d.call)
+            out |= chamadas(d)
+        return out
+
+    for r in _rotas_011():
+        texto = f"{r.path} {r.operation_id}".lower()
+        assert r.operation_id.startswith(OPS_011), r.operation_id
+        assert "tiktok" not in texto and "youtube" not in texto, texto
+        assert "DELETE" not in r.methods, r.path
+        deps = chamadas(r.dependant)
+        assert deps & {require_user, require_human, require_human_owner}, r.path
+        if r.methods != {"GET"}:
+            assert deps & {require_human, require_human_owner}, r.path
+        if "reverter" in r.path or r.operation_id.endswith("_reverter"):
+            assert require_human_owner in deps, r.path
+    for path, metodos in app.openapi()["paths"].items():
+        for metodo, op in metodos.items():
+            if op.get("operationId", "").startswith(OPS_011):
+                texto = f"{path} {op['operationId']}".lower()
+                assert "tiktok" not in texto and "youtube" not in texto, texto
+                assert metodo != "delete", path
+
+
+def test_update_de_candidatos_so_na_revogacao_e_na_limpeza():
+    """R12: zerar a mídia de `geracao_candidatos` é da revogação LGPD (025) e da limpeza de 90
+    dias (021/011); nenhum outro módulo faz UPDATE na tabela."""
+    permitidos = {REVOGACAO, GERACAO / "limpeza.py"}
+    padroes = ("update(GeracaoCandidato", "UPDATE geracao_candidatos",
+               "update geracao_candidatos")
+    for path in SRC.rglob("*.py"):
+        if path in permitidos:
+            continue
+        texto = path.read_text()
+        achados = [p for p in padroes if p in texto]
+        assert not achados, f"{path} faz UPDATE em geracao_candidatos: {achados}"
+        for campo in ("video_key", "video_miniatura_key", "audio_id", "image_id"):
+            assert f"cand.{campo} = None" not in texto, f"{path} zera {campo} do candidato"
+
+
+def test_delete_permitido_nao_muda_na_011():
+    """A emenda 4.5.0 amplia a exceção 1, mas o delete continua só nos mesmos três módulos, e o
+    `intermediarios_90d` é uma exceção nomeada no `storage`."""
+    assert DELETE_PERMITIDO == {SRC / "storage.py", GERACAO / "limpeza.py", SRC / "revogacao.py"}
+    from typing import get_args
+
+    from sociman_api import storage
+
+    assert set(get_args(storage.Excecao)) == {"candidatos_90d", "lgpd_revogacao",
+                                             "intermediarios_90d"}
+
+
+def test_revogacao_nao_toca_os_artefatos_do_roteiro():
+    """FR-048 e R16: revogar uma voz ou um avatar não apaga tomadas, narrações, entregas nem as
+    gerações da cena e do roteiro (o já gerado fica)."""
+    texto = REVOGACAO.read_text()
+    proibidos = ("cena_tomadas", "CenaTomada", "roteiro_", "Roteiro", "roteiros", *PASSOS_011)
+    achados = [p for p in proibidos if p in texto]
+    assert not achados, f"revogacao.py referencia {achados}"

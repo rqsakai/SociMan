@@ -1,0 +1,46 @@
+{
+ "workflow": "V3 - Upscale vídeo SeedVR2 3B.api.json",
+ "params": {
+  "video": {
+   "node": "1",
+   "input": "file",
+   "kind": "image",
+   "default": "clip.mp4",
+   "doc": "Clipe de entrada (mp4)"
+  },
+  "prefix": {
+   "node": "2",
+   "input": "value",
+   "kind": "value",
+   "default": "v3/pos",
+   "doc": ""
+  },
+  "width": {
+   "node": "3",
+   "input": "value",
+   "kind": "value",
+   "default": 720,
+   "doc": "largura final (múltiplo de 16)"
+  },
+  "height": {
+   "node": "4",
+   "input": "value",
+   "kind": "value",
+   "default": 1248,
+   "doc": "altura final (múltiplo de 16)"
+  },
+  "seed": {
+   "node": "5",
+   "input": "value",
+   "kind": "value",
+   "default": 42,
+   "doc": ""
+  }
+ },
+ "outputs": {
+  "video": {
+   "node": "19",
+   "kind": "video"
+  }
+ }
+}

@@ -238,6 +238,19 @@ export const errorCodes = [
   "loja_nao_seguida",
   "ja_adotado",
   "ficha_ausente",
+  // 011-roteiros-video-local (cena_usada e consentimento_revogado já estão acima)
+  "invalid_roteiro",
+  "portao_fora_de_hora",
+  "limite_cenas",
+  "roteiro_arquivado",
+  "roteiro_planejando",
+  "pronuncia_existe",
+  "tomada_curta",
+  "tomada_longa",
+  "keyframe_antigo",
+  "keyframes_pendentes",
+  "produto_fora_de_aprovado",
+  "sem_voz",
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

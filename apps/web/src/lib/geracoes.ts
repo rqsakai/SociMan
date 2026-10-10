@@ -165,6 +165,15 @@ export async function invalidarAlvo(qc: QueryClient, _perfilId: string | null, a
     ]);
     return;
   }
+  // 011: a geração de keyframe e de clipe é da cena; a do plano, da narração e da prévia, do roteiro
+  if (alvo.tipo === "cena" || alvo.tipo === "roteiro") {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ["roteiro"] }),
+      qc.invalidateQueries({ queryKey: ["roteiros"] }),
+      alvo.tipo === "cena" ? qc.invalidateQueries({ queryKey: ["cena", alvo.id] }) : null,
+    ]);
+    return;
+  }
   if (alvo.tipo !== "asset") return;
   await Promise.all([
     qc.invalidateQueries({ queryKey: assetKey(alvo.id) }),

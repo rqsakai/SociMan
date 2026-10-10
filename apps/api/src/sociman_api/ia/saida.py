@@ -26,6 +26,7 @@ from sociman_api.ia import guia as guia_mod
 from sociman_api.ia.tipos import CAMPOS_CENA_IA, LIMITES_CENA, TipoCampo
 from sociman_api.postagem import textos  # normalizar_hashtags e os limites da postagem
 from sociman_api.produtos import ficha as ficha_produto  # spec 012 (puro)
+from sociman_api.roteiros import plano as plano_roteiro  # spec 011 (puro)
 
 EXPLICACAO_MAX = 400
 AVISOS_MAX = 5
@@ -172,7 +173,7 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "variacoes": PropostaVariacoes, "campos_cena": PropostaCamposCena,
     "taxonomia": PropostaTaxonomia, "classificacao": PropostaClassificacao,
     "analise": PropostaAnalise, "ficha_produto": ficha_produto.FichaSaida,
-    "identidade": PropostaIdentidade,
+    "identidade": PropostaIdentidade, "plano_roteiro": plano_roteiro.PlanoSaida,
 }
 VARIACOES = 3
 
@@ -293,6 +294,8 @@ def problemas(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
         erros.extend(ficha_produto.validar_limites(parsed))
     elif isinstance(parsed, PropostaIdentidade):  # spec 025
         erros.extend(_problemas_identidade(parsed))
+    elif isinstance(parsed, plano_roteiro.PlanoSaida):  # spec 011
+        erros.extend(plano_roteiro.problemas(parsed))
     elif isinstance(parsed, PropostaCamposCena):
         if not parsed.acao.strip():
             erros.append("a ação veio vazia")
@@ -584,6 +587,11 @@ def finalizar(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
         out.proposta = {"identidade": {
             "notas": {n.slot: {"nota": n.nota, "observacao": n.observacao} for n in parsed.notas},
             "descricao_prompt": parsed.descricao_prompt}}
+    elif isinstance(parsed, plano_roteiro.PlanoSaida):  # spec 011: estrutura sempre válida
+        erros = plano_roteiro.problemas(parsed)
+        if erros:
+            raise Invalida("; ".join(erros))
+        out.proposta = plano_roteiro.proposta(parsed)
     else:  # pragma: no cover
         raise TypeError(type(parsed).__name__)
     _avisos_do_guia(tipo, parsed, out, efetivo)

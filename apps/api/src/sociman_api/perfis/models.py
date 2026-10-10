@@ -63,6 +63,7 @@ class ImageKind(enum.StrEnum):
     avatar = "avatar"  # referência e pose de avatar (spec 007)
     imagem = "imagem"  # imagem genérica da biblioteca (spec 007)
     produto = "produto"  # foto, recorte e flat de produto do Shop (spec 012)
+    keyframe = "keyframe"  # keyframe de cena do clipe local (spec 011, FR-022)
 
 
 class _Versioned:

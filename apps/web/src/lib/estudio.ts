@@ -8,7 +8,7 @@ import { useFiltroUrl } from "./filtros";
 // "Perfil base" na URL (`perfil=<id>|sem`; sem o parâmetro, "Todos").
 
 export type PerfilFiltro = "todos" | "sem" | string;
-export type TipoEstudio = "avatares" | "cenarios" | "vozes" | "produtos" | "cenas" | "assets";
+export type TipoEstudio = "videos" | "avatares" | "cenarios" | "vozes" | "produtos" | "cenas" | "assets";
 
 export const SEM_PERFIL = "Sem perfil";
 export const SEM_PERFIL_BASE_TEXTO = "Sem perfil base: só as regras do tipo, sem guia";
@@ -20,6 +20,7 @@ export const rotaEstudio = (tipo: TipoEstudio, perfil?: string | null) =>
   `/app/estudio/${tipo}${perfil ? `?perfil=${encodeURIComponent(perfil)}` : ""}`;
 
 export const rotuloTipo: Record<TipoEstudio, string> = {
+  videos: "Vídeos",
   avatares: "Avatares",
   cenarios: "Cenários",
   vozes: "Vozes",
@@ -147,4 +148,20 @@ export function vazioDoPerfil(filtro: PerfilFiltro, perfis: Perfil[] | undefined
   if (filtro === "todos") return { trecho: "", criarComPerfil: false };
   if (filtro === "sem") return { trecho: " sem perfil base", criarComPerfil: false };
   return { trecho: ` com o perfil base ${nomePerfil(perfis, filtro)}`, criarComPerfil: true };
+}
+
+// Cenas ativas da agência (o "Reaproveitar cena" do roteiro, 011).
+export function useCenasOpcoes(perfilBase: string | null | undefined) {
+  const q = useQuery({
+    queryKey: ["cenas", "agencia", "opcoes"],
+    queryFn: () =>
+      buscarTodas(
+        (cursor) => api.cenas.listarAgencia({ arquivadas: "false", limit: 100, cursor }),
+        (p) => p.items,
+        (p) => p.nextCursor,
+      ),
+    staleTime: 30_000,
+  });
+  const itens = q.data ? ordenarPorPerfil(q.data.itens, perfilBase, (c) => c.nome) : undefined;
+  return { ...q, itens, truncado: q.data?.truncado ?? false };
 }

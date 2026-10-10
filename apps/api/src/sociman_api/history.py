@@ -14,6 +14,7 @@ from collections.abc import Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any, Literal, Protocol
 
 from sqlalchemy import (
@@ -39,6 +40,10 @@ from sociman_api.errors import ApiError
 ACTIONS = ("created", "updated", "archived", "restored", "reverted",
            # Spec 025: o kit padrão, a checagem de identidade, o consentimento e a revogação.
            "kit_escolhido", "identidade", "consentimento", "revoked")
+# Como os atores de sistema aparecem no histórico (o resto aparece pelo `actor_kind`). Spec 011:
+# a escolha automática do roteiro (R9). As entidades novas da 011 são `roteiro`,
+# `roteiro_padroes` e `pronuncia` (`roteiros/models.py`).
+NOMES_SISTEMA = {"system:roteiro": "sistema (automático)"}
 VERSAO_REDIGIDA = ("Esta versão foi redigida pela revogação do consentimento e não pode ser "
                    "restaurada")
 
@@ -113,6 +118,8 @@ def _jsonable(value: Any) -> Any:
         return str(value)
     if isinstance(value, (datetime, date)):
         return value.isoformat()
+    if isinstance(value, Decimal):  # spec 011: velocidade e durações (numeric)
+        return float(value)
     if isinstance(value, Mapping):
         return {str(k): _jsonable(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
@@ -274,5 +281,6 @@ def autores(db: Session, rows: list[EntityVersion]) -> dict[int, dict[str, Any]]
             out[r.id] = {"tipo": "usuario", "id": r.actor_user_id,
                          "nome": users.get(r.actor_user_id, "Usuário")}
         else:
-            out[r.id] = {"tipo": "sistema", "id": None, "nome": r.actor_kind}
+            out[r.id] = {"tipo": "sistema", "id": None,
+                         "nome": NOMES_SISTEMA.get(r.actor_kind, r.actor_kind)}
     return out

@@ -402,6 +402,29 @@ export type ColetaResumoRodada = components["schemas"]["ColetaResumo"];
 export type ColetaEvento = components["schemas"]["ColetaEventoOut"];
 export type ColetaColetasFiltros = NonNullable<paths["/api/coleta/coletas"]["get"]["parameters"]["query"]>;
 export type ColetaEventosFiltros = NonNullable<paths["/api/coleta/eventos"]["get"]["parameters"]["query"]>;
+// 011-roteiros-video-local
+export type Roteiro = components["schemas"]["RoteiroDetalhe"];
+export type RoteiroResumo = components["schemas"]["RoteiroResumo"];
+export type RoteiroStatus = components["schemas"]["RoteiroStatus"];
+export type RoteiroEtapa = components["schemas"]["RoteiroEtapa"];
+export type RoteiroModo = components["schemas"]["RoteiroModo"];
+export type RoteiroPortoes = components["schemas"]["Portoes"];
+export type RoteiroPosicao = components["schemas"]["PosicaoOut"];
+export type RoteiroPosicaoIn = components["schemas"]["PosicaoIn"];
+export type RoteiroCena = components["schemas"]["CenaRoteiro"];
+export type RoteiroTomada = components["schemas"]["TomadaRoteiro"];
+export type RoteiroNarracao = components["schemas"]["NarracaoOut"];
+export type RoteiroVideo = components["schemas"]["PreviaOut"];
+export type RoteiroGeracaoAberta = components["schemas"]["GeracaoAberta"];
+export type RoteiroProduto = components["schemas"]["ProdutoRoteiro"];
+export type RoteiroCreateRequest = components["schemas"]["RoteiroIn"];
+export type RoteiroPatchRequest = components["schemas"]["RoteiroPatch"];
+export type RoteiroPadroes = components["schemas"]["RoteiroPadroes"];
+export type RoteiroPadroesRequest = components["schemas"]["RoteiroPadroesIn"];
+export type RoteiroPortao = components["schemas"]["AprovarIn"]["portao"];
+export type CenaMotor = components["schemas"]["CenaMotor"];
+export type Pronuncia = components["schemas"]["Pronuncia"];
+export type RoteiroAgenciaFilters = NonNullable<paths["/api/roteiros"]["get"]["parameters"]["query"]>;
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -1488,6 +1511,61 @@ export function createApiClient(options: ApiClientOptions = {}) {
         unwrap(client.POST("/api/coleta/clientes/{cliente_id}/reativar", { params: { path: { cliente_id: clienteId } }, body: { version } })),
       revogarCliente: (clienteId: string, version: number) =>
         unwrap(client.POST("/api/coleta/clientes/{cliente_id}/revogar", { params: { path: { cliente_id: clienteId } }, body: { version } })),
+    },
+    // Roteiros com vídeo local (spec 011): o roteiro, as etapas por posição, o padrão de portões do perfil
+    // e as pronúncias. Escritas só de humano. O keyframe enviado é multipart (no app, por XHR); escolher a
+    // opção de keyframe é a rota de `geracoes`. Nenhuma rota DELETE.
+    roteiros: {
+      listarAgencia: (query: RoteiroAgenciaFilters = {}) => unwrap(client.GET("/api/roteiros", { params: { query } })),
+      criar: (perfilId: string, body: RoteiroCreateRequest) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/roteiros", { params: { path: { perfil_id: perfilId } }, body })),
+      detalhe: (roteiroId: string) => unwrap(client.GET("/api/roteiros/{roteiro_id}", { params: { path: { roteiro_id: roteiroId } } })),
+      editar: (roteiroId: string, body: RoteiroPatchRequest) =>
+        unwrap(client.PATCH("/api/roteiros/{roteiro_id}", { params: { path: { roteiro_id: roteiroId } }, body })),
+      planejar: (roteiroId: string, version: number) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/planejar", { params: { path: { roteiro_id: roteiroId } }, body: { version } })),
+      aprovar: (roteiroId: string, version: number, portao: RoteiroPortao) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/aprovar", { params: { path: { roteiro_id: roteiroId } }, body: { version, portao } })),
+      controle: (roteiroId: string, body: { version: number; modo: RoteiroModo; portoes: RoteiroPortoes }) =>
+        unwrap(client.PUT("/api/roteiros/{roteiro_id}/controle", { params: { path: { roteiro_id: roteiroId } }, body })),
+      tentarDeNovo: (roteiroId: string, version: number) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/tentar-de-novo", { params: { path: { roteiro_id: roteiroId } }, body: { version } })),
+      arquivar: (roteiroId: string, version: number) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/arquivar", { params: { path: { roteiro_id: roteiroId } }, body: { version } })),
+      restaurar: (roteiroId: string, version: number) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/restaurar", { params: { path: { roteiro_id: roteiroId } }, body: { version } })),
+      versoes: (roteiroId: string) => unwrap(client.GET("/api/roteiros/{roteiro_id}/versoes", { params: { path: { roteiro_id: roteiroId } } })),
+      reverter: (roteiroId: string, versao: number, version: number) =>
+        unwrap(
+          client.POST("/api/roteiros/{roteiro_id}/versoes/{versao}/reverter", {
+            params: { path: { roteiro_id: roteiroId, versao } },
+            body: { version },
+          }),
+        ),
+      regerarKeyframe: (roteiroId: string, ordem: number, body: { version: number; instrucao?: string | null; referencias?: string[] | null }) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/posicoes/{ordem}/keyframe/regerar", { params: { path: { roteiro_id: roteiroId, ordem } }, body })),
+      regerarClipe: (roteiroId: string, ordem: number, body: { version: number; motor?: CenaMotor | null }) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/posicoes/{ordem}/clipe/regerar", { params: { path: { roteiro_id: roteiroId, ordem } }, body })),
+      escolherTomada: (roteiroId: string, ordem: number, version: number, tomadaId: string) =>
+        unwrap(
+          client.PUT("/api/roteiros/{roteiro_id}/posicoes/{ordem}/tomada", { params: { path: { roteiro_id: roteiroId, ordem } }, body: { version, tomadaId } }),
+        ),
+      padroes: (perfilId: string) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/roteiro-padroes", { params: { path: { perfil_id: perfilId } } })),
+      padroesSalvar: (perfilId: string, body: RoteiroPadroesRequest) =>
+        unwrap(client.PUT("/api/perfis/{perfil_id}/roteiro-padroes", { params: { path: { perfil_id: perfilId } }, body })),
+    },
+    pronuncias: {
+      listar: (perfilId: string, arquivadas = false) =>
+        unwrap(client.GET("/api/perfis/{perfil_id}/pronuncias", { params: { path: { perfil_id: perfilId }, query: { arquivadas } } })),
+      criar: (perfilId: string, body: { escrita: string; falada: string }) =>
+        unwrap(client.POST("/api/perfis/{perfil_id}/pronuncias", { params: { path: { perfil_id: perfilId } }, body })),
+      editar: (pronunciaId: string, body: { version: number; escrita?: string; falada?: string }) =>
+        unwrap(client.PATCH("/api/pronuncias/{pronuncia_id}", { params: { path: { pronuncia_id: pronunciaId } }, body })),
+      arquivar: (pronunciaId: string, version: number) =>
+        unwrap(client.POST("/api/pronuncias/{pronuncia_id}/arquivar", { params: { path: { pronuncia_id: pronunciaId } }, body: { version } })),
+      restaurar: (pronunciaId: string, version: number) =>
+        unwrap(client.POST("/api/pronuncias/{pronuncia_id}/restaurar", { params: { path: { pronuncia_id: pronunciaId } }, body: { version } })),
     },
     config: () => unwrap(client.GET("/api/config")),
     health: () => unwrap(client.GET("/api/health")),

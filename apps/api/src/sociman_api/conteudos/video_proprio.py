@@ -14,8 +14,10 @@ e o arquivo vai para `work/tmp` (HD). Depois:
 O princípio II não se aplica (não é envio para corte, não há canal-fonte). Nada aqui publica.
 """
 
+import hashlib
 import tempfile
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 
 from sqlalchemy.orm import Session
@@ -82,6 +84,36 @@ def create_de_arquivo(db: Session, actor: Actor, perfil_id: uuid.UUID, path: Pat
                       filename: str, titulo: str, size: int, sha256: str) -> Conteudo:
     """O miolo do envio com o vídeo já no disco (o spool da rota ou, na importação da agência
     da spec 013, o arquivo na montagem só leitura). O `path` só é lido."""
+    def enviar(v_key: str, content_type: str) -> None:
+        storage.put_file(v_key, path, content_type, bucket="videos")
+
+    return _criar(db, actor, perfil_id, path, filename, titulo, size, sha256, enviar)
+
+
+def create_de_objeto(db: Session, actor: Actor, perfil_id: uuid.UUID, origem_key: str, *,
+                     filename: str, titulo: str, gerado_ia: bool = False) -> Conteudo:
+    """Spec 011 (R13): o conteúdo a partir de um vídeo que já está no bucket de vídeos (o
+    acabamento do roteiro). O objeto é copiado no MinIO para `conteudos/{id}/video.<ext>` (o
+    candidato da geração pode ser limpo depois sem levar o conteúdo junto); o ffprobe e o
+    pôster leem uma cópia em `work/tmp` (HD), apagada no fim."""
+    with tempfile.TemporaryDirectory(dir=cortes_service.spool_dir(), prefix="objeto-") as tmp:
+        path = Path(tmp) / Path(filename).name
+        storage.get_to_file(origem_key, path, bucket="videos")
+        sha = hashlib.sha256()
+        with path.open("rb") as fh:
+            for bloco in iter(lambda: fh.read(1024 * 1024), b""):
+                sha.update(bloco)
+
+        def enviar(v_key: str, content_type: str) -> None:
+            storage.copiar(origem_key, v_key, bucket="videos")
+
+        return _criar(db, actor, perfil_id, path, filename, titulo, path.stat().st_size,
+                      sha.hexdigest(), enviar, gerado_ia=gerado_ia)
+
+
+def _criar(db: Session, actor: Actor, perfil_id: uuid.UUID, path: Path, filename: str,
+           titulo: str, size: int, sha256: str, enviar: Callable[[str, str], None], *,
+           gerado_ia: bool = False) -> Conteudo:
     perfil = get_perfil_or_404(db, perfil_id)
     if perfil.archived:
         raise ApiError(409, "perfil_archived", "O perfil está arquivado")
@@ -98,19 +130,22 @@ def create_de_arquivo(db: Session, actor: Actor, perfil_id: uuid.UUID, path: Pat
         p_key = poster_key(perfil_id, conteudo_id)
         storage.put(p_key, poster.read_bytes(), "image/jpeg", bucket="imagens")
     v_key = video_key(conteudo_id, info.content_type)
-    storage.put_file(v_key, path, info.content_type, bucket="videos")
+    enviar(v_key, info.content_type)
 
     conteudo = Conteudo(
         id=conteudo_id, perfil_id=perfil_id, origem=ConteudoOrigem.video_proprio,
         titulo=titulo[:TITULO_MAX], video_key=v_key, video_content_type=info.content_type,
         video_bytes=size, video_sha256=sha256, original_filename=filename,
         duration_ms=info.duration_ms, width=info.width, height=info.height, poster_key=p_key,
-        created_by=actor.user_id, updated_by=actor.user_id,
+        gerado_ia=gerado_ia, created_by=actor.user_id, updated_by=actor.user_id,
     )
     db.add(conteudo)
     db.flush()
+    details = {"arquivo": {"nome": filename, "bytes": size, "sha256": sha256}}
+    if gerado_ia:
+        details["geradoIa"] = True
     history.record(db, actor, ENTITY, conteudo, "created", None, history.snapshot(conteudo),
-                   {"arquivo": {"nome": filename, "bytes": size, "sha256": sha256}})
+                   details)
     db.flush()
     db.refresh(conteudo)
     return conteudo

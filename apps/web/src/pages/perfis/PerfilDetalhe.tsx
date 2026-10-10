@@ -41,12 +41,15 @@ import { PadroesCorteTab } from "./tabs/PadroesCorteTab";
 import { GuiaTab } from "./tabs/GuiaTab";
 import { MercadoTab } from "./tabs/MercadoTab";
 import { VerNoEstudio } from "./VerNoEstudio";
+import { VideoLocalTab } from "./tabs/VideoLocalTab";
 
 const tabs = [
   { id: "dados", label: "Dados" },
   { id: "contas", label: "Contas" },
   { id: "marca", label: "Marca" },
   { id: "guia", label: "Guia" },
+  // 011 (FR-051): portões e pronúncias dos vídeos do perfil
+  { id: "video-local", label: "Vídeo local" },
   { id: "fontes", label: "Fontes" },
   { id: "padroes", label: "Padrões de corte" },
   { id: "mercado", label: "Mercado" },
@@ -204,6 +207,9 @@ export default function PerfilDetalhe() {
         </TabsContent>
         <TabsContent value="mercado">
           <MercadoTab perfil={perfil} />
+        </TabsContent>
+        <TabsContent value="video-local">
+          <VideoLocalTab perfil={perfil} />
         </TabsContent>
         <TabsContent value="historico">
           <PerfilHistorico perfil={perfil} onReverted={refresh} />

@@ -13,7 +13,15 @@ Um advisory lock do Postgres (`0x50C2`) garante uma instância ativa. Com o lock
   4. job `comfyui`: sobe a RAM para 28 GB, roda as opções e, num `finally`, devolve 12 GB e
      confere (sucesso, falha, cancelamento e SIGTERM). Sem `DOCKERCTL_TOKEN`, não pega job
      `comfyui` ("Ajuste de memória do ComfyUI não configurado"), e os `tts` seguem;
-- **linha Claude** (thread própria, um job por vez, sem conferir a GPU, FR-019).
+- **linha Claude** (thread própria, um job por vez, sem conferir a GPU, FR-019);
+- **linha de montagem** (spec 011, R2: thread própria, motor `ffmpeg`, um job por vez, fora do
+  `uq_geracoes_gpu_rodando` e sem subir a RAM do ComfyUI): a prévia do roteiro não espera a GPU.
+
+Spec 011: os passos de resultado `video` gravam o mp4 como candidato (`_gravar_video`: ffprobe,
+miniatura, bucket `videos` e miniatura em `imagens`); o trabalho de cada passo vem do
+`Aplicador.executar_video` (ou o padrão: um `run_bloco` com saída de vídeo, como o `cena.clipe`),
+numa pasta de `work/tmp/roteiros/` apagada no fim. A narração (`{"op": "paragrafo"}`) usa o
+`/v2/tts_paragraph`, aplica o `atempo` e divide os tempos pela velocidade (R5) antes de gravar.
 
 Cada opção é gravada assim que fica pronta (R7). O heartbeat (5 s) também lê o status: uma
 geração cancelada para o ComfyUI (`/interrupt` e `/queue delete`) e o resultado que chegar depois
@@ -24,13 +32,16 @@ O estado da linha (ativo, RAM travada) vai para o Redis com validade curta (`ger
 para o `GET /api/integracoes` mostrar sem expor nada.
 """
 
+import hashlib
 import json
 import logging
 import signal
+import tempfile
 import threading
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import Engine, select, text
@@ -39,10 +50,18 @@ from sqlalchemy.orm import Session
 from sociman_api import datadir, imaging, storage
 from sociman_api.auth.deps import Actor
 from sociman_api.config import get_settings
+from sociman_api.cortes import compose
+from sociman_api.cortes.probe import InvalidVideo, probe
 from sociman_api.db import get_engine, get_sessionmaker
 from sociman_api.errors import ApiError
-from sociman_api.geracao import aplicadores, audios, erros, fila, gpu, motor_claude, passos
-from sociman_api.geracao.comfyui import Cancelada, ComfyClient, get_comfy_client, run_bloco
+from sociman_api.geracao import aplicadores, audios, erros, fila, gpu, motor_claude, passos, video
+from sociman_api.geracao.comfyui import (
+    Cancelada,
+    ComfyClient,
+    get_comfy_client,
+    run_bloco,
+    teto_do_bloco,
+)
 from sociman_api.geracao.erros import MotorErro
 from sociman_api.geracao.fila import Job
 from sociman_api.geracao.memoria import MemoriaClient, MemoriaErro, get_memoria_client
@@ -69,6 +88,7 @@ SEM_MEMORIA_CFG = "Ajuste de memória do ComfyUI não configurado"
 SEM_RAM = "Não foi possível dar memória ao ComfyUI; tentando de novo"
 HD_FORA = "O HD de dados não está disponível"
 NAO_COUBE_TENTATIVAS = 3
+NARRACAO_NAO_BATEU = "A narração não bateu com o texto"
 
 
 class Parado(Exception):
@@ -202,12 +222,114 @@ class Executor:
             return cand
         return fila.gravar_candidato(job, gravar)
 
+    def _gravar_video(self, job: Job, numero: int, seed: int | None, caminho: Path) -> bool:
+        """Spec 011 (R3): o mp4 do candidato no bucket `videos` (`geracoes/{id}/{n}.mp4`) e a
+        miniatura em `imagens`, com as medidas do ffprobe. False = a geração não é mais minha."""
+        try:
+            info = probe(caminho, max_duration_s=video.VIDEO_MAX_S, min_duration_s=0.1,
+                         max_bytes=video.VIDEO_MAX_BYTES)
+        except InvalidVideo as exc:
+            raise MotorErro("entrada_invalida", "O motor devolveu um vídeo inválido",
+                            detalhe=str(exc)) from exc
+        raiz = f"perfis/{job.perfil_id}" if job.perfil_id is not None else "agencia"
+        v_key = f"geracoes/{job.id}/{numero}.mp4"
+        m_key = f"{raiz}/geracoes/{job.id}/{numero}.jpg"
+        with tempfile.TemporaryDirectory(dir=caminho.parent, prefix="poster-") as tmp:
+            poster = Path(tmp) / "poster.jpg"
+            try:
+                compose.extract_frame(caminho, min(1.0, info.duration_s / 2), poster)
+            except compose.ComposeError as exc:
+                raise MotorErro("entrada_invalida", "O motor devolveu um vídeo inválido",
+                                detalhe=exc.code) from exc
+            storage.put(m_key, poster.read_bytes(), "image/jpeg", bucket="imagens")
+        tamanho = storage.put_file(v_key, caminho, "video/mp4", bucket="videos")
+        sha = hashlib.sha256()
+        with caminho.open("rb") as fh:
+            for bloco in iter(lambda: fh.read(1024 * 1024), b""):
+                sha.update(bloco)
+
+        def gravar(db: Session) -> GeracaoCandidato:
+            cand = GeracaoCandidato(
+                geracao_id=job.id, numero=numero, seed=seed, video_key=v_key,
+                video_miniatura_key=m_key, video_duracao_ms=info.duration_ms,
+                video_largura=info.width, video_altura=info.height,
+                video_fps=round(info.fps) if info.fps else None, video_bytes=tamanho,
+                metricas={"segundos": info.duration_ms / 1000, "largura": info.width,
+                          "altura": info.height, "audio": info.audio_codec is not None,
+                          "sha256": sha.hexdigest()})
+            db.add(cand)
+            return cand
+        return fila.gravar_candidato(job, gravar)
+
+    def _contexto(self, job: Job, beat: _Heartbeat, pasta: Path,
+                  comfy: bool) -> video.Contexto:
+        def andamento(progresso: int, mensagem: str) -> None:
+            beat.progress, beat.mensagem = progresso, mensagem
+            beat.bater()
+
+        def bloco(nome_bloco: str, entrada: dict[str, Any], nome: str) -> bytes:
+            return run_bloco(self.c.comfy, nome_bloco, entrada, self._vivo(beat),
+                             nome_base=f"{job.id}_{nome}", teto_s=teto_do_bloco(nome_bloco),
+                             saida="video")
+
+        def liberar() -> None:
+            try:
+                self.c.comfy.free(unload_models=True)
+            except MotorErro:
+                log.warning("POST /free do ComfyUI falhou no fim da geração %s", job.id)
+
+        return video.Contexto(pasta=pasta, geracao_id=job.id, _bloco=bloco if comfy else None,
+                              _andamento=andamento, _checar=lambda: self._checar(beat),
+                              _liberar=liberar)
+
+    def _video(self, job: Job, beat: _Heartbeat, passo: passos.Passo,
+               aplicador: aplicadores.Aplicador, refs: list[bytes]) -> None:
+        """Spec 011: um passo de resultado `video` (1 opção). O aplicador monta o trabalho
+        (`executar_video`) ou vale o padrão: um bloco do ComfyUI com saída de vídeo."""
+        with _session() as db:
+            g = db.get(Geracao, job.id)
+            db.expunge(g)
+        seeds = list(job.params.get("seeds") or [])
+        seed = seeds[0] if seeds else None
+        comfy = job.motor == GeracaoMotor.comfyui
+        if 1 in self._ja_gravadas(job):
+            self._concluir(job, passo, aplicador)
+            return
+        with video.pasta_tmp(job.id) as pasta:
+            ctx = self._contexto(job, beat, pasta, comfy)
+            ctx.andamento(0, "Gerando o vídeo" if comfy else "Montando o vídeo")
+            saida = aplicador.executar_video(g, ctx)
+            if saida is None:
+                if not comfy:
+                    raise MotorErro("internal", detalhe=f"passo {job.passo} sem execução")
+                entrada = aplicador.entradas_comfyui(g, seed, refs)[0]
+                dados = ctx.rodar_bloco(g.params["bloco"], entrada, "1")
+                saida = pasta / "saida.mp4"
+                saida.write_bytes(dados)
+            self._checar(beat)
+            if not self._gravar_video(job, 1, seed, Path(saida)):
+                raise Cancelada
+        self._concluir(job, passo, aplicador)
+
+    def ffmpeg(self, job: Job, beat: _Heartbeat) -> None:
+        """Spec 011 (R2): a montagem, sem GPU (o trabalho é do `executar_video` do aplicador)."""
+        passo = passos.get(job.passo)
+        aplicador = aplicadores.para(job.passo)
+        if passo is None or aplicador is None:
+            raise MotorErro("internal", detalhe=f"passo {job.passo} sem aplicador")
+        with _session() as db:
+            aplicador.conferir_referencias(db, db.get(Geracao, job.id))
+        self._video(job, beat, passo, aplicador, [])
+
     def comfyui(self, job: Job, beat: _Heartbeat) -> None:
         passo = passos.get(job.passo)
         aplicador = aplicadores.para(job.passo)
         if passo is None or aplicador is None:
             raise MotorErro("internal", detalhe=f"passo {job.passo} sem aplicador")
         refs = self._conferir_referencias(job, aplicador)
+        if passo.resultado == "video":  # spec 011: clipe e acabamento
+            self._video(job, beat, passo, aplicador, refs)
+            return
         with _session() as db:
             g = db.get(Geracao, job.id)
             db.expunge(g)
@@ -233,7 +355,7 @@ class Executor:
                         pngs = []
                         break
                     raise
-                pngs.append(aplicador.normalizar(dados))
+                pngs.append(aplicador.normalizar_da(g, dados))
             if not pngs:
                 continue  # "veio 1 de 2" (edge case da spec)
             self._checar(beat)
@@ -263,18 +385,48 @@ class Executor:
                                      seed=seeds[0], texto=pedido.get("texto"))
         elif op == "tts":
             lote = self.c.tts.tts(pedido["corpo"])
+        elif op == "paragrafo":  # spec 011 (R5): a narração contínua do roteiro
+            lote = self.c.tts.tts_paragraph(pedido["corpo"])
         else:
             raise MotorErro("internal", detalhe=f"pedido tts desconhecido: {op}")
         lote_id = lote.get("lote_id") or ""
         try:
             self._checar(beat)
-            self._gravar_lote(job, passo, lote, beat)
+            if op == "paragrafo":
+                self._gravar_narracao(job, lote, float(pedido.get("velocidade") or 1.0))
+            else:
+                self._gravar_lote(job, passo, lote, beat)
         finally:
             try:
                 self.c.tts.apagar_lote(lote_id)
             except (MotorErro, ValueError):
                 log.warning("não foi possível apagar o lote %s do shop-tts", lote_id)
         self._concluir(job, passo, aplicador)
+
+    def _gravar_narracao(self, job: Job, lote: dict[str, Any], velocidade: float) -> None:
+        """Spec 011 (R5): o take contínuo na velocidade final e os tempos já divididos por ela.
+        `ok = false` (a similaridade não chegou ao mínimo no serviço) é entrada inválida."""
+        if lote.get("ok") is False:
+            raise MotorErro("entrada_invalida", NARRACAO_NAO_BATEU,
+                            detalhe=f"similaridade {lote.get('similarity')}")
+        arquivo = lote.get("arquivo")
+        if not arquivo:
+            raise MotorErro("internal", "O motor não devolveu áudio", detalhe="sem arquivo")
+        dados = video.atempo(self.c.tts.baixar(lote.get("lote_id") or "", arquivo), velocidade)
+        tempos, total = video.tempos_na_velocidade(lote.get("sentences") or [],
+                                                   float(lote.get("seconds") or 0), velocidade)
+
+        def gravar(db: Session) -> GeracaoCandidato:
+            a = audios.gravar_bytes(db, job.perfil_id, dados, job.created_by)
+            cand = GeracaoCandidato(
+                geracao_id=job.id, numero=1, audio_id=a.id, seed=lote.get("seed"),
+                metricas={"segundos": a.duracao_ms / 1000, "total_s": total, "tempos": tempos,
+                          "similaridade": lote.get("similarity"), "velocidade": velocidade,
+                          "transcricao": lote.get("transcript")})
+            db.add(cand)
+            return cand
+        if not fila.gravar_candidato(job, gravar):
+            raise Cancelada
 
     def _gravar_lote(self, job: Job, passo: passos.Passo, lote: dict[str, Any],
                      beat: _Heartbeat) -> None:
@@ -376,7 +528,8 @@ class Executor:
         beat.start()
         try:
             {GeracaoMotor.comfyui: self.comfyui, GeracaoMotor.tts: self.tts,
-             GeracaoMotor.claude: self.claude}[job.motor](job, beat)
+             GeracaoMotor.claude: self.claude, GeracaoMotor.ffmpeg: self.ffmpeg}[job.motor](
+                job, beat)
             return "ok"
         except Parado:
             fila.devolver(job)
@@ -585,6 +738,35 @@ class LinhaClaude:
                 self.stop.wait(espera)
 
 
+class LinhaMontagem:
+    """Spec 011 (R2, FR-043): o motor `ffmpeg`, um job por vez, sem esperar a GPU."""
+
+    def __init__(self, clientes: Clientes, stop: threading.Event):
+        self.stop = stop
+        self.executor = Executor(clientes, stop)
+
+    def volta(self) -> str | None:
+        if datadir.status().reason == "sem_sentinela":
+            return None
+        nxt = fila.proxima({GeracaoMotor.ffmpeg})
+        if nxt is None:
+            return None
+        job = fila.claim(nxt.id)
+        return self.executor.executar(job) if job is not None else None
+
+    def run(self) -> None:
+        while not self.stop.is_set():
+            espera = IDLE_S
+            try:
+                if self.volta() is not None:
+                    espera = 0
+            except Exception:
+                log.exception("falha na linha de montagem do gerador")
+                espera = get_settings().worker_poll_s
+            if espera:
+                self.stop.wait(espera)
+
+
 class LinhaVozes:
     """Spec 025 (R12): importa e remove vozes no shop-tts, a cada `GERADOR_VOZES_SYNC_S`."""
 
@@ -678,6 +860,7 @@ def _registrar_modelos() -> None:
     from sociman_api.geracao import models as _geracao  # noqa: F401
     from sociman_api.ia import models as _ia  # noqa: F401
     from sociman_api.produtos import aplicadores as _produtos  # noqa: F401 — spec 012
+    from sociman_api.roteiros import aplicadores as _roteiros  # noqa: F401 — spec 011
 
     base()
 
@@ -718,11 +901,15 @@ def run(stop: threading.Event, clientes: Clientes | None = None,
         vozes = threading.Thread(target=LinhaVozes(clientes, stop).run, name="linha-vozes",
                                  daemon=True)
         vozes.start()  # spec 025
+        montagem = threading.Thread(target=LinhaMontagem(clientes, stop).run,
+                                    name="linha-montagem", daemon=True)
+        montagem.start()  # spec 011
         log.info("gerador pronto (lock ok): ComfyUI em %s; shop-tts em %s; memória %s",
                  clientes.comfy.base_url, clientes.tts.base_url,
                  "configurada" if clientes.memoria else "NÃO configurada (sem jobs comfyui)")
         gpu_linha.run()
         t.join(timeout=30)
+        montagem.join(timeout=30)
     finally:
         try:
             conn.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": LOCK_KEY})

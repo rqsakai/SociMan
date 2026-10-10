@@ -50,7 +50,14 @@ const actionDot: Record<EntityVersion["action"], string> = {
   revoked: "tone-dark",
 };
 
-const actorKindLabel: Record<string, string> = { "system:cli": "CLI", "system:agendador": "Agendador", mcp_client: "Cliente MCP", "system:publicacao": "Envio automático" };
+const actorKindLabel: Record<string, string> = {
+  "system:cli": "CLI",
+  "system:agendador": "Agendador",
+  mcp_client: "Cliente MCP",
+  "system:publicacao": "Envio automático",
+  // 011: a escolha da opção 1 no modo automático do roteiro
+  "system:roteiro": "sistema (automático)",
+};
 
 function actorText(version: EntityVersion): string {
   return version.actor?.name ?? actorKindLabel[version.actorKind] ?? "—";

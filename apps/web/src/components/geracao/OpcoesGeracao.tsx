@@ -25,6 +25,7 @@ import {
   type Geracao,
   type ImagemCandidato,
 } from "../../lib/geracoes";
+import { PlayerVideo } from "../roteiro/PlayerVideo";
 import { PlayerAudio } from "./PlayerAudio";
 
 // Opções de uma geração (spec 021, T027/T044/T054): grade numerada, imagens grandes lado a lado
@@ -109,6 +110,11 @@ export function OpcoesGeracao({
                 )}
 
                 {c.audio && <AudioOpcao candidato={c} onRenovar={onRenovarLinks} />}
+
+                {/* spec 011: o clipe de vídeo de uma opção */}
+                {c.video && (
+                  <PlayerVideo chave={c.id} url={c.video.link.url} expiresAt={c.video.link.expiresAt} miniaturaUrl={c.video.miniaturaUrl} rotulo={`Vídeo da opção ${c.numero}`} onRenovar={onRenovarLinks} />
+                )}
 
                 {podeEscolher && (
                   <Confirmar

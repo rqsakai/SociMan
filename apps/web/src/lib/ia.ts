@@ -84,6 +84,8 @@ export const formatoLabel: Record<TipoCampo["formato"], string> = {
   ficha_produto: "Ficha técnica do produto",
   // spec 025
   identidade: "Checagem de identidade do kit",
+  // spec 011
+  plano_roteiro: "Plano do roteiro (frases e cenas)",
 };
 
 export const IA_AUSENTE_TEXTO = "IA não configurada: falta a chave do Claude (ANTHROPIC_API_KEY no .env). O campo continua editável à mão.";

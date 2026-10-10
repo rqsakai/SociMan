@@ -766,7 +766,7 @@ export function DestinoPanel({
       <AgendarDialog
         open={agendarOpen}
         onOpenChange={setAgendarOpen}
-        conteudo={{ id: conteudo.id, perfilId: conteudo.perfil.id, titulo: conteudo.titulo, situacao: conteudo.situacao, proposta, origem: conteudo.origem, posterUrl: conteudo.posterUrl }}
+        conteudo={{ id: conteudo.id, perfilId: conteudo.perfil.id, titulo: conteudo.titulo, situacao: conteudo.situacao, proposta, origem: conteudo.origem, posterUrl: conteudo.posterUrl, geradoIa: conteudo.geradoIa }}
         destinos={conteudo.destinos}
         contaId={conta.id}
         onDone={onChanged}

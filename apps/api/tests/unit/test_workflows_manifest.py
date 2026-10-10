@@ -1,5 +1,5 @@
-"""Os 4 blocos copiados do pipeline (spec 021, T011, R6): os sha256 do MANIFEST batem e cada
-`params.json` aponta para nós que existem no `api.json`."""
+"""Os blocos copiados do pipeline (spec 021, T011, R6; os 4 da 021 e os 5 de vídeo da 011): os
+sha256 do MANIFEST batem e cada `params.json` aponta para nós que existem no `api.json`."""
 
 import hashlib
 import json
@@ -10,6 +10,7 @@ from sociman_api.geracao.comfyui import BLOCOS, WORKFLOWS
 def test_hashes_batem():
     man = json.loads((WORKFLOWS / "MANIFEST.json").read_text())["blocos"]
     assert set(man) == set(BLOCOS)
+    assert len(BLOCOS) == 9
     for bloco, ent in man.items():
         for ext in ("api", "params"):
             dados = (WORKFLOWS / f"{bloco}.{ext}.json").read_bytes()
@@ -27,3 +28,16 @@ def test_contrato_aponta_para_nos_do_workflow():
                 assert inp in api[nid]["inputs"], (bloco, nome, nid)
         for saida in contrato["outputs"].values():
             assert saida["node"] in api, bloco
+
+
+def test_blocos_de_video_tem_saida_de_video():
+    """Spec 011 (comfyui-blocos.md): os clipes e o `upscale_video` devolvem `video`, e o clipe
+    tem o `start_image` obrigatório e o `end_image` opcional."""
+    for bloco in ("clipe_minimax", "clipe_wan", "clipe_wan_qualidade", "clipe_ltx",
+                  "upscale_video"):
+        contrato = json.loads((WORKFLOWS / f"{bloco}.params.json").read_text())
+        assert any(o["kind"] == "video" for o in contrato["outputs"].values()), bloco
+        if bloco.startswith("clipe_"):
+            assert contrato["params"]["start_image"]["kind"] == "image", bloco
+            assert contrato["params"]["end_image"]["kind"] == "image_optional", bloco
+            assert {"prompt", "width", "height", "frames", "seed"} <= set(contrato["params"])

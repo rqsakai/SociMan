@@ -20,6 +20,13 @@ A API padrão que o cliente usa (contracts/comfyui.md):
 - `GET /view?filename&subfolder&type`: o PNG sintético do tamanho do workflow (`width`/`height`
   do contrato; sem eles, 768×1344), com a seed escrita na imagem e no texto `seed` do PNG
   (`ComfyFake.seed_do_png(dados)` lê de volta);
+- **blocos de vídeo (spec 011, T013, R18):** os 4 clipes devolvem em `outputs[<nó video>].images`
+  um mp4 `ffmpeg -f lavfi testsrc2` na largura, altura, fps do motor (`FPS_VIDEO`) e quadros
+  pedidos (MiniMax e LTX com uma faixa de áudio, como o modelo; o `last_frame` vem como PNG); o
+  `upscale_video` devolve o vídeo enviado redimensionado para `width`×`height`, com o fps e o
+  áudio da entrada. A seed e o bloco vão no comentário do mp4 (`ComfyFake.meta_do_mp4(dados)`
+  lê de volta). Os mp4 ficam em cache por parâmetros (`cache_dir`; na fixture, um diretório da
+  sessão do pytest); `videos_gerados` conta os que o ffmpeg fez de verdade;
 - `POST /free` (corpos em `frees`), `POST /interrupt` (`interrupcoes`; o prompt que está rodando
   termina com `execution_interrupted`), `GET /queue` (`queue_running` com
   `[numero, prompt_id, workflow, extra, saídas]`) e `POST /queue {delete: [...]}` (`apagados`).
@@ -34,11 +41,15 @@ campos de texto do multipart (com `image` = nome do arquivo) ou a query do GET.
 """
 
 import copy
+import hashlib
 import io
 import itertools
 import json
+import subprocess
+import tempfile
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, NamedTuple
 
 import httpx
@@ -46,11 +57,23 @@ import pytest
 from PIL import Image, ImageDraw, PngImagePlugin
 
 from fakes import _multipart
-from sociman_api.geracao.comfyui import BLOCOS, ComfyClient, carregar_bloco
+from sociman_api.geracao.comfyui import BLOCOS, WORKFLOWS, ComfyClient
 
 BASE = "http://comfyui:8188"
 GiB = 1024**3
 W_PADRAO, H_PADRAO = 768, 1344
+# Spec 011: os blocos de vídeo (fps do motor; o `upscale_video` herda o da entrada) e os que
+# devolvem áudio do modelo.
+FPS_VIDEO = {"clipe_minimax": 24, "clipe_wan": 16, "clipe_wan_qualidade": 16, "clipe_ltx": 24}
+COM_AUDIO = {"clipe_minimax", "clipe_ltx"}
+BLOCOS_VIDEO = (*FPS_VIDEO, "upscale_video")
+
+
+def _carregar(bloco: str) -> tuple[dict[str, Any], dict[str, Any]]:
+    # Lê direto de `workflows/` (e não pelo `comfyui.carregar_bloco`), para reconhecer os blocos
+    # de vídeo mesmo antes de o `BLOCOS` do cliente os listar.
+    return (json.loads((WORKFLOWS / f"{bloco}.api.json").read_text()),
+            json.loads((WORKFLOWS / f"{bloco}.params.json").read_text()))
 
 
 class Pedido(NamedTuple):
@@ -70,6 +93,8 @@ class PromptFake:
     estado: str = "fila"  # fila | pronto | interrompido | apagado
     saida: dict[str, str] | None = None
     params: dict[str, Any] = field(default_factory=dict)
+    # Spec 011: saídas a mais por nó (o `last_frame` dos clipes).
+    extras: dict[str, dict[str, str]] = field(default_factory=dict)
 
 
 def _ids_opcionais(contrato: dict[str, Any]) -> set[str]:
@@ -87,7 +112,7 @@ def _links(no: dict[str, Any]) -> list[str]:
 
 
 class ComfyFake:
-    def __init__(self) -> None:
+    def __init__(self, cache_dir: Path | None = None) -> None:
         self.requests: list[Pedido] = []
         self.vram_total = 16 * GiB
         self.vram_free = 14 * GiB
@@ -106,7 +131,9 @@ class ComfyFake:
         self._falhas: list[str] = []
         self._numero = itertools.count(1)
         self._contador = itertools.count(1)
-        self._blocos = {b: carregar_bloco(b) for b in BLOCOS}
+        self._blocos = {b: _carregar(b) for b in dict.fromkeys((*BLOCOS, *BLOCOS_VIDEO))}
+        self._cache_dir = cache_dir
+        self.videos_gerados = 0
         self.transport = httpx.MockTransport(self._handle)
 
     # ---- para os testes ----
@@ -129,6 +156,26 @@ class ComfyFake:
     def seed_do_png(dados: bytes) -> int:
         with Image.open(io.BytesIO(dados)) as im:
             return int(im.text["seed"])  # type: ignore[attr-defined]
+
+    @staticmethod
+    def meta_do_mp4(dados: bytes) -> dict[str, Any]:
+        """`{bloco, seed}` do comentário e `{width, height, fps, frames, duracao, audio}` do
+        ffprobe."""
+        with tempfile.NamedTemporaryFile(suffix=".mp4") as f:
+            f.write(dados)
+            f.flush()
+            info = json.loads(subprocess.run(
+                ["ffprobe", "-v", "error", "-count_frames", "-show_entries",
+                 ("format=duration:format_tags=comment:stream=codec_type,width,height,"
+                  "r_frame_rate,nb_read_frames"), "-of", "json", f.name],
+                capture_output=True, check=True).stdout)
+        video = next(s for s in info["streams"] if s["codec_type"] == "video")
+        num, den = video["r_frame_rate"].split("/")
+        meta = json.loads(info["format"].get("tags", {}).get("comment") or "{}")
+        return {**meta, "width": video["width"], "height": video["height"],
+                "fps": round(int(num) / int(den), 3), "frames": int(video["nb_read_frames"]),
+                "duracao": float(info["format"]["duration"]),
+                "audio": any(s["codec_type"] == "audio" for s in info["streams"])}
 
     # ---- servidor ----
 
@@ -288,12 +335,80 @@ class ComfyFake:
         im.save(buf, format="PNG", pnginfo=info)
         return buf.getvalue()
 
+    # -- vídeo (spec 011) --
+
+    def _pasta_cache(self) -> Path:
+        if self._cache_dir is None:  # sem fixture (ex.: `Motores` da 021): um só por container
+            self._cache_dir = Path(tempfile.gettempdir()) / "comfyui_fake_videos"
+        self._cache_dir.mkdir(parents=True, exist_ok=True)
+        return self._cache_dir
+
+    def _ffmpeg(self, chave: dict[str, Any], args: list[str]) -> bytes | None:
+        """Roda o ffmpeg com saída em `{saida}` e guarda o mp4 no cache pela `chave`."""
+        nome = hashlib.sha256(json.dumps(chave, sort_keys=True).encode()).hexdigest()[:24]
+        destino = self._pasta_cache() / f"{nome}.mp4"
+        if not destino.exists():
+            parcial = destino.with_suffix(f".{uuid.uuid4().hex}.mp4")
+            res = subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y",
+                                  *[str(parcial) if a == "{saida}" else a for a in args]],
+                                 capture_output=True, check=False)
+            if res.returncode != 0:
+                parcial.unlink(missing_ok=True)
+                return None
+            parcial.replace(destino)
+            self.videos_gerados += 1
+        return destino.read_bytes()
+
+    def _mp4(self, p: PromptFake) -> bytes | None:
+        seed = int(p.params.get("seed") or 0)
+        w, h = self._tamanho(p)
+        comentario = json.dumps({"bloco": p.bloco, "seed": seed})
+        if p.bloco == "upscale_video":
+            entrada = self.uploads.get(str(p.params.get("video")))
+            if not entrada:
+                return None
+            chave = {"bloco": p.bloco, "w": w, "h": h, "seed": seed,
+                     "entrada": hashlib.sha256(entrada).hexdigest()}
+            fonte = self._pasta_cache() / f"in_{chave['entrada'][:24]}.mp4"
+            if not fonte.exists():
+                fonte.write_bytes(entrada)
+            return self._ffmpeg(chave, [
+                "-i", str(fonte), "-vf", f"scale={w}:{h}:flags=lanczos,setsar=1",
+                "-map", "0:v", "-map", "0:a?", "-c:v", "libx264", "-preset", "ultrafast",
+                "-pix_fmt", "yuv420p", "-c:a", "copy", "-metadata", f"comment={comentario}",
+                "{saida}"])
+        fps = FPS_VIDEO[p.bloco]
+        quadros = int(p.params.get("frames") or 1)
+        chave = {"bloco": p.bloco, "w": w, "h": h, "fps": fps, "frames": quadros, "seed": seed}
+        audio = (["-f", "lavfi", "-i", f"sine=frequency={200 + seed % 400}:sample_rate=48000"]
+                 if p.bloco in COM_AUDIO else [])
+        return self._ffmpeg(chave, [
+            "-f", "lavfi", "-i", f"testsrc2=size={w}x{h}:rate={fps}", *audio,
+            "-frames:v", str(quadros), "-map", "0:v",
+            *(["-map", "1:a", "-c:a", "aac", "-t", f"{quadros / fps:.3f}"] if audio else []),
+            "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+            "-metadata", f"comment={comentario}", "{saida}"])
+
     def _concluir(self, p: PromptFake) -> None:
         p.estado = "pronto"
         if p.falha:
             return
         prefixo = str(p.params.get("prefix") or "ComfyUI")
         sub, _, base = prefixo.rpartition("/")
+        if p.bloco in BLOCOS_VIDEO:
+            dados = self._mp4(p)
+            if dados is None:  # entrada que o ffmpeg não lê: termina sem saída, como a `vazia`
+                return
+            nome = f"{base}_{next(self._contador):05d}_.mp4"
+            p.saida = {"filename": nome, "subfolder": sub, "type": "output"}
+            self.saidas[(sub, nome, "output")] = dados
+            for o in self._blocos[p.bloco][1]["outputs"].values():
+                if o["kind"] == "image":  # o `last_frame`, que o SociMan ignora
+                    quadro = f"{base}_last_{next(self._contador):05d}_.png"
+                    p.extras[o["node"]] = {"filename": quadro, "subfolder": sub,
+                                           "type": "output"}
+                    self.saidas[(sub, quadro, "output")] = self._png(p)
+            return
         nome = f"{base}_{next(self._contador):05d}_.png"
         p.saida = {"filename": nome, "subfolder": sub, "type": "output"}
         self.saidas[(sub, nome, "output")] = self._png(p)
@@ -313,8 +428,9 @@ class ComfyFake:
         return self._json(200, {p.id: self._resultado(p)})
 
     def _resultado(self, p: PromptFake) -> dict[str, Any]:
+        tipo = "video" if p.bloco in BLOCOS_VIDEO else "image"
         no_saida = next(o["node"] for o in self._blocos[p.bloco][1]["outputs"].values()
-                        if o["kind"] == "image")
+                        if o["kind"] == tipo)
         if p.estado == "interrompido":
             return {"prompt": [p.numero, p.id, p.workflow, {}, [no_saida]], "outputs": {},
                     "status": {"status_str": "error", "completed": False, "messages": [
@@ -331,8 +447,12 @@ class ComfyFake:
                             "exception_message": ("Allocation on device 0 would exceed "
                                                   "allowed memory. (out of memory)")}]]}}
         imagens = [p.saida] if p.saida else []
+        # O SaveVideo também devolve o arquivo em `images` (como na referência, R4).
+        saidas = {no_saida: {"images": imagens}} if imagens else {}
+        if imagens:
+            saidas.update({no: {"images": [f]} for no, f in p.extras.items()})
         return {"prompt": [p.numero, p.id, p.workflow, {}, [no_saida]],
-                "outputs": {no_saida: {"images": imagens}} if imagens else {},
+                "outputs": saidas,
                 "status": {"status_str": "success", "completed": True, "messages": [
                     ["execution_start", {"prompt_id": p.id}],
                     ["execution_success", {"prompt_id": p.id}]]}}
@@ -341,7 +461,8 @@ class ComfyFake:
         dados = self.saidas.get((subfolder, filename, tipo))
         if dados is None:
             return self._json(404, {"error": "file not found"})
-        return httpx.Response(200, content=dados, headers={"content-type": "image/png"})
+        tipo_conteudo = "video/mp4" if filename.endswith(".mp4") else "image/png"
+        return httpx.Response(200, content=dados, headers={"content-type": tipo_conteudo})
 
     def _queue(self) -> httpx.Response:
         vivos = sorted((p for p in self.prompts.values() if p.estado == "fila"),
@@ -375,5 +496,7 @@ class ComfyFake:
 
 
 @pytest.fixture
-def comfy_fake() -> ComfyFake:
-    return ComfyFake()
+def comfy_fake(tmp_path_factory: pytest.TempPathFactory) -> ComfyFake:
+    # O cache dos mp4 sintéticos vale para a sessão inteira do pytest (mesmos parâmetros, mesmo
+    # arquivo): cada teste não paga o ffmpeg de novo.
+    return ComfyFake(cache_dir=tmp_path_factory.getbasetemp() / "comfyui_fake_videos")
