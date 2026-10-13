@@ -4,6 +4,7 @@
  * prompt com que foi gerada. Só cena pronta ou usada recebe tomada (o prompt precisa estar congelado).
  * Nada é apagado: arquivar e restaurar.
  */
+import { VideoEstavel } from "../midia/VideoEstavel";
 import { ApiError } from "@sociman/contract";
 import { useQueryClient } from "@tanstack/react-query";
 import { Archive, ArchiveRestore, Check, ChevronDown, Loader2, Save, Star, TriangleAlert, Upload, X } from "lucide-react";
@@ -211,11 +212,12 @@ function TomadaItem({ tomada: t, numero, cena, onChanged }: { tomada: Tomada; nu
       </header>
       <div className="grid gap-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
         {t.videoUrl ? (
-          <video
+          <VideoEstavel
+            chave={t.id}
+            url={t.videoUrl}
             controls
             playsInline
             preload="metadata"
-            src={t.videoUrl}
             poster={t.thumbUrl ?? undefined}
             aria-label={`Vídeo da ${nome.toLowerCase()}`}
             className="mx-auto max-h-72 w-full rounded-md bg-black"

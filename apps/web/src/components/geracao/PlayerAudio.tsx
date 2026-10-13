@@ -1,38 +1,21 @@
-import { useEffect, useRef } from "react";
 import type { Audio } from "../../lib/geracoes";
+import { useLinkEstavel } from "../../lib/linkEstavel";
 
-// Player nativo (spec 021, T054). O link do áudio tem validade: ao vencer, ou se o navegador não
-// conseguir tocar, pede um link novo (`onRenovar` recarrega o detalhe da geração). Pede uma vez
-// por link, para não entrar em laço quando o erro não é de validade.
+// Player nativo (spec 021, T054). O link do áudio tem validade e muda a cada resposta da API: o
+// `useLinkEstavel` segura o link em uso enquanto vale (senão o polling cortava o play em ~2 s) e,
+// se o navegador não conseguir tocar, pede um link novo (`onRenovar` recarrega o detalhe).
 export function PlayerAudio({ audio, rotulo, onRenovar }: { audio: Audio; rotulo: string; onRenovar: () => void }) {
-  const pedido = useRef<string | null>(null);
-  const { url, expiresAt } = audio.link;
-
-  function renovar() {
-    if (pedido.current === url) return;
-    pedido.current = url;
-    onRenovar();
-  }
-
-  useEffect(() => {
-    if (!expiresAt) return;
-    const falta = new Date(expiresAt).getTime() - Date.now();
-    if (!Number.isFinite(falta)) return;
-    // Renova um pouco antes de vencer (30 s), para o play não pegar um link morto.
-    const t = window.setTimeout(renovar, Math.max(0, falta - 30_000));
-    return () => window.clearTimeout(t);
-  }, [url, expiresAt]);
-
+  const link = useLinkEstavel(audio.link, audio.id, onRenovar);
   return (
     <audio
-      key={url}
+      key={audio.id}
       controls
       preload="metadata"
-      src={url}
+      src={link.url ?? undefined}
       aria-label={rotulo}
       className="w-full"
       data-testid="player-audio"
-      onError={renovar}
+      onError={link.onErro}
     />
   );
 }
