@@ -51,6 +51,9 @@ class DockerFalso:
         self.memoria = 12 * GiB
         self.swap = 12 * GiB
         self.recusar_update = 0  # quantos `update` respondem 500 (o cgroup não reduziu)
+        # `stats` do cgroup v2: `usage` e `file` (cache que o kernel recupera); None = parado
+        self.uso: int | None = 2 * GiB
+        self.cache = 1 * GiB
         self.pedidos: list[tuple[str, str, Any]] = []
         dono = self
 
@@ -68,7 +71,12 @@ class DockerFalso:
 
             def do_GET(self) -> None:
                 dono.pedidos.append(("GET", self.path, None))
-                if self.path == f"/v1.47/containers/{dono.container}/json":
+                if self.path == (f"/v1.47/containers/{dono.container}/stats"
+                                 "?stream=false&one-shot=true"):
+                    mem = ({} if dono.uso is None else
+                           {"usage": dono.uso, "stats": {"file": dono.cache, "shmem": 0}})
+                    self._json(200, {"memory_stats": mem})
+                elif self.path == f"/v1.47/containers/{dono.container}/json":
                     self._json(200, {"Name": f"/{dono.container}",
                                      "HostConfig": {"Memory": dono.memoria,
                                                     "MemorySwap": dono.swap}})
@@ -153,9 +161,10 @@ def test_ler_subir_e_devolver_com_corpo_fixo(ambiente) -> None:
                         {"Memory": 28 * GiB, "MemorySwap": 28 * GiB}),
                        ("/v1.47/containers/comfyui/update",
                         {"Memory": 12 * GiB, "MemorySwap": 12 * GiB})]
-    # do Docker, só inspect e update deste container
+    # do Docker, só inspect, stats e update deste container
     assert {(m, p) for m, p, _ in docker.pedidos} == {
         ("GET", "/v1.47/containers/comfyui/json"),
+        ("GET", "/v1.47/containers/comfyui/stats?stream=false&one-shot=true"),
         ("POST", "/v1.47/containers/comfyui/update")}
 
 
@@ -199,6 +208,33 @@ def test_fora_da_allowlist_404_com_log(ambiente, metodo, caminho) -> None:
     assert r.status_code == 404
     assert docker.pedidos == []
     assert logs and "404" in logs[-1]
+
+
+def test_devolver_com_uso_alto_409_sem_update(ambiente) -> None:
+    """2026-10-13: o Docker aceitou baixar para 12 GB com ~13 GB em uso e o kernel matou o
+    ComfyUI. Agora o `devolver` lê o uso antes e nem chega ao `update`."""
+    docker, http, logs = ambiente
+    http.post("/comfyui/memoria/subir", headers=AUTH)
+    docker.uso, docker.cache = 16 * GiB, 2 * GiB  # 14 GB presos: não cabe em 12
+    n_updates = sum(1 for m, _, _ in docker.pedidos if m == "POST")
+    r = http.post("/comfyui/memoria/devolver", headers=AUTH)
+    assert r.status_code == 409 and r.json() == {"erro": "nao_coube"}
+    assert docker.memoria == 28 * GiB
+    assert sum(1 for m, _, _ in docker.pedidos if m == "POST") == n_updates
+    assert "nao_coube" in logs[-1]
+    # 11,5 GB presos também não: falta a folga de 1 GB
+    docker.uso, docker.cache = 12 * GiB, GiB // 2
+    assert http.post("/comfyui/memoria/devolver", headers=AUTH).status_code == 409
+    # muito cache recuperável: cabe
+    docker.uso, docker.cache = 20 * GiB, 14 * GiB
+    assert http.post("/comfyui/memoria/devolver", headers=AUTH).json()["estado"] == "normal"
+
+
+def test_devolver_com_container_parado_segue(ambiente) -> None:
+    docker, http, _ = ambiente
+    http.post("/comfyui/memoria/subir", headers=AUTH)
+    docker.uso = None
+    assert http.post("/comfyui/memoria/devolver", headers=AUTH).json()["estado"] == "normal"
 
 
 def test_devolver_recusado_pelo_docker_409_nao_coube(ambiente) -> None:

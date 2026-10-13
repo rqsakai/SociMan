@@ -22,12 +22,16 @@ from integration.geracao_helpers import (  # noqa: F401 (fixtures)
     rodar_gpu,
     sem_espera,
 )
-from sociman_api.geracao import fila
+from sociman_api.geracao import fila, gerador
 from sociman_api.geracao.gerador import SEM_MEMORIA_CFG
 
 
 def _subiu_e_voltou(m: Motores) -> bool:
     return JOB in m.dockerctl.historico and m.dockerctl.memoria == NORMAL
+
+
+def _soltou_modelos(m: Motores) -> bool:
+    return {"unload_models": True, "free_memory": True} in m.comfy.frees
 
 
 def test_sucesso_e_falha_devolvem_12(client, owner, motores):
@@ -37,6 +41,8 @@ def test_sucesso_e_falha_devolvem_12(client, owner, motores):
     rodar_gpu(motores)
     assert detalhe(client, h, g["id"])["status"] == "revisao"
     assert _subiu_e_voltou(motores)
+    # 2026-10-13: devolver com os modelos na RAM fazia o kernel matar o ComfyUI (OOM)
+    assert _soltou_modelos(motores)
     motores.dockerctl.historico.clear()
     motores.comfy.falhar_sempre = "oom"
     g2 = pedir(client, h, b)
@@ -108,7 +114,8 @@ def test_reiniciado_com_28_devolve_antes_e_nao_volta_trava(client, owner, motore
     assert detalhe(client, h, g["id"])["status"] == "revisao"
 
 
-def test_nao_coube_libera_vram_e_tenta_de_novo(client, owner, motores):
+def test_nao_coube_libera_vram_e_tenta_de_novo(client, owner, motores, monkeypatch):
+    monkeypatch.setattr(gerador, "ESPERA_FREE_S", 0.0)
     h = owner[1]
     b = montar(client, h)
     g = pedir(client, h, b, nOpcoes=1)
@@ -116,8 +123,7 @@ def test_nao_coube_libera_vram_e_tenta_de_novo(client, owner, motores):
     rodar_gpu(motores)
     assert detalhe(client, h, g["id"])["status"] == "revisao"
     assert motores.dockerctl.memoria == NORMAL
-    assert {"unload_models": True, "free_memory": True} in \
-        [p.corpo for p in motores.comfy.requests if p.caminho == "/free"]
+    assert sum(1 for f in motores.comfy.frees if f.get("unload_models")) >= 2
 
 
 def test_sem_token_nao_pega_job_comfyui(client, owner):

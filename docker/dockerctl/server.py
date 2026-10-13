@@ -10,14 +10,19 @@ isso ele é mínimo e fechado:
 - o corpo do pedido é lido e jogado fora: o container, a versão da API do Docker e os valores
   vêm SÓ do ambiente (`DOCKERCTL_CONTAINER`, `DOCKERCTL_DOCKER_API`, `DOCKERCTL_MEM_JOB` e
   `DOCKERCTL_MEM_NORMAL`);
-- do Docker, só `GET /<api>/containers/<container>/json` e
+- do Docker, só `GET /<api>/containers/<container>/json`,
+  `GET /<api>/containers/<container>/stats?stream=false&one-shot=true` e
   `POST /<api>/containers/<container>/update` com `{"Memory": X, "MemorySwap": X}`;
 - `Authorization: Bearer <DOCKERCTL_TOKEN>` comparado em tempo constante (`hmac.compare_digest`);
   sem `DOCKERCTL_TOKEN` o processo sai com erro e não sobe;
 - log em stdout, uma linha por ação (data, ação, antes, depois, resultado). O token nunca aparece.
 
-Reduzir a memória com o container rodando funciona se o uso atual couber; se o Docker recusar a
-redução, a resposta é 409 `nao_coube` (o gerador chama `POST /free` no ComfyUI e tenta de novo).
+Reduzir a memória com o container rodando só é seguro se o uso atual couber: no cgroup v2 o Docker
+ACEITA a redução e o kernel, sem conseguir liberar, MATA o processo (OOM; aconteceu em 2026-10-13
+com os modelos do Qwen na RAM). Por isso, antes do `update`, o `devolver` lê o uso que não se
+recupera (`usage - file + shmem`, ou `usage - inactive_file` no cgroup v1) e, se não couber em
+`MEM_NORMAL - FOLGA`, responde 409 `nao_coube` sem mexer no limite (o gerador chama `POST /free`
+no ComfyUI, espera e tenta de novo). O 409 também vale se o Docker recusar a redução.
 """
 
 import hmac
@@ -36,6 +41,7 @@ ENDERECO = ("0.0.0.0", 8080)
 SOCKET_PADRAO = "/var/run/docker.sock"
 CORPO_MAX = 64 * 1024  # o corpo é ignorado; acima disso, nem é lido
 TIMEOUT_DOCKER_S = 20.0
+FOLGA_BYTES = 1024**3  # margem para o kernel e o que cresce entre a leitura e o `update`
 ROTAS = {
     ("GET", "/comfyui/memoria"): "ler",
     ("POST", "/comfyui/memoria/subir"): "subir",
@@ -114,6 +120,7 @@ class _ConexaoUnix(http.client.HTTPConnection):
 
 def _docker(cfg: Config, metodo: str, sufixo: str, corpo: dict[str, int] | None = None
             ) -> tuple[int, bytes]:
+    """`sufixo` é sempre uma constante deste arquivo (nada do pedido entra no caminho)."""
     caminho = f"/{cfg.api}/containers/{cfg.container}/{sufixo}"
     conn = _ConexaoUnix(cfg.socket_path)
     try:
@@ -137,6 +144,25 @@ def ler_memoria(cfg: Config) -> tuple[int, int]:
         return int(hc.get("Memory") or 0), int(hc.get("MemorySwap") or 0)
     except (ValueError, KeyError, TypeError) as exc:
         raise DockerFora("inspect ilegível") from exc
+
+
+def uso_preso(cfg: Config) -> int | None:
+    """Bytes que o kernel não consegue liberar ao reduzir o limite; None se o container não está
+    rodando ou o Docker não informou (aí não há o que matar e o `update` segue)."""
+    status, corpo = _docker(cfg, "GET", "stats?stream=false&one-shot=true")
+    if status != 200:
+        return None
+    try:
+        mem = json.loads(corpo).get("memory_stats") or {}
+        usage = int(mem.get("usage") or 0)
+        st = mem.get("stats") or {}
+    except (ValueError, TypeError, AttributeError):
+        return None
+    if usage <= 0:
+        return None
+    if "file" in st:  # cgroup v2
+        return max(0, usage - int(st["file"]) + int(st.get("shmem") or 0))
+    return max(0, usage - int(st.get("total_inactive_file") or st.get("inactive_file") or 0))
 
 
 def atualizar_memoria(cfg: Config, valor: int) -> int:
@@ -221,6 +247,12 @@ class Handler(BaseHTTPRequestHandler):
         antes, _ = ler_memoria(cfg)
         if acao != "ler":
             alvo = cfg.mem_job if acao == "subir" else cfg.mem_normal
+            if acao == "devolver" and alvo < antes:
+                preso = uso_preso(cfg)
+                if preso is not None and preso > alvo - FOLGA_BYTES:
+                    _log(acao, antes, antes, f"409 nao_coube (em uso {preso})")
+                    self._responder(409, {"erro": "nao_coube"})
+                    return
             status = atualizar_memoria(cfg, alvo)
             if not 200 <= status < 300:
                 depois, _ = ler_memoria(cfg)

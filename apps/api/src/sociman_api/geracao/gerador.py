@@ -88,6 +88,8 @@ SEM_MEMORIA_CFG = "Ajuste de memória do ComfyUI não configurado"
 SEM_RAM = "Não foi possível dar memória ao ComfyUI; tentando de novo"
 HD_FORA = "O HD de dados não está disponível"
 NAO_COUBE_TENTATIVAS = 3
+# O `/free` do ComfyUI só marca um pedido; quem descarrega é o laço da fila dele, logo depois.
+ESPERA_FREE_S = 5.0
 NARRACAO_NAO_BATEU = "A narração não bateu com o texto"
 
 
@@ -587,10 +589,19 @@ class LinhaGpu:
         self.sondado_em = float("-inf")
 
     # RAM do ComfyUI (R4)
+    def _soltar_comfy(self) -> None:
+        try:
+            self.c.comfy.free(unload_models=True)
+        except MotorErro:
+            pass  # fora do ar: não segura RAM nenhuma
+
     def devolver_ram(self) -> bool:
-        """Devolve 12 GB e confere. "Não coube" → `/free` no ComfyUI e tenta de novo."""
+        """Solta os modelos do ComfyUI e só então devolve 12 GB, conferindo. Baixar o limite com
+        os modelos na RAM faz o kernel matar o container (OOM, 2026-10-13): o `dockerctl` responde
+        "não coube" sem mexer no limite, e aqui se espera o descarregamento e tenta de novo."""
         if self.c.memoria is None:
             return True
+        self._soltar_comfy()
         for tentativa in range(1, NAO_COUBE_TENTATIVAS + 1):
             try:
                 self.c.memoria.devolver()
@@ -599,10 +610,8 @@ class LinhaGpu:
             except MemoriaErro as exc:
                 log.error("RAM do ComfyUI não voltou a 12 GB (%s)", exc.motivo)
                 if exc.motivo == "nao_coube" and tentativa < NAO_COUBE_TENTATIVAS:
-                    try:
-                        self.c.comfy.free(unload_models=True)
-                    except MotorErro:
-                        pass
+                    self.stop.wait(ESPERA_FREE_S)
+                    self._soltar_comfy()
                     continue
                 break
         self.travada = True
