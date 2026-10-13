@@ -393,10 +393,14 @@ def _confirmar_incerta(destino: Postagem, confirmo: bool | None) -> None:
 
 
 def resolver_opcoes(conta: Conta, modo: Modo, pedido: OpcoesTikTok | None,
-                    destino: Postagem | None) -> OpcoesTikTok | None:
+                    destino: Postagem | None, *, gerado_ia: bool = False
+                    ) -> OpcoesTikTok | None:
     """US3 (R13): no modo `publicar`, as opções da tela obrigatória (as do pedido ou, ao
     reagendar sem mudá-las, as já confirmadas), validadas pelas regras da rede. Sem elas ou com
-    alguma combinação proibida: 400 `opcoes_invalidas` com `details.problemas`."""
+    alguma combinação proibida: 400 `opcoes_invalidas` com `details.problemas`.
+
+    Spec 011 (R13): no conteúdo `gerado_ia` (entregue por um roteiro), o `conteudoIa` ausente no
+    pedido vem `true` (o humano ainda pode mandar `false`)."""
     if modo != Modo.publicar:
         return None
     cru: Any = pedido
@@ -406,6 +410,8 @@ def resolver_opcoes(conta: Conta, modo: Modo, pedido: OpcoesTikTok | None,
         raise ApiError(400, "opcoes_invalidas", PUBLICAR_SEM_TELA, details={"problemas": [
             {"campo": "opcoes", "motivo": PUBLICAR_SEM_TELA}]})
     opcoes = cru if isinstance(cru, OpcoesTikTok) else OpcoesTikTok.model_validate(cru)
+    if gerado_ia and isinstance(cru, OpcoesTikTok) and "conteudo_ia" not in cru.model_fields_set:
+        opcoes = opcoes.model_copy(update={"conteudo_ia": True})
     from sociman_api.publicacao import registro  # import tardio (ciclo)
 
     executor = registro.executor_para(conta.platform)
@@ -1103,7 +1109,8 @@ def agendar(db: Session, actor: Actor, body: schemas.AgendarIn,
     if automatico(body.modo, destino.modo if destino is not None else None):
         exigir_humano(actor, "POST /api/agendamentos", destino, conta_id=conta.id)
     _check_modo(db, conta, body.modo, body.antecedencia_min)
-    opcoes = resolver_opcoes(conta, body.modo, body.opcoes, destino)
+    opcoes = resolver_opcoes(conta, body.modo, body.opcoes, destino,
+                             gerado_ia=info.conteudo.gerado_ia)
     _exigir_legenda(conta, destino, body.textos)
     if info.arquivado:
         raise ApiError(409, "conflict", "Este conteúdo está arquivado")
@@ -1223,7 +1230,9 @@ def _reagendar(db: Session, actor: Actor, destino: Postagem, planned_at: datetim
         exigir_humano(actor, "PATCH /api/destinos/{id}/agendamento", destino)
     nova_antecedencia = antecedencia_min if muda_antecedencia else destino.antecedencia_min
     _check_modo(db, conta, novo_modo, nova_antecedencia)
-    opcoes = resolver_opcoes(conta, novo_modo, opcoes_in, destino)
+    conteudo = db.get(Conteudo, destino.conteudo_id)
+    opcoes = resolver_opcoes(conta, novo_modo, opcoes_in, destino,
+                             gerado_ia=bool(conteudo and conteudo.gerado_ia))
     legenda.exigir(conta.platform, destino)
     falhou = destino.estado == DestinoEstado.falhou
     if falhou:

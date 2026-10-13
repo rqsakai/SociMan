@@ -16,7 +16,15 @@ Rotas:
 - `POST /v2/voices/import` (multipart `nome`, `ref` = WAV mono 24 kHz, `ref_texto`, `meta` JSON)
   → `{nome, sha256, importada_em}`; a voz entra no `GET /voices` com o `sha256` da referência;
 - `POST /v2/tts` (frases em `frase_NN.wav`) e `POST /v2/tts_paragraph` (`narracao.wav` e os
-  tempos de cada frase): o `TTSRequest` do serviço **sem** `out_dir` (com ele → 422);
+  tempos de cada frase): o `TTSRequest` do serviço **sem** `out_dir` (com ele, ou com um campo
+  que o serviço não conhece, → 422, como o `extra="forbid"` do v2);
+- **spec 011 (T013, contracts/shop-tts-pronuncias.md):** o `pronuncias` opcional (até 500 pares,
+  chaves e valores de 1 a 60 caracteres; fora disso → 422) fica em `pronuncias_recebidas` (um
+  item por chamada, `None` = ausente; `ultimo_pronuncias` é o último). O `tts_paragraph` devolve
+  os tempos **proporcionais ao tamanho de cada frase** (`SEG_POR_CARACTERE`, mínimo `FRASE_MIN_S`,
+  `PAUSA_S` entre frases), em `frases` **e** em `sentences`, com as `attempts` (o serviço real
+  devolve os dois); `narracao_ruim = N` faz as próximas N responderem `ok = false` (similaridade
+  0,81, todas as `max_attempts` tentativas gastas);
 - `GET /v2/lotes/{lote}/{arquivo}` → WAV sintético válido (mono, 24 kHz, 16 bits, tom de 440 Hz,
   a duração do `segundos` do lote), que o ffprobe aceita; `DELETE /v2/lotes/{lote}` → 204 (o id
   vai para `lotes_apagados` e os arquivos somem); `DELETE /v2/voices/{nome}` → 204, ou 404 se a
@@ -58,6 +66,13 @@ TAXA = 24000
 _NOME_VOZ = re.compile(r"^[a-z0-9_]{2,40}$")
 _NOME_ARQ = re.compile(r"^[A-Za-z0-9_.-]{1,120}$")
 COMPRIMIDOS = (".ogg", ".opus", ".m4a", ".mp3")
+# O `V2TTSRequest` do serviço (`extra="forbid"`).
+CAMPOS_TTS = frozenset({"sentences", "voice", "seed", "max_attempts", "min_similarity",
+                        "language", "pronuncias"})
+SEG_POR_CARACTERE = 0.06
+FRASE_MIN_S = 0.4
+PAUSA_S = 0.4
+SIMILARIDADE_RUIM = 0.81
 
 
 class Pedido(NamedTuple):
@@ -118,6 +133,8 @@ class ShopTtsFake:
         self.fora = False
         self.erro_5xx = False
         self.sem_memoria = 0
+        self.narracao_ruim = 0
+        self.pronuncias_recebidas: list[dict[str, str] | None] = []
         self.transport = httpx.MockTransport(self._handle)
 
     # ---- para os testes ----
@@ -130,6 +147,20 @@ class ShopTtsFake:
 
     def ultimo_lote(self) -> LoteFake:
         return list(self.lotes.values())[-1]
+
+    @property
+    def ultimo_pronuncias(self) -> dict[str, str] | None:
+        return self.pronuncias_recebidas[-1] if self.pronuncias_recebidas else None
+
+    @staticmethod
+    def tempos_esperados(frases: list[str]) -> list[tuple[float, float]]:
+        """Os (início, fim) que o `tts_paragraph` devolve para estas frases."""
+        t, saida = 0.0, []
+        for f in frases:
+            fim = t + max(FRASE_MIN_S, len(f.strip()) * SEG_POR_CARACTERE)
+            saida.append((round(t, 2), round(fim, 2)))
+            t = fim + PAUSA_S
+        return saida
 
     # ---- servidor ----
 
@@ -289,26 +320,47 @@ class ShopTtsFake:
                                 "sha256": sha, "ref": ref.dados})
         return self._json(200, {"nome": nome, "sha256": sha, "importada_em": agora})
 
+    @staticmethod
+    def _pronuncias_ok(p: Any) -> bool:
+        return isinstance(p, dict) and len(p) <= 500 and all(
+            isinstance(k, str) and isinstance(v, str) and 1 <= len(k) <= 60 and 1 <= len(v) <= 60
+            for k, v in p.items())
+
     def _tts(self, corpo_in: dict[str, Any], *, paragrafo: bool) -> httpx.Response:
         if "out_dir" in corpo_in:
             return self._422("out_dir não existe no v2")
+        if set(corpo_in) - CAMPOS_TTS:
+            return self._422(f"campos desconhecidos: {sorted(set(corpo_in) - CAMPOS_TTS)}")
         frases = corpo_in.get("sentences")
         if not isinstance(frases, list) or not frases or not all(
                 isinstance(f, str) and f.strip() for f in frases):
             return self._422("sentences deve ser uma lista de textos")
+        pronuncias = corpo_in.get("pronuncias")
+        if pronuncias is not None and not self._pronuncias_ok(pronuncias):
+            return self._422("pronuncias: até 500 pares, chaves e valores de 1 a 60 caracteres")
         voz = corpo_in.get("voice", "animada")
         if voz not in self.vozes:
             return self._json(404, {"detail": f"voz desconhecida: {voz}"})
+        self.pronuncias_recebidas.append(dict(pronuncias) if pronuncias is not None else None)
         seed = int(corpo_in.get("seed", 1))
         minimo = float(corpo_in.get("min_similarity", 0.95))
-        ok = self.similaridade >= minimo
+        similaridade = self.similaridade
+        if paragrafo and self.narracao_ruim > 0:
+            self.narracao_ruim -= 1
+            similaridade = SIMILARIDADE_RUIM
+        ok = similaridade >= minimo
         if paragrafo:
-            total = round(self.segundos * len(frases), 2)
-            tempos = [{"index": i, "text": f, "start": round(self.segundos * (i - 1), 2),
-                       "end": round(self.segundos * i, 2)} for i, f in enumerate(frases, 1)]
+            tempos = [{"index": i, "text": f, "start": a, "end": b}
+                      for i, (f, (a, b)) in enumerate(zip(frases, self.tempos_esperados(frases),
+                                                          strict=True), 1)]
+            total = round(tempos[-1]["end"] + 0.02, 2)
+            tentativas = 1 if ok else max(1, int(corpo_in.get("max_attempts", 5)))
+            attempts = [{"seed": seed + i, "similarity": similaridade, "seconds": total}
+                        for i in range(tentativas)]
             corpo = {"voice": voz, "arquivo": "narracao.wav", "frases": tempos,
-                     "sample_rate": TAXA, "seconds": total, "similarity": self.similaridade,
-                     "seed": seed, "transcript": " ".join(frases), "ok": ok}
+                     "sentences": tempos, "attempts": attempts, "sample_rate": TAXA,
+                     "seconds": total, "similarity": similaridade, "seed": seed,
+                     "transcript": " ".join(frases), "ok": ok}
             return self._novo_lote(corpo, {"narracao.wav": wav_sintetico(total)})
         saida, arquivos = [], {}
         for i, f in enumerate(frases, 1):

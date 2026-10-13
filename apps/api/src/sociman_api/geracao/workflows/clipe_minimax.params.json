@@ -1,0 +1,77 @@
+{
+ "workflow": "V2 - Clip MiniMax-H3 (início + fim opcional, com áudio).api.json",
+ "params": {
+  "start_image": {
+   "node": "1",
+   "input": "image",
+   "kind": "image",
+   "default": "composite_00005_.png",
+   "doc": "Primeiro frame"
+  },
+  "prompt": {
+   "node": "3",
+   "input": "value",
+   "kind": "value",
+   "default": "Slow camera push-in. The product keeps its shape, texture, colors and logo.",
+   "doc": "UMA ação simples; material correto; câmera/ambiente se movem"
+  },
+  "width": {
+   "node": "4",
+   "input": "value",
+   "kind": "value",
+   "default": 480,
+   "doc": ""
+  },
+  "height": {
+   "node": "5",
+   "input": "value",
+   "kind": "value",
+   "default": 832,
+   "doc": ""
+  },
+  "frames": {
+   "node": "6",
+   "input": "value",
+   "kind": "value",
+   "default": 73,
+   "doc": "MiniMax-H3 = 24 fps; frames = 17k+5 (73 = 3 s, 90 = 3,75 s, 107 = 4,5 s)"
+  },
+  "seed": {
+   "node": "7",
+   "input": "value",
+   "kind": "value",
+   "default": 7,
+   "doc": ""
+  },
+  "prefix": {
+   "node": "8",
+   "input": "value",
+   "kind": "value",
+   "default": "v2/clip",
+   "doc": ""
+  },
+  "end_image": {
+   "node": "2",
+   "input": "image",
+   "kind": "image_optional",
+   "default": "composite_00005_.png",
+   "doc": "Último frame alvo (opcional)",
+   "consumers": [
+    [
+     "14",
+     "last_frame"
+    ]
+   ]
+  }
+ },
+ "outputs": {
+  "video": {
+   "node": "23",
+   "kind": "video"
+  },
+  "last_frame": {
+   "node": "25",
+   "kind": "image"
+  }
+ }
+}

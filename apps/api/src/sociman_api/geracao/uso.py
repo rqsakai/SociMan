@@ -69,9 +69,14 @@ register("biblioteca", _biblioteca)
 
 
 def midia_em_uso(db: Session, *, image_id: uuid.UUID | None = None,
-                 audio_id: uuid.UUID | None = None) -> str | None:
-    """O nome do 1º provedor que usa a mídia, ou None (pode apagar)."""
+                 audio_id: uuid.UUID | None = None,
+                 ignorar: frozenset[str] = frozenset()) -> str | None:
+    """O nome do 1º provedor que usa a mídia, ou None (pode apagar). `ignorar` (spec 011): a
+    fase 2 da limpeza decide pelo roteiro se a narração está em uso (o áudio dela é sempre o
+    escolhido da própria geração e é citado pelas prévias)."""
     for nome, fn in _PROVEDORES.items():
+        if nome in ignorar:
+            continue
         if fn(db, image_id, audio_id):
             return nome
     return None

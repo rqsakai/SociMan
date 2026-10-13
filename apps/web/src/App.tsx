@@ -69,6 +69,10 @@ const Analytics = lazy(() => import("./pages/analytics/Analytics"));
 // 023-aprendizado: /app/aprendizado também usa o ECharts (rota lazy).
 const Aprendizado = lazy(() => import("./pages/aprendizado/Aprendizado"));
 // 029-ai-studio: uma rota lazy por lista.
+// 011-roteiros-video-local
+const RoteirosList = lazy(() => import("./pages/roteiros/RoteirosList"));
+const RoteiroNovo = lazy(() => import("./pages/roteiros/RoteiroNovo"));
+const RoteiroDetalhe = lazy(() => import("./pages/roteiros/RoteiroDetalhe"));
 const EstudioAvatares = lazy(() => import("./pages/estudio/Avatares"));
 const EstudioCenarios = lazy(() => import("./pages/estudio/Cenarios"));
 const EstudioVozes = lazy(() => import("./pages/estudio/Vozes"));
@@ -188,6 +192,9 @@ export default function App() {
                 />
                 {/* 029-ai-studio */}
                 <Route path="/app/estudio" element={<EstudioRedirect />} />
+                <Route path="/app/estudio/videos" element={<Suspense fallback={carregando}><RoteirosList /></Suspense>} />
+                <Route path="/app/estudio/videos/novo" element={<Suspense fallback={carregando}><RoteiroNovo /></Suspense>} />
+                <Route path="/app/roteiros/:id" element={<Suspense fallback={carregando}><RoteiroDetalhe /></Suspense>} />
                 <Route path="/app/estudio/avatares" element={<Suspense fallback={carregando}><EstudioAvatares /></Suspense>} />
                 <Route path="/app/estudio/cenarios" element={<Suspense fallback={carregando}><EstudioCenarios /></Suspense>} />
                 <Route path="/app/estudio/vozes" element={<Suspense fallback={carregando}><EstudioVozes /></Suspense>} />

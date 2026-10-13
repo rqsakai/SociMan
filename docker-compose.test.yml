@@ -112,6 +112,8 @@ services:
       MERCADO_HASH_PEPPER: pepper-de-teste-efemero-nao-e-segredo
       MERCADO_URL_PUBLICA: https://exemplo.test/shop
       MERCADO_URL_AFFILIATE: https://exemplo.test/affiliate
+      # Spec 011 (R14): o padrão do código (os testes mudam por override de Settings).
+      ROTEIRO_MAX_CENAS: "8"
       # Os testes usam MemoryEmailSender; um host inexistente faz qualquer envio real falhar.
       SMTP_HOST: smtp.invalido.test
       SMTP_PORT: "1025"

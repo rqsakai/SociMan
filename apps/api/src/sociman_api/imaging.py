@@ -29,13 +29,13 @@ Image.MAX_IMAGE_PIXELS = 40_000_000
 MAX_BYTES = 5 * 1024 * 1024
 MIN_SIZE = {"logo": (200, 200), "banner": (1000, 250), "watermark": (64, 64),
             "fundo": (540, 540), "avatar": (256, 256), "imagem": (64, 64),
-            "produto": (512, 512)}
+            "produto": (512, 512), "keyframe": (512, 512)}
 _FORMATS = {"PNG": ("image/png", "png"), "JPEG": ("image/jpeg", "jpg"),
             "WEBP": ("image/webp", "webp")}
 _KIND_FORMATS = {"logo": tuple(_FORMATS), "banner": tuple(_FORMATS),
                  "watermark": ("PNG", "WEBP"), "fundo": tuple(_FORMATS),
                  "avatar": tuple(_FORMATS), "imagem": tuple(_FORMATS),
-                 "produto": tuple(_FORMATS)}
+                 "produto": tuple(_FORMATS), "keyframe": tuple(_FORMATS)}
 TRANSPARENCY_MESSAGE = "A imagem precisa ter fundo transparente"
 
 
@@ -48,7 +48,8 @@ def object_key(perfil_id: uuid.UUID | None, ext: str) -> str:
     return f"perfis/{perfil_id}/{uuid.uuid4()}.{ext}"
 FORMAT_MESSAGE = "Formato não aceito"
 
-ImageKind = Literal["logo", "banner", "watermark", "fundo", "avatar", "imagem", "produto"]
+ImageKind = Literal["logo", "banner", "watermark", "fundo", "avatar", "imagem", "produto",
+                    "keyframe"]  # keyframe: spec 011
 
 
 @dataclass(frozen=True)

@@ -5472,6 +5472,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/perfis/{perfil_id}/pronuncias": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pronuncias Listar */
+        get: operations["pronuncias_listar"];
+        put?: never;
+        /** Pronuncias Criar */
+        post: operations["pronuncias_criar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/perfis/{perfil_id}/restore": {
         parameters: {
             query?: never;
@@ -5500,6 +5518,59 @@ export interface paths {
         put?: never;
         /** Revert Perfil */
         post: operations["perfis_revert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/roteiro-padroes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Padroes Ler */
+        get: operations["roteiro_padroes_ler"];
+        /** Padroes Salvar */
+        put: operations["roteiro_padroes_salvar"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/roteiro-padroes/versoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Padroes Versoes */
+        get: operations["roteiro_padroes_versoes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perfis/{perfil_id}/roteiros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar */
+        get: operations["roteiros_listar"];
+        put?: never;
+        /** Criar */
+        post: operations["roteiros_criar"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5821,6 +5892,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/pronuncias/{pronuncia_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Pronuncia Editar */
+        patch: operations["pronuncias_editar"];
+        trace?: never;
+    };
+    "/api/pronuncias/{pronuncia_id}/arquivar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pronuncia Arquivar */
+        post: operations["pronuncias_arquivar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pronuncias/{pronuncia_id}/restaurar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pronuncia Restaurar */
+        post: operations["pronuncias_restaurar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/pronuncias/{pronuncia_id}/versoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pronuncia Versoes */
+        get: operations["pronuncias_versoes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/publicacao/config": {
         parameters: {
             query?: never;
@@ -5850,6 +5989,248 @@ export interface paths {
         get: operations["publicacao_config_versions"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar Agencia
+         * @description O perfil do vídeo: ausente = todos; `sem` = nenhum (o roteiro sempre tem perfil); um id.
+         */
+        get: operations["roteiros_listar_agencia"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe */
+        get: operations["roteiros_detalhe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Editar */
+        patch: operations["roteiros_editar"];
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/aprovar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Aprovar */
+        post: operations["roteiros_aprovar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/arquivar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Arquivar */
+        post: operations["roteiros_arquivar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/controle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Controle */
+        put: operations["roteiros_controle"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/planejar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Planejar */
+        post: operations["roteiros_planejar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/clipe/regerar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Regerar Clipe */
+        post: operations["roteiros_regerar_clipe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/keyframe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enviar Keyframe */
+        post: operations["roteiros_enviar_keyframe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/keyframe/regerar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Regerar Keyframe */
+        post: operations["roteiros_regerar_keyframe"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/tomada": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Escolher Tomada */
+        put: operations["roteiros_escolher_tomada"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/restaurar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restaurar */
+        post: operations["roteiros_restaurar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/tentar-de-novo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tentar De Novo */
+        post: operations["roteiros_tentar_de_novo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/versoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Versoes */
+        get: operations["roteiros_versoes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/versoes/{versao}/reverter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reverter */
+        post: operations["roteiros_reverter"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7725,6 +8106,16 @@ export interface components {
             em: string;
             por: components["schemas"]["UserRef"];
         };
+        /** AprovarIn */
+        AprovarIn: {
+            /**
+             * Portao
+             * @enum {string}
+             */
+            portao: "texto" | "narracao" | "keyframes" | "clipes" | "final";
+            /** Version */
+            version: number;
+        };
         /**
          * Armazenamento
          * @description O HD de dados (R5): a aba Cortes mostra uso e espaço livre e desabilita o envio.
@@ -8161,6 +8552,20 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** AvatarRef */
+        AvatarRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kitstatus */
+            kitStatus: string | null;
+            /** Nome */
+            nome: string;
+            /** Revogado */
+            revogado: boolean;
+        };
         /** AvisoDerivados */
         AvisoDerivados: {
             /**
@@ -8173,6 +8578,15 @@ export interface components {
             itens: {
                 [key: string]: unknown;
             }[];
+        };
+        /** AvisoRoteiro */
+        AvisoRoteiro: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /** Ordem */
+            ordem?: number | null;
         };
         /** BatimentoIn */
         BatimentoIn: {
@@ -8375,6 +8789,16 @@ export interface components {
              * @description PNG, JPG ou WebP, ≥ 512×512, até 20 MB
              */
             foto: string;
+            /** Version */
+            version: number;
+        };
+        /** Body_roteiros_enviar_keyframe */
+        Body_roteiros_enviar_keyframe: {
+            /**
+             * Arquivo
+             * @description PNG, JPG ou WebP, até 20 MB, na proporção da cena
+             */
+            arquivo: string;
             /** Version */
             version: number;
         };
@@ -8717,6 +9141,7 @@ export interface components {
             /** Seed */
             seed: number | null;
             testeAudio: components["schemas"]["Audio"] | null;
+            video?: components["schemas"]["VideoCandidato"] | null;
         };
         /** CardFinal */
         CardFinal: {
@@ -8935,6 +9360,11 @@ export interface components {
         Cena: {
             /** Acao */
             acao: string;
+            /**
+             * Altura
+             * @default 1280
+             */
+            altura: number;
             /** Arquivada */
             arquivada: boolean;
             /** Audio */
@@ -8961,6 +9391,8 @@ export interface components {
             createdAt: string;
             /** Duplicadade */
             duplicadaDe: string | null;
+            /** Duracaomaxs */
+            duracaoMaxS?: number | null;
             /** Duracaos */
             duracaoS: number;
             /** Estilo */
@@ -8974,7 +9406,22 @@ export interface components {
             id: string;
             /** Ingredientes */
             ingredientes: components["schemas"]["Ingrediente"][];
+            keyframeFinal?: components["schemas"]["ImageRef"] | null;
+            /** Keyframegeracaoid */
+            keyframeGeracaoId?: string | null;
+            keyframeInicial?: components["schemas"]["ImageRef"] | null;
+            /** Keyframeinstrucao */
+            keyframeInstrucao?: string | null;
+            /** Keyframerefs */
+            keyframeRefs?: components["schemas"]["KeyframeRef"][];
+            /**
+             * Largura
+             * @default 736
+             */
+            largura: number;
             modo: components["schemas"]["CenaModo"];
+            /** @default minimax */
+            motor: components["schemas"]["CenaMotor"];
             movimento: components["schemas"]["CenaMovimento"] | null;
             /** Negative */
             negative: string | null;
@@ -9174,6 +9621,12 @@ export interface components {
          */
         CenaModo: "ingredientes" | "quadros" | "estender";
         /**
+         * CenaMotor
+         * @description O motor do clipe local (spec 011, FR-022).
+         * @enum {string}
+         */
+        CenaMotor: "minimax" | "wan" | "wan_qualidade" | "ltx";
+        /**
          * CenaMovimento
          * @enum {string}
          */
@@ -9203,11 +9656,13 @@ export interface components {
         /**
          * CenaPatch
          * @description Qualquer subconjunto dos campos. Nulo limpa os opcionais; em nome, ação, duração, modo,
-         *     tags e notas, é ignorado.
+         *     tags e notas (e, na 011, motor, largura, altura e referências do keyframe), é ignorado.
          */
         CenaPatch: {
             /** Acao */
             acao?: string | null;
+            /** Altura */
+            altura?: number | null;
             /** Audio */
             audio?: string | null;
             /** Avatararquivoid */
@@ -9220,6 +9675,8 @@ export interface components {
             cenarioArquivoId?: string | null;
             /** Cenarioid */
             cenarioId?: string | null;
+            /** Duracaomaxs */
+            duracaoMaxS?: number | string | null;
             /** Duracaos */
             duracaoS?: (4 | 6 | 8) | null;
             /** Estilo */
@@ -9228,7 +9685,18 @@ export interface components {
             fala?: string | null;
             /** Ia */
             ia?: components["schemas"]["IaAplicacao"][] | null;
+            /** Keyframefinalid */
+            keyframeFinalId?: string | null;
+            /** Keyframeinicialid */
+            keyframeInicialId?: string | null;
+            /** Keyframeinstrucao */
+            keyframeInstrucao?: string | null;
+            /** Keyframerefs */
+            keyframeRefs?: string[] | null;
+            /** Largura */
+            largura?: number | null;
             modo?: components["schemas"]["CenaModo"] | null;
+            motor?: components["schemas"]["CenaMotor"] | null;
             movimento?: components["schemas"]["CenaMovimento"] | null;
             /** Negative */
             negative?: string | null;
@@ -9303,6 +9771,38 @@ export interface components {
             updatedAt: string;
             /** Usos */
             usos: number;
+        };
+        /** CenaRoteiro */
+        CenaRoteiro: {
+            /** Altura */
+            altura: number;
+            /** Arquivada */
+            arquivada: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Keyframegeracaoid */
+            keyframeGeracaoId: string | null;
+            /** Keyframeimageid */
+            keyframeImageId: string | null;
+            /** Keyframeinstrucao */
+            keyframeInstrucao: string | null;
+            /** Keyframerefs */
+            keyframeRefs: components["schemas"]["KeyframeRef"][];
+            /** Keyframeurl */
+            keyframeUrl: string | null;
+            /** Largura */
+            largura: number;
+            motor: components["schemas"]["CenaMotor"];
+            /** Nome */
+            nome: string;
+            /** Perfilid */
+            perfilId: string | null;
+            status: components["schemas"]["CenaStatus"];
+            /** Version */
+            version: number;
         };
         /**
          * CenaStatus
@@ -10245,6 +10745,11 @@ export interface components {
             durationMs: number | null;
             /** Envioid */
             envioId: string | null;
+            /**
+             * Geradoia
+             * @default false
+             */
+            geradoIa: boolean;
             /** Height */
             height: number | null;
             /**
@@ -10261,6 +10766,7 @@ export interface components {
             /** Posterurl */
             posterUrl: string | null;
             propostaOpenshorts: components["schemas"]["PropostaOpenshorts"] | null;
+            roteiro?: components["schemas"]["RoteiroDoConteudo"] | null;
             /** Semconta */
             semConta: boolean;
             situacao: components["schemas"]["Situacao"];
@@ -10436,6 +10942,13 @@ export interface components {
         };
         /** ContinuarIn */
         ContinuarIn: {
+            /** Version */
+            version: number;
+        };
+        /** ControleIn */
+        ControleIn: {
+            modo: components["schemas"]["RoteiroModo"];
+            portoes: components["schemas"]["Portoes"];
             /** Version */
             version: number;
         };
@@ -11338,6 +11851,13 @@ export interface components {
             /** Message */
             message: string;
         };
+        /** ErroRoteiro */
+        ErroRoteiro: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
         /** ErrorBody */
         ErrorBody: {
             /** Code */
@@ -11362,6 +11882,16 @@ export interface components {
              * Format: uuid
              */
             candidatoId: string;
+            /** Version */
+            version: number;
+        };
+        /** EscolherTomadaIn */
+        EscolherTomadaIn: {
+            /**
+             * Tomadaid
+             * Format: uuid
+             */
+            tomadaId: string;
             /** Version */
             version: number;
         };
@@ -12073,11 +12603,27 @@ export interface components {
              */
             tamanho: "P" | "M" | "G";
         };
+        /** GeracaoAberta */
+        GeracaoAberta: {
+            /** Etapamensagem */
+            etapaMensagem: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Passo */
+            passo: string;
+            /** Progress */
+            progress: number;
+            /** Status */
+            status: string;
+        };
         /**
          * GeracaoAlvo
          * @enum {string}
          */
-        GeracaoAlvo: "asset" | "voz" | "produto";
+        GeracaoAlvo: "asset" | "voz" | "produto" | "cena" | "roteiro";
         /** GeracaoDetalhe */
         GeracaoDetalhe: {
             /**
@@ -12265,7 +12811,7 @@ export interface components {
          * GeracaoMotor
          * @enum {string}
          */
-        GeracaoMotor: "comfyui" | "tts" | "claude";
+        GeracaoMotor: "comfyui" | "tts" | "claude" | "ffmpeg";
         /** GeracaoResumo */
         GeracaoResumo: {
             /**
@@ -12377,7 +12923,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade" | "roteiro.plano";
             valorAtual?: components["schemas"]["Valor"];
         };
         /** Guia */
@@ -12576,7 +13122,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade" | "roteiro.plano";
         };
         /** IaChamada */
         IaChamada: {
@@ -13250,6 +13796,21 @@ export interface components {
             /** Inicio */
             inicio: number;
         };
+        /**
+         * KeyframeRef
+         * @description Spec 011: uma referência do keyframe (id de `images` sem FK; a apagada vem `removida`).
+         */
+        KeyframeRef: {
+            /**
+             * Imageid
+             * Format: uuid
+             */
+            imageId: string;
+            /** Removida */
+            removida: boolean;
+            /** Thumburl */
+            thumbUrl: string | null;
+        };
         /** Kit */
         Kit: {
             caption: components["schemas"]["Legenda"];
@@ -13884,7 +14445,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video" | "cena_tomada" | "audio" | "mercado_imagem" | "mercado_bruto";
+            kind: "corte_original" | "corte_marcado" | "fonte" | "marca_dagua" | "fundo" | "imagem" | "conteudo_video" | "cena_tomada" | "audio" | "mercado_imagem" | "mercado_bruto" | "geracao_video";
         };
         /** MidiaLink */
         MidiaLink: {
@@ -13961,6 +14522,38 @@ export interface components {
         NaoLidasOut: {
             /** Naolidas */
             naoLidas: number;
+        };
+        /** NarracaoOut */
+        NarracaoOut: {
+            /** Audiourl */
+            audioUrl: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Desatualizada */
+            desatualizada: boolean;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Limpa */
+            limpa: boolean;
+            /** Similaridade */
+            similaridade: number;
+            /** Tempos */
+            tempos: components["schemas"]["TempoFrase"][];
+            /** Totals */
+            totalS: number;
+            /** Velocidade */
+            velocidade: number;
+            /**
+             * Vozid
+             * Format: uuid
+             */
+            vozId: string;
         };
         /** NotaIn */
         NotaIn: {
@@ -14587,6 +15180,65 @@ export interface components {
             /** Y */
             y: number;
         };
+        /** Portoes */
+        Portoes: {
+            /**
+             * Clipes
+             * @default true
+             */
+            clipes: boolean;
+            /**
+             * Final
+             * @default true
+             */
+            final: boolean;
+            /**
+             * Keyframes
+             * @default true
+             */
+            keyframes: boolean;
+            /**
+             * Narracao
+             * @default true
+             */
+            narracao: boolean;
+            /**
+             * Texto
+             * @default true
+             */
+            texto: boolean;
+        };
+        /** PosicaoIn */
+        PosicaoIn: {
+            /**
+             * Cenaid
+             * Format: uuid
+             */
+            cenaId: string;
+            /** Frases */
+            frases: number[];
+            /** Tomadaid */
+            tomadaId?: string | null;
+        };
+        /** PosicaoOut */
+        PosicaoOut: {
+            /** Aviso */
+            aviso: string | null;
+            cena: components["schemas"]["CenaRoteiro"];
+            /** Duracaos */
+            duracaoS: number | null;
+            /** Frases */
+            frases: number[];
+            /** Geracoesabertas */
+            geracoesAbertas: components["schemas"]["GeracaoAberta"][];
+            /** Inicios */
+            inicioS: number | null;
+            /** Ordem */
+            ordem: number;
+            /** Reaproveitada */
+            reaproveitada: boolean;
+            tomada: components["schemas"]["TomadaRoteiro"] | null;
+        };
         /** PosicaoRanking */
         PosicaoRanking: {
             /** Categoriaid */
@@ -14695,6 +15347,20 @@ export interface components {
             pulados: components["schemas"]["Pulado"][];
             /** Slots */
             slots: components["schemas"]["SlotSequencia"][];
+        };
+        /** PreviaOut */
+        PreviaOut: {
+            /** Atual */
+            atual: boolean;
+            /** Duracaoms */
+            duracaoMs: number | null;
+            /**
+             * Geracaoid
+             * Format: uuid
+             */
+            geracaoId: string;
+            /** Videourl */
+            videoUrl: string | null;
         };
         /** PreviaRevogacao */
         PreviaRevogacao: {
@@ -14943,6 +15609,34 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** ProdutoRoteiro */
+        ProdutoRoteiro: {
+            /** Aprovado */
+            aprovado: boolean;
+            /** Cor */
+            cor: string | null;
+            /** Nome */
+            nome: string;
+            /** Nomecomercial */
+            nomeComercial: string | null;
+            /**
+             * Produtoid
+             * Format: uuid
+             */
+            produtoId: string;
+            /** Varianteid */
+            varianteId: string | null;
+        };
+        /** ProdutoRoteiroIn */
+        ProdutoRoteiroIn: {
+            /**
+             * Produtoid
+             * Format: uuid
+             */
+            produtoId: string;
+            /** Varianteid */
+            varianteId?: string | null;
+        };
         /**
          * ProdutoStatus
          * @enum {string}
@@ -14969,6 +15663,53 @@ export interface components {
             partes: components["schemas"]["ParteOut"][];
             /** Texto */
             texto: string;
+        };
+        /** Pronuncia */
+        Pronuncia: {
+            /** Archived */
+            archived: boolean;
+            /** Escrita */
+            escrita: string;
+            /** Falada */
+            falada: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Version */
+            version: number;
+        };
+        /** PronunciaIn */
+        PronunciaIn: {
+            /** Escrita */
+            escrita: string;
+            /** Falada */
+            falada: string;
+        };
+        /** PronunciaPatch */
+        PronunciaPatch: {
+            /** Escrita */
+            escrita?: string | null;
+            /** Falada */
+            falada?: string | null;
+            /** Version */
+            version: number;
+        };
+        /** PronunciasList */
+        PronunciasList: {
+            /** Items */
+            items: components["schemas"]["Pronuncia"][];
         };
         /**
          * PropostaOpenshorts
@@ -15440,6 +16181,21 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** RegerarClipeIn */
+        RegerarClipeIn: {
+            motor?: components["schemas"]["CenaMotor"] | null;
+            /** Version */
+            version: number;
+        };
+        /** RegerarKeyframeIn */
+        RegerarKeyframeIn: {
+            /** Instrucao */
+            instrucao?: string | null;
+            /** Referencias */
+            referencias?: string[] | null;
+            /** Version */
+            version: number;
+        };
         /** Regras */
         Regras: {
             /** Padrao */
@@ -15642,6 +16398,211 @@ export interface components {
             confirmo: boolean;
             /** Version */
             version: number;
+        };
+        /** RoteiroDetalhe */
+        RoteiroDetalhe: {
+            acabamento: components["schemas"]["PreviaOut"] | null;
+            /** Arquivado */
+            arquivado: boolean;
+            avatar: components["schemas"]["AvatarRef"] | null;
+            /** Avisos */
+            avisos: components["schemas"]["AvisoRoteiro"][];
+            /** Brief */
+            brief: string;
+            /** Conteudoid */
+            conteudoId: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            erro: components["schemas"]["ErroRoteiro"] | null;
+            etapaFalhou: components["schemas"]["RoteiroEtapa"] | null;
+            formato: components["schemas"]["RoteiroFormato"];
+            /** Frases */
+            frases: string[];
+            /** Geracoesabertas */
+            geracoesAbertas: components["schemas"]["GeracaoAberta"][];
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Maxcenas */
+            maxCenas: number;
+            modo: components["schemas"]["RoteiroModo"];
+            narracao: components["schemas"]["NarracaoOut"] | null;
+            /** Narracoesanteriores */
+            narracoesAnteriores: number;
+            /** Nome */
+            nome: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Perfilnome */
+            perfilNome: string | null;
+            portoes: components["schemas"]["Portoes"];
+            /** Posicoes */
+            posicoes: components["schemas"]["PosicaoOut"][];
+            previa: components["schemas"]["PreviaOut"] | null;
+            /** Produtos */
+            produtos: components["schemas"]["ProdutoRoteiro"][];
+            status: components["schemas"]["RoteiroStatus"];
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Velocidade */
+            velocidade: number;
+            /** Version */
+            version: number;
+            voz: components["schemas"]["VozRef"] | null;
+        };
+        /**
+         * RoteiroDoConteudo
+         * @description Spec 011: de que roteiro veio e quais motores geraram as tomadas (atribuição do MiniMax).
+         */
+        RoteiroDoConteudo: {
+            /** Avisoatribuicao */
+            avisoAtribuicao: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Motores */
+            motores: string[];
+            /** Nome */
+            nome: string;
+        };
+        /**
+         * RoteiroEtapa
+         * @description A etapa em que o roteiro falhou (o "Tentar de novo" retoma dela, FR-011).
+         * @enum {string}
+         */
+        RoteiroEtapa: "plano" | "narracao" | "keyframes" | "clipes" | "montagem" | "acabamento";
+        /**
+         * RoteiroFormato
+         * @enum {string}
+         */
+        RoteiroFormato: "voice_over";
+        /** RoteiroIn */
+        RoteiroIn: {
+            /** Avatarid */
+            avatarId?: string | null;
+            /**
+             * Brief
+             * @default
+             */
+            brief: string;
+            /** Nome */
+            nome: string;
+            /** Produtos */
+            produtos: components["schemas"]["ProdutoRoteiroIn"][];
+            /** Vozid */
+            vozId?: string | null;
+        };
+        /**
+         * RoteiroModo
+         * @enum {string}
+         */
+        RoteiroModo: "revisar" | "automatico";
+        /** RoteiroPadroes */
+        RoteiroPadroes: {
+            modo: components["schemas"]["RoteiroModo"];
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            portoes: components["schemas"]["Portoes"];
+            /** Version */
+            version: number;
+        };
+        /** RoteiroPadroesIn */
+        RoteiroPadroesIn: {
+            modo: components["schemas"]["RoteiroModo"];
+            portoes: components["schemas"]["Portoes"];
+            /** Version */
+            version: number;
+        };
+        /**
+         * RoteiroPatch
+         * @description Qualquer subconjunto. `avatarId`/`vozId` nulos tiram o avatar ou a voz.
+         */
+        RoteiroPatch: {
+            /** Avatarid */
+            avatarId?: string | null;
+            /** Brief */
+            brief?: string | null;
+            /** Frases */
+            frases?: string[] | null;
+            /** Nome */
+            nome?: string | null;
+            /** Posicoes */
+            posicoes?: components["schemas"]["PosicaoIn"][] | null;
+            /** Produtos */
+            produtos?: components["schemas"]["ProdutoRoteiroIn"][] | null;
+            /** Velocidade */
+            velocidade?: number | string | null;
+            /** Version */
+            version: number;
+            /** Vozid */
+            vozId?: string | null;
+        };
+        /** RoteiroResumo */
+        RoteiroResumo: {
+            /** Arquivado */
+            arquivado: boolean;
+            /** Cenas */
+            cenas: number;
+            /** Conteudoid */
+            conteudoId: string | null;
+            etapaFalhou: components["schemas"]["RoteiroEtapa"] | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Miniaturaurl */
+            miniaturaUrl: string | null;
+            /** Nome */
+            nome: string;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /** Perfilnome */
+            perfilNome: string | null;
+            /** Produtos */
+            produtos: string[];
+            status: components["schemas"]["RoteiroStatus"];
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+        };
+        /**
+         * RoteiroStatus
+         * @enum {string}
+         */
+        RoteiroStatus: "rascunho" | "planejando" | "aguardando_texto" | "narrando" | "aguardando_narracao" | "gerando_keyframes" | "aguardando_keyframes" | "gerando_clipes" | "aguardando_clipes" | "montando" | "aguardando_final" | "finalizando" | "pronto" | "falhou";
+        /** RoteiroVersionIn */
+        RoteiroVersionIn: {
+            /** Version */
+            version: number;
+        };
+        /** RoteirosPagina */
+        RoteirosPagina: {
+            /** Itens */
+            itens: components["schemas"]["RoteiroResumo"][];
+            /** Proximo */
+            proximo: string | null;
         };
         /** SalvarFichaIn */
         SalvarFichaIn: {
@@ -16145,6 +17106,15 @@ export interface components {
              */
             temaId: string;
         };
+        /** TempoFrase */
+        TempoFrase: {
+            /** Fims */
+            fimS: number;
+            /** Frase */
+            frase: number;
+            /** Inicios */
+            inicioS: number;
+        };
         /** TentarDeNovoIn */
         TentarDeNovoIn: {
             /**
@@ -16239,17 +17209,17 @@ export interface components {
              * Entidade
              * @enum {string}
              */
-            entidade: "asset" | "perfil" | "kit" | "postagem" | "guia" | "cena" | "aprendizado" | "produto";
+            entidade: "asset" | "perfil" | "kit" | "postagem" | "guia" | "cena" | "aprendizado" | "produto" | "roteiro";
             /**
              * Formato
              * @enum {string}
              */
-            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes" | "campos_cena" | "taxonomia" | "classificacao" | "analise" | "ficha_produto" | "identidade";
+            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes" | "campos_cena" | "taxonomia" | "classificacao" | "analise" | "ficha_produto" | "identidade" | "plano_roteiro";
             /**
              * Id
              * @enum {string}
              */
-            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade";
+            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade" | "roteiro.plano";
             /**
              * Idioma
              * @enum {string}
@@ -16295,7 +17265,7 @@ export interface components {
             arquivada: boolean;
             autor: components["schemas"]["Autor"];
             /** Bytes */
-            bytes: number;
+            bytes: number | null;
             /**
              * Cenaid
              * Format: uuid
@@ -16312,13 +17282,30 @@ export interface components {
             duracaoMs: number;
             /** Escolhida */
             escolhida: boolean;
+            /** Fps */
+            fps?: number | null;
+            /** Geracaoid */
+            geracaoId?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
+            /**
+             * Keyframeantigo
+             * @default false
+             */
+            keyframeAntigo: boolean;
             /** Largura */
             largura: number;
+            /**
+             * Limpa
+             * @default false
+             */
+            limpa: boolean;
+            /** Limpaem */
+            limpaEm?: string | null;
+            motor?: components["schemas"]["CenaMotor"] | null;
             /** Naovertical */
             naoVertical: boolean;
             /** Negativeusado */
@@ -16329,7 +17316,7 @@ export interface components {
             /** Promptusado */
             promptUsado: string;
             /** Thumburl */
-            thumbUrl: string;
+            thumbUrl: string | null;
             /** Version */
             version: number;
             /** Videourl */
@@ -16337,10 +17324,30 @@ export interface components {
         };
         /**
          * TomadaOrigem
-         * @description Como a tomada nasceu. Ponto de extensão: a 021 (geração local) poderá acrescentar valores.
+         * @description Como a tomada nasceu: enviada à mão do Flow (010) ou gerada no ComfyUI pelo roteiro (011).
          * @enum {string}
          */
-        TomadaOrigem: "flow_manual";
+        TomadaOrigem: "flow_manual" | "geracao_local";
+        /** TomadaRoteiro */
+        TomadaRoteiro: {
+            /** Duracaoms */
+            duracaoMs: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Keyframeantigo */
+            keyframeAntigo: boolean;
+            /** Limpa */
+            limpa: boolean;
+            /** Miniaturaurl */
+            miniaturaUrl: string | null;
+            motor: components["schemas"]["CenaMotor"] | null;
+            origem: components["schemas"]["TomadaOrigem"];
+            /** Videourl */
+            videoUrl: string | null;
+        };
         /** TomadasList */
         TomadasList: {
             /** Items */
@@ -16770,6 +17777,21 @@ export interface components {
             /** Items */
             items: components["schemas"]["Version"][];
         };
+        /**
+         * VideoCandidato
+         * @description Spec 011 (R3): o vídeo de um candidato (clipe, prévia ou acabamento).
+         */
+        VideoCandidato: {
+            /** Altura */
+            altura: number | null;
+            /** Duracaoms */
+            duracaoMs: number | null;
+            /** Largura */
+            largura: number | null;
+            link: components["schemas"]["Link"];
+            /** Miniaturaurl */
+            miniaturaUrl: string | null;
+        };
         /** VideoDetalhe */
         VideoDetalhe: {
             /** Coletaparadaem */
@@ -17190,6 +18212,20 @@ export interface components {
             tom?: string | null;
             /** Version */
             version: number;
+        };
+        /** VozRef */
+        VozRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Nome */
+            nome: string;
+            /** Origem */
+            origem: string;
+            /** Revogada */
+            revogada: boolean;
         };
         /** VozResumo */
         VozResumo: {
@@ -40417,6 +41453,137 @@ export interface operations {
             };
         };
     };
+    pronuncias_listar: {
+        parameters: {
+            query?: {
+                arquivadas?: boolean;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PronunciasList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    pronuncias_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PronunciaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pronuncia"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     perfis_restore: {
         parameters: {
             query?: never;
@@ -40510,6 +41677,330 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PerfilOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiro_padroes_ler: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroPadroes"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiro_padroes_salvar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroPadroesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroPadroes"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiro_padroes_versoes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_listar: {
+        parameters: {
+            query?: {
+                /** @description Estados (OU) */
+                status?: components["schemas"]["RoteiroStatus"][] | null;
+                produtoId?: string | null;
+                arquivados?: boolean;
+                q?: string | null;
+                cursor?: string | null;
+                limite?: number;
+            };
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteirosPagina"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_criar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                perfil_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
                 };
             };
             /** @description Bad Request */
@@ -42020,6 +43511,277 @@ export interface operations {
             };
         };
     };
+    pronuncias_editar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pronuncia_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PronunciaPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pronuncia"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    pronuncias_arquivar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pronuncia_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pronuncia"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    pronuncias_restaurar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pronuncia_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pronuncia"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    pronuncias_versoes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pronuncia_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     publicacao_config_get: {
         parameters: {
             query?: never;
@@ -42147,6 +43909,1091 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_listar_agencia: {
+        parameters: {
+            query?: {
+                /** @description Perfil base: ausente = todos; `sem` = sem perfil; ou o id de um perfil */
+                perfilId?: string | null;
+                /** @description Estados (OU) */
+                status?: components["schemas"]["RoteiroStatus"][] | null;
+                produtoId?: string | null;
+                /** @description true = só os arquivados */
+                archived?: boolean;
+                q?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteirosPagina"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_detalhe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_editar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_aprovar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprovarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_arquivar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_controle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ControleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_planejar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_regerar_clipe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+                ordem: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegerarClipeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_enviar_keyframe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+                ordem: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_roteiros_enviar_keyframe"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Request Entity Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Insufficient Storage */
+            507: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_regerar_keyframe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+                ordem: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegerarKeyframeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_escolher_tomada: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+                ordem: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EscolherTomadaIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_restaurar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_tentar_de_novo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_versoes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VersionsList"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_reverter: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+                versao: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

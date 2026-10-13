@@ -148,7 +148,7 @@ export default function ConteudoDetalhe() {
       <AgendarDialog
         open={agendarOpen}
         onOpenChange={setAgendarOpen}
-        conteudo={{ id: c.id, perfilId: c.perfil.id, titulo: c.titulo, situacao: c.situacao, proposta: propostaDe(c), origem: c.origem, posterUrl: c.posterUrl }}
+        conteudo={{ id: c.id, perfilId: c.perfil.id, titulo: c.titulo, situacao: c.situacao, proposta: propostaDe(c), origem: c.origem, posterUrl: c.posterUrl, geradoIa: c.geradoIa }}
         destinos={c.destinos}
         onDone={refresh}
       />
@@ -282,8 +282,30 @@ function Cabecalho({ conteudo: c, onChanged }: { conteudo: Conteudo; onChanged: 
               não é vertical
             </Badge>
           )}
+          {/* spec 011 (T043): conteúdo feito por um roteiro com vídeo local */}
+          {c.geradoIa && (
+            <Badge className="bg-info text-info-foreground" data-testid="selo-gerado-ia">
+              Gerado por IA
+            </Badge>
+          )}
           <span>{c.perfil.name}</span>
         </CardDescription>
+        {c.roteiro && (
+          <div className="space-y-1 text-sm" data-testid="conteudo-roteiro">
+            <p>
+              Feito pelo roteiro{" "}
+              <Link to={`/app/roteiros/${c.roteiro.id}`} className="font-medium underline-offset-2 hover:underline">
+                {c.roteiro.nome}
+              </Link>
+              {c.roteiro.motores.length > 0 && <span className="text-muted-foreground"> · motores: {c.roteiro.motores.join(", ")}</span>}
+            </p>
+            {c.roteiro.avisoAtribuicao && (
+              <p role="note" className="text-warning-foreground" data-testid="aviso-atribuicao">
+                {c.roteiro.avisoAtribuicao}
+              </p>
+            )}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Ações do post inteiro (todas as contas); as de cada conta ficam no bloco da conta. */}

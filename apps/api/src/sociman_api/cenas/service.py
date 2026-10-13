@@ -12,6 +12,14 @@ arquivado não trava a cena (só a criação pela rota antiga por perfil o recus
 Status (Q3): `rascunho` monta o prompt ao vivo; `pronta` congela o texto e as versões do avatar e
 do cenário; `usada` vem do vínculo com um conteúdo (`usos.py`). Editar um campo de
 `CAMPOS_PROMPT` numa `pronta` a devolve a `rascunho`; numa `usada`, 409 `cena_usada`.
+
+Spec 011 (FR-022/024/025): os `CAMPOS_LOCAIS` do clipe local (motor, resolução, keyframes e a
+duração máxima) não mexem no status nem no prompt do Flow. Numa cena `usada`, só o **primeiro
+preenchimento** passa (campo nulo, ou a cena ainda sem keyframe nem tomada local, como a cena do
+Flow que ganha o primeiro keyframe com a resolução e o motor); trocar um valor já definido dá 409
+`cena_usada`. `marcar_pronta(db, ator, cena)` é a reutilizável (o roteiro a chama ao passar o
+portão KEYFRAMES, R8) e `definir_keyframe` grava o keyframe inicial (da opção escolhida ou do
+envio). O `duplicar` copia os campos locais **sem** os keyframes.
 """
 
 import base64
@@ -19,6 +27,7 @@ import binascii
 import uuid
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import and_, func, or_, select
@@ -32,22 +41,26 @@ from sociman_api.cenas import ingredientes, padroes, schemas
 from sociman_api.cenas import prompt as prompt_mod
 from sociman_api.cenas.models import (
     CAMPOS_EDITAVEIS,
+    CAMPOS_LOCAIS,
+    CAMPOS_LOCAIS_DUPLICAR,
     CAMPOS_PROMPT,
     Cena,
     CenaModo,
+    CenaMotor,
     CenaMovimento,
     CenaPlano,
     CenaStatus,
     CenaTomada,
     CenaUso,
+    TomadaOrigem,
 )
 from sociman_api.conteudos.models import Conteudo
 from sociman_api.errors import ApiError
 from sociman_api.ia import aplicacao
 from sociman_api.ia import guia as guia_mod
 from sociman_api.perfis import base as perfil_base
-from sociman_api.perfis.models import Image, Perfil
-from sociman_api.perfis.schemas import Autor, VersionsList
+from sociman_api.perfis.models import Image, ImageKind, Perfil
+from sociman_api.perfis.schemas import Autor, ImageRef, ImageUrls, VersionsList
 from sociman_api.perfis.service_perfis import (
     apply_archived,
     get_perfil_or_404,
@@ -64,13 +77,20 @@ DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
 _UUIDS = ("avatar_id", "avatar_arquivo_id", "cenario_id", "cenario_arquivo_id",
           "produto_imagem_id", "produto_id", "produto_variante_id")
-_ENUMS = {"plano": CenaPlano, "movimento": CenaMovimento, "modo": CenaModo}
+_ENUMS = {"plano": CenaPlano, "movimento": CenaMovimento, "modo": CenaModo,
+          "motor": CenaMotor}
+_KEYFRAMES = ("keyframe_inicial_id", "keyframe_final_id")
+# PATCH: nulo nestes é ignorado (não há "limpar": o padrão é um valor).
+_LOCAIS_OBRIGATORIOS = ("motor", "largura", "altura", "keyframe_refs")
 _CAMEL = {"avatar_id": "avatarId", "avatar_arquivo_id": "avatarArquivoId",
           "cenario_id": "cenarioId", "cenario_arquivo_id": "cenarioArquivoId",
           "produto_imagem_id": "produtoImagemId", "produto_nome": "produtoNome",
           "produto_id": "produtoId", "produto_variante_id": "produtoVarianteId",
           "quadro_inicial": "quadroInicial", "quadro_final": "quadroFinal",
-          "duracao_s": "duracaoS", "texto_tela": "textoTela"}
+          "duracao_s": "duracaoS", "texto_tela": "textoTela",
+          "keyframe_inicial_id": "keyframeInicialId", "keyframe_final_id": "keyframeFinalId",
+          "keyframe_instrucao": "keyframeInstrucao", "keyframe_refs": "keyframeRefs",
+          "keyframe_geracao_id": "keyframeGeracaoId", "duracao_max_s": "duracaoMaxS"}
 _ACENTOS = ("áàâãäéèêëíìîïóòôõöúùûüç", "aaaaaeeeeiiiiooooouuuuc")
 
 
@@ -235,7 +255,10 @@ def _mudancas(db: Session, cena: Cena,
                                     ("cenario", assets.cenario, cena.cenario_version_congelada)):
         if asset is None or congelada is None or asset.version == congelada:
             continue
-        antes = _texto_parte(papel, history.version_state(db, "asset", asset.id, congelada))
+        try:
+            antes = _texto_parte(papel, history.version_state(db, "asset", asset.id, congelada))
+        except ApiError:  # 025: a versão congelada foi redigida pela revogação (não há "antes")
+            continue
         depois = _texto_parte(papel, history.snapshot(asset))
         if antes != depois:
             out.append(avisos_mod.Mudanca(papel, antes, depois))
@@ -316,17 +339,25 @@ def _sem_autor() -> Autor:
     return Autor(tipo="sistema", id=None, nome="sistema")
 
 
+def keyframe_antigo(t: CenaTomada, cena: Cena | None) -> bool:
+    """Spec 011 (R10): derivado, nunca gravado. Só a tomada local tem keyframe."""
+    return (t.origem == TomadaOrigem.geracao_local and cena is not None
+            and t.keyframe_image_id != cena.keyframe_inicial_id)
+
+
 def tomada_out(t: CenaTomada, escolhida: bool, autor: Autor | None,
-               com_video: bool = True) -> schemas.Tomada:
-    video_url = midia.link("cena_tomada", t.id).url if com_video else None
+               com_video: bool = True, cena: Cena | None = None) -> schemas.Tomada:
+    video_url = midia.link("cena_tomada", t.id).url if com_video and t.video_key else None
     return schemas.Tomada(
         id=t.id, cena_id=t.cena_id, origem=t.origem, duracao_ms=t.duracao_ms, largura=t.largura,
         altura=t.altura, nao_vertical=t.largura >= t.altura, bytes=t.bytes,
         content_type=t.content_type,
-        thumb_url=imaging.image_urls(t.miniatura_key)["thumb"], video_url=video_url,
+        thumb_url=imaging.image_urls(t.miniatura_key)["thumb"] if t.miniatura_key else None,
+        video_url=video_url,
         prompt_usado=t.prompt_usado, negative_usado=t.negative_usado, nota=t.nota,
         escolhida=escolhida, arquivada=t.archived, version=t.version, created_at=t.created_at,
-        autor=autor or _sem_autor())
+        autor=autor or _sem_autor(), geracao_id=t.geracao_id, motor=t.motor, fps=t.fps,
+        keyframe_antigo=keyframe_antigo(t, cena), limpa=t.limpa, limpa_em=t.limpa_em)
 
 
 def _contagens(db: Session, ids: Sequence[uuid.UUID]) -> tuple[dict, dict]:
@@ -346,7 +377,7 @@ def _contagens(db: Session, ids: Sequence[uuid.UUID]) -> tuple[dict, dict]:
 def _thumb(db: Session, cena: Cena, assets: ingredientes.Assets,
            tomada: CenaTomada | None) -> str | None:
     """Miniatura: tomada escolhida → imagem do arquivo do avatar → nenhuma (iniciais no SPA)."""
-    if tomada is not None:
+    if tomada is not None and tomada.miniatura_key:
         return imaging.image_urls(tomada.miniatura_key)["thumb"]
     f = ingredientes.arquivo(assets.avatar, cena.avatar_arquivo_id)
     image = db.get(Image, f.image_id) if f is not None else None
@@ -408,12 +439,38 @@ def cena_out(db: Session, cena: Cena, actor: Actor | None = None) -> schemas.Cen
         ingredientes=ingredientes.listar(db, assets, cena.avatar_arquivo_id,
                                          cena.cenario_arquivo_id),
         avisos=avisos(db, cena, assets),
-        tomada_escolhida=tomada_out(tomada, True, tomada_autores.get(tomada.id), com_video)
+        tomada_escolhida=tomada_out(tomada, True, tomada_autores.get(tomada.id), com_video, cena)
         if tomada is not None else None,
         tomadas=tomadas.get(cena.id, 0), usos=usos_out(db, cena.id),
         thumb_url=_thumb(db, cena, assets, tomada), duplicada_de=cena.duplicada_de,
         created_at=cena.created_at, updated_at=cena.updated_at,
-        autor=autores.get(cena.id) or _sem_autor())
+        autor=autores.get(cena.id) or _sem_autor(), **locais_out(db, cena))
+
+
+def _image_ref(img: Image | None) -> ImageRef | None:
+    if img is None:
+        return None
+    return ImageRef(id=img.id, width=img.width, height=img.height,
+                    urls=ImageUrls(**imaging.image_urls(img.object_key)))
+
+
+def locais_out(db: Session, cena: Cena) -> dict[str, Any]:
+    """Spec 011: os campos locais do detalhe (as referências apagadas vêm `removida`)."""
+    refs = list(cena.keyframe_refs or [])
+    ids = [i for i in (*refs, cena.keyframe_inicial_id, cena.keyframe_final_id) if i]
+    imgs = {i.id: i for i in db.scalars(select(Image).where(Image.id.in_(ids)))} if ids else {}
+    return {
+        "motor": cena.motor, "largura": cena.largura, "altura": cena.altura,
+        "keyframe_inicial": _image_ref(imgs.get(cena.keyframe_inicial_id)),
+        "keyframe_final": _image_ref(imgs.get(cena.keyframe_final_id)),
+        "keyframe_instrucao": cena.keyframe_instrucao,
+        "keyframe_refs": [schemas.KeyframeRef(
+            image_id=r, removida=r not in imgs,
+            thumb_url=imaging.image_urls(imgs[r].object_key)["thumb"] if r in imgs else None)
+            for r in refs],
+        "keyframe_geracao_id": cena.keyframe_geracao_id,
+        "duracao_max_s": float(cena.duracao_max_s) if cena.duracao_max_s is not None else None,
+    }
 
 
 # ---- consultas ----
@@ -529,9 +586,13 @@ def _aplicar_proposta(db: Session, actor: Actor, proposta_id: uuid.UUID | None,
 
 
 def criar(db: Session, actor: Actor, perfil_id: uuid.UUID | None, body: schemas.CenaIn,
-          exige_ativo: bool = True) -> Cena:
+          exige_ativo: bool = True, *, locais: dict[str, Any] | None = None,
+          details: dict[str, Any] | None = None) -> Cena:
     """`perfil_id` é o perfil base (029: opcional). A rota antiga por perfil (`exige_ativo`)
-    recusa o perfil arquivado, como antes; a da agência só confere que ele existe."""
+    recusa o perfil arquivado, como antes; a da agência só confere que ele existe.
+
+    Spec 011: o plano do roteiro cria a cena com os campos locais (`locais`: motor e instrução
+    do keyframe) e os `details` da versão (a chamada da IA e o roteiro, FR-014)."""
     if exige_ativo and perfil_id is not None:
         perfil_ativo(db, perfil_id)
     else:
@@ -540,9 +601,15 @@ def criar(db: Session, actor: Actor, perfil_id: uuid.UUID | None, body: schemas.
     validar_refs(db, perfil_id, valores, novos=set(_UUIDS))
     cena = Cena(id=uuid.uuid4(), perfil_id=perfil_id, created_by=actor.user_id,
                 updated_by=actor.user_id, **valores)
+    for campo, valor in (locais or {}).items():
+        if campo not in CAMPOS_LOCAIS or campo in _KEYFRAMES or campo == "keyframe_geracao_id":
+            raise ValueError(f"campo local não aceito na criação: {campo}")
+        setattr(cena, campo, valor)
     db.add(cena)
     db.flush()
-    details = _aplicar_proposta(db, actor, body.proposta_id, cena, perfil_id, nova=True)
+    proposta = _aplicar_proposta(db, actor, body.proposta_id, cena, perfil_id, nova=True)
+    if proposta or details:
+        details = {**(details or {}), **(proposta or {})}
     _record(db, actor, cena, "created", None, details, ia=body.ia)
     return cena
 
@@ -557,6 +624,19 @@ def _limpa_congelado(cena: Cena) -> None:
 _OBRIGATORIOS = ("nome", "acao", "duracao_s", "modo", "tags", "notas")
 
 
+def _mudancas_locais(cena: Cena, pedidas: dict[str, Any]) -> dict[str, Any]:
+    out = {}
+    for campo, valor in pedidas.items():
+        if valor is None and campo in _LOCAIS_OBRIGATORIOS:
+            continue
+        atual = getattr(cena, campo)
+        if campo == "keyframe_refs":
+            valor, atual = list(valor), list(atual or [])
+        if atual != valor:
+            out[campo] = valor
+    return out
+
+
 def mudancas_de(cena: Cena, changes: dict[str, Any]) -> dict[str, Any]:
     """Só o que difere do valor atual (nulo em campo obrigatório é ignorado)."""
     out = {}
@@ -568,11 +648,50 @@ def mudancas_de(cena: Cena, changes: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def tem_tomada_local(db: Session, cena_id: uuid.UUID) -> bool:
+    return db.scalar(select(func.count()).select_from(CenaTomada).where(
+        CenaTomada.cena_id == cena_id, CenaTomada.origem == TomadaOrigem.geracao_local)) > 0
+
+
+def conferir_locais_em_usada(db: Session, cena: Cena, campos: set[str]) -> None:
+    """FR-024: numa cena `usada`, o primeiro preenchimento passa (campo nulo, ou a cena ainda sem
+    keyframe e sem tomada local: nada local a invalidar); trocar um valor definido, 409."""
+    locais = campos & set(CAMPOS_LOCAIS)
+    if cena.status != CenaStatus.usada or not locais:
+        return
+    sem_local = cena.keyframe_inicial_id is None and not tem_tomada_local(db, cena.id)
+    if sem_local:
+        return
+    if any(getattr(cena, f) is not None for f in locais):
+        raise _usada()
+
+
+def _validar_locais(db: Session, valores: dict[str, Any], novos: set[str]) -> None:
+    """Os keyframes são imagens `keyframe`; as referências, imagens que existem (só as novas)."""
+    for campo in _KEYFRAMES:
+        image_id = valores.get(campo)
+        if campo in novos and image_id is not None:
+            img = db.get(Image, image_id)
+            if img is None or img.kind != ImageKind.keyframe:
+                raise invalida(campo, "use uma imagem de keyframe da biblioteca")
+    if valores.get("keyframe_final_id") is not None and valores.get("keyframe_inicial_id") is None:
+        raise invalida("keyframe_final_id", "defina o keyframe inicial antes do final")
+    if "keyframe_refs" in novos:
+        refs = list(valores.get("keyframe_refs") or [])
+        if len(set(refs)) != len(refs):
+            raise invalida("keyframe_refs", "referência repetida")
+        achadas = set(db.scalars(select(Image.id).where(Image.id.in_(refs)))) if refs else set()
+        if any(r not in achadas for r in refs):
+            raise invalida("keyframe_refs", "use imagens da biblioteca")
+
+
 def editar(db: Session, actor: Actor, cena_id: uuid.UUID, body: schemas.CenaPatch) -> Cena:
     cena = _editavel(db, cena_id, body.version)
-    changes = mudancas_de(cena, body.model_dump(exclude_unset=True,
-                                                exclude={"version", "proposta_id", "ia",
-                                                         "perfil_id"}))
+    pedidas = body.model_dump(exclude_unset=True, exclude={"version", "proposta_id", "ia",
+                                                           "perfil_id"})
+    locais = {f: pedidas.pop(f) for f in list(pedidas) if f in CAMPOS_LOCAIS}
+    changes = mudancas_de(cena, pedidas)
+    locais = _mudancas_locais(cena, locais)
     # 029: o perfil base (pode ser arquivado; nulo = nenhum). Não mexe no prompt congelado: o
     # "Remontar" usa os padrões do novo perfil base.
     novo_perfil = cena.perfil_id
@@ -586,11 +705,16 @@ def editar(db: Session, actor: Actor, cena_id: uuid.UUID, body: schemas.CenaPatc
     for dono, arq in (("avatar_id", "avatar_arquivo_id"), ("cenario_id", "cenario_arquivo_id")):
         if dono in changes and arq not in changes and getattr(cena, arq) is not None:
             changes[arq] = None
+    conferir_locais_em_usada(db, cena, set(locais))
     valores = {f: changes.get(f, getattr(cena, f)) for f in CAMPOS_EDITAVEIS}
     validar_refs(db, cena.perfil_id, valores, novos=set(changes) & set(_UUIDS))
+    _validar_locais(db, {f: locais.get(f, getattr(cena, f)) for f in CAMPOS_LOCAIS},
+                    set(locais))
     before = history.snapshot(cena)
-    for campo, valor in changes.items():
+    for campo, valor in (changes | locais).items():
         setattr(cena, campo, valor)
+    if "keyframe_inicial_id" in locais:  # trocado à mão: não veio de uma geração
+        cena.keyframe_geracao_id = None
     cena.perfil_id = novo_perfil
     details: dict[str, Any] = {}
     if prompt_mudou and cena.status == CenaStatus.pronta:
@@ -634,8 +758,13 @@ def faltando(db: Session, cena: Cena) -> list[str]:
     return out
 
 
-def marcar_pronta(db: Session, actor: Actor, cena_id: uuid.UUID, version: int) -> Cena:
-    cena = _editavel(db, cena_id, version)
+def marcar_pronta(db: Session, actor: Actor, cena: Cena,
+                  details: dict[str, Any] | None = None) -> Cena:
+    """`rascunho → pronta` de uma cena já travada (a rota e o roteiro da 011, R8). Com
+    `details`, a versão leva a ação do chamador (ex.: `{"acao": "pronta_pelo_roteiro",
+    "roteiroId": …}`, com o ator que passou o portão)."""
+    if cena.archived:
+        raise ApiError(409, "arquivada", "Restaure a cena antes de alterar")
     if cena.status != CenaStatus.rascunho:
         raise ApiError(409, "conflict", "Esta cena já está pronta")
     falta = faltando(db, cena)
@@ -645,8 +774,37 @@ def marcar_pronta(db: Session, actor: Actor, cena_id: uuid.UUID, version: int) -
     before = history.snapshot(cena)
     _congelar(db, cena)  # antes do status: o montar consulta o banco (autoflush)
     cena.status = CenaStatus.pronta
-    _record(db, actor, cena, "updated", before, {"acao": "pronta"})
+    _record(db, actor, cena, "updated", before, details or {"acao": "pronta"})
     return cena
+
+
+def marcar_pronta_por_id(db: Session, actor: Actor, cena_id: uuid.UUID, version: int) -> Cena:
+    """A rota `POST /api/cenas/{id}/pronta`."""
+    return marcar_pronta(db, actor, _editavel(db, cena_id, version))
+
+
+def definir_keyframe(db: Session, actor: Actor, cena: Cena, image_id: uuid.UUID, *,
+                     geracao_id: uuid.UUID | None = None,
+                     details: dict[str, Any] | None = None) -> bool:
+    """Spec 011 (FR-024/026/027): o keyframe inicial de uma cena já travada, vindo da opção
+    escolhida (`geracao_id`) ou de um envio (sem geração). Numa `usada`, só o primeiro; a troca,
+    409 `cena_usada`. A versão leva `details.acao = "keyframe"` e o `geracaoId`. Devolve se
+    mudou."""
+    if cena.archived:
+        raise ApiError(409, "arquivada", "Restaure a cena antes de alterar")
+    img = db.get(Image, image_id)
+    if img is None or img.kind != ImageKind.keyframe:
+        raise invalida("keyframe_inicial_id", "use uma imagem de keyframe da biblioteca")
+    if cena.keyframe_inicial_id == image_id and cena.keyframe_geracao_id == geracao_id:
+        return False
+    conferir_locais_em_usada(db, cena, {"keyframe_inicial_id", "keyframe_geracao_id"})
+    before = history.snapshot(cena)
+    cena.keyframe_inicial_id = image_id
+    cena.keyframe_geracao_id = geracao_id
+    info: dict[str, Any] = {"acao": "keyframe", **(details or {})}
+    if geracao_id is not None:
+        info.setdefault("geracaoId", str(geracao_id))
+    return _record(db, actor, cena, "updated", before, info)
 
 
 def voltar_rascunho(db: Session, actor: Actor, cena_id: uuid.UUID, version: int) -> Cena:
@@ -678,6 +836,9 @@ def duplicar(db: Session, actor: Actor, cena_id: uuid.UUID) -> Cena:
     valores["tags"] = list(origem.tags)
     sufixo = " (cópia)"
     valores["nome"] = origem.nome[:120 - len(sufixo)] + sufixo
+    for campo in CAMPOS_LOCAIS_DUPLICAR:  # 011 (FR-025): sem os keyframes, que a cópia pede
+        valores[campo] = getattr(origem, campo)
+    valores["keyframe_refs"] = list(origem.keyframe_refs or [])
     cena = Cena(id=uuid.uuid4(), perfil_id=origem.perfil_id, duplicada_de=origem.id,
                 status=CenaStatus.rascunho, created_by=actor.user_id, updated_by=actor.user_id,
                 **valores)
@@ -728,6 +889,20 @@ def _de_snapshot(campo: str, valor: Any) -> Any:
     return valor
 
 
+def _de_snapshot_local(campo: str, valor: Any) -> Any:
+    if campo == "keyframe_refs":
+        return [uuid.UUID(v) for v in valor or []]
+    if valor is None:
+        return None
+    if campo in ("keyframe_inicial_id", "keyframe_final_id", "keyframe_geracao_id"):
+        return uuid.UUID(valor)
+    if campo == "motor":
+        return CenaMotor(valor)
+    if campo == "duracao_max_s":
+        return Decimal(str(valor))
+    return valor
+
+
 def reverter(db: Session, actor: Actor, cena_id: uuid.UUID, version: int,
              to_version: int) -> Cena:
     """Só o dono humano (rota). Recusado em `usada`; um snapshot `usada` sem vínculo ativo volta
@@ -742,6 +917,9 @@ def reverter(db: Session, actor: Actor, cena_id: uuid.UUID, version: int,
         setattr(cena, campo, _de_snapshot(campo, state[campo]))
     if "perfil_id" in state:  # 029: o perfil base volta (mesmo arquivado)
         cena.perfil_id = uuid.UUID(state["perfil_id"]) if state["perfil_id"] else None
+    for campo in CAMPOS_LOCAIS:  # 011: as versões antigas não têm os campos locais
+        if campo in state:
+            setattr(cena, campo, _de_snapshot_local(campo, state[campo]))
     status = CenaStatus(state["status"])
     if status == CenaStatus.usada and not tem_uso_ativo(db, cena.id):
         status = CenaStatus.pronta

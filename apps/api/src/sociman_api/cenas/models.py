@@ -17,6 +17,7 @@ Nada é apagado: cenas e tomadas são arquivadas, e o vínculo é desfeito (`des
 import enum
 import uuid
 from datetime import datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger,
@@ -25,6 +26,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
+    Numeric,
     SmallInteger,
     Text,
     Uuid,
@@ -38,6 +40,7 @@ from sociman_api.assets import models as _assets_models  # noqa: F401 — FKs pa
 from sociman_api.auth.models import AuditMixin
 from sociman_api.conteudos import models as _conteudos_models  # noqa: F401 — FK conteudos
 from sociman_api.db import Base
+from sociman_api.geracao import models as _geracao_models  # noqa: F401 — FK geracoes (011)
 from sociman_api.perfis.models import _Versioned
 from sociman_api.produtos import models as _produtos_models  # noqa: F401 — FKs (spec 012)
 
@@ -46,9 +49,19 @@ NEGATIVE_PADRAO = "text, subtitles, watermark, logo changes, extra fingers, dist
 
 
 class TomadaOrigem(enum.StrEnum):
-    """Como a tomada nasceu. Ponto de extensão: a 021 (geração local) poderá acrescentar valores."""
+    """Como a tomada nasceu: enviada à mão do Flow (010) ou gerada no ComfyUI pelo roteiro (011)."""
 
     flow_manual = "flow_manual"
+    geracao_local = "geracao_local"  # spec 011: aponta o objeto do candidato do `cena.clipe` (R3)
+
+
+class CenaMotor(enum.StrEnum):
+    """O motor do clipe local (spec 011, FR-022)."""
+
+    minimax = "minimax"  # padrão
+    wan = "wan"  # plano de rosto sem fala
+    wan_qualidade = "wan_qualidade"  # tecido ou giro em que a física importa
+    ltx = "ltx"
 
 
 class CenaStatus(enum.StrEnum):
@@ -94,6 +107,17 @@ CAMPOS_PROMPT = frozenset({
     "quadro_final", "produto_nome", "produto_imagem_id", "produto_id", "produto_variante_id",
     "negative",
 })
+# Spec 011 (FR-022): os campos do clipe local. Não mudam o prompt do Flow (`CAMPOS_PROMPT`); numa
+# cena `usada`, só o primeiro preenchimento (campo nulo) é aceito, e trocar um valor já definido
+# dá 409 `cena_usada` (FR-024). Os padrões não nulos (`motor`, `largura`, `altura`,
+# `keyframe_refs`) contam como "definidos" quando diferem do padrão do código.
+CAMPOS_LOCAIS = ("motor", "largura", "altura", "keyframe_inicial_id", "keyframe_final_id",
+                 "keyframe_instrucao", "keyframe_refs", "keyframe_geracao_id", "duracao_max_s")
+LOCAIS_PADRAO: dict[str, object] = {"motor": "minimax", "largura": 736, "altura": 1280,
+                                    "keyframe_refs": []}
+# O `duplicar` copia estes e pede keyframe novo (FR-025).
+CAMPOS_LOCAIS_DUPLICAR = ("motor", "largura", "altura", "keyframe_instrucao", "keyframe_refs",
+                          "duracao_max_s")
 
 
 class Cena(_Versioned, AuditMixin, Base):
@@ -110,7 +134,7 @@ class Cena(_Versioned, AuditMixin, Base):
     __versioned_fields__ = (
         *CAMPOS_EDITAVEIS, "status", "prompt_congelado", "negative_congelado",
         "avatar_version_congelada", "cenario_version_congelada", "tomada_escolhida_id",
-        "archived", "perfil_id", "duplicada_de",
+        "archived", "perfil_id", "duplicada_de", *CAMPOS_LOCAIS,
     )
     __immutable_fields__ = ("duplicada_de",)  # 029: o perfil base é editável
 
@@ -161,6 +185,23 @@ class Cena(_Versioned, AuditMixin, Base):
         Uuid, ForeignKey("cena_tomadas.id", use_alter=True, name="fk_cenas_tomada_escolhida",
                          deferrable=True, initially="DEFERRED"))
     duplicada_de: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("cenas.id"))
+    # ---- spec 011: o clipe local (FR-022) ----
+    motor: Mapped[CenaMotor] = mapped_column(
+        Enum(CenaMotor, name="cena_motor"), nullable=False, default=CenaMotor.minimax,
+        server_default=CenaMotor.minimax.value)
+    largura: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=736,
+                                         server_default=text("736"))
+    altura: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=1280,
+                                        server_default=text("1280"))
+    keyframe_inicial_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("images.id"))
+    keyframe_final_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("images.id"))
+    keyframe_instrucao: Mapped[str | None] = mapped_column(Text)
+    # Ids de `images` sem FK: a imagem apagada pela revogação vira "referência removida" (R16).
+    keyframe_refs: Mapped[list[uuid.UUID]] = mapped_column(
+        ARRAY(Uuid), nullable=False, default=list, server_default=text("'{}'"))
+    keyframe_geracao_id: Mapped[uuid.UUID | None] = mapped_column(Uuid,
+                                                                  ForeignKey("geracoes.id"))
+    duracao_max_s: Mapped[Decimal | None] = mapped_column(Numeric(4, 1))
 
 
 class CenaTomada(_Versioned, AuditMixin, Base):
@@ -170,24 +211,38 @@ class CenaTomada(_Versioned, AuditMixin, Base):
     )
     __versioned_fields__ = ("nota", "archived", "origem")
     __immutable_fields__ = ("origem",)
+    # Spec 011: `geracao_id`, `keyframe_image_id`, `motor` e `fps` são fixos da tomada local;
+    # `desuso_em` e `limpa_em` são técnicos (R12), fora do snapshot.
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     cena_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("cenas.id"), nullable=False)
     origem: Mapped[TomadaOrigem] = mapped_column(
         Enum(TomadaOrigem, name="tomada_origem"), nullable=False,
         default=TomadaOrigem.flow_manual, server_default=TomadaOrigem.flow_manual.value)
-    video_key: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    # Spec 011: nulos só depois da limpeza (`limpa_em`, `ck_tomadas_limpa`).
+    video_key: Mapped[str | None] = mapped_column(Text, unique=True)
     content_type: Mapped[str] = mapped_column(Text, nullable=False)
-    bytes: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    bytes: Mapped[int | None] = mapped_column(BigInteger)
     sha256: Mapped[str] = mapped_column(Text, nullable=False)
     original_filename: Mapped[str] = mapped_column(Text, nullable=False)
     duracao_ms: Mapped[int] = mapped_column(Integer, nullable=False)
     largura: Mapped[int] = mapped_column(Integer, nullable=False)
     altura: Mapped[int] = mapped_column(Integer, nullable=False)
-    miniatura_key: Mapped[str] = mapped_column(Text, nullable=False)  # bucket `sociman`
+    miniatura_key: Mapped[str | None] = mapped_column(Text)  # bucket `sociman`
     prompt_usado: Mapped[str] = mapped_column(Text, nullable=False)
     negative_usado: Mapped[str] = mapped_column(Text, nullable=False)
     nota: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    # ---- spec 011: a tomada local (FR-023, R3, R10, R12) ----
+    geracao_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("geracoes.id"))
+    keyframe_image_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("images.id"))
+    motor: Mapped[CenaMotor | None] = mapped_column(Enum(CenaMotor, name="cena_motor"))
+    fps: Mapped[int | None] = mapped_column(SmallInteger)
+    desuso_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    limpa_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    @property
+    def limpa(self) -> bool:
+        return self.limpa_em is not None
 
 
 class CenaUso(Base):

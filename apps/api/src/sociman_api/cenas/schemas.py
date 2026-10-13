@@ -5,6 +5,7 @@ do avatar e as regras de status ficam no service (422 `cena_invalida`, 409 `cena
 """
 
 from datetime import datetime
+from decimal import Decimal
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -14,13 +15,14 @@ from sociman_api.assets.schemas import normalize_tags
 from sociman_api.auth.schemas import CamelModel
 from sociman_api.cenas.models import (
     CenaModo,
+    CenaMotor,
     CenaMovimento,
     CenaPlano,
     CenaStatus,
     TomadaOrigem,
 )
 from sociman_api.ia.aplicacao import IaAplicacoes
-from sociman_api.perfis.schemas import Autor, VersionNumber
+from sociman_api.perfis.schemas import Autor, ImageRef, VersionNumber
 
 Nome = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120,
                                         pattern=r"^[^\r\n]*$")]
@@ -34,6 +36,25 @@ Notas = Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)
 Tags = Annotated[list[str], AfterValidator(normalize_tags)]
 Duracao = Literal[4, 6, 8]
 Nota = Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)]
+# Spec 011 (FR-022): o clipe local.
+Lado = Annotated[int, Field(ge=256, le=1920, multiple_of=16)]
+InstrucaoKeyframe = Annotated[str, StringConstraints(strip_whitespace=True, max_length=2000)]
+RefsKeyframe = Annotated[list[UUID], Field(max_length=6)]
+DuracaoMax = Annotated[Decimal, Field(ge=1, le=30, max_digits=4, decimal_places=1)]
+
+
+class _CamposLocais(CamelModel):
+    """Os campos locais do PATCH (spec 011). O `keyframeGeracaoId` não entra: só a escolha de uma
+    opção (ou o envio pelo roteiro) o grava."""
+
+    motor: CenaMotor | None = None
+    largura: Lado | None = None
+    altura: Lado | None = None
+    keyframe_inicial_id: UUID | None = None
+    keyframe_final_id: UUID | None = None
+    keyframe_instrucao: InstrucaoKeyframe | None = None
+    keyframe_refs: RefsKeyframe | None = None
+    duracao_max_s: DuracaoMax | None = None
 
 
 class _CamposCena(CamelModel):
@@ -79,9 +100,9 @@ class CenaAgenciaIn(CenaIn):
     perfil_id: UUID | None = None
 
 
-class CenaPatch(_CamposCena):
+class CenaPatch(_CamposLocais, _CamposCena):
     """Qualquer subconjunto dos campos. Nulo limpa os opcionais; em nome, ação, duração, modo,
-    tags e notas, é ignorado."""
+    tags e notas (e, na 011, motor, largura, altura e referências do keyframe), é ignorado."""
 
     version: VersionNumber
     nome: Nome | None = None
@@ -184,10 +205,10 @@ class Tomada(CamelModel):
     largura: int
     altura: int
     nao_vertical: bool
-    bytes: int
+    bytes: int | None  # 011: nulo depois da limpeza (`limpa`)
     content_type: str
-    thumb_url: str
-    video_url: str | None  # com validade; nulo para o MCP
+    thumb_url: str | None  # 011: nulo depois da limpeza
+    video_url: str | None  # com validade; nulo para o MCP e depois da limpeza
     prompt_usado: str
     negative_usado: str
     nota: str
@@ -196,6 +217,21 @@ class Tomada(CamelModel):
     version: int
     created_at: datetime
     autor: Autor
+    # Spec 011 (FR-023, R10, R12): a tomada local.
+    geracao_id: UUID | None = None
+    motor: CenaMotor | None = None
+    fps: int | None = None
+    keyframe_antigo: bool = False  # local e de outro keyframe que não o atual (derivado)
+    limpa: bool = False  # o arquivo foi removido pela limpeza de 90 dias
+    limpa_em: datetime | None = None
+
+
+class KeyframeRef(CamelModel):
+    """Spec 011: uma referência do keyframe (id de `images` sem FK; a apagada vem `removida`)."""
+
+    image_id: UUID
+    removida: bool
+    thumb_url: str | None
 
 
 class UsoOut(CamelModel):
@@ -288,6 +324,16 @@ class Cena(CamelModel):
     created_at: datetime
     updated_at: datetime
     autor: Autor  # quem criou
+    # ---- spec 011: o clipe local (FR-022) ----
+    motor: CenaMotor = CenaMotor.minimax
+    largura: int = 736
+    altura: int = 1280
+    keyframe_inicial: ImageRef | None = None
+    keyframe_final: ImageRef | None = None
+    keyframe_instrucao: str | None = None
+    keyframe_refs: list[KeyframeRef] = Field(default_factory=list)
+    keyframe_geracao_id: UUID | None = None
+    duracao_max_s: float | None = None
 
 
 class CenasList(CamelModel):

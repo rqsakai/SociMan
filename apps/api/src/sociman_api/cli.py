@@ -207,7 +207,8 @@ def geracoes_limpar(
         r = limpeza.limpar(db, CLI, dry_run=dry_run)
     acao = "seriam apagadas" if dry_run else "apagadas"
     typer.echo(f"Gerações: {r.geracoes}; opções {acao}: {r.candidatos} ({r.imagens} imagens, "
-               f"{r.audios} áudios, {r.bytes} bytes); mantidas por estarem em uso: {r.mantidos}.")
+               f"{r.audios} áudios, {r.bytes} bytes); roteiros (spec 011): {r.tomadas} tomadas "
+               f"e {r.narracoes} narrações; mantidas por estarem em uso: {r.mantidos}.")
 
 
 tokens_app = typer.Typer(help="Credenciais da publicação (spec 015).", no_args_is_help=True)

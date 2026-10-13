@@ -15,6 +15,11 @@ diz se a geração foi cancelada: aí `/interrupt` se o prompt é o que está ro
 
 Os erros saem já traduzidos em `MotorErro` (R8): conexão, timeout e 5xx → `servico_fora`;
 `OutOfMemoryError` na execução → `sem_memoria`; o resto → `internal`, com o detalhe só no log.
+
+Spec 011 (contracts/comfyui-blocos.md): os 5 blocos de vídeo (`clipe_*` e `upscale_video`). O
+`run_bloco` pega a saída do `kind` pedido (`saida="video"`: o SaveVideo devolve o mp4 em
+`outputs[node].images`, como a imagem; o `last_frame` dos clipes é ignorado), o vídeo de entrada do
+`upscale_video` sobe pelo mesmo `/upload/image`, e o teto vale por bloco (`TETOS`).
 """
 
 import copy
@@ -37,7 +42,13 @@ from sociman_api.geracao.erros import MotorErro
 log = logging.getLogger("sociman.gerador")
 
 WORKFLOWS = Path(__file__).resolve().parent / "workflows"
-BLOCOS = ("cena", "keyframe", "retrato", "cutout")
+BLOCOS = ("cena", "keyframe", "retrato", "cutout",
+          # spec 011
+          "clipe_minimax", "clipe_wan", "clipe_wan_qualidade", "clipe_ltx", "upscale_video")
+# Teto de uma execução por bloco, em segundos (spec 011, comfyui-blocos.md); os outros usam o
+# `GERACAO_COMFYUI_TETO_S`. O `upscale_video` é por posição.
+TETOS: dict[str, float] = {"keyframe": 600, "clipe_minimax": 1200, "clipe_wan": 1200,
+                           "clipe_ltx": 1200, "clipe_wan_qualidade": 3600, "upscale_video": 900}
 ALLOWED: tuple[tuple[str, str], ...] = (
     ("GET", "/system_stats"),
     ("POST", "/upload/image"),
@@ -106,9 +117,9 @@ class ComfyClient:
         dev = (self.system_stats().get("devices") or [{}])[0]
         return (int(dev.get("vram_free") or 0) + int(dev.get("torch_vram_total") or 0)) / GB
 
-    def upload_image(self, nome: str, data: bytes) -> str:
+    def upload_image(self, nome: str, data: bytes, content_type: str = "image/png") -> str:
         resp = self._req("POST", "/upload/image",
-                         files={"image": (nome, data, "image/png")},
+                         files={"image": (nome, data, content_type)},
                          data={"subfolder": SUBPASTA, "type": "input", "overwrite": "true"})
         j = resp.json()
         return f"{j['subfolder']}/{j['name']}" if j.get("subfolder") else j["name"]
@@ -213,15 +224,27 @@ def _parar(client: ComfyClient, prompt_id: str) -> None:
         log.warning("não foi possível interromper o prompt %s no ComfyUI", prompt_id)
 
 
+def teto_do_bloco(bloco: str) -> float:
+    return TETOS.get(bloco, get_settings().geracao_comfyui_teto_s)
+
+
+def _e_video(data: bytes) -> bool:
+    """MP4/MOV (`ftyp` no byte 4) ou WebM/MKV (EBML)."""
+    return data[4:8] == b"ftyp" or data[:4] == b"\x1aE\xdf\xa3"
+
+
 def run_bloco(client: ComfyClient, bloco: str, params: dict[str, Any],
               heartbeat: Callable[[], bool], *, nome_base: str, teto_s: float | None = None,
-              poll_s: float = POLL_S, sleep: Callable[[float], None] = time.sleep,
+              saida: str = "image", poll_s: float = POLL_S,
+              sleep: Callable[[float], None] = time.sleep,
               relogio: Callable[[], float] = time.monotonic) -> bytes:
-    """Roda um bloco e devolve os bytes da 1ª imagem de saída. `heartbeat()` False = cancelada
-    (levanta `Cancelada` depois de parar o ComfyUI)."""
-    teto = teto_s if teto_s is not None else get_settings().geracao_comfyui_teto_s
+    """Roda um bloco e devolve os bytes da 1ª saída do `kind` pedido (`image` ou, na 011,
+    `video`). `heartbeat()` False = cancelada (levanta `Cancelada` depois de parar o ComfyUI)."""
+    teto = teto_s if teto_s is not None else teto_do_bloco(bloco)
 
     def upload(nome: str, data: bytes) -> str:
+        if _e_video(data):  # o vídeo de entrada do `upscale_video` (spec 011)
+            return client.upload_image(f"{nome_base}_{nome}.mp4", data, "video/mp4")
         return client.upload_image(f"{nome_base}_{nome}.png", data)
 
     api, contrato = preencher(bloco, params, upload)
@@ -243,7 +266,7 @@ def run_bloco(client: ComfyClient, bloco: str, params: dict[str, Any],
         raise _erro_execucao(status)
     dados = None
     for o in contrato["outputs"].values():
-        if o["kind"] != "image":
+        if o["kind"] != saida:
             continue
         files = (h.get("outputs") or {}).get(o["node"], {}).get("images") or []
         if files:
@@ -255,7 +278,9 @@ def run_bloco(client: ComfyClient, bloco: str, params: dict[str, Any],
     except MotorErro:
         log.warning("POST /free do ComfyUI falhou no fim do bloco %s", bloco)
     if not dados:
-        raise MotorErro("internal", "O motor não devolveu imagem", detalhe=f"{bloco}: sem saída")
+        rotulo = "vídeo" if saida == "video" else "imagem"
+        raise MotorErro("internal", f"O motor não devolveu {rotulo}",
+                        detalhe=f"{bloco}: sem saída")
     return dados
 
 

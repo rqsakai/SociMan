@@ -7,6 +7,7 @@ como escrever.
 """
 
 from sociman_api.produtos.ficha import SYSTEM as _FICHA_PRODUTO
+from sociman_api.roteiros.plano import REGRAS as _PLANO_ROTEIRO  # spec 011
 
 PADROES: dict[str, tuple[int, str]] = {
     "avatar.descricao_prompt": (1, """\
@@ -144,6 +145,8 @@ comparáveis fazem diferente (até 160 caracteres); n: quantos posts sustentam.
 são hipóteses a conferir."""),
     # Spec 012 (R5): o texto do pipeline (`produtos.py`), adaptado; não é editável.
     "produto.ficha": (1, _FICHA_PRODUTO),
+    # Spec 011 (FR-013): o plano do roteiro; não é editável.
+    "roteiro.plano": (1, _PLANO_ROTEIRO),
     # Spec 025 (R4): o texto do `avatares.py` (avaliar_kit), adaptado; não é editável.
     "avatar.identidade": (1, """\
 These are the standard reference images of ONE synthetic (AI-generated, fictional, adult) \

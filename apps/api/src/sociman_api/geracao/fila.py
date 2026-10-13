@@ -3,7 +3,9 @@
 - `proxima(motores)`: espia (sem travar) o próximo `na_fila` vencido, por `created_at, id`;
 - `claim(geracao_id)`: pega aquela geração com `FOR UPDATE SKIP LOCKED`, marca `rodando`,
   `started_at`, `heartbeat_at` e `attempts + 1`, e faz commit antes do motor. O índice único
-  `uq_geracoes_gpu_rodando` recusa um 2º job de GPU rodando, mesmo com dois processos;
+  `uq_geracoes_gpu_rodando` recusa um 2º job de GPU rodando, mesmo com dois processos. O motor
+  `ffmpeg` (a montagem da 011, R2) fica fora do índice: a `LinhaMontagem` pega o seu com
+  `proxima({ffmpeg})` + `claim` mesmo com um job de GPU rodando;
 - `aguardar_gpu`: a GPU não está livre → toda a fila de GPU fica "Aguardando a GPU ficar livre"
   com a mesma próxima tentativa (+30 s), **sem** contar tentativa (a ordem de pedido se mantém);
 - `heartbeat`: grava andamento e `heartbeat_at`; False = a linha não é mais deste processamento

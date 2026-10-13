@@ -16,6 +16,7 @@ import uuid
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     Enum,
     ForeignKey,
@@ -23,6 +24,7 @@ from sqlalchemy import (
     Integer,
     Text,
     Uuid,
+    false,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -63,6 +65,7 @@ class Conteudo(_Versioned, AuditMixin, Base):
     __immutable_fields__ = (
         "origem", "corte_id", "video_key", "video_content_type", "video_bytes", "video_sha256",
         "original_filename", "duration_ms", "width", "height", "poster_key",
+        "gerado_ia",  # spec 011: nasce `true` na entrega de um roteiro e nunca muda
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
@@ -84,6 +87,9 @@ class Conteudo(_Versioned, AuditMixin, Base):
     width: Mapped[int | None] = mapped_column(Integer)
     height: Mapped[int | None] = mapped_column(Integer)
     poster_key: Mapped[str | None] = mapped_column(Text)  # bucket `sociman` (imgproxy)
+    # Spec 011 (R13): entregue por um roteiro (o `conteudoIa` do destino vem ligado por padrão).
+    gerado_ia: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False,
+                                            server_default=false())
 
 
 Index("ix_conteudos_perfil_created", Conteudo.perfil_id, Conteudo.created_at.desc(),

@@ -1,0 +1,77 @@
+{
+ "workflow": "V2 - Clip Wan 2.2 14B qualidade (20 passos, sem LightX2V).api.json",
+ "params": {
+  "start_image": {
+   "node": "1",
+   "input": "image",
+   "kind": "image",
+   "default": "composite_00005_.png",
+   "doc": "Primeiro frame"
+  },
+  "prompt": {
+   "node": "3",
+   "input": "value",
+   "kind": "value",
+   "default": "Slow camera push-in. The product keeps its shape, texture, colors and logo.",
+   "doc": "UMA ação simples; material correto; câmera/ambiente se movem"
+  },
+  "width": {
+   "node": "4",
+   "input": "value",
+   "kind": "value",
+   "default": 480,
+   "doc": ""
+  },
+  "height": {
+   "node": "5",
+   "input": "value",
+   "kind": "value",
+   "default": 832,
+   "doc": ""
+  },
+  "frames": {
+   "node": "6",
+   "input": "value",
+   "kind": "value",
+   "default": 49,
+   "doc": "Wan 14B = 16 fps; frames = 4k+1 (49 = 3 s, 65 = 4 s, 81 = 5 s)"
+  },
+  "seed": {
+   "node": "7",
+   "input": "value",
+   "kind": "value",
+   "default": 7,
+   "doc": ""
+  },
+  "prefix": {
+   "node": "8",
+   "input": "value",
+   "kind": "value",
+   "default": "v2/clip",
+   "doc": ""
+  },
+  "end_image": {
+   "node": "2",
+   "input": "image",
+   "kind": "image_optional",
+   "default": "composite_00005_.png",
+   "doc": "Último frame alvo (opcional)",
+   "consumers": [
+    [
+     "17",
+     "end_image"
+    ]
+   ]
+  }
+ },
+ "outputs": {
+  "video": {
+   "node": "22",
+   "kind": "video"
+  },
+  "last_frame": {
+   "node": "24",
+   "kind": "image"
+  }
+ }
+}

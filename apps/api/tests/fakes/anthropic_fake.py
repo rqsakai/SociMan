@@ -31,6 +31,12 @@ Spec 025 (T010): a resposta padrão cobre a checagem de identidade do avatar (`i
 as notas vêm de `anthropic_fake.notas_identidade` (padrão 8 em cada slot) e a descrição de
 `anthropic_fake.descricao_identidade` (padrão: 50 palavras em inglês).
 
+Spec 011 (T021): a resposta padrão cobre o plano do roteiro (`plano(...)`): as frases de
+`FRASES_PLANO` (até o pedido), a 1ª cena de `<cenas>` reaproveitada na 1ª posição e as outras
+criadas (uma frase por cena, o produto 1). Na `<instrucao>`: "sem reuso" cria todas; "muitas
+cenas" pede uma cena por frase com 10 frases (para o corte do `ROTEIRO_MAX_CENAS`); "cena
+inexistente" reaproveita um id que não está na lista. `anthropic_fake.planos` conta as chamadas.
+
 Spec 017: a resposta padrão cobre os formatos `guia` (`guia(...)`) e `variacoes`
 (`variacoes(...)`, 3 textos de postagem **sem** hashtags fixas: quem inclui é o servidor);
 `anthropic_fake.systems` devolve o `system` enviado em cada chamada (texto dos blocos) e
@@ -239,6 +245,8 @@ def _padrao(body: dict[str, Any]) -> dict[str, Any]:
         return resposta
     if "material_en" in props:  # spec 012
         return _ficha(body)
+    if "posicoes" in props and "frases" in props:  # spec 011
+        return _plano(body)
     if "descricao_prompt" in props and "notas" in props:  # spec 025
         return identidade(_NOTAS.get("atual"), _NOTAS.get("descricao", DESCRICAO_IDENTIDADE))
     if "proposta" in props:
@@ -256,6 +264,47 @@ def _padrao(body: dict[str, Any]) -> dict[str, Any]:
         dados = json.loads(base["content"][0]["text"])
         return mensagem(dados | {"explicacao": "Textos para o clipe.", "avisos": []})
     return base
+
+
+FRASES_PLANO = ("Gente, achei o vestido perfeito pra quem tem curvas!",
+                "Olha esse caimento: tecido levinho e a faixa marca a cintura.",
+                "Verde esmeralda, decote V e manguinha soltinha.",
+                "Corre no link aqui embaixo!")
+_CENA = re.compile(r'<cena id="([0-9a-f-]{36})"')
+
+
+def cena_nova(n: int, produto: int | None = 1, motor: str = "minimax") -> dict[str, Any]:
+    return {"nome": f"Cena nova {n}", "acao": "She smiles and shows the dress to the camera",
+            "plano": "medio", "movimento": "parada", "camera": None, "motor": motor,
+            "keyframe_instrucao": "She stands in the bedroom wearing the dress, smiling",
+            "produto": produto}
+
+
+def plano(frases: tuple[str, ...] | list[str] = FRASES_PLANO,
+          posicoes: list[dict[str, Any]] | None = None, reusar: list[str] | None = None,
+          **kw: Any) -> dict[str, Any]:
+    """Spec 011: uma frase por cena; as primeiras posições reaproveitam `reusar`."""
+    reusar = list(reusar or [])
+    if posicoes is None:
+        posicoes = []
+        for i in range(len(frases)):
+            if i < len(reusar):
+                posicoes.append({"cena_id": reusar[i], "nova": None, "frases": [i + 1]})
+            else:
+                posicoes.append({"cena_id": None, "nova": cena_nova(i + 1), "frases": [i + 1]})
+    return mensagem({"frases": list(frases), "posicoes": posicoes,
+                     "explicacao": "Reaproveitei o que deu.", "avisos": []}, **kw)
+
+
+def _plano(body: dict[str, Any]) -> dict[str, Any]:
+    texto = _texto_user(body)
+    pedido = texto.split("<instrucao>")[-1].split("</instrucao>")[0].lower()
+    ids = _CENA.findall(texto)
+    if "muitas cenas" in pedido:
+        return plano([f"Frase número {i}." for i in range(1, 11)])
+    if "cena inexistente" in pedido:
+        return plano(reusar=[ID_INVALIDO])
+    return plano(reusar=[] if "sem reuso" in pedido else ids[:1])
 
 
 _NOTAS: dict[str, Any] = {}
@@ -314,6 +363,13 @@ class AnthropicFake:
         """Spec 012 (SC-002): quantas chamadas pediram a ficha do produto."""
         return sum("material_en" in (b.get("output_config", {}).get("format", {})
                                      .get("schema", {}).get("properties", {}))
+                   for b in self.bodies)
+
+    @property
+    def planos(self) -> int:
+        """Spec 011: quantas chamadas pediram o plano do roteiro."""
+        return sum("posicoes" in (b.get("output_config", {}).get("format", {})
+                                  .get("schema", {}).get("properties", {}))
                    for b in self.bodies)
 
     @property

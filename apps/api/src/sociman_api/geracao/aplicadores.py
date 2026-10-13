@@ -16,6 +16,10 @@ O protocolo `Aplicador` (coordenado com a 025 e a 012 em 2026-10-07):
   escolha, só a escolha humana chama (o gerador só chama nos `sem_escolha`, teste-guarda);
 - `ao_mudar_estado(db, geracao, de, para)`: opcional (o padrão não faz nada). A 021 o chama na
   mesma transação de toda transição; não faz chamada de rede, e uma exceção desfaz a transição.
+- `executar_video(geracao, ctx)` (spec 011): opcional, nos passos de resultado `video`. Monta o
+  trabalho na pasta do `ctx` (`geracao/video.py`) e devolve o mp4 final; None = o padrão do
+  gerador (um `run_bloco` com `entradas_comfyui`, como o `cena.clipe`). O `ffmpeg` (montagem)
+  exige a sua.
 
 Na 021 só existe o do **`cenario.cena`** (o piloto, FR-030): a opção vira um arquivo `referencia`
 do cenário. Passo sem aplicador → 409 `passo_indisponivel`. A seta é `geracao → assets`: o
@@ -122,11 +126,26 @@ class Aplicador:
             return [{"prompt": p["prompt"], "seed": seed, "prefix": prefixo}]
         if bloco == "cutout":
             return [{"image": refs[0] if refs else None, "prefix": prefixo}]
+        if bloco in passos.BLOCOS_CLIPE.values():  # spec 011: keyframe inicial (+ final)
+            extras = p.get("extras") or {}
+            return [{"start_image": refs[0] if refs else None,
+                     "end_image": refs[1] if len(refs) > 1 else None, "prompt": p["prompt"],
+                     "width": p["largura"], "height": p["altura"], "frames": extras["quadros"],
+                     "seed": seed, "prefix": prefixo}]
         raise MotorErro("internal", detalhe=f"bloco desconhecido: {bloco}")
+
+    def executar_video(self, geracao: Geracao, ctx: Any) -> Any:
+        """Spec 011: o trabalho de um passo de vídeo (`ctx` é um `geracao.video.Contexto`).
+        Devolve o `Path` do mp4 final, ou None para o padrão do gerador."""
+        return None
 
     def normalizar(self, png: bytes) -> bytes:
         """A imagem que o motor devolveu, antes de validar e gravar (padrão: como veio)."""
         return png
+
+    def normalizar_da(self, geracao: Geracao, png: bytes) -> bytes:
+        """O mesmo, sabendo da geração (spec 011: o keyframe vai à resolução da cena)."""
+        return self.normalizar(png)
 
     def preparar_referencia(self, data: bytes) -> bytes:
         """A foto de referência antes de subir ao ComfyUI (padrão: como está no MinIO)."""
@@ -139,7 +158,9 @@ class Aplicador:
 
     def pedido_tts(self, db: Session, geracao: Geracao) -> dict[str, Any]:
         """O pedido do motor `tts`: `{"op": "register", "audio_id", "nome", "tom"}`,
-        `{"op": "design", "nome", "descricao", "texto"?}` ou `{"op": "tts", "corpo": {...}}`."""
+        `{"op": "design", "nome", "descricao", "texto"?}`, `{"op": "tts", "corpo": {...}}` ou,
+        na 011, `{"op": "paragrafo", "corpo": {...}, "velocidade": 1.08}` (o `/v2/tts_paragraph`
+        com as `pronuncias`; o gerador aplica o `atempo` e divide os tempos, R5)."""
         raise NotImplementedError
 
     # ---- auxiliares para as subclasses ----

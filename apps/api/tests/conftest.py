@@ -101,6 +101,10 @@ _TABLES += ("aprendizado_fonte_temas", "aprendizado_conferencias", "aprendizado_
 _TABLES += ("geracao_candidatos", "geracoes", "audios")
 # Spec 012: produtos e variantes (o CASCADE cobre as FKs de `cenas` e `images`).
 _TABLES += ("produto_variantes", "produtos")
+# Spec 011: os roteiros (o trigger só de inserção das entregas não dispara no TRUNCATE; o CASCADE
+# cobre o ciclo `narracao_id`).
+_TABLES += ("roteiro_entregas", "roteiro_narracoes", "roteiro_cenas", "roteiro_produtos",
+            "roteiros", "roteiro_padroes", "pronuncias")
 # Spec 026: o lago, a operação e a infra da coleta (o CASCADE cobre as FKs e os ciclos; os
 # triggers só de inserção não disparam no TRUNCATE). A linha única de `coleta_config` some com o
 # TRUNCATE (sem linha = padrões, desligada).

@@ -12,12 +12,12 @@ from typing import Literal
 from sociman_api.ia.regras_padrao import PADROES
 
 Entidade = Literal["asset", "perfil", "kit", "postagem", "guia", "cena", "aprendizado",
-                   "produto"]
+                   "produto", "roteiro"]
 Idioma = Literal["en", "perfil"]
 UsaGuia = Literal["completo", "so_proibidas"]
 Formato = Literal["texto", "lista", "sugestoes", "textos_postagem", "guia", "variacoes",
                   "campos_cena", "taxonomia", "classificacao", "analise", "ficha_produto",
-                  "identidade"]
+                  "identidade", "plano_roteiro"]
 TipoCampoId = Literal[
     "avatar.descricao_prompt", "avatar.tom_de_voz", "avatar.regras_imagem",
     "cenario.prompt_ambiente", "asset.nome", "asset.descricao", "perfil.bio", "kit.bordoes",
@@ -27,6 +27,7 @@ TipoCampoId = Literal[
     "aprendizado.taxonomia", "aprendizado.classificacao", "aprendizado.analise",  # spec 023
     "produto.ficha",  # spec 012
     "avatar.identidade",  # spec 025
+    "roteiro.plano",  # spec 011
 ]
 
 MAX_SUGESTOES = 10
@@ -175,6 +176,13 @@ _LISTA: tuple[TipoCampo, ...] = (
               ("prompt", "identidade"), "Assets › Avatar › Kit padrão", "en", "identidade",
               _PROMPT, frozenset({"avatar"}), usa_guia="so_proibidas", listar_regras=False,
               max_tokens=4000, esforco="medium", timeout_s=120.0),
+    # Spec 011 (FR-013): o plano do roteiro (passo `roteiro.plano` da 021, motor `claude`): as
+    # frases de venda e as cenas, preferindo reaproveitar. Não passa pelo `gerar` nem aparece
+    # nas regras editáveis; o resultado vai direto ao roteiro (editável no portão TEXTO).
+    TipoCampo("roteiro.plano", "Plano do roteiro (frases e cenas)", "roteiro",
+              ("frases", "posicoes"), "AI Studio › Vídeos › Roteiro › Planejar com IA",
+              "perfil", "plano_roteiro", Limites(trim=False, max_itens=60), listar_regras=False,
+              max_tokens=8000, esforco="medium", timeout_s=120.0),
 )
 
 TIPOS: dict[str, TipoCampo] = {t.id: t for t in _LISTA}

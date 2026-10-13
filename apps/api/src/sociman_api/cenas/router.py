@@ -144,7 +144,7 @@ def duplicar(cena_id: UUID, actor: RequireUser, db: DbSession) -> schemas.Cena:
              responses=_errors(400, 401, 403, 404, 409, 422))
 def pronta(cena_id: UUID, body: schemas.VersionIn, actor: RequireUser,
            db: DbSession) -> schemas.Cena:
-    return svc.cena_out(db, svc.marcar_pronta(db, actor, cena_id, body.version), actor)
+    return svc.cena_out(db, svc.marcar_pronta_por_id(db, actor, cena_id, body.version), actor)
 
 
 @router.post("/cenas/{cena_id}/rascunho", operation_id="cenas_rascunho",

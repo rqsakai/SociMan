@@ -117,6 +117,7 @@ services:
       <<: [*api-env, *integracoes-env, *tiktok-env]
       # Spec 009: o `/mcp` ligado no servidor SÓ aqui (o botão da tela começa desligado).
       MCP_HABILITADO: "true"
+      ROTEIRO_MAX_CENAS: "8"   # spec 011 (R14)
     extra_hosts: *tiktok-hosts
     volumes:
       - sociman-data:/srv/sociman-data
@@ -162,6 +163,8 @@ services:
     entrypoint: ["python", "/fake/server.py"]
     volumes:
       - ./e2e/fakes:/fake:ro
+      # Spec 011 (T057): o mp4 e o wav fixos dos blocos de vídeo e da narração.
+      - ./e2e/fixtures/geracao:/fixtures/geracao:ro
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
       interval: 1s
@@ -210,6 +213,7 @@ services:
       DOCKERCTL_URL: http://openshorts-fake:8000/dockerctl
       DOCKERCTL_TOKEN: e2e-token-do-dockerctl-de-teste
       GERADOR_VOZES_SYNC_S: "1"   # spec 025: a sincronização das vozes sem esperar
+      ROTEIRO_MAX_CENAS: "8"   # spec 011 (R14)
     volumes:
       - sociman-data:/srv/sociman-data
     entrypoint: *data-entrypoint

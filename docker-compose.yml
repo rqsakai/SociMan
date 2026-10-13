@@ -93,6 +93,8 @@ services:
       MERCADO_HASH_PEPPER: ${MERCADO_HASH_PEPPER:-}
       MERCADO_URL_PUBLICA: ${MERCADO_URL_PUBLICA:-}
       MERCADO_URL_AFFILIATE: ${MERCADO_URL_AFFILIATE:-}
+      # Spec 011 (R14): posições por roteiro.
+      ROTEIRO_MAX_CENAS: ${ROTEIRO_MAX_CENAS:-8}
     extra_hosts:
       - "host.docker.internal:host-gateway"   # OpenShorts roda no host (:8000)
     volumes:
@@ -241,6 +243,7 @@ services:
       GERACAO_VRAM_MIN_GB_COMFYUI: ${GERACAO_VRAM_MIN_GB_COMFYUI:-12}
       GERACAO_VRAM_MIN_GB_TTS: ${GERACAO_VRAM_MIN_GB_TTS:-6}
       GERADOR_VOZES_SYNC_S: ${GERADOR_VOZES_SYNC_S:-60}
+      ROTEIRO_MAX_CENAS: ${ROTEIRO_MAX_CENAS:-8}   # spec 011 (R14)
     networks: [default, gpu-local, dockerctl]
     volumes:
       - ./apps/api:/app

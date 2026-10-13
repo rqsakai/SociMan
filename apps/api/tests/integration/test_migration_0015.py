@@ -70,10 +70,11 @@ def test_upgrade_checks_e_downgrade(make_user):
                               "(:id, :p, 'imagem', 'Foto')"), {"id": asset, "p": perfil})
         _recusa(CENA, _cena(perfil, pi=asset), "ck_cenas_produto")
 
-        # a tomada nasce `flow_manual` (ponto de extensão da 021)
+        # a tomada nasce `flow_manual` (ponto de extensão: a 011 soma `geracao_local` no head)
         with engine.begin() as conn:
             assert conn.execute(text(
-                "SELECT enum_range(NULL::tomada_origem)::text")).scalar() == "{flow_manual}"
+                "SELECT enum_range(NULL::tomada_origem)::text")).scalar() == \
+                "{flow_manual,geracao_local}"
             assert conn.execute(text(
                 "SELECT column_default FROM information_schema.columns WHERE table_name = "
                 "'cena_tomadas' AND column_name = 'origem'")).scalar().startswith(

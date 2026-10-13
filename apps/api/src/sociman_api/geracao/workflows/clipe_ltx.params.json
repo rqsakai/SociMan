@@ -1,0 +1,79 @@
+{
+ "workflow": "V2 - Clip LTX-2.5 22B (início + fim opcional, com áudio).api.json",
+ "params": {
+  "start_image": {
+   "node": "1",
+   "input": "image",
+   "kind": "image",
+   "default": "composite_00005_.png",
+   "doc": "Primeiro frame"
+  },
+  "prompt": {
+   "node": "3",
+   "input": "value",
+   "kind": "value",
+   "default": "Slow camera push-in. The product keeps its shape, texture, colors and logo.",
+   "doc": "UMA ação simples; material correto; câmera/ambiente se movem"
+  },
+  "width": {
+   "node": "4",
+   "input": "value",
+   "kind": "value",
+   "default": 480,
+   "doc": ""
+  },
+  "height": {
+   "node": "5",
+   "input": "value",
+   "kind": "value",
+   "default": 832,
+   "doc": ""
+  },
+  "frames": {
+   "node": "6",
+   "input": "value",
+   "kind": "value",
+   "default": 73,
+   "doc": "LTX-2.5 = 24 fps; frames = 8k+1 (73 = 3 s, 97 = 4 s, 121 = 5 s)"
+  },
+  "seed": {
+   "node": "7",
+   "input": "value",
+   "kind": "value",
+   "default": 7,
+   "doc": ""
+  },
+  "prefix": {
+   "node": "8",
+   "input": "value",
+   "kind": "value",
+   "default": "v2/clip",
+   "doc": ""
+  },
+  "end_image": {
+   "node": "2",
+   "input": "image",
+   "kind": "image_optional",
+   "default": "composite_00005_.png",
+   "doc": "Último frame alvo (opcional)",
+   "drop": [
+    "15",
+    "16",
+    "22"
+   ],
+   "rewire": {
+    "22": "21"
+   }
+  }
+ },
+ "outputs": {
+  "video": {
+   "node": "35",
+   "kind": "video"
+  },
+  "last_frame": {
+   "node": "37",
+   "kind": "image"
+  }
+ }
+}

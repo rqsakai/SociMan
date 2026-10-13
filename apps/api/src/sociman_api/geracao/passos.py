@@ -4,7 +4,13 @@ Cada passo diz o motor, o tipo de alvo, o tipo de resultado, o número padrão e
 (o pedido pode reduzir, nunca aumentar), se vai direto ao alvo sem escolha humana
 (`sem_escolha`: só os passos de texto e o `produto.recorte`, FR-010 e FR-031; o `voz.teste` é
 entregue sem mudar o alvo), o bloco do ComfyUI e o `kind` da imagem gerada. O CHECK
-`ck_geracoes_passo` da migration 0020 repete a lista (o teste cruzado confere).
+`ck_geracoes_passo` (migration 0020, refeito na 0027) repete a lista (o teste cruzado confere).
+
+Spec 011: os 6 passos do roteiro. O único com escolha é o `cena.keyframe` (FR-041); os de
+resultado único vão direto ao roteiro ou à cena, porque a conferência humana é o portão do
+roteiro. O `cena.clipe` declara o bloco do motor padrão (`clipe_minimax`): o bloco de cada pedido
+vem do motor da cena, em `params.bloco`. A `roteiro.montagem` roda no motor `ffmpeg` (sem bloco,
+fora da trava de GPU, R2).
 
 Os sufixos `REALISMO` e `MANTER` vêm do `cenarios.py` do pipeline (R6): a cena sai sem pessoas,
 sem texto e com área livre embaixo para os produtos.
@@ -21,8 +27,10 @@ from typing import Literal
 
 from sociman_api.geracao.models import GeracaoAlvo, GeracaoMotor
 
-Resultado = Literal["imagem", "par_imagem", "audio", "texto"]
-Bloco = Literal["cena", "keyframe", "retrato", "cutout"]
+Resultado = Literal["imagem", "par_imagem", "audio", "texto", "video"]
+Bloco = Literal["cena", "keyframe", "retrato", "cutout",
+                # spec 011 (contracts/comfyui-blocos.md)
+                "clipe_minimax", "clipe_wan", "clipe_wan_qualidade", "clipe_ltx", "upscale_video"]
 
 REALISMO = ("vertical candid photograph, natural light, photorealistic, realistic textures, "
             "an empty clean surface in the lower part of the frame with free space to place "
@@ -46,7 +54,9 @@ class Passo:
 
 
 _C, _T, _CL = GeracaoMotor.comfyui, GeracaoMotor.tts, GeracaoMotor.claude
+_F = GeracaoMotor.ffmpeg
 _A, _V, _P = GeracaoAlvo.asset, GeracaoAlvo.voz, GeracaoAlvo.produto
+_CE, _R = GeracaoAlvo.cena, GeracaoAlvo.roteiro
 
 _PASSOS: tuple[Passo, ...] = (
     Passo("avatar.rosto_origem", _C, _A, "imagem", 4, 4, bloco="retrato", image_kind="avatar"),
@@ -66,7 +76,16 @@ _PASSOS: tuple[Passo, ...] = (
     Passo("produto.flat", _C, _P, "imagem", 2, 2, bloco="keyframe", image_kind="produto"),
     Passo("cenario.cena", _C, _A, "imagem", 2, 2, bloco="cena", image_kind="fundo"),
     Passo("cenario.variacao", _C, _A, "imagem", 2, 2, bloco="keyframe", image_kind="fundo"),
+    # spec 011
+    Passo("roteiro.plano", _CL, _R, "texto", 1, 1, sem_escolha=True),
+    Passo("roteiro.narracao", _T, _R, "audio", 1, 1, sem_escolha=True),
+    Passo("cena.keyframe", _C, _CE, "imagem", 2, 2, bloco="keyframe", image_kind="keyframe"),
+    Passo("cena.clipe", _C, _CE, "video", 1, 1, sem_escolha=True, bloco="clipe_minimax"),
+    Passo("roteiro.montagem", _F, _R, "video", 1, 1, sem_escolha=True),
+    Passo("roteiro.acabamento", _C, _R, "video", 1, 1, sem_escolha=True, bloco="upscale_video"),
 )
+BLOCOS_CLIPE: dict[str, Bloco] = {"minimax": "clipe_minimax", "wan": "clipe_wan",
+                                  "wan_qualidade": "clipe_wan_qualidade", "ltx": "clipe_ltx"}
 
 PASSOS: dict[str, Passo] = {p.id: p for p in _PASSOS}
 IDS: tuple[str, ...] = tuple(PASSOS)

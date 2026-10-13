@@ -12,6 +12,10 @@ arquivo em `work/tmp` (HD). Depois:
 
 Só cenas `pronta`/`usada` recebem tomadas (409 `cena_nao_pronta`). Nada é apagado: arquivar e
 restaurar; a reversão é só do dono humano.
+
+Spec 011 (FR-023, R3): a tomada `geracao_local` nasce do candidato do `cena.clipe` e **aponta o
+mesmo objeto** (`video_key` e miniatura do candidato, sem cópia), com a geração, o keyframe
+inicial usado, o motor, o fps e o prompt do clipe (`prompt_usado`, não o congelado do Flow).
 """
 
 import tempfile
@@ -27,13 +31,14 @@ from sociman_api import datadir, history, storage
 from sociman_api.auth.deps import Actor
 from sociman_api.cenas import schemas
 from sociman_api.cenas import service as cenas
-from sociman_api.cenas.models import Cena, CenaStatus, CenaTomada, TomadaOrigem
+from sociman_api.cenas.models import Cena, CenaMotor, CenaStatus, CenaTomada, TomadaOrigem
 from sociman_api.cortes import compose
 from sociman_api.cortes import service as cortes_service
 from sociman_api.cortes.probe import InvalidVideo, probe
 from sociman_api.cortes.service import Spooled
 from sociman_api.cortes.worker import EXT
 from sociman_api.errors import ApiError
+from sociman_api.geracao.models import GeracaoCandidato
 from sociman_api.perfis.schemas import VersionsList
 from sociman_api.perfis.service_perfis import target_state, versions_out
 
@@ -114,12 +119,52 @@ def criar(db: Session, actor: Actor, cena_id: uuid.UUID, up: Spooled) -> CenaTom
     return registrar_tomada(db, actor, cena, up, TomadaOrigem.flow_manual)
 
 
-def registrar_tomada(db: Session, actor: Actor, cena: Cena, arquivo: Spooled,
-                     origem: TomadaOrigem) -> CenaTomada:
-    """Valida o arquivo (já em `work/tmp`) e cria a tomada com o prompt congelado do momento,
-    sem saber de HTTP: a 021 (geração local) vai reaproveitar com outra `origem`."""
-    up = arquivo
+def _de_candidato(db: Session, actor: Actor, cena: Cena, cand: GeracaoCandidato,
+                  prompt_usado: str, geracao_id: uuid.UUID, keyframe_image_id: uuid.UUID,
+                  motor: CenaMotor) -> CenaTomada:
+    """Spec 011 (R3): a tomada local aponta o vídeo e a miniatura do candidato."""
+    if not cand.video_key or not cand.video_miniatura_key or cand.video_duracao_ms is None:
+        raise ApiError(400, "candidato_invalido", "Esta opção não tem mais o arquivo")
+    tomada = CenaTomada(
+        id=uuid.uuid4(), cena_id=cena.id, origem=TomadaOrigem.geracao_local,
+        video_key=cand.video_key, content_type="video/mp4", bytes=cand.video_bytes,
+        sha256=(cand.metricas or {}).get("sha256") or "", original_filename=(
+            f"geracao-{geracao_id.hex[:8]}-{cand.numero}.mp4"),
+        duracao_ms=cand.video_duracao_ms, largura=cand.video_largura or cena.largura,
+        altura=cand.video_altura or cena.altura, miniatura_key=cand.video_miniatura_key,
+        prompt_usado=prompt_usado, negative_usado="", nota="", geracao_id=geracao_id,
+        keyframe_image_id=keyframe_image_id, motor=motor,
+        fps=cand.video_fps if cand.video_fps in (16, 24) else None,
+        created_by=actor.user_id, updated_by=actor.user_id)
+    db.add(tomada)
+    db.flush()
+    history.record(db, actor, ENTITY, tomada, "created", None, history.snapshot(tomada),
+                   {"cenaId": str(cena.id), "geracaoId": str(geracao_id),
+                    "candidato": {"id": str(cand.id), "numero": cand.numero},
+                    "motor": motor.value})
+    return tomada
+
+
+def registrar_tomada(db: Session, actor: Actor, cena: Cena, arquivo: Spooled | None,
+                     origem: TomadaOrigem, prompt_usado: str | None = None,
+                     geracao_id: uuid.UUID | None = None,
+                     keyframe_image_id: uuid.UUID | None = None, motor: CenaMotor | None = None,
+                     objeto_existente: GeracaoCandidato | None = None) -> CenaTomada:
+    """Cria a tomada sem saber de HTTP. `flow_manual`: valida o arquivo (já em `work/tmp`), sobe
+    vídeo e miniatura e grava o prompt congelado do momento. `geracao_local` (011): a geração, o
+    keyframe e o motor são obrigatórios, e o `objeto_existente` (o candidato do `cena.clipe`) é
+    apontado sem cópia; `prompt_usado` é o prompt do clipe. A 1ª tomada vira a escolhida."""
     _recebe(cena)
+    local = origem == TomadaOrigem.geracao_local
+    if local and (geracao_id is None or keyframe_image_id is None or motor is None):
+        raise ValueError("a tomada local precisa da geração, do keyframe e do motor")
+    if local and objeto_existente is not None:
+        tomada = _de_candidato(db, actor, cena, objeto_existente, prompt_usado or "",
+                               geracao_id, keyframe_image_id, motor)
+        return _escolher_primeira(db, actor, cena, tomada)
+    if arquivo is None:
+        raise ValueError("sem arquivo nem objeto existente")
+    up = arquivo
     info = probe(up.path, max_duration_s=MAX_DURATION_S, min_duration_s=MIN_DURATION_S,
                  max_bytes=max_bytes(), too_long=TOO_LONG, too_short=TOO_SHORT,
                  too_big=TOO_BIG)
@@ -139,14 +184,20 @@ def registrar_tomada(db: Session, actor: Actor, cena: Cena, arquivo: Spooled,
         id=tomada_id, cena_id=cena.id, origem=origem, video_key=v_key, content_type=info.content_type,
         bytes=up.size, sha256=up.sha256, original_filename=up.filename,
         duracao_ms=info.duration_ms, largura=info.width, altura=info.height,
-        miniatura_key=m_key, prompt_usado=cena.prompt_congelado or "",
-        negative_usado=cena.negative_congelado or "", nota="",
+        miniatura_key=m_key,
+        prompt_usado=prompt_usado if prompt_usado is not None else cena.prompt_congelado or "",
+        negative_usado="" if local else cena.negative_congelado or "", nota="",
+        geracao_id=geracao_id, keyframe_image_id=keyframe_image_id, motor=motor,
         created_by=actor.user_id, updated_by=actor.user_id)
     db.add(tomada)
     db.flush()
     history.record(db, actor, ENTITY, tomada, "created", None, history.snapshot(tomada),
                    {"cenaId": str(cena.id),
                     "arquivo": {"nome": up.filename, "bytes": up.size, "sha256": up.sha256}})
+    return _escolher_primeira(db, actor, cena, tomada)
+
+
+def _escolher_primeira(db: Session, actor: Actor, cena: Cena, tomada: CenaTomada) -> CenaTomada:
     if cena.tomada_escolhida_id is None:
         before = history.snapshot(cena)
         cena.tomada_escolhida_id = tomada.id
@@ -162,7 +213,8 @@ def tomada_out(db: Session, tomada: CenaTomada, actor: Actor | None = None) -> s
     cena = db.get(Cena, tomada.cena_id)
     autor = cenas.autores_de(db, ENTITY, [tomada.id]).get(tomada.id)
     return cenas.tomada_out(tomada, cena is not None and cena.tomada_escolhida_id == tomada.id,
-                            autor, com_video=actor is None or actor.kind != "mcp_client")
+                            autor, com_video=actor is None or actor.kind != "mcp_client",
+                            cena=cena)
 
 
 def listar(db: Session, cena_id: uuid.UUID, arquivadas: bool,
@@ -175,7 +227,7 @@ def listar(db: Session, cena_id: uuid.UUID, arquivadas: bool,
     autores = cenas.autores_de(db, ENTITY, [t.id for t in rows])
     com_video = actor is None or actor.kind != "mcp_client"
     return schemas.TomadasList(items=[
-        cenas.tomada_out(t, cena.tomada_escolhida_id == t.id, autores.get(t.id), com_video)
+        cenas.tomada_out(t, cena.tomada_escolhida_id == t.id, autores.get(t.id), com_video, cena)
         for t in rows])
 
 

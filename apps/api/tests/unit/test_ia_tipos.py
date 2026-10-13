@@ -38,10 +38,10 @@ def _aceita(adapter: TypeAdapter, valor) -> bool:
     return True
 
 
-def test_os_25_ids_e_o_literal():
+def test_os_26_ids_e_o_literal():
     # 13 da 008 + guia.montar e guia.testar (spec 017) + 5 da cena (spec 010) + 3 do aprendizado
     # (spec 023) + a ficha do produto (spec 012) + a identidade do avatar (spec 025).
-    assert len(TIPOS) == 25
+    assert len(TIPOS) == 26  # + o plano do roteiro (spec 011)
     assert set(get_args(TipoCampoId)) == set(TIPOS)
     assert set(PADROES) == set(TIPOS) - {"guia.testar"}
     for tid, tipo in TIPOS.items():
@@ -113,8 +113,8 @@ def test_campos_existem_no_modelo_e_no_schema():
             continue  # sem entidade salva com esses campos (spec 017; o montar é cruzado abaixo)
         if tipo.entidade == "aprendizado":
             continue  # spec 023: não aplica em formulário (o serviço do aprendizado grava)
-        if tipo.entidade == "produto" or tipo.formato == "identidade":
-            continue  # specs 012 e 025: o aplicador da 021 grava (não há formulário)
+        if tipo.entidade in ("produto", "roteiro") or tipo.formato == "identidade":
+            continue  # specs 012, 025 e 011: o aplicador da 021 grava (não há formulário)
         for campo in tipo.campos:
             assert campo in modelos[tipo.entidade].__versioned_fields__, (tipo.id, campo)
             assert campo in SCHEMAS[tipo.entidade].model_fields, (tipo.id, campo)

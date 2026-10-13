@@ -94,6 +94,16 @@ class Audio(CamelModel):
     created_by: UserRef | None
 
 
+class VideoCandidato(CamelModel):
+    """Spec 011 (R3): o vídeo de um candidato (clipe, prévia ou acabamento)."""
+
+    link: Link  # `geracao_video`, sempre com validade e Range
+    miniatura_url: str | None
+    duracao_ms: int | None
+    largura: int | None
+    altura: int | None
+
+
 class CandidatoGeracao(CamelModel):
     id: uuid.UUID
     numero: int
@@ -103,6 +113,7 @@ class CandidatoGeracao(CamelModel):
     audio: Audio | None
     metricas: dict[str, Any]
     teste_audio: Audio | None  # voz: o áudio de teste
+    video: VideoCandidato | None = None  # spec 011
 
 
 class GeracaoResumo(CamelModel):

@@ -20,6 +20,31 @@
    "origem": "V2 - Cutout (BiRefNet, fundo branco)",
    "api_sha256": "b7c24fa9ed1cdd398de438fa7d4bd3953ea73cf52238178dbbf3a21744ade84e",
    "params_sha256": "5f29ae669aaf53d63ff3cc00198733be55741c97434b9619a581e64a25f540d5"
+  },
+  "clipe_minimax": {
+   "origem": "V2 - Clip MiniMax-H3 (início + fim opcional, com áudio)",
+   "api_sha256": "c574ff4b5083ef01408c06b0f305a11dcceb53358b41127e75b4460081fc140d",
+   "params_sha256": "9a7a28f997542ef76d9de7905fc6a344f6945b1af9c0497e9dc3d299099f404f"
+  },
+  "clipe_wan": {
+   "origem": "V2 - Clip Wan 2.2 14B (início + fim opcional)",
+   "api_sha256": "1074e348b028141ebef4c1a0e99aba1009257fa2aee3d2bf371909ba4d4dc735",
+   "params_sha256": "bf5d5f82d670fe47b69af688f7847d16d8e5f8842054e2afb070f6344d877634"
+  },
+  "clipe_wan_qualidade": {
+   "origem": "V2 - Clip Wan 2.2 14B qualidade (20 passos, sem LightX2V)",
+   "api_sha256": "ee90daa6e583bb30a5a2ad3659d86373dea4474324706b79fb169547f93654f2",
+   "params_sha256": "17eef2c177cdfb133ea5bf6174307fb0c080febda2a1e89b3f1d58c6ad107b21"
+  },
+  "clipe_ltx": {
+   "origem": "V2 - Clip LTX-2.5 22B (início + fim opcional, com áudio)",
+   "api_sha256": "7b7045d63c0b5ace79d5f9e2c371bebd6423a0860806a15bd4077f30cb252c17",
+   "params_sha256": "8ec2497556944a19dcb562758c3989d084aceea8efc9c8ece13ac6b07f3aa20c"
+  },
+  "upscale_video": {
+   "origem": "V3 - Upscale vídeo SeedVR2 3B",
+   "api_sha256": "bbcc8ffdde9782e6ad73b8a3497c8a4e3ee80cd8d3238c66db11d73b8a467208",
+   "params_sha256": "78dd6475180400a38281f9940947af7c4d8efeb2cd6ebeb3121c60c58f7ce25d"
   }
  }
 }

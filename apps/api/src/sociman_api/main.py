@@ -54,6 +54,8 @@ from sociman_api.produtos.router import router as produtos_router  # spec 012
 from sociman_api.produtos.router_perfil import router as produtos_perfil_router  # spec 012
 from sociman_api.publicacao.router import router as publicacao_router
 from sociman_api.redis import get_redis
+from sociman_api.roteiros.router import router as roteiros_router  # spec 011
+from sociman_api.roteiros.router_perfil import router as roteiros_perfil_router  # spec 011
 from sociman_api.router_midia import router as midia_router
 from sociman_api.vozes.router import router as vozes_router  # spec 025
 
@@ -109,6 +111,8 @@ app.include_router(estudio_router)  # spec 029: resumo da biblioteca da agência
 app.include_router(coleta_router)  # spec 026: ingestão do coletor de mercado
 app.include_router(mercado_router)  # spec 026: leitura do mercado (cockpit)
 app.include_router(mercado_router_perfil)  # spec 026: interesses e nicho por perfil
+app.include_router(roteiros_perfil_router)  # spec 011: roteiros, portões e pronúncias do perfil
+app.include_router(roteiros_router)  # spec 011: roteiro, posições e pronúncias
 install_openapi_error_contract(app)
 
 

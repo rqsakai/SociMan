@@ -136,12 +136,20 @@ def resolve(db: Session, kind: str, entity_id: uuid.UUID) -> Target:
         from sociman_api.cenas.models import Cena, CenaTomada
 
         tomada = db.get(CenaTomada, entity_id)
-        if tomada is None:
+        if tomada is None or tomada.video_key is None:  # 011: a tomada local limpa (R12)
             raise _not_found()
         cena = db.get(Cena, tomada.cena_id)
         ext = _VIDEO_EXT.get(tomada.content_type, "mp4")
         stem = f"{_slug(db, cena.perfil_id) if cena else 'cena'}-tomada-{tomada.id.hex[:8]}"
         return Target("videos", tomada.video_key, tomada.content_type, f"{stem}.{ext}")
+    if kind == "geracao_video":  # spec 011 (R3): o id é o do candidato
+        from sociman_api.geracao.models import GeracaoCandidato
+
+        cand = db.get(GeracaoCandidato, entity_id)
+        if cand is None or not cand.video_key:
+            raise _not_found()
+        return Target("videos", cand.video_key, "video/mp4",
+                      f"geracao-{cand.geracao_id.hex[:8]}-{cand.numero}.mp4")
     if kind == "audio":  # spec 021 (R11)
         from sociman_api.geracao.audios import CONTENT_TYPES as AUDIO_CONTENT_TYPES
         from sociman_api.geracao.models import Audio

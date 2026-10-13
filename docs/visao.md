@@ -100,7 +100,7 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    prompt em inglês montado na ordem do shop-diretor (ao vivo em rascunho, congelado em pronta, "Remontar"),
    ingredientes para baixar, tomadas no HD, vínculo com o vídeo próprio (`usada`), 5 tipos de IA `cena.*` e a
    `proposta_cena` do agente pelo MCP (o humano aceita).
-11. `011-roteiros-video-local` 📋 **spec pronta** (`specs/011-roteiros-video-local/`, 2026-10-08; 59 tarefas; depende da
+11. `011-roteiros-video-local` ✅ **implementada contra os fakes** (`specs/011-roteiros-video-local/`, 2026-10-09; migration `0027_roteiros_video_local`; falta com o dono o quickstart §2 em diante na GPU real; 59 tarefas; depende da
    012, da 025 e da 021; implementar na ordem 012 → 025 → 011, migration `0024`): roteiro de vídeo de produto com
    avatar, em voice over, tudo local. Plano pelo Claude (frases, posições, cenas novas ou reaproveitadas da 010),
    narração contínua no shop-tts com o dicionário de pronúncias do perfil (X3), keyframes e clipes no ComfyUI

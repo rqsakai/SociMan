@@ -24,7 +24,9 @@ from sociman_api.config import get_settings
 # Spec 026: `mercado` guarda o bruto gzip da coleta (as imagens do lago ficam em `imagens`, com
 # o prefixo `mercado/`, para o imgproxy servir). Nenhum delete novo: o lago é permanente.
 Bucket = Literal["imagens", "fontes", "videos", "audios", "mercado"]
-Excecao = Literal["candidatos_90d", "lgpd_revogacao"]  # constitution 4.3.0, princípio VII
+# Constitution 4.3.0, princípio VII; a 4.5.0 (spec 011, R12) amplia a exceção 1 aos
+# intermediários de roteiro (tomadas, narrações e prévias fora de um vídeo final entregue).
+Excecao = Literal["candidatos_90d", "lgpd_revogacao", "intermediarios_90d"]
 
 PART_SIZE = 16 * 1024 * 1024
 CHUNK = 64 * 1024
@@ -74,16 +76,28 @@ def put_file(key: str, path: str | os.PathLike, content_type: str, *,
 def apagar_por_excecao(key: str, *, bucket: Bucket, excecao: Excecao) -> None:
     """O **único** delete do módulo (constitution 4.3.0, "Exceções de eliminação").
 
-    Só vale para os dois casos nomeados: `candidatos_90d` (opções de geração não escolhidas,
-    90 dias depois do fim; o escolhido nunca) e `lgpd_revogacao` (revogação de consentimento de
-    pessoa real, só pelo dono, na 025). Quem chama registra o evento (quem, quando, contagem e
+    Só vale para os casos nomeados: `candidatos_90d` (opções de geração não escolhidas, 90 dias
+    depois do fim; o escolhido nunca), `intermediarios_90d` (4.5.0: tomadas, narrações e prévias
+    de roteiro sem uso num vídeo final entregue, 90 dias depois do `desuso_em`, spec 011) e
+    `lgpd_revogacao` (revogação de consentimento de pessoa real, só pelo dono, na 025). Quem chama registra o evento (quem, quando, contagem e
     motivo) e apaga as linhas do banco **antes** (o objeto sai depois do commit: um objeto órfão
     é inofensivo, uma linha apontando para objeto apagado, não). Nunca é disparado por IA,
     agente ou MCP: o teste-guarda confere por AST quem pode importar esta função.
     """
-    if excecao not in ("candidatos_90d", "lgpd_revogacao"):
+    if excecao not in ("candidatos_90d", "lgpd_revogacao", "intermediarios_90d"):
         raise ValueError(f"exceção de eliminação desconhecida: {excecao}")
     get_client().remove_object(bucket_name(bucket), key)
+
+
+def copiar(origem: str, destino: str, *, bucket: Bucket = "imagens") -> None:
+    """Cópia no próprio MinIO (spec 011: o acabamento vira o vídeo do conteúdo), sem baixar.
+    A origem continua."""
+    from minio.commonconfig import CopySource
+
+    nome = bucket_name(bucket)
+    tamanho = get_client().stat_object(nome, origem).size or 0
+    datadir.ensure_writable(tamanho)
+    get_client().copy_object(nome, destino, CopySource(nome, origem))
 
 
 def get(key: str, *, bucket: Bucket = "imagens") -> bytes:
