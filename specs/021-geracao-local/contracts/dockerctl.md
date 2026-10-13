@@ -17,13 +17,17 @@ O corpo dos pedidos é **ignorado**.
 |---|---|---|
 | `GET /comfyui/memoria` | `GET /v1.47/containers/comfyui/json` | `{memoria_bytes, memoria_swap_bytes, estado: "normal"|"job"|"outro"}` |
 | `POST /comfyui/memoria/subir` | `POST /v1.47/containers/comfyui/update` com `{"Memory": MEM_JOB, "MemorySwap": MEM_JOB}` | igual ao GET, depois de ler de novo |
-| `POST /comfyui/memoria/devolver` | idem com `MEM_NORMAL` | igual ao GET |
+| `POST /comfyui/memoria/devolver` | `GET …/stats` (uso atual) e, se couber, `update` com `MEM_NORMAL` | igual ao GET, ou 409 `nao_coube` |
 
 Qualquer outro método ou caminho → 404 (com linha no log). O nome do container (`comfyui`), a versão da
 API do Docker e os valores vêm **só** do ambiente do `dockerctl`: `DOCKERCTL_CONTAINER=comfyui`,
 `DOCKERCTL_MEM_JOB=28g`, `DOCKERCTL_MEM_NORMAL=12g`. O `docker update` de memória para baixo funciona com
-o container rodando (o cgroup aceita reduzir se o uso atual couber; se não couber, o Docker devolve erro e
-o `dockerctl` responde 409 `nao_coube`, e o gerador tenta de novo depois de `POST /free` no ComfyUI).
+o container rodando, **mas não protege**: no cgroup v2 o Docker aceita a redução mesmo sem caber, e o kernel
+mata o processo (OOM, visto em 2026-10-13). Por isso o `devolver` primeiro lê
+`GET /v1.47/containers/comfyui/stats?stream=false&one-shot=true` e, se o uso que não se recupera
+(`usage - file + shmem`) passar de `MEM_NORMAL - 1 GB`, responde 409 `nao_coube` **sem** o `update`. O 409
+também vale se o Docker recusar. O gerador sempre manda `POST /free` (`unload_models`) ao ComfyUI antes de
+devolver e, no 409, espera 5 s, solta de novo e tenta outra vez (3 tentativas; depois, linha travada).
 
 Log (stdout, uma linha por ação): data, ação, antes, depois, resultado. Sem o token.
 
