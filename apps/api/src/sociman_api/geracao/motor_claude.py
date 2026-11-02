@@ -60,13 +60,14 @@ def chamar(db: Session, job: Job, client: IaClient | None) -> IaChamada:
     a linha sai com `unconfigured`."""
     from sociman_api.geracao.models import Geracao
 
-    tipo = TIPOS.get(job.passo)
-    if tipo is None:
-        raise MotorErro("internal", detalhe=f"tipo de campo {job.passo} não registrado")
     aplicador = aplicadores.para(job.passo)
     if aplicador is None:
         raise MotorErro("internal", detalhe=f"passo {job.passo} sem aplicador")
     geracao = db.get(Geracao, job.id)
+    extras = aplicador.extras_claude(db, geracao)  # spec 031
+    tipo = extras.tipo or TIPOS.get(job.passo)
+    if tipo is None:
+        raise MotorErro("internal", detalhe=f"tipo de campo {job.passo} não registrado")
     regras = ia_service.regras_em_vigor(db, tipo)
     instrucao = (job.params or {}).get("instrucao") or ""
     row = IaChamada(
@@ -74,14 +75,17 @@ def chamar(db: Session, job: Job, client: IaClient | None) -> IaChamada:
         entity_type=job.alvo_tipo.value, entity_id=job.alvo_id, geracao_id=job.id,
         instrucao=instrucao, prompt_version=prompt.PROMPT_VERSION,
         regras_version=regras.version, padrao_versao=regras.padrao_versao,
-        created_by=job.created_by)
+        guia_perfil_version=extras.guia_perfil_version, created_by=job.created_by)
     if client is None:
         row.model, row.duration_ms = get_settings().textos_model, 0
         row.erro_code, row.desfecho = "unconfigured", IaDesfecho.erro
     else:
         mensagem = aplicador.mensagem_claude(db, geracao)
+        opcionais: dict[str, Any] = {"extra": extras.problemas}
+        if extras.efetivo is not None:
+            opcionais["efetivo"] = extras.efetivo
         res = client.gerar(tipo, _system(tipo, regras.texto),
-                           lambda erro: com_erro_anterior(mensagem, erro))
+                           lambda erro: com_erro_anterior(mensagem, erro), **opcionais)
         ia_service._preencher(row, res, ())
     db.add(row)
     db.flush()
@@ -107,7 +111,11 @@ def erro_da_chamada(row: IaChamada) -> MotorErro | None:
     if row.erro_code == "unconfigured":
         return MotorErro("servico_fora", NAO_CONFIGURADO, detalhe="sem ANTHROPIC_API_KEY")
     codigo, msg = _ERROS.get(row.erro_code, ("internal", None))
-    return MotorErro(codigo, msg, detalhe=f"claude: {row.erro_code} {row.erro_status or ''}")
+    detalhe = f"claude: {row.erro_code} {row.erro_status or ''}".strip()
+    if row.erro_code == "invalid" and row.explicacao:  # o motivo da recusa (T059)
+        msg = f"{msg} ({row.explicacao[:300]})"
+        detalhe = f"{detalhe}: {row.explicacao[:500]}"
+    return MotorErro(codigo, msg, detalhe=detalhe)
 
 
 def marcar_aplicada(db: Session, chamada_id: uuid.UUID, por: uuid.UUID | None) -> None:

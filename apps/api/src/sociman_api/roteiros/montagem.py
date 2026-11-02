@@ -16,6 +16,15 @@ A receita é a do pipeline aprovado (`run_storyboard.concat`, `stage_mix` e `fin
 
 Nunca `tpad`/clone: uma tomada mais curta que a posição é recusada antes (`tomada_curta`), e a
 posição volta para os clipes.
+
+Vídeo guiado (spec 031, R2 e R4), sem mudar o caminho da 011:
+- cada trecho (`cmd_trecho`) é reajustado por `setpts` para exatamente o trecho-base, sem cortar
+  o fim (o último quadro continua sendo o keyframe de fim); a partir do 2º trecho da posição, o
+  1º quadro sai (é o keyframe que fechou o trecho anterior);
+- os trechos de uma posição e as posições são juntados por `concat` seco; o cross-fade
+  (`crossfade_quadros`) fica previsto e desligado;
+- a fala vai para o slot de cada posição (`cmd_fala_no_slot`, com os blocos de
+  `tempos.fala_por_slot`) e a mistura continua no `cmd_mixar`/`cmd_acabamento` (−14 LUFS).
 """
 
 import logging
@@ -24,10 +33,12 @@ import subprocess
 import uuid
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 
 from sociman_api.config import get_settings
 from sociman_api.geracao.erros import MotorErro
+from sociman_api.roteiros.tempos import ATRASO_FALA, BlocoFala
 
 log = logging.getLogger("sociman.gerador")
 
@@ -112,6 +123,102 @@ def cmd_acabamento(video: str | Path, narracao: str | Path, dst: str | Path, *, 
             "-shortest", "-movflags", "+faststart", str(dst)]
 
 
+# ---- vídeo guiado (spec 031) ----
+
+def quadros_saida(base_s: float) -> int:
+    """Os quadros de um trecho-base a 24 fps (5 s → 120)."""
+    return round(base_s * FPS)
+
+
+def cmd_trecho(src: str | Path, dst: str | Path, *, base_s: float, quadros: int,
+               primeiro: bool, largura: int, altura: int, extra_quadros: int = 0) -> list[str]:
+    """Um trecho com exatamente `base_s` (+ `extra_quadros`, só com cross-fade) a 24 fps.
+
+    `quadros` são os da tomada (na regra do motor: MiniMax 124, Wan 81, LTX 121). Fora do 1º
+    trecho, o 1º quadro sai (`select`). Os que ficam são espalhados por `setpts` de modo que o
+    último caia no último quadro da saída: o fim não é cortado, só a velocidade muda um pouco
+    (124 → 120 quadros, ~3%)."""
+    usados = quadros - (0 if primeiro else 1)
+    saida = quadros_saida(base_s) + extra_quadros
+    if usados < 2 or saida < 2:
+        raise ValueError("trecho com menos de 2 quadros")
+    passo = (saida - 1) / FPS / (usados - 1)
+    corte = "" if primeiro else r"select=gte(n\,1),"
+    vf = (f"{corte}setpts=N*{passo:.9f}/TB,"
+          f"scale={largura}:{altura}:force_original_aspect_ratio=decrease,"
+          f"pad={largura}:{altura}:(ow-iw)/2:(oh-ih)/2,fps={FPS},format=yuv420p,setsar=1")
+    return [*_BASE, "-i", str(src), "-vf", vf, "-an", "-frames:v", str(saida), "-c:v",
+            "libx264", "-crf", "12", "-preset", "fast", str(dst)]
+
+
+def cmd_crossfade(partes: Sequence[str | Path], dst: str | Path, *, base_s: float,
+                  crossfade_quadros: int) -> list[str]:
+    """Os trechos de uma posição com cross-fade de `crossfade_quadros` (cada trecho, menos o
+    último, foi feito com esses quadros a mais: o total continua trechos × base)."""
+    if len(partes) < 2 or crossfade_quadros <= 0:
+        raise ValueError("cross-fade precisa de 2 trechos e de quadros")
+    dur = crossfade_quadros / FPS
+    entradas = [a for p in partes for a in ("-i", str(p))]
+    filtros, atual = [], "[0:v]"
+    for i in range(1, len(partes)):
+        # O i-ésimo começa a entrar `dur` antes do fim do que já foi juntado.
+        offset = i * base_s
+        saida = f"[x{i}]" if i + 1 < len(partes) else "[v]"
+        filtros.append(f"{atual}[{i}:v]xfade=transition=fade:duration={dur:.6f}:"
+                       f"offset={offset:.6f}{saida}")
+        atual = saida
+    return [*_BASE, *entradas, "-filter_complex", ";".join(filtros), "-map", "[v]", "-an",
+            "-c:v", "libx264", "-crf", "12", "-preset", "fast", "-pix_fmt", "yuv420p",
+            str(dst)]
+
+
+def cmd_fala_no_slot(src: str | Path, dst: str | Path, blocos: Sequence[BlocoFala],
+                     duracoes_s: Sequence[float]) -> list[str]:
+    """A narração do guiado, um slot por posição, juntados por `concat`: no slot com fala, o
+    bloco cortado da narração contínua, com o seu `atempo`, depois de `ATRASO_FALA` de silêncio
+    (`adelay`) e completado com silêncio até o fim do slot (`apad`); no slot sem fala, silêncio.
+    O total é exatamente a soma das durações. Sem `loudnorm` aqui: a mistura
+    (`cmd_mixar`/`cmd_acabamento`) continua a −14 LUFS.
+
+    Não usa `amix` com `adelay` absoluto: no ffmpeg 7.1, com `atempo` em mais de um ramo, o
+    `amix` termina na hora (o arquivo saía com 0,15 s), e o `apad` sem `whole_dur` não para."""
+    por_slot = {b.indice: b for b in blocos}
+    if len(por_slot) != len(blocos) or any(not 0 <= i < len(duracoes_s) for i in por_slot):
+        raise ValueError("um bloco por posição, dentro das posições")
+    total_s = sum(duracoes_s)
+    n = len(blocos)
+    filtros = []
+    if n:
+        copias = (f",asplit={n}" if n > 1 else "") + "".join(f"[s{i}]" for i in range(n))
+        filtros.append(f"[0:a]aresample=48000,aformat=channel_layouts=stereo{copias}")
+    slots, k = [], 0
+    for i, dur in enumerate(duracoes_s):
+        b = por_slot.get(i)
+        if b is None:
+            filtros.append(f"anullsrc=r=48000:cl=stereo:d={_n(dur)}[z{i}]")
+            slots.append(f"[z{i}]")
+            continue
+        tempo = f",atempo={b.atempo:g}" if b.atempo != 1 else ""
+        filtros.append(f"[s{k}]atrim=start={_n(b.inicio_s)}:end={_n(b.fim_s)},"
+                       f"asetpts=PTS-STARTPTS{tempo},atrim=duration={_n(b.max_s)},"
+                       f"apad=whole_dur={_n(b.max_s)},"
+                       f"adelay={round(ATRASO_FALA * 1000)}:all=1[b{i}]")
+        slots.append(f"[b{i}]")
+        k += 1
+    filtros.append(f"{''.join(slots)}concat=n={len(slots)}:v=0:a=1[a]")
+    entrada = ["-i", str(src)] if n else []
+    return [*_BASE, *entrada, "-filter_complex", ";".join(filtros), "-map", "[a]",
+            "-t", _n(total_s), "-c:a", "pcm_s16le", str(dst)]
+
+
+@dataclass(frozen=True)
+class PosicaoGuiada:
+    """Uma posição do guiado para a montagem: os arquivos dos trechos, na ordem, e a duração
+    fixa (trechos × base)."""
+    trechos: Sequence[Path]
+    duracao_s: float
+
+
 # ---- executores ----
 
 def pasta(geracao_id: uuid.UUID) -> Path:
@@ -176,6 +283,76 @@ def montar_previa(trabalho: Path, tomadas: Sequence[tuple[Path, float]], narraca
                                                 altura=altura))
     dst = trabalho / "previa.mp4"
     executar(cmd_mixar(mudo, narracao, dst))
+    return dst
+
+
+def contar_quadros(src: Path) -> int:
+    """Os quadros de vídeo do arquivo (pelos pacotes do ffprobe, sem decodificar)."""
+    try:
+        res = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0",
+                              "-count_packets", "-show_entries", "stream=nb_read_packets",
+                              "-of", "csv=p=0", str(src)], capture_output=True,
+                             timeout=TIMEOUT_S, check=False)
+    except subprocess.TimeoutExpired:
+        raise MotorErro("internal", "O ffprobe passou do tempo limite",
+                        detalhe=str(src)) from None
+    texto = res.stdout.decode().strip().split(",")[0]
+    if res.returncode != 0 or not texto.isdigit():
+        raise MotorErro("internal", "O ffprobe não conseguiu ler o trecho",
+                        detalhe=f"{src}: {res.stderr.decode('utf-8', 'replace')[-500:]}")
+    return int(texto)
+
+
+def montar_posicoes_guiadas(trabalho: Path, posicoes: Sequence[PosicaoGuiada], *,
+                            base_s: float, largura: int, altura: int,
+                            crossfade_quadros: int = 0) -> list[Path]:
+    """Um mp4 por posição (`pos_NN.mp4`), cada um com exatamente `duracao_s`: os trechos
+    reajustados (`cmd_trecho`) e juntados. Serve à prévia e ao `upscale_video` do acabamento."""
+    saida = []
+    for i, pos in enumerate(posicoes):
+        n = len(pos.trechos)
+        if n < 1 or round(n * base_s, 3) != round(pos.duracao_s, 3):
+            raise ValueError(f"a posição {i} tem {n} trechos e {pos.duracao_s:g} s: não fecha "
+                             f"com a base de {base_s:g} s")
+        partes = []
+        for t, src in enumerate(pos.trechos):
+            extra = crossfade_quadros if crossfade_quadros and t + 1 < n else 0
+            dst = trabalho / f"pos_{i:02d}_t{t}.mp4"
+            executar(cmd_trecho(src, dst, base_s=base_s, quadros=contar_quadros(src),
+                                primeiro=t == 0, largura=largura, altura=altura,
+                                extra_quadros=extra))
+            partes.append(dst)
+        if n == 1:
+            saida.append(partes[0])
+        elif crossfade_quadros:
+            dst = trabalho / f"pos_{i:02d}.mp4"
+            executar(cmd_crossfade(partes, dst, base_s=base_s,
+                                   crossfade_quadros=crossfade_quadros))
+            saida.append(dst)
+        else:
+            saida.append(concatenar(trabalho, partes, f"pos_{i:02d}.mp4"))
+    return saida
+
+
+def colocar_fala(trabalho: Path, narracao: Path, blocos: Sequence[BlocoFala],
+                 duracoes_s: Sequence[float]) -> Path:
+    """A narração contínua (na velocidade do roteiro) posta nos slots: `fala_slot.wav`, com
+    exatamente a soma de `duracoes_s` (a duração-alvo)."""
+    dst = trabalho / "fala_slot.wav"
+    executar(cmd_fala_no_slot(narracao, dst, blocos, duracoes_s))
+    return dst
+
+
+def montar_previa_guiada(trabalho: Path, posicoes: Sequence[PosicaoGuiada],
+                         narracao_slot: Path, *, base_s: float, largura: int, altura: int,
+                         crossfade_quadros: int = 0) -> Path:
+    """`roteiro.montagem` do guiado: os trechos por posição, as posições juntadas e a fala já
+    nos slots (`colocar_fala`), a −14 LUFS. A duração é a soma das posições (o alvo)."""
+    partes = montar_posicoes_guiadas(trabalho, posicoes, base_s=base_s, largura=largura,
+                                     altura=altura, crossfade_quadros=crossfade_quadros)
+    mudo = concatenar(trabalho, partes)
+    dst = trabalho / "previa.mp4"
+    executar(cmd_mixar(mudo, narracao_slot, dst))
     return dst
 
 

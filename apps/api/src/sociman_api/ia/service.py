@@ -437,6 +437,8 @@ def executar(db: Session, actor: Actor, tipo: TipoCampo, perfil: Perfil | None,
         db.commit()
         if res.erro_code in _ERROS:
             status, code, msg = _ERROS[res.erro_code]
+            if res.erro_detalhe:
+                raise ApiError(status, code, msg, details={"motivo": res.erro_detalhe[:500]})
             raise ApiError(status, code, msg)
         raise _erro_api(res.erro_status)
     db.flush()
@@ -455,6 +457,7 @@ def _preencher(row: IaChamada, res: Resultado, faltante: Sequence[str]) -> None:
     if res.erro_code is not None:
         row.erro_code, row.erro_status, row.desfecho = res.erro_code, res.erro_status, \
             IaDesfecho.erro
+        row.explicacao = (res.erro_detalhe or "")[:1000]  # o motivo da recusa (`invalid`)
         return
     v = res.validada
     assert v is not None

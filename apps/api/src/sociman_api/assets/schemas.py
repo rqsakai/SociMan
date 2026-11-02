@@ -187,6 +187,14 @@ class AssetSummary(CamelModel):
     version: int
     updated_at: datetime
     kit_status: KitStatus | None = None  # spec 025 (null = sem kit padrão)
+    # Spec 031: miniatura dos seletores (imgproxy 256×256): o rosto frontal do avatar ou a cena
+    # do cenário, senão a capa, senão o 1º arquivo ativo; null sem arquivo.
+    thumb_url: str | None = None
+    # Spec 031: o que os blocos do "Novo vídeo" filtram sem abrir o item: o consentimento
+    # revogado (025), a voz padrão do avatar e, no cenário, a imagem `cena` do cadastro.
+    revogado: bool = False
+    voz_id: UUID | None = None
+    tem_cena: bool = False
 
 
 class Asset(AssetSummary):
@@ -202,11 +210,9 @@ class Asset(AssetSummary):
     # Spec 025: o cadastro padronizado (nulos fora do avatar/cenário).
     origem: AssetOrigem | None = None
     consentimento: padrao_schemas.ConsentimentoPessoa | None = None
-    voz_id: UUID | None = None
     voz_padrao: padrao_schemas.VozPadrao | None = None
     identidade: padrao_schemas.Identidade | None = None
     kit: padrao_schemas.KitPadrao | None = None
-    revogado: bool = False
 
 
 class Uso(CamelModel):

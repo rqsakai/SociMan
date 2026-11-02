@@ -15,6 +15,13 @@
   linha = padrão do código, `version 0`;
 - `pronuncias`: o dicionário de pronúncia do perfil (`entity_type = "pronuncia"`), arquivável.
 
+Spec 031 (vídeo guiado, data-model): o roteiro guiado tem `tipo_video`, `cenario_id` e a grade
+com que nasceu (`duracao_alvo_s`, `trecho_base_s`; as 4 juntas ou nenhuma, `ck_roteiros_guiado`).
+Nulas = roteiro da 011, que segue igual. A posição do guiado ganha `trechos` (1 a 3), o `reuso`,
+o `motivo`, as aprovações por posição e o orçamento de fala; a tomada de cada trecho fica em
+`roteiro_trechos` (no snapshot de `posicoes`, só nas posições do guiado). A `roteiro_conversa` é o
+chat (só inserção, trigger).
+
 Nada é apagado nas invalidações: só se marca `desuso_em`. A limpeza de 90 dias (exceção 1 da
 4.5.0) é a única que remove mídia, e a linha fica com `limpa_em`.
 """
@@ -31,12 +38,15 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     Numeric,
     SmallInteger,
     Text,
+    UniqueConstraint,
     Uuid,
+    and_,
     func,
     text,
 )
@@ -48,6 +58,7 @@ from sociman_api.cenas import models as _cenas_models  # noqa: F401 — FKs cena
 from sociman_api.conteudos import models as _conteudos_models  # noqa: F401 — FK conteudos
 from sociman_api.db import Base
 from sociman_api.geracao import models as _geracao_models  # noqa: F401 — FKs geracoes/audios
+from sociman_api.ia import models as _ia_models  # noqa: F401 — FK ia_chamadas (031)
 from sociman_api.perfis.models import _Versioned
 from sociman_api.produtos import models as _produtos_models  # noqa: F401 — FKs produtos
 from sociman_api.vozes import models as _vozes_models  # noqa: F401 — FK vozes
@@ -71,6 +82,15 @@ class RoteiroFormato(enum.StrEnum):
 class RoteiroModo(enum.StrEnum):
     revisar = "revisar"
     automatico = "automatico"
+
+
+class RoteiroAcabamento(enum.StrEnum):
+    """Decisão do dono (T059, 2026-10-15): o acabamento padrão é `leve` (lanczos para 1080×1920,
+    24 fps e −14 LUFS, segundos, na linha ffmpeg); `hd` é o SeedVR2 por cena (~20 min por 15 s,
+    na GPU), opcional e, no futuro, cobrado à parte."""
+
+    leve = "leve"
+    hd = "hd"
 
 
 class RoteiroStatus(enum.StrEnum):
@@ -101,6 +121,34 @@ class RoteiroEtapa(enum.StrEnum):
     acabamento = "acabamento"
 
 
+class RoteiroTipoVideo(enum.StrEnum):
+    """Spec 031: o tipo do vídeo guiado (nulo = roteiro da 011)."""
+
+    avatar_pov = "avatar_pov"
+
+
+class ConversaEstado(enum.StrEnum):
+    sem_perguntas = "sem_perguntas"
+    perguntando = "perguntando"
+    respondida = "respondida"
+
+
+class ConversaTipo(enum.StrEnum):
+    pergunta = "pergunta"
+    resposta = "resposta"
+    pedido_troca = "pedido_troca"
+    esclarecimento = "esclarecimento"
+    aviso = "aviso"
+
+
+class PosicaoReuso(enum.StrEnum):
+    """A decisão do modal de cenas (FR-019): a cena como está, só o plano dela ou uma nova."""
+
+    total = "total"
+    plano = "plano"
+    nova = "nova"
+
+
 class PosicaoAviso(enum.StrEnum):
     tomada_curta = "tomada_curta"
     cena_arquivada = "cena_arquivada"
@@ -119,8 +167,13 @@ class Roteiro(_Versioned, AuditMixin, Base):
     )
     __versioned_fields__ = ("nome", "brief", "avatar_id", "voz_id", "formato", "frases",
                             "velocidade", "modo", "portoes", "status", "archived", "produtos",
-                            "posicoes", "perfil_id")
-    __immutable_fields__ = ("perfil_id",)
+                            "posicoes", "perfil_id",
+                            # spec 031 (nulos na 011)
+                            "tipo_video", "cenario_id", "duracao_alvo_s", "trecho_base_s",
+                            "acabamento_modo")
+    # A `duracao_alvo_s` muda dentro da grade guardada (FR-033): só a base é fixa. Imutável aqui =
+    # o revert não volta o campo (o `PATCH` da duração confere a grade).
+    __immutable_fields__ = ("perfil_id", "trecho_base_s")
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     perfil_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("perfis.id"), nullable=False)
@@ -141,6 +194,9 @@ class Roteiro(_Versioned, AuditMixin, Base):
         server_default=RoteiroModo.revisar.value)
     portoes: Mapped[dict[str, bool]] = mapped_column(
         JSONB, nullable=False, default=lambda: dict(PORTOES_PADRAO))
+    acabamento_modo: Mapped[RoteiroAcabamento] = mapped_column(
+        Enum(RoteiroAcabamento, name="roteiro_acabamento"), nullable=False,
+        default=RoteiroAcabamento.leve, server_default=RoteiroAcabamento.leve.value)
     status: Mapped[RoteiroStatus] = mapped_column(
         Enum(RoteiroStatus, name="roteiro_status"), nullable=False,
         default=RoteiroStatus.rascunho, server_default=RoteiroStatus.rascunho.value)
@@ -160,6 +216,14 @@ class Roteiro(_Versioned, AuditMixin, Base):
     acabamento_geracao_id: Mapped[uuid.UUID | None] = mapped_column(Uuid,
                                                                     ForeignKey("geracoes.id"))
     conteudo_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("conteudos.id"))
+    # ---- spec 031: o vídeo guiado (nulos = roteiro da 011) ----
+    tipo_video: Mapped[RoteiroTipoVideo | None] = mapped_column(
+        Enum(RoteiroTipoVideo, name="roteiro_tipo_video"))
+    cenario_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("assets.id"))
+    duracao_alvo_s: Mapped[int | None] = mapped_column(SmallInteger)
+    trecho_base_s: Mapped[int | None] = mapped_column(SmallInteger)
+    conversa_estado: Mapped[ConversaEstado | None] = mapped_column(  # técnico, fora do snapshot
+        Enum(ConversaEstado, name="conversa_estado"))
 
     produtos_rel: Mapped[list["RoteiroProduto"]] = relationship(
         primaryjoin=lambda: Roteiro.id == RoteiroProduto.roteiro_id,
@@ -179,11 +243,29 @@ class Roteiro(_Versioned, AuditMixin, Base):
                 for p in sorted(self.produtos_rel, key=lambda p: p.ordem)]
 
     @property
+    def guiado(self) -> bool:
+        """Spec 031: o roteiro nasceu no "Novo vídeo" guiado (tem a grade)."""
+        return self.tipo_video is not None
+
+    @property
     def posicoes(self) -> list[dict[str, Any]]:
-        """As posições do snapshot (sem os campos técnicos derivados da narração)."""
-        return [{"ordem": c.ordem, "cena_id": c.cena_id, "frases": list(c.frases),
-                 "tomada_id": c.tomada_id}
-                for c in sorted(self.posicoes_rel, key=lambda c: c.ordem)]
+        """As posições do snapshot (sem os campos técnicos derivados da narração). As do guiado
+        levam também os trechos, o reuso, o motivo e a tomada de cada trecho; as da 011 ficam
+        iguais (byte a byte)."""
+        out = []
+        for c in sorted(self.posicoes_rel, key=lambda c: c.ordem):
+            item: dict[str, Any] = {"ordem": c.ordem, "cena_id": c.cena_id,
+                                    "frases": list(c.frases), "tomada_id": c.tomada_id}
+            if c.trechos is not None:
+                item["trechos"] = c.trechos
+                item["reuso"] = c.reuso.value if c.reuso else None
+                item["motivo"] = c.motivo
+                item["tomadas_trechos"] = [t.tomada_id for t in c.trechos_ordenados()]
+                # As aprovações humanas por posição (R9, FR-037: antes e depois no histórico).
+                item["aprovado_keyframes"] = c.aprovado_keyframes_em is not None
+                item["aprovado_clipe"] = c.aprovado_clipe_em is not None
+            out.append(item)
+        return out
 
 
 Index("ix_roteiros_perfil_lista", Roteiro.perfil_id, Roteiro.archived_at,
@@ -221,6 +303,73 @@ class RoteiroCena(Base):
     duracao_s: Mapped[Decimal | None] = mapped_column(Numeric(7, 3))
     tomada_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("cena_tomadas.id"))
     aviso: Mapped[str | None] = mapped_column(Text)  # técnico: um `PosicaoAviso`
+    # ---- spec 031: a posição do guiado (nulos na 011) ----
+    trechos: Mapped[int | None] = mapped_column(SmallInteger)  # 1 a 3; duração = trechos × base
+    reuso: Mapped[PosicaoReuso | None] = mapped_column(Enum(PosicaoReuso, name="posicao_reuso"))
+    motivo: Mapped[str | None] = mapped_column(Text)
+    # Técnicos (R9): zerados quando um quadro ou trecho da posição muda.
+    aprovado_keyframes_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    aprovado_keyframes_por: Mapped[uuid.UUID | None] = mapped_column(Uuid,
+                                                                     ForeignKey("users.id"))
+    aprovado_clipe_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    aprovado_clipe_por: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
+    orcamento_chars: Mapped[int | None] = mapped_column(SmallInteger)
+
+    trechos_rel: Mapped[list["RoteiroTrecho"]] = relationship(
+        primaryjoin=lambda: and_(RoteiroCena.roteiro_id == RoteiroTrecho.roteiro_id,
+                                 RoteiroCena.ordem == RoteiroTrecho.ordem),
+        foreign_keys=lambda: [RoteiroTrecho.roteiro_id, RoteiroTrecho.ordem],
+        order_by=lambda: RoteiroTrecho.trecho, lazy="selectin",
+        cascade="all, delete-orphan")
+
+    def trechos_ordenados(self) -> list["RoteiroTrecho"]:
+        return sorted(self.trechos_rel, key=lambda t: t.trecho)
+
+    def trecho(self, t: int) -> "RoteiroTrecho | None":
+        return next((x for x in self.trechos_rel if x.trecho == t), None)
+
+
+class RoteiroTrecho(Base):
+    """Spec 031 (R8): a tomada escolhida de cada trecho de uma posição do guiado (nula = a gerar).
+    Sem versão própria: entra no snapshot de `posicoes` do roteiro."""
+
+    __tablename__ = "roteiro_trechos"
+    __table_args__ = (
+        ForeignKeyConstraint(["roteiro_id", "ordem"],
+                             ["roteiro_cenas.roteiro_id", "roteiro_cenas.ordem"],
+                             name="fk_roteiro_trechos_posicao"),
+        CheckConstraint("trecho BETWEEN 0 AND 2", name="ck_roteiro_trechos_trecho"),
+    )
+
+    roteiro_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    ordem: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    trecho: Mapped[int] = mapped_column(SmallInteger, primary_key=True)
+    tomada_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("cena_tomadas.id"))
+
+
+class RoteiroConversa(Base):
+    """Spec 031: uma mensagem do chat do roteiro guiado. Só inserção (trigger
+    `roteiro_conversa_so_insercao`); fica fora da revogação da 025 (data-model)."""
+
+    __tablename__ = "roteiro_conversa"
+    __table_args__ = (
+        UniqueConstraint("roteiro_id", "seq", name="uq_roteiro_conversa_seq"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    roteiro_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("roteiros.id"),
+                                                  nullable=False)
+    seq: Mapped[int] = mapped_column(Integer, nullable=False)
+    tipo: Mapped[ConversaTipo] = mapped_column(Enum(ConversaTipo, name="conversa_tipo"),
+                                               nullable=False)
+    pergunta_id: Mapped[str | None] = mapped_column(Text)
+    conteudo: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    alvo: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    ia_chamada_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("ia_chamadas.id"))
+    autor_tipo: Mapped[str] = mapped_column(Text, nullable=False)  # "user" | "system:roteiro"
+    autor_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now())
 
 
 class RoteiroNarracao(Base):

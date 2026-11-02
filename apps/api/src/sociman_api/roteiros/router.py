@@ -20,7 +20,7 @@ from sociman_api.perfis.base import SEM
 from sociman_api.perfis.schemas import VersionsList
 from sociman_api.perfis.service_imagens import read_limited
 from sociman_api.roteiros import aplicadores as _aplicadores  # noqa: F401 — registra os passos
-from sociman_api.roteiros import schemas
+from sociman_api.roteiros import conversa, guiado, schemas
 from sociman_api.roteiros import service as svc
 from sociman_api.roteiros import service_pronuncias as pron
 from sociman_api.roteiros.models import RoteiroStatus
@@ -53,6 +53,46 @@ def listar_agencia(
         return schemas.RoteirosPagina(itens=[], proximo=None)
     return svc.listar(db, f, status=status, produto_id=produto_id, arquivados=archived, q=q,
                       cursor=cursor, limite=limit)
+
+
+# ---- spec 031: o "Novo vídeo" guiado e o chat ----
+
+@router.get("/roteiros/grade", operation_id="roteiros_grade", response_model=schemas.GradeOut,
+            responses=_errors(401, 403))
+def grade(actor: RequireUser) -> schemas.GradeOut:
+    """As durações que valem para um vídeo novo (múltiplos do trecho-base, R1)."""
+    return guiado.grade_out()
+
+
+@router.post("/roteiros", operation_id="roteiros_criar_guiado", status_code=201,
+             response_model=schemas.RoteiroDetalhe,
+             responses=_errors(400, 401, 403, 409, 422, 503))
+def criar_guiado(body: schemas.RoteiroGuiadoIn, actor: RequireHuman,
+                 db: Db) -> schemas.RoteiroDetalhe:
+    """O "Novo vídeo" em blocos: cria o rascunho e já pede as perguntas do chat."""
+    return svc.detalhe_out(db, guiado.criar_guiado(db, actor, body))
+
+
+@router.get("/roteiros/{roteiro_id}/conversa", operation_id="roteiros_conversa",
+            response_model=schemas.ConversaOut, responses=_errors(401, 403, 404))
+def ver_conversa(roteiro_id: UUID, actor: RequireUser, db: Db) -> schemas.ConversaOut:
+    return conversa.conversa_out(db, svc.get_or_404(db, roteiro_id))
+
+
+@router.post("/roteiros/{roteiro_id}/conversa/respostas", operation_id="roteiros_responder",
+             response_model=schemas.ConversaOut, responses=_errors(400, 401, 403, 404, 409, 422))
+def responder(roteiro_id: UUID, body: schemas.ResponderIn, actor: RequireHuman,
+              db: Db) -> schemas.ConversaOut:
+    return conversa.conversa_out(db, conversa.responder(db, actor, roteiro_id, body))
+
+
+@router.post("/roteiros/{roteiro_id}/conversa/refazer-perguntas",
+             operation_id="roteiros_refazer_perguntas", response_model=schemas.ConversaOut,
+             responses=_errors(400, 401, 403, 404, 409, 503))
+def refazer_perguntas(roteiro_id: UUID, body: schemas.RoteiroVersionIn, actor: RequireHuman,
+                      db: Db) -> schemas.ConversaOut:
+    return conversa.conversa_out(db, conversa.refazer_perguntas(db, actor, roteiro_id,
+                                                                body.version))
 
 
 # ---- um roteiro ----
@@ -167,6 +207,46 @@ def regerar_clipe(roteiro_id: UUID, ordem: int, body: schemas.RegerarClipeIn,
 def escolher_tomada(roteiro_id: UUID, ordem: int, body: schemas.EscolherTomadaIn,
                     actor: RequireHuman, db: Db) -> schemas.RoteiroDetalhe:
     return svc.detalhe_out(db, svc.escolher_tomada(db, actor, roteiro_id, ordem, body))
+
+
+# ---- spec 031: o wizard (aprovar por posição e "Não aprovo") ----
+
+@router.post("/roteiros/{roteiro_id}/recusar", operation_id="roteiros_recusar",
+             response_model=schemas.RoteiroDetalhe,
+             responses=_errors(400, 401, 403, 404, 409, 422, 503))
+def recusar(roteiro_id: UUID, body: schemas.RecusarIn, actor: RequireHuman,
+            db: Db) -> schemas.RoteiroDetalhe:
+    """O "Não aprovo": o pedido de troca vai para o chat e a IA o transforma num ajuste só do
+    item (ou pergunta antes, quando é ambíguo)."""
+    return svc.detalhe_out(db, guiado.recusar(db, actor, roteiro_id, body))
+
+
+@router.post("/roteiros/{roteiro_id}/posicoes/{ordem}/aprovar",
+             operation_id="roteiros_aprovar_posicao", response_model=schemas.RoteiroDetalhe,
+             responses=_errors(400, 401, 403, 404, 409))
+def aprovar_posicao(roteiro_id: UUID, ordem: int, body: schemas.AprovarPosicaoIn,
+                    actor: RequireHuman, db: Db) -> schemas.RoteiroDetalhe:
+    """Aprova a sequência de quadros (ou os trechos) da posição; com todas aprovadas, o portão
+    passa."""
+    return svc.detalhe_out(db, guiado.aprovar_posicao(db, actor, roteiro_id, ordem, body))
+
+
+@router.put("/roteiros/{roteiro_id}/posicoes/{ordem}/cena", operation_id="roteiros_definir_cena",
+            response_model=schemas.RoteiroDetalhe,
+            responses=_errors(400, 401, 403, 404, 409, 422, 503))
+def definir_cena(roteiro_id: UUID, ordem: int, body: schemas.DefinirCenaIn,
+                 actor: RequireHuman, db: Db) -> schemas.RoteiroDetalhe:
+    """O modal de cenas: o reuso total ou do plano de uma cena da biblioteca, ou uma cena nova
+    pedida à IA para a posição."""
+    return svc.detalhe_out(db, guiado.definir_cena(db, actor, roteiro_id, ordem, body))
+
+
+@router.get("/roteiros/{roteiro_id}/posicoes/{ordem}/quadros", operation_id="roteiros_quadros",
+            response_model=list[schemas.QuadroResumo], responses=_errors(401, 403, 404))
+def quadros(roteiro_id: UUID, ordem: int, actor: RequireUser,
+            db: Db) -> list[schemas.QuadroResumo]:
+    """Os quadros ativos da cena da posição (esconder a instrução no wizard é regra da tela)."""
+    return guiado.quadros_da_posicao(db, roteiro_id, ordem)
 
 
 # ---- uma pronúncia ----

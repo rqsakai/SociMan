@@ -125,6 +125,10 @@ class Settings(BaseSettings):
     agendador_geracao_limpeza_s: float = Field(3600, gt=0)
     # Spec 011 (R14): posições por roteiro (ao salvar e ao aplicar o plano da IA).
     roteiro_max_cenas: int = Field(8, ge=1, le=20)
+    # Spec 031 (R1): grade de duração do vídeo guiado (trecho-base em segundos e o máximo de
+    # múltiplos). O roteiro guarda a cópia da base ao nascer; mudar aqui não mexe nos existentes.
+    roteiro_trecho_base_s: int = Field(5, ge=3, le=10)
+    roteiro_grade_max: int = Field(6, ge=1, le=12)
 
     # Coleta de mercado (spec 026, princípio IX): o nível do servidor do interruptor (o outro é
     # o botão da tela), a trilha `mercado`, o pepper do hash dos autores de avaliação (segredo

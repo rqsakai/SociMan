@@ -1625,6 +1625,67 @@
         "title": "AlvoGeracao",
         "type": "object"
       },
+      "AlvoRecusa": {
+        "additionalProperties": false,
+        "description": "Spec 031 (R6): o item recusado no wizard. `ordem` é a posição (0-based); `quadro` e\n`trecho` dizem de onde refazer.",
+        "properties": {
+          "ordem": {
+            "anyOf": [
+              {
+                "maximum": 19.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ordem"
+          },
+          "quadro": {
+            "anyOf": [
+              {
+                "maximum": 3.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadro"
+          },
+          "tipo": {
+            "enum": [
+              "narracao",
+              "quadros",
+              "trecho",
+              "posicao",
+              "final"
+            ],
+            "title": "Tipo",
+            "type": "string"
+          },
+          "trecho": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trecho"
+          }
+        },
+        "required": [
+          "tipo"
+        ],
+        "title": "AlvoRecusa",
+        "type": "object"
+      },
       "AlvoRef": {
         "properties": {
           "arquivado": {
@@ -4833,6 +4894,21 @@
       "AprovarIn": {
         "additionalProperties": false,
         "properties": {
+          "acabamentoModo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "leve",
+                  "hd"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acabamentomodo"
+          },
           "portao": {
             "enum": [
               "texto",
@@ -4855,6 +4931,31 @@
           "portao"
         ],
         "title": "AprovarIn",
+        "type": "object"
+      },
+      "AprovarPosicaoIn": {
+        "additionalProperties": false,
+        "description": "Spec 031 (R9): aprovar a sequência de quadros (ou os trechos) de uma posição.",
+        "properties": {
+          "etapa": {
+            "enum": [
+              "keyframes",
+              "clipe"
+            ],
+            "title": "Etapa",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "etapa"
+        ],
+        "title": "AprovarPosicaoIn",
         "type": "object"
       },
       "Armazenamento": {
@@ -5167,6 +5268,22 @@
             },
             "title": "Tags",
             "type": "array"
+          },
+          "temCena": {
+            "default": false,
+            "title": "Temcena",
+            "type": "boolean"
+          },
+          "thumbUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumburl"
           },
           "tipo": {
             "$ref": "#/components/schemas/AssetTipo"
@@ -5869,12 +5986,33 @@
             ],
             "title": "Perfilnome"
           },
+          "revogado": {
+            "default": false,
+            "title": "Revogado",
+            "type": "boolean"
+          },
           "tags": {
             "items": {
               "type": "string"
             },
             "title": "Tags",
             "type": "array"
+          },
+          "temCena": {
+            "default": false,
+            "title": "Temcena",
+            "type": "boolean"
+          },
+          "thumbUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumburl"
           },
           "tipo": {
             "$ref": "#/components/schemas/AssetTipo"
@@ -5887,6 +6025,18 @@
           "version": {
             "title": "Version",
             "type": "integer"
+          },
+          "vozId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vozid"
           }
         },
         "required": [
@@ -6158,6 +6308,44 @@
           "nome"
         ],
         "title": "Autor",
+        "type": "object"
+      },
+      "AutorConversa": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "tipo": {
+            "title": "Tipo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tipo",
+          "id",
+          "nome"
+        ],
+        "title": "AutorConversa",
         "type": "object"
       },
       "AvaliacaoOut": {
@@ -14129,6 +14317,21 @@
       "ControleIn": {
         "additionalProperties": false,
         "properties": {
+          "acabamentoModo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "leve",
+                  "hd"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acabamentomodo"
+          },
           "modo": {
             "$ref": "#/components/schemas/RoteiroModo"
           },
@@ -14148,6 +14351,107 @@
         ],
         "title": "ControleIn",
         "type": "object"
+      },
+      "ConversaEstado": {
+        "enum": [
+          "sem_perguntas",
+          "perguntando",
+          "respondida"
+        ],
+        "title": "ConversaEstado",
+        "type": "string"
+      },
+      "ConversaOut": {
+        "description": "Spec 031: o chat do roteiro guiado. `perguntaAtual` = a primeira sem resposta da rodada;\n`erro` = a IA não respondeu (o \"tentar de novo\" é o refazer-perguntas).",
+        "properties": {
+          "erro": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErroRoteiro"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "estado": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConversaEstado"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "geracaoAberta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GeracaoAberta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mensagens": {
+            "items": {
+              "$ref": "#/components/schemas/MensagemConversa"
+            },
+            "title": "Mensagens",
+            "type": "array"
+          },
+          "perguntaAtual": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PerguntaConversa"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "respondidas": {
+            "title": "Respondidas",
+            "type": "integer"
+          },
+          "rodada": {
+            "title": "Rodada",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "estado",
+          "rodada",
+          "mensagens",
+          "perguntaAtual",
+          "respondidas",
+          "total",
+          "geracaoAberta",
+          "erro",
+          "version"
+        ],
+        "title": "ConversaOut",
+        "type": "object"
+      },
+      "ConversaTipo": {
+        "enum": [
+          "pergunta",
+          "resposta",
+          "pedido_troca",
+          "esclarecimento",
+          "aviso"
+        ],
+        "title": "ConversaTipo",
+        "type": "string"
       },
       "Cor": {
         "additionalProperties": false,
@@ -15225,6 +15529,49 @@
           "distribuicao"
         ],
         "title": "CurvasOut",
+        "type": "object"
+      },
+      "DefinirCenaIn": {
+        "additionalProperties": false,
+        "description": "Spec 031 (FR-019/021, R7): a decisão do modal de cenas para uma posição. `total` e `plano`\npedem a `cenaId` (da biblioteca); `nova` pede à IA a cena daquela posição. Depois do texto,\nsó no modo avançado (`avancado: true`).",
+        "properties": {
+          "avancado": {
+            "default": false,
+            "title": "Avancado",
+            "type": "boolean"
+          },
+          "cenaId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenaid"
+          },
+          "reuso": {
+            "enum": [
+              "total",
+              "plano",
+              "nova"
+            ],
+            "title": "Reuso",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "reuso"
+        ],
+        "title": "DefinirCenaIn",
         "type": "object"
       },
       "DesaprovarTodasIn": {
@@ -17076,6 +17423,19 @@
             "format": "uuid",
             "title": "Tomadaid",
             "type": "string"
+          },
+          "trecho": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trecho"
           },
           "version": {
             "minimum": 1.0,
@@ -20536,7 +20896,10 @@
               "aprendizado.analise",
               "produto.ficha",
               "avatar.identidade",
-              "roteiro.plano"
+              "roteiro.plano",
+              "roteiro.perguntas",
+              "roteiro.ajuste",
+              "roteiro.plano_guiado"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -20551,6 +20914,33 @@
           "sessaoId"
         ],
         "title": "GerarIn",
+        "type": "object"
+      },
+      "GradeOut": {
+        "description": "Spec 031 (R1): a grade de duração que vale para um vídeo novo.",
+        "properties": {
+          "maxTrechosPorCena": {
+            "title": "Maxtrechosporcena",
+            "type": "integer"
+          },
+          "opcoes": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Opcoes",
+            "type": "array"
+          },
+          "trechoBaseS": {
+            "title": "Trechobases",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "trechoBaseS",
+          "opcoes",
+          "maxTrechosPorCena"
+        ],
+        "title": "GradeOut",
         "type": "object"
       },
       "Guia": {
@@ -21059,7 +21449,10 @@
               "aprendizado.analise",
               "produto.ficha",
               "avatar.identidade",
-              "roteiro.plano"
+              "roteiro.plano",
+              "roteiro.perguntas",
+              "roteiro.ajuste",
+              "roteiro.plano_guiado"
             ],
             "title": "Tipocampo",
             "type": "string"
@@ -24856,6 +25249,70 @@
         "title": "Medida",
         "type": "object"
       },
+      "MensagemConversa": {
+        "properties": {
+          "alvo": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alvo"
+          },
+          "autor": {
+            "$ref": "#/components/schemas/AutorConversa"
+          },
+          "conteudo": {
+            "additionalProperties": true,
+            "title": "Conteudo",
+            "type": "object"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "perguntaId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Perguntaid"
+          },
+          "seq": {
+            "title": "Seq",
+            "type": "integer"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/ConversaTipo"
+          }
+        },
+        "required": [
+          "id",
+          "seq",
+          "tipo",
+          "perguntaId",
+          "conteudo",
+          "alvo",
+          "autor",
+          "createdAt"
+        ],
+        "title": "MensagemConversa",
+        "type": "object"
+      },
       "MercadoLinkOut": {
         "properties": {
           "expiresAt": {
@@ -25570,6 +26027,24 @@
           }
         },
         "title": "Ok",
+        "type": "object"
+      },
+      "OpcaoConversa": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "rotulo": {
+            "title": "Rotulo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "rotulo"
+        ],
+        "title": "OpcaoConversa",
         "type": "object"
       },
       "OpcoesTikTok": {
@@ -26900,6 +27375,50 @@
         "title": "PerfisList",
         "type": "object"
       },
+      "PerguntaConversa": {
+        "properties": {
+          "exemplos": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Exemplos",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "multipla": {
+            "title": "Multipla",
+            "type": "boolean"
+          },
+          "opcoes": {
+            "items": {
+              "$ref": "#/components/schemas/OpcaoConversa"
+            },
+            "title": "Opcoes",
+            "type": "array"
+          },
+          "rodada": {
+            "title": "Rodada",
+            "type": "integer"
+          },
+          "texto": {
+            "title": "Texto",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "texto",
+          "multipla",
+          "rodada",
+          "opcoes",
+          "exemplos"
+        ],
+        "title": "PerguntaConversa",
+        "type": "object"
+      },
       "PeriodoPrevia": {
         "properties": {
           "anoOrigem": {
@@ -27081,6 +27600,19 @@
               }
             ],
             "title": "Tomadaid"
+          },
+          "trechos": {
+            "anyOf": [
+              {
+                "maximum": 3.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trechos"
           }
         },
         "required": [
@@ -27092,6 +27624,30 @@
       },
       "PosicaoOut": {
         "properties": {
+          "aprovadoClipeEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprovadoclipeem"
+          },
+          "aprovadoKeyframesEm": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aprovadokeyframesem"
+          },
           "aviso": {
             "anyOf": [
               {
@@ -27142,13 +27698,52 @@
             ],
             "title": "Inicios"
           },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "orcamentoChars": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Orcamentochars"
+          },
           "ordem": {
             "title": "Ordem",
             "type": "integer"
           },
+          "quadros": {
+            "items": {
+              "$ref": "#/components/schemas/QuadroResumo"
+            },
+            "title": "Quadros",
+            "type": "array"
+          },
           "reaproveitada": {
             "title": "Reaproveitada",
             "type": "boolean"
+          },
+          "reuso": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PosicaoReuso"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "tomada": {
             "anyOf": [
@@ -27159,6 +27754,24 @@
                 "type": "null"
               }
             ]
+          },
+          "tomadasTrechos": {
+            "items": {
+              "$ref": "#/components/schemas/TomadaTrecho"
+            },
+            "title": "Tomadastrechos",
+            "type": "array"
+          },
+          "trechos": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trechos"
           }
         },
         "required": [
@@ -27300,6 +27913,16 @@
         ],
         "title": "PosicaoRankingItem",
         "type": "object"
+      },
+      "PosicaoReuso": {
+        "description": "A decisão do modal de cenas (FR-019): a cena como está, só o plano dela ou uma nova.",
+        "enum": [
+          "total",
+          "plano",
+          "nova"
+        ],
+        "title": "PosicaoReuso",
+        "type": "string"
       },
       "PostResumo": {
         "description": "Um post analisado, resumido para listas (principais, alertas).",
@@ -29867,6 +30490,83 @@
         "title": "Pulado",
         "type": "object"
       },
+      "QuadroPapel": {
+        "description": "Spec 031: o papel do quadro na sequência da cena (derivado da ordem e do total).",
+        "enum": [
+          "inicio",
+          "meio1",
+          "meio2",
+          "fim"
+        ],
+        "title": "QuadroPapel",
+        "type": "string"
+      },
+      "QuadroResumo": {
+        "description": "Spec 031: um quadro da sequência da cena (o texto da instrução fica fora do wizard por\nregra da tela, FR-015).",
+        "properties": {
+          "geracaoId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Geracaoid"
+          },
+          "imageId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imageid"
+          },
+          "imageUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imageurl"
+          },
+          "instrucao": {
+            "title": "Instrucao",
+            "type": "string"
+          },
+          "ordem": {
+            "title": "Ordem",
+            "type": "integer"
+          },
+          "papel": {
+            "$ref": "#/components/schemas/QuadroPapel"
+          },
+          "provisorio": {
+            "title": "Provisorio",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ordem",
+          "papel",
+          "imageId",
+          "imageUrl",
+          "provisorio",
+          "geracaoId",
+          "instrucao"
+        ],
+        "title": "QuadroResumo",
+        "type": "object"
+      },
       "QuandoPostarOut": {
         "properties": {
           "atividadeSeguidores": {
@@ -30218,27 +30918,6 @@
         "title": "Recusa",
         "type": "object"
       },
-      "RecusarIn": {
-        "properties": {
-          "motivo": {
-            "maxLength": 500,
-            "minLength": 1,
-            "title": "Motivo",
-            "type": "string"
-          },
-          "version": {
-            "minimum": 1.0,
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "version",
-          "motivo"
-        ],
-        "title": "RecusarIn",
-        "type": "object"
-      },
       "RegerarClipeIn": {
         "additionalProperties": false,
         "properties": {
@@ -30251,6 +30930,32 @@
                 "type": "null"
               }
             ]
+          },
+          "nOpcoes": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nopcoes"
+          },
+          "trecho": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trecho"
           },
           "version": {
             "minimum": 1.0,
@@ -30278,6 +30983,32 @@
               }
             ],
             "title": "Instrucao"
+          },
+          "nOpcoes": {
+            "anyOf": [
+              {
+                "maximum": 4.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nopcoes"
+          },
+          "quadro": {
+            "anyOf": [
+              {
+                "maximum": 3.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quadro"
           },
           "referencias": {
             "anyOf": [
@@ -30483,6 +31214,51 @@
           "existente"
         ],
         "title": "ResolverOut",
+        "type": "object"
+      },
+      "ResponderIn": {
+        "additionalProperties": false,
+        "description": "Spec 031: a resposta a uma pergunta do chat (só cliques, ou com o texto curto).",
+        "properties": {
+          "opcoes": {
+            "items": {
+              "maxLength": 40,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Opcoes",
+            "type": "array"
+          },
+          "perguntaId": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Perguntaid",
+            "type": "string"
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "perguntaId"
+        ],
+        "title": "ResponderIn",
         "type": "object"
       },
       "ResultadoItem": {
@@ -30979,6 +31755,14 @@
               }
             ]
           },
+          "acabamentoModo": {
+            "enum": [
+              "leve",
+              "hd"
+            ],
+            "title": "Acabamentomodo",
+            "type": "string"
+          },
           "arquivado": {
             "title": "Arquivado",
             "type": "boolean"
@@ -31004,6 +31788,18 @@
             "title": "Brief",
             "type": "string"
           },
+          "cenarioId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cenarioid"
+          },
           "conteudoId": {
             "anyOf": [
               {
@@ -31016,10 +31812,31 @@
             ],
             "title": "Conteudoid"
           },
+          "conversaEstado": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConversaEstado"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "format": "date-time",
             "title": "Createdat",
             "type": "string"
+          },
+          "duracaoAlvoS": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaoalvos"
           },
           "erro": {
             "anyOf": [
@@ -31134,6 +31951,27 @@
           "status": {
             "$ref": "#/components/schemas/RoteiroStatus"
           },
+          "tipoVideo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoteiroTipoVideo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "trechoBaseS": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trechobases"
+          },
           "updatedAt": {
             "format": "date-time",
             "title": "Updatedat",
@@ -31181,6 +32019,7 @@
           "narracoesAnteriores",
           "previa",
           "acabamento",
+          "acabamentoModo",
           "conteudoId",
           "geracoesAbertas",
           "maxCenas",
@@ -31251,6 +32090,104 @@
         ],
         "title": "RoteiroFormato",
         "type": "string"
+      },
+      "RoteiroGuiadoIn": {
+        "additionalProperties": false,
+        "description": "Spec 031: o \"Novo vídeo\" guiado (os 6 blocos). Sem `vozId`, vale a voz padrão do avatar;\nsem `varianteId`, a primeira variante ativa com recorte; sem `nome`, \"<produto> – dd/mm\".",
+        "properties": {
+          "acabamentoModo": {
+            "anyOf": [
+              {
+                "enum": [
+                  "leve",
+                  "hd"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acabamentomodo"
+          },
+          "avatarId": {
+            "format": "uuid",
+            "title": "Avatarid",
+            "type": "string"
+          },
+          "cenarioId": {
+            "format": "uuid",
+            "title": "Cenarioid",
+            "type": "string"
+          },
+          "duracaoS": {
+            "maximum": 600.0,
+            "minimum": 1.0,
+            "title": "Duracaos",
+            "type": "integer"
+          },
+          "nome": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "pattern": "^[^\\r\\n]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "perfilId": {
+            "format": "uuid",
+            "title": "Perfilid",
+            "type": "string"
+          },
+          "produtoId": {
+            "format": "uuid",
+            "title": "Produtoid",
+            "type": "string"
+          },
+          "tipoVideo": {
+            "$ref": "#/components/schemas/RoteiroTipoVideo",
+            "default": "avatar_pov"
+          },
+          "varianteId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Varianteid"
+          },
+          "vozId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vozid"
+          }
+        },
+        "required": [
+          "perfilId",
+          "avatarId",
+          "cenarioId",
+          "produtoId",
+          "duracaoS"
+        ],
+        "title": "RoteiroGuiadoIn",
+        "type": "object"
       },
       "RoteiroIn": {
         "additionalProperties": false,
@@ -31394,6 +32331,19 @@
               }
             ],
             "title": "Brief"
+          },
+          "duracaoS": {
+            "anyOf": [
+              {
+                "maximum": 600.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duracaos"
           },
           "frases": {
             "anyOf": [
@@ -31618,6 +32568,14 @@
           "falhou"
         ],
         "title": "RoteiroStatus",
+        "type": "string"
+      },
+      "RoteiroTipoVideo": {
+        "description": "Spec 031: o tipo do vídeo guiado (nulo = roteiro da 011).",
+        "enum": [
+          "avatar_pov"
+        ],
+        "title": "RoteiroTipoVideo",
         "type": "string"
       },
       "RoteiroVersionIn": {
@@ -33432,7 +34390,10 @@
               "analise",
               "ficha_produto",
               "identidade",
-              "plano_roteiro"
+              "plano_roteiro",
+              "perguntas_roteiro",
+              "ajuste_roteiro",
+              "plano_roteiro_v2"
             ],
             "title": "Formato",
             "type": "string"
@@ -33464,7 +34425,10 @@
               "aprendizado.analise",
               "produto.ficha",
               "avatar.identidade",
-              "roteiro.plano"
+              "roteiro.plano",
+              "roteiro.perguntas",
+              "roteiro.ajuste",
+              "roteiro.plano_guiado"
             ],
             "title": "Id",
             "type": "string"
@@ -33822,6 +34786,30 @@
           "limpa"
         ],
         "title": "TomadaRoteiro",
+        "type": "object"
+      },
+      "TomadaTrecho": {
+        "properties": {
+          "tomada": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TomadaRoteiro"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "trecho": {
+            "title": "Trecho",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "trecho",
+          "tomada"
+        ],
+        "title": "TomadaTrecho",
         "type": "object"
       },
       "TomadasList": {
@@ -37511,6 +38499,70 @@
           "version"
         ],
         "title": "VersionIn",
+        "type": "object"
+      },
+      "sociman_api__postagem__schemas__RecusarIn": {
+        "properties": {
+          "motivo": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Motivo",
+            "type": "string"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "motivo"
+        ],
+        "title": "RecusarIn",
+        "type": "object"
+      },
+      "sociman_api__roteiros__schemas__RecusarIn": {
+        "additionalProperties": false,
+        "description": "Spec 031: o \"Não aprovo\": as opções de troca clicadas e/ou o texto curto.",
+        "properties": {
+          "alvo": {
+            "$ref": "#/components/schemas/AlvoRecusa"
+          },
+          "opcoes": {
+            "items": {
+              "maxLength": 80,
+              "minLength": 1,
+              "pattern": "^[^\\r\\n]*$",
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Opcoes",
+            "type": "array"
+          },
+          "texto": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Texto"
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "alvo"
+        ],
+        "title": "RecusarIn",
         "type": "object"
       }
     }
@@ -54667,7 +55719,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RecusarIn"
+                "$ref": "#/components/schemas/sociman_api__postagem__schemas__RecusarIn"
               }
             }
           },
@@ -71773,6 +72825,8 @@
         "summary": "Listar"
       },
       "post": {
+        "deprecated": true,
+        "description": "Deprecated (spec 031, FR-018): a SPA cria pelo `POST /api/roteiros` (o guiado); fica para\no MCP e os testes da 011.",
         "operationId": "roteiros_criar",
         "parameters": [
           {
@@ -74519,6 +75573,122 @@
           }
         },
         "summary": "Listar Agencia"
+      },
+      "post": {
+        "description": "O \"Novo vídeo\" em blocos: cria o rascunho e já pede as perguntas do chat.",
+        "operationId": "roteiros_criar_guiado",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroGuiadoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Criar Guiado"
+      }
+    },
+    "/api/roteiros/grade": {
+      "get": {
+        "description": "As durações que valem para um vídeo novo (múltiplos do trecho-base, R1).",
+        "operationId": "roteiros_grade",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GradeOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          }
+        },
+        "summary": "Grade"
       }
     },
     "/api/roteiros/{roteiro_id}": {
@@ -74949,6 +76119,266 @@
         "summary": "Controle"
       }
     },
+    "/api/roteiros/{roteiro_id}/conversa": {
+      "get": {
+        "operationId": "roteiros_conversa",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Ver Conversa"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/conversa/refazer-perguntas": {
+      "post": {
+        "operationId": "roteiros_refazer_perguntas",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoteiroVersionIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Refazer Perguntas"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/conversa/respostas": {
+      "post": {
+        "operationId": "roteiros_responder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponderIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversaOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Responder"
+      }
+    },
     "/api/roteiros/{roteiro_id}/planejar": {
       "post": {
         "operationId": "roteiros_planejar",
@@ -75047,6 +76477,216 @@
           }
         },
         "summary": "Planejar"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/aprovar": {
+      "post": {
+        "description": "Aprova a sequência de quadros (ou os trechos) da posição; com todas aprovadas, o portão\npassa.",
+        "operationId": "roteiros_aprovar_posicao",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ordem",
+            "required": true,
+            "schema": {
+              "title": "Ordem",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AprovarPosicaoIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Aprovar Posicao"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/cena": {
+      "put": {
+        "description": "O modal de cenas: o reuso total ou do plano de uma cena da biblioteca, ou uma cena nova\npedida à IA para a posição.",
+        "operationId": "roteiros_definir_cena",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ordem",
+            "required": true,
+            "schema": {
+              "title": "Ordem",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefinirCenaIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Definir Cena"
       }
     },
     "/api/roteiros/{roteiro_id}/posicoes/{ordem}/clipe/regerar": {
@@ -75396,6 +77036,90 @@
         "summary": "Regerar Keyframe"
       }
     },
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/quadros": {
+      "get": {
+        "description": "Os quadros ativos da cena da posição (esconder a instrução no wizard é regra da tela).",
+        "operationId": "roteiros_quadros",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "ordem",
+            "required": true,
+            "schema": {
+              "title": "Ordem",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/QuadroResumo"
+                  },
+                  "title": "Response Roteiros Quadros",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Dados inválidos (validation_error)"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          }
+        },
+        "summary": "Quadros"
+      }
+    },
     "/api/roteiros/{roteiro_id}/posicoes/{ordem}/tomada": {
       "put": {
         "operationId": "roteiros_escolher_tomada",
@@ -75493,6 +77217,107 @@
           }
         },
         "summary": "Escolher Tomada"
+      }
+    },
+    "/api/roteiros/{roteiro_id}/recusar": {
+      "post": {
+        "description": "O \"Não aprovo\": o pedido de troca vai para o chat e a IA o transforma num ajuste só do\nitem (ou pergunta antes, quando é ambíguo).",
+        "operationId": "roteiros_recusar",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "roteiro_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Roteiro Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sociman_api__roteiros__schemas__RecusarIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoteiroDetalhe"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Recusar"
       }
     },
     "/api/roteiros/{roteiro_id}/restaurar": {

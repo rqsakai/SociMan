@@ -425,6 +425,21 @@ export type RoteiroPortao = components["schemas"]["AprovarIn"]["portao"];
 export type CenaMotor = components["schemas"]["CenaMotor"];
 export type Pronuncia = components["schemas"]["Pronuncia"];
 export type RoteiroAgenciaFilters = NonNullable<paths["/api/roteiros"]["get"]["parameters"]["query"]>;
+// 031-video-guiado
+export type RoteiroGuiadoRequest = components["schemas"]["RoteiroGuiadoIn"];
+export type RoteiroTipoVideo = components["schemas"]["RoteiroTipoVideo"];
+export type RoteiroGrade = components["schemas"]["GradeOut"];
+export type RoteiroConversa = components["schemas"]["ConversaOut"];
+export type RoteiroConversaEstado = components["schemas"]["ConversaEstado"];
+export type RoteiroMensagem = components["schemas"]["MensagemConversa"];
+export type RoteiroPergunta = components["schemas"]["PerguntaConversa"];
+export type RoteiroResponderRequest = components["schemas"]["ResponderIn"];
+export type RoteiroQuadro = components["schemas"]["QuadroResumo"];
+export type RoteiroQuadroPapel = components["schemas"]["QuadroPapel"];
+export type RoteiroAlvoRecusa = components["schemas"]["AlvoRecusa"];
+export type RoteiroRecusarRequest = components["schemas"]["sociman_api__roteiros__schemas__RecusarIn"];
+export type RoteiroTomadaTrecho = components["schemas"]["TomadaTrecho"];
+export type RoteiroPosicaoReuso = components["schemas"]["PosicaoReuso"];
 export type SecurityEventFilters = NonNullable<
   paths["/api/security-events"]["get"]["parameters"]["query"]
 >;
@@ -1519,14 +1534,33 @@ export function createApiClient(options: ApiClientOptions = {}) {
       listarAgencia: (query: RoteiroAgenciaFilters = {}) => unwrap(client.GET("/api/roteiros", { params: { query } })),
       criar: (perfilId: string, body: RoteiroCreateRequest) =>
         unwrap(client.POST("/api/perfis/{perfil_id}/roteiros", { params: { path: { perfil_id: perfilId } }, body })),
+      // 031: o "Novo vídeo" guiado (os 6 blocos), a grade de duração e o chat de perguntas fechadas.
+      criarGuiado: (body: RoteiroGuiadoRequest) => unwrap(client.POST("/api/roteiros", { body })),
+      grade: () => unwrap(client.GET("/api/roteiros/grade")),
+      conversa: (roteiroId: string) =>
+        unwrap(client.GET("/api/roteiros/{roteiro_id}/conversa", { params: { path: { roteiro_id: roteiroId } } })),
+      responder: (roteiroId: string, body: RoteiroResponderRequest) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/conversa/respostas", { params: { path: { roteiro_id: roteiroId } }, body })),
+      refazerPerguntas: (roteiroId: string, version: number) =>
+        unwrap(
+          client.POST("/api/roteiros/{roteiro_id}/conversa/refazer-perguntas", { params: { path: { roteiro_id: roteiroId } }, body: { version } }),
+        ),
+      // 031 (US3): o "Não aprovo" do wizard (vira ajuste pela IA), aprovar a sequência de quadros ou os
+      // trechos de uma posição e os quadros de uma posição.
+      recusar: (roteiroId: string, body: RoteiroRecusarRequest) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/recusar", { params: { path: { roteiro_id: roteiroId } }, body })),
+      aprovarPosicao: (roteiroId: string, ordem: number, body: { etapa: "keyframes" | "clipe"; version: number }) =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/posicoes/{ordem}/aprovar", { params: { path: { roteiro_id: roteiroId, ordem } }, body })),
+      quadros: (roteiroId: string, ordem: number) =>
+        unwrap(client.GET("/api/roteiros/{roteiro_id}/posicoes/{ordem}/quadros", { params: { path: { roteiro_id: roteiroId, ordem } } })),
       detalhe: (roteiroId: string) => unwrap(client.GET("/api/roteiros/{roteiro_id}", { params: { path: { roteiro_id: roteiroId } } })),
       editar: (roteiroId: string, body: RoteiroPatchRequest) =>
         unwrap(client.PATCH("/api/roteiros/{roteiro_id}", { params: { path: { roteiro_id: roteiroId } }, body })),
       planejar: (roteiroId: string, version: number) =>
         unwrap(client.POST("/api/roteiros/{roteiro_id}/planejar", { params: { path: { roteiro_id: roteiroId } }, body: { version } })),
-      aprovar: (roteiroId: string, version: number, portao: RoteiroPortao) =>
-        unwrap(client.POST("/api/roteiros/{roteiro_id}/aprovar", { params: { path: { roteiro_id: roteiroId } }, body: { version, portao } })),
-      controle: (roteiroId: string, body: { version: number; modo: RoteiroModo; portoes: RoteiroPortoes }) =>
+      aprovar: (roteiroId: string, version: number, portao: RoteiroPortao, acabamentoModo?: "leve" | "hd") =>
+        unwrap(client.POST("/api/roteiros/{roteiro_id}/aprovar", { params: { path: { roteiro_id: roteiroId } }, body: { version, portao, acabamentoModo: acabamentoModo ?? null } })),
+      controle: (roteiroId: string, body: { version: number; modo: RoteiroModo; portoes: RoteiroPortoes; acabamentoModo?: "leve" | "hd" | null }) =>
         unwrap(client.PUT("/api/roteiros/{roteiro_id}/controle", { params: { path: { roteiro_id: roteiroId } }, body })),
       tentarDeNovo: (roteiroId: string, version: number) =>
         unwrap(client.POST("/api/roteiros/{roteiro_id}/tentar-de-novo", { params: { path: { roteiro_id: roteiroId } }, body: { version } })),
@@ -1542,13 +1576,31 @@ export function createApiClient(options: ApiClientOptions = {}) {
             body: { version },
           }),
         ),
-      regerarKeyframe: (roteiroId: string, ordem: number, body: { version: number; instrucao?: string | null; referencias?: string[] | null }) =>
+      // 031 (avançado): `quadro` (o guiado refaz dele em diante) e `nOpcoes` (1..4) no keyframe;
+      // `trecho` e `nOpcoes` (1..2, cada opção uma tomada) no clipe; `trecho` na escolha da tomada.
+      regerarKeyframe: (
+        roteiroId: string,
+        ordem: number,
+        body: { version: number; instrucao?: string | null; referencias?: string[] | null; quadro?: number | null; nOpcoes?: number | null },
+      ) =>
         unwrap(client.POST("/api/roteiros/{roteiro_id}/posicoes/{ordem}/keyframe/regerar", { params: { path: { roteiro_id: roteiroId, ordem } }, body })),
-      regerarClipe: (roteiroId: string, ordem: number, body: { version: number; motor?: CenaMotor | null }) =>
+      regerarClipe: (roteiroId: string, ordem: number, body: { version: number; motor?: CenaMotor | null; trecho?: number | null; nOpcoes?: number | null }) =>
         unwrap(client.POST("/api/roteiros/{roteiro_id}/posicoes/{ordem}/clipe/regerar", { params: { path: { roteiro_id: roteiroId, ordem } }, body })),
-      escolherTomada: (roteiroId: string, ordem: number, version: number, tomadaId: string) =>
+      escolherTomada: (roteiroId: string, ordem: number, version: number, tomadaId: string, trecho?: number | null) =>
         unwrap(
-          client.PUT("/api/roteiros/{roteiro_id}/posicoes/{ordem}/tomada", { params: { path: { roteiro_id: roteiroId, ordem } }, body: { version, tomadaId } }),
+          client.PUT("/api/roteiros/{roteiro_id}/posicoes/{ordem}/tomada", {
+            params: { path: { roteiro_id: roteiroId, ordem } },
+            body: { version, tomadaId, trecho: trecho ?? null },
+          }),
+        ),
+      // 031 (modal de cenas, FR-021): a cena de uma posição (`total`/`plano` com `cenaId`, ou `nova`);
+      // depois do texto, só com `avancado: true`.
+      definirCena: (roteiroId: string, ordem: number, body: { reuso: RoteiroPosicaoReuso; cenaId?: string | null; avancado?: boolean; version: number }) =>
+        unwrap(
+          client.PUT("/api/roteiros/{roteiro_id}/posicoes/{ordem}/cena", {
+            params: { path: { roteiro_id: roteiroId, ordem } },
+            body: { ...body, avancado: body.avancado ?? false },
+          }),
         ),
       padroes: (perfilId: string) =>
         unwrap(client.GET("/api/perfis/{perfil_id}/roteiro-padroes", { params: { path: { perfil_id: perfilId } } })),

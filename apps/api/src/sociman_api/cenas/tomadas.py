@@ -121,8 +121,10 @@ def criar(db: Session, actor: Actor, cena_id: uuid.UUID, up: Spooled) -> CenaTom
 
 def _de_candidato(db: Session, actor: Actor, cena: Cena, cand: GeracaoCandidato,
                   prompt_usado: str, geracao_id: uuid.UUID, keyframe_image_id: uuid.UUID,
-                  motor: CenaMotor) -> CenaTomada:
-    """Spec 011 (R3): a tomada local aponta o vídeo e a miniatura do candidato."""
+                  motor: CenaMotor, trecho: int | None = None,
+                  keyframe_fim_image_id: uuid.UUID | None = None) -> CenaTomada:
+    """Spec 011 (R3): a tomada local aponta o vídeo e a miniatura do candidato. Spec 031: a de
+    um trecho guarda o `trecho` e o quadro final usado (a chave do reuso, R8)."""
     if not cand.video_key or not cand.video_miniatura_key or cand.video_duracao_ms is None:
         raise ApiError(400, "candidato_invalido", "Esta opção não tem mais o arquivo")
     tomada = CenaTomada(
@@ -135,13 +137,16 @@ def _de_candidato(db: Session, actor: Actor, cena: Cena, cand: GeracaoCandidato,
         prompt_usado=prompt_usado, negative_usado="", nota="", geracao_id=geracao_id,
         keyframe_image_id=keyframe_image_id, motor=motor,
         fps=cand.video_fps if cand.video_fps in (16, 24) else None,
+        trecho=trecho, keyframe_fim_image_id=keyframe_fim_image_id,
         created_by=actor.user_id, updated_by=actor.user_id)
     db.add(tomada)
     db.flush()
+    details = {"cenaId": str(cena.id), "geracaoId": str(geracao_id),
+               "candidato": {"id": str(cand.id), "numero": cand.numero}, "motor": motor.value}
+    if trecho is not None:
+        details["trecho"] = trecho
     history.record(db, actor, ENTITY, tomada, "created", None, history.snapshot(tomada),
-                   {"cenaId": str(cena.id), "geracaoId": str(geracao_id),
-                    "candidato": {"id": str(cand.id), "numero": cand.numero},
-                    "motor": motor.value})
+                   details)
     return tomada
 
 
@@ -149,18 +154,26 @@ def registrar_tomada(db: Session, actor: Actor, cena: Cena, arquivo: Spooled | N
                      origem: TomadaOrigem, prompt_usado: str | None = None,
                      geracao_id: uuid.UUID | None = None,
                      keyframe_image_id: uuid.UUID | None = None, motor: CenaMotor | None = None,
-                     objeto_existente: GeracaoCandidato | None = None) -> CenaTomada:
+                     objeto_existente: GeracaoCandidato | None = None,
+                     trecho: int | None = None,
+                     keyframe_fim_image_id: uuid.UUID | None = None) -> CenaTomada:
     """Cria a tomada sem saber de HTTP. `flow_manual`: valida o arquivo (já em `work/tmp`), sobe
     vídeo e miniatura e grava o prompt congelado do momento. `geracao_local` (011): a geração, o
     keyframe e o motor são obrigatórios, e o `objeto_existente` (o candidato do `cena.clipe`) é
-    apontado sem cópia; `prompt_usado` é o prompt do clipe. A 1ª tomada vira a escolhida."""
+    apontado sem cópia; `prompt_usado` é o prompt do clipe. A 1ª tomada vira a escolhida.
+    Spec 031: o `trecho` e o `keyframe_fim_image_id` da tomada de um trecho (só local)."""
     _recebe(cena)
     local = origem == TomadaOrigem.geracao_local
     if local and (geracao_id is None or keyframe_image_id is None or motor is None):
         raise ValueError("a tomada local precisa da geração, do keyframe e do motor")
+    if trecho is not None and (objeto_existente is None or keyframe_fim_image_id is None):
+        raise ValueError("a tomada de um trecho é local e precisa do quadro final")
     if local and objeto_existente is not None:
         tomada = _de_candidato(db, actor, cena, objeto_existente, prompt_usado or "",
-                               geracao_id, keyframe_image_id, motor)
+                               geracao_id, keyframe_image_id, motor, trecho,
+                               keyframe_fim_image_id)
+        if trecho is not None:  # 031: a do trecho fica na posição do roteiro (`roteiro_trechos`)
+            return tomada
         return _escolher_primeira(db, actor, cena, tomada)
     if arquivo is None:
         raise ValueError("sem arquivo nem objeto existente")

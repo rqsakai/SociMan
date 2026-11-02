@@ -7,7 +7,9 @@ O princípio II (direito primeiro) tem teste próprio desde a spec 006, que abso
 """
 
 import ast
+import inspect
 import re
+import textwrap
 import tomllib
 from collections.abc import Callable
 from pathlib import Path
@@ -1790,6 +1792,32 @@ def test_so_o_automatico_do_roteiro_chama_a_escolha_automatica():
     assert "geracao.passo != PASSO_AUTOMATICO" in texto  # recusa qualquer outro passo
 
 
+def test_opcao_unica_provisoria_nunca_aprova_portao():
+    """Spec 031 (R3, plano VII): a opção única do quadro do guiado é aplicada pela máquina só
+    como provisória. Nem o `automatico.py` nem o `escolher_automatico` tocam nas aprovações das
+    posições ou nos portões; a confirmação dos provisórios (`quadros.confirmar`) e a aprovação
+    por posição só saem do `roteiros/guiado.py` (rotas `RequireHuman`)."""
+    from sociman_api.geracao import service as geracao_service
+
+    proibidos = ("aprovado_keyframes_em", "aprovado_clipe_em", "aprovado_keyframes_por",
+                 "aprovado_clipe_por", "passar", "passar_keyframes", "portao", "todas_aprovadas",
+                 "confirmar", "aprovar", "aprovar_posicao", "aprovar_todas")
+    for nome in proibidos:
+        assert not _referencias(AUTOMATICO, nome), f"automatico.py usa {nome}"
+    fonte = ast.parse(textwrap.dedent(inspect.getsource(geracao_service.escolher_automatico)))
+    nomes = {getattr(n, "attr", getattr(n, "id", None)) for n in ast.walk(fonte)}
+    assert not nomes & set(proibidos), "escolher_automatico mexe em aprovação ou portão"
+    assert "opcao_unica" in nomes and "n_opcoes" in nomes  # 1 opção e um quadro do guiado
+    for path in SRC.rglob("*.py"):
+        if path in (ROTEIROS / "guiado.py", SRC / "cenas" / "quadros.py"):
+            continue
+        for node in ast.walk(ast.parse(path.read_text())):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and \
+                    node.func.attr == "confirmar" and \
+                    getattr(node.func.value, "id", "") == "cenas_quadros":
+                raise AssertionError(f"{path} confirma os quadros provisórios")
+
+
 def test_roteiros_sem_rede_social_mcp_nem_http():
     """Princípio I: o `roteiros/` não importa `publicacao`, `mcp` nem cliente HTTP, e não cita
     host de rede social."""
@@ -1902,5 +1930,63 @@ def test_revogacao_nao_toca_os_artefatos_do_roteiro():
     gerações da cena e do roteiro (o já gerado fica)."""
     texto = REVOGACAO.read_text()
     proibidos = ("cena_tomadas", "CenaTomada", "roteiro_", "Roteiro", "roteiros", *PASSOS_011)
+    achados = [p for p in proibidos if p in texto]
+    assert not achados, f"revogacao.py referencia {achados}"
+
+
+# ---- spec 031 (vídeo guiado): os módulos novos sem rede, sem escolha automática fora do
+# `automatico.py`, rotas classificadas no MCP e a revogação longe dos quadros e da conversa ----
+
+MODULOS_031 = (*(ROTEIROS / f"{m}.py" for m in ("ajuste", "conversa", "formatos", "grade",
+                                                "guiado", "plano_guiado", "reuso")),
+               SRC / "cenas" / "quadros.py")
+ENDERECO = re.compile(r"://|\blocalhost\b|host\.docker\.internal|"
+                      r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b")
+
+
+def test_modulos_do_guiado_sem_rede_nem_publicacao():
+    """Princípio I e IX: o código novo da 031 não importa `publicacao`, `mcp` nem cliente HTTP e
+    não cita endereço de rede (o ComfyUI, o shop-tts e o Claude ficam com o `geracao/`)."""
+    for path in MODULOS_031:
+        assert path.exists(), f"{path} sumiu: atualize MODULOS_031"
+        mods = _imports(path)
+        ruins = [m for m in mods if m.startswith(("sociman_api.publicacao", "sociman_api.mcp",
+                                                  "httpx", "requests", "urllib", "socket",
+                                                  "anthropic"))]
+        assert not ruins, f"{path.name} importa {ruins}"
+        achados = ENDERECO.findall(path.read_text())
+        assert not achados, f"{path.name} cita endereço de rede: {achados}"
+
+
+def test_guiado_nao_escolhe_sozinho():
+    """R3/R9: a opção única do quadro também passa só pelo `roteiros/automatico.py` (o teste da
+    011 varre o `src/` inteiro; aqui, explícito para os módulos novos)."""
+    for path in MODULOS_031:
+        assert not _referencias(path, "escolher_automatico"), f"{path.name} escolhe sozinho"
+
+
+def test_rotas_do_guiado_classificadas_no_mcp():
+    """FR do MCP (009) e plano VII: toda rota `roteiros_*` está no mapa; as que escrevem são
+    PROIBIDAS (ato humano) e nenhuma vira tool."""
+    from sociman_api.mcp import mapa
+
+    for metodos in app.openapi()["paths"].values():
+        for metodo, op in metodos.items():
+            nome = op.get("operationId", "")
+            if not nome.startswith("roteiros_"):
+                continue
+            classe = mapa.classificar(nome)
+            assert classe is not None, f"{nome} sem classificação no mcp/mapa.py"
+            assert classe != "tool", f"{nome} virou tool"
+            if metodo != "get":
+                assert classe == "proibida", f"{nome} escreve e não está em PROIBIDAS"
+
+
+def test_revogacao_nao_toca_quadros_nem_conversa():
+    """Data-model "Limpeza e revogação": revogar não mexe nos quadros, nos trechos nem na
+    `roteiro_conversa` (só inserção; o chat é sobre o produto e o vídeo)."""
+    texto = REVOGACAO.read_text()
+    proibidos = ("cena_quadros", "CenaQuadro", "quadros", "roteiro_conversa", "RoteiroConversa",
+                 "roteiro_trechos", "RoteiroTrecho")
     achados = [p for p in proibidos if p in texto]
     assert not achados, f"revogacao.py referencia {achados}"

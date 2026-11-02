@@ -14,12 +14,14 @@ import { cenaKey } from "@/lib/cenas";
 import { useGeracao } from "@/lib/geracoes";
 import { enviarKeyframe, invalidarRoteiro, KEYFRAME_ACCEPT, LIM, roteiroKey, type RoteiroPosicao } from "@/lib/roteiros";
 import { Andamentos, BotaoAprovar, type EtapaProps } from "./comum";
+import { QuadrosAvancado } from "./Guiado";
 
 // Etapa Keyframes (spec 011, US3, T033): por posição, o keyframe atual, as opções da geração aberta
 // (componentes da 021, "Usar opção N" com a versão da cena), "Regerar esta cena" com a instrução e as
 // referências, o envio de uma imagem pronta, os avisos e aprovar.
 export function Keyframes({ roteiro, rodar, travado }: EtapaProps) {
-  const pendentes = roteiro.posicoes.filter((p) => !p.cena.keyframeUrl).length;
+  // 031: no guiado, a cena tem a sequência de quadros (todos com imagem) no lugar do keyframe único.
+  const pendentes = roteiro.posicoes.filter((p) => (p.trechos != null ? !(p.quadros ?? []).every((q) => q.imageId) : !p.cena.keyframeUrl)).length;
   return (
     <div className="space-y-4" data-testid="etapa-keyframes">
       <BotaoAprovar
@@ -30,9 +32,23 @@ export function Keyframes({ roteiro, rodar, travado }: EtapaProps) {
         motivo={pendentes > 0 ? `Falta escolher o keyframe de ${pendentes} ${pendentes === 1 ? "cena" : "cenas"}.` : undefined}
       />
       <ol className="grid gap-4 lg:grid-cols-2" aria-label="Keyframes por cena">
-        {roteiro.posicoes.map((p) => (
-          <KeyframePosicao key={p.ordem} roteiroId={roteiro.id} version={roteiro.version} posicao={p} rodar={rodar} travado={travado} />
-        ))}
+        {roteiro.posicoes.map((p) =>
+          p.trechos != null ? (
+            <li key={p.ordem} className="space-y-3 rounded-xl border p-3 lg:col-span-2" data-testid={`keyframe-cena-${p.ordem + 1}`}>
+              <h3 className="text-sm font-semibold">
+                Cena {p.ordem + 1}: {p.cena.nome}
+              </h3>
+              {p.aviso && (
+                <p role="status" className="text-sm text-warning-foreground" data-testid="aviso-posicao">
+                  {p.aviso}
+                </p>
+              )}
+              <QuadrosAvancado roteiro={roteiro} posicao={p} rodar={rodar} travado={travado} />
+            </li>
+          ) : (
+            <KeyframePosicao key={p.ordem} roteiroId={roteiro.id} version={roteiro.version} posicao={p} rodar={rodar} travado={travado} />
+          ),
+        )}
       </ol>
     </div>
   );

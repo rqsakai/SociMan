@@ -39,3 +39,6 @@ FollowerGender.csv
 FollowerTopTerritories.csv
 FollowerActivity.csv
 .claude/worktrees/
+
+# Material de terceiros (só referência local; o repositório é público)
+docs/insumos/prompts-externos/

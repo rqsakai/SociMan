@@ -13,6 +13,13 @@
 - `roteiro.acabamento` (ComfyUI, sem escolha): o HD (SeedVR2 por posição + ffmpeg) e a entrega.
 
 O gancho de todos é o `maquina.gancho` (sem rede). A seta é `roteiros → geracao`.
+
+Spec 031 (vídeo guiado): o `cena.keyframe` com `extras.quadro` grava a imagem no quadro certo da
+sequência (`cenas/quadros.py`, que espelha o quadro 0 e o último nos keyframes da cena); o
+`cena.clipe` com `extras.trecho` registra a tomada do trecho (com o quadro final) e a liga em
+`roteiro_trechos`. A montagem e o acabamento de posições com `trechos` colam os trechos de cada
+posição (exatamente trechos × base) e põem a fala no slot (`extras.fala`, R4); o acabamento
+amplia a posição já colada. Sem os extras, o caminho da 011, igual.
 """
 
 import io
@@ -30,6 +37,7 @@ from sqlalchemy.orm import Session
 from sociman_api import history
 from sociman_api.assets.models import Asset
 from sociman_api.auth.deps import Actor
+from sociman_api.cenas import quadros as cenas_quadros
 from sociman_api.cenas import schemas as cenas_schemas
 from sociman_api.cenas import service as cenas_service
 from sociman_api.cenas import tomadas as cenas_tomadas
@@ -39,9 +47,20 @@ from sociman_api.errors import ApiError
 from sociman_api.geracao import aplicadores as base
 from sociman_api.geracao.erros import MotorErro
 from sociman_api.geracao.models import Geracao, GeracaoCandidato, GeracaoStatus
+from sociman_api.ia.tipos import TIPOS
 from sociman_api.perfis.models import Image
 from sociman_api.produtos.models import Produto
-from sociman_api.roteiros import entrega, estado, maquina, montagem, plano
+from sociman_api.roteiros import (  # spec 031
+    ajuste,
+    conversa,
+    entrega,
+    estado,
+    maquina,
+    montagem,
+    plano,
+    plano_guiado,
+    tempos,
+)
 from sociman_api.roteiros.models import (
     ENTITY,
     Roteiro,
@@ -133,8 +152,21 @@ def cenas_para_reuso(db: Session, r: Roteiro) -> list[Cena]:
 
 
 class RoteiroPlano(_DoRoteiro):
+    def extras_claude(self, db: Session, geracao: Geracao) -> base.ExtrasClaude:
+        """031: no roteiro guiado, o plano v2 (outro tipo de campo), o guia do perfil base e a
+        conferência da soma, do orçamento e das candidatas dentro das duas tentativas."""
+        r = db.get(Roteiro, geracao.alvo_id)
+        if r is None or not r.guiado:
+            return base.ExtrasClaude()
+        _, efetivo, versao = conversa.guia_do(db, r.perfil_id)
+        return base.ExtrasClaude(tipo=TIPOS["roteiro.plano_guiado"], efetivo=efetivo,
+                                 guia_perfil_version=versao,
+                                 problemas=plano_guiado.problemas(plano_guiado.contexto(db, r)))
+
     def mensagem_claude(self, db: Session, geracao: Geracao) -> str:
         r = db.get(Roteiro, geracao.alvo_id)
+        if r.guiado:  # 031: as respostas do chat, a grade e as candidatas com o nível
+            return plano_guiado.mensagem(db, r)
         produtos = produtos_do(db, r)
         indice = {p.id: n for n, (p, _) in enumerate(produtos, start=1)}
         itens = []
@@ -161,6 +193,9 @@ class RoteiroPlano(_DoRoteiro):
         dados = (candidato.metricas or {}).get("plano")
         if not isinstance(dados, dict):
             raise MotorErro("internal", detalhe="candidato do plano sem o plano")
+        if dados.get("versao") == 2:  # 031: o plano v2 do vídeo guiado
+            plano_guiado.aplicar(db, actor, r, geracao, candidato, dados)
+            return
         frases = list(dados["frases"])
         posicoes = [dict(p) for p in dados["posicoes"]]
         maximo = get_settings().roteiro_max_cenas
@@ -220,7 +255,7 @@ class RoteiroPlano(_DoRoteiro):
         except (ValidationError, ValueError) as exc:
             raise MotorErro("entrada_invalida", "A IA propôs uma cena fora do formato",
                             detalhe=str(exc)[:300]) from exc
-        locais = {"motor": CenaMotor(nova.get("motor") or "minimax"),
+        locais = {"motor": CenaMotor(plano.MOTOR_DO_PLANO),
                   "keyframe_instrucao": (nova.get("keyframe_instrucao") or "")[:2000] or None}
         return cenas_service.criar(db, actor, r.perfil_id, body, exige_ativo=False,
                                    locais=locais, details={"ia": ia, "roteiroId": str(r.id)})
@@ -231,6 +266,45 @@ def _uuid(valor: Any) -> uuid.UUID | None:
         return uuid.UUID(str(valor))
     except ValueError:
         return None
+
+
+# ---- roteiro.perguntas (spec 031, R5) ----
+
+class RoteiroPerguntas(_DoRoteiro):
+    """As perguntas fechadas do chat, numa chamada só, com o guia do perfil base; o resultado
+    vai para a `roteiro_conversa` (`roteiros/conversa.py`)."""
+
+    def extras_claude(self, db: Session, geracao: Geracao) -> base.ExtrasClaude:
+        r = db.get(Roteiro, geracao.alvo_id)
+        _, efetivo, versao = conversa.guia_do(db, r.perfil_id if r else None)
+        return base.ExtrasClaude(efetivo=efetivo, guia_perfil_version=versao)
+
+    def mensagem_claude(self, db: Session, geracao: Geracao) -> str:
+        return conversa.mensagem_perguntas(db, db.get(Roteiro, geracao.alvo_id))
+
+    def aplicar(self, db: Session, actor: Actor, geracao: Geracao,
+                candidato: GeracaoCandidato) -> None:
+        m = candidato.metricas or {}
+        conversa.aplicar_perguntas(db, geracao, m, _uuid(m.get("chamada_id")))
+
+
+# ---- roteiro.ajuste (spec 031, R6) ----
+
+class RoteiroAjuste(_DoRoteiro):
+    """O "Não aprovo" do wizard: um esclarecimento no chat ou a mudança só do alvo, aplicada em
+    nome de quem recusou (`roteiros/ajuste.py`)."""
+
+    def extras_claude(self, db: Session, geracao: Geracao) -> base.ExtrasClaude:
+        r = db.get(Roteiro, geracao.alvo_id)
+        _, efetivo, versao = conversa.guia_do(db, r.perfil_id if r else None)
+        return base.ExtrasClaude(efetivo=efetivo, guia_perfil_version=versao)
+
+    def mensagem_claude(self, db: Session, geracao: Geracao) -> str:
+        return ajuste.mensagem(db, geracao)
+
+    def aplicar(self, db: Session, actor: Actor, geracao: Geracao,
+                candidato: GeracaoCandidato) -> None:
+        ajuste.aplicar(db, actor, geracao, candidato)
 
 
 # ---- roteiro.narracao ----
@@ -294,8 +368,26 @@ class CenaKeyframe(_DaCena):
         rid = estado.do_roteiro(geracao)
         if rid:
             details["roteiroId"] = str(rid)
+        ordem_quadro = estado.extras(geracao).get("quadro")
+        if ordem_quadro is not None:  # 031: um quadro da sequência
+            self._aplicar_quadro(db, actor, cena, geracao, candidato, int(ordem_quadro), details)
+            return
         cenas_service.definir_keyframe(db, actor, cena, candidato.image_id,
                                        geracao_id=geracao.id, details=details)
+
+    def _aplicar_quadro(self, db: Session, actor: Actor, cena: Cena, geracao: Geracao,
+                        candidato: GeracaoCandidato, ordem: int, details: dict[str, Any]
+                        ) -> None:
+        """A opção vai ao quadro ativo daquela ordem, se ele ainda é o desta geração (o quadro
+        refeito depois do pedido recusa: 409 `quadro_mudou`). O `provisorio` (a opção única que
+        a máquina aplica para seguir a cadeia, R3) é só do `system:roteiro`."""
+        q = cenas_quadros.por_ordem(db, cena.id, ordem)
+        if q is None or q.geracao_id != geracao.id:
+            raise ApiError(409, "quadro_mudou",
+                           "Este quadro foi refeito depois do pedido; escolha na geração nova")
+        cenas_quadros.definir_imagem(db, actor, q, candidato.image_id,
+                                     provisorio=actor.kind == "system:roteiro",
+                                     geracao_id=geracao.id, details=details)
 
 
 def ajustar(dados: bytes, largura: int, altura: int) -> bytes:
@@ -321,6 +413,9 @@ class CenaClipe(_DaCena):
             raise MotorErro("entrada_invalida", "A cena não existe mais")
         refs = geracao.params.get("referencias") or []
         ex = estado.extras(geracao)
+        if ex.get("trecho") is not None:  # 031: o trecho de uma posição do guiado
+            self._aplicar_trecho(db, actor, cena, geracao, candidato, refs, ex)
+            return
         tomada = cenas_tomadas.registrar_tomada(
             db, actor, cena, None, TomadaOrigem.geracao_local,
             prompt_usado=geracao.params.get("prompt") or "", geracao_id=geracao.id,
@@ -335,6 +430,32 @@ class CenaClipe(_DaCena):
                 estado.tomada_serve(tomada, cena, p.duracao_s, aceita_flow=False):
             maquina._definir_tomada(db, p, tomada)
             p.aviso = None
+
+    def _aplicar_trecho(self, db: Session, actor: Actor, cena: Cena, geracao: Geracao,
+                        candidato: GeracaoCandidato, refs: list[str], ex: dict[str, Any]
+                        ) -> None:
+        """A tomada do trecho (com o par de quadros do pedido) e, se ela ainda serve aos quadros
+        de agora, o trecho da posição que pediu passa a usá-la (R8); com 2 versões pedidas no
+        avançado, só a tomada (a escolha é do `PUT …/tomada`)."""
+        t = int(ex["trecho"])
+        tomada = cenas_tomadas.registrar_tomada(
+            db, actor, cena, None, TomadaOrigem.geracao_local,
+            prompt_usado=geracao.params.get("prompt") or "", geracao_id=geracao.id,
+            keyframe_image_id=uuid.UUID(refs[0]), motor=CenaMotor(ex.get("motor") or "minimax"),
+            objeto_existente=candidato, trecho=t, keyframe_fim_image_id=uuid.UUID(refs[1]))
+        # Nasce em desuso (R12): só o trecho que passa a usá-la (`definir_tomada_trecho`) a tira;
+        # as versões do avançado não escolhidas seguem para a limpeza de 90 dias.
+        tomada.desuso_em = _agora()
+        rid, ordem = estado.do_roteiro(geracao), ex.get("ordem")
+        r = db.get(Roteiro, rid, with_for_update=True) if rid else None
+        p = next((p for p in r.posicoes_rel if p.ordem == ordem), None) if r else None
+        if p is None or p.cena_id != cena.id or p.trechos is None or t >= p.trechos or \
+                r.trecho_base_s is None:
+            return
+        if int(ex.get("opcoes") or 1) > 1:  # as versões do avançado: quem escolhe é o humano
+            return
+        if estado.tomada_serve_trecho(db, tomada, cena, t, r.trecho_base_s):
+            maquina.definir_tomada_trecho(db, p, t, tomada)
 
 
 # ---- roteiro.montagem e roteiro.acabamento ----
@@ -358,6 +479,46 @@ def _narracao(ctx: Any, ex: dict[str, Any]) -> Path:
     return ctx.baixar(ex["audioKey"], "audios", "narracao.wav")
 
 
+def _guiado(ex: dict[str, Any]) -> bool:
+    return any(p.get("trechos") is not None for p in ex.get("posicoes") or [])
+
+
+def _baixar_trechos(ctx: Any, ex: dict[str, Any]) -> list[montagem.PosicaoGuiada]:
+    """031: as tomadas de cada trecho, por posição, na ordem."""
+    saida = []
+    for i, p in enumerate(ex.get("posicoes") or []):
+        arquivos = []
+        for x in sorted(p.get("trechos") or [], key=lambda x: int(x["trecho"])):
+            if not x.get("videoKey"):
+                raise MotorErro("entrada_invalida",
+                                f"O trecho {int(x['trecho']) + 1} da posição {i + 1} está sem "
+                                "tomada")
+            arquivos.append(ctx.baixar(x["videoKey"], "videos",
+                                       f"tomada_{i:02d}_{int(x['trecho'])}.mp4"))
+        saida.append(montagem.PosicaoGuiada(trechos=arquivos, duracao_s=float(p["duracaoS"])))
+    return saida
+
+
+def _fala_no_slot(ctx: Any, ex: dict[str, Any], posicoes: list[montagem.PosicaoGuiada]) -> Path:
+    """031 (R4): a narração contínua cortada e posta no slot de cada posição."""
+    if ex.get("fala") is None:
+        raise MotorErro("entrada_invalida", "A narração não bate com as cenas; narre de novo")
+    blocos = [tempos.BlocoFala(**b) for b in ex["fala"]]
+    return montagem.colocar_fala(ctx.pasta, _narracao(ctx, ex), blocos,
+                                 [p.duracao_s for p in posicoes])
+
+
+def _posicoes_guiadas(ctx: Any, ex: dict[str, Any], posicoes: list[montagem.PosicaoGuiada]
+                      ) -> list[Path]:
+    try:
+        return montagem.montar_posicoes_guiadas(
+            ctx.pasta, posicoes, base_s=float(ex["trechoBaseS"]), largura=int(ex["largura"]),
+            altura=int(ex["altura"]))
+    except ValueError as exc:  # trechos × base não fecha com a duração
+        raise MotorErro("entrada_invalida", "Os trechos não fecham com a duração da cena",
+                        detalhe=str(exc)) from exc
+
+
 def _definir_ponteiro(db: Session, r: Roteiro, campo: str, geracao: Geracao) -> bool:
     """Aponta a prévia (ou o acabamento) atual; a de outra assinatura fica em desuso."""
     if estado.extras(geracao).get("assinatura") != estado.assinatura(r):
@@ -373,6 +534,15 @@ def _definir_ponteiro(db: Session, r: Roteiro, campo: str, geracao: Geracao) -> 
 class RoteiroMontagem(_DoRoteiro):
     def executar_video(self, geracao: Geracao, ctx: Any) -> Path:
         ex = estado.extras(geracao)
+        if _guiado(ex):  # 031: trechos colados por posição e a fala no slot (R2, R4)
+            posicoes = _baixar_trechos(ctx, ex)
+            fala = _fala_no_slot(ctx, ex, posicoes)
+            ctx.andamento(40, "Montando a prévia")
+            partes = _posicoes_guiadas(ctx, ex, posicoes)
+            dst = ctx.pasta / "previa.mp4"
+            montagem.executar(montagem.cmd_mixar(montagem.concatenar(ctx.pasta, partes), fala,
+                                                 dst))
+            return dst
         tomadas = _baixar_posicoes(ctx, ex)
         narr = _narracao(ctx, ex)
         ctx.andamento(40, "Montando a prévia")
@@ -391,16 +561,30 @@ class RoteiroAcabamento(_DoRoteiro):
         ex = estado.extras(geracao)
         largura, altura = int(ex["largura"]), int(ex["altura"])
         seeds = geracao.params.get("seeds") or [1]
-        tomadas = _baixar_posicoes(ctx, ex)
-        narr = _narracao(ctx, ex)
-        ampliadas = []
-        for i, (src, duracao_s) in enumerate(tomadas):
+        if _guiado(ex):  # 031: a posição já colada (trechos × base) vai ao SeedVR2
+            guiadas = _baixar_trechos(ctx, ex)
+            narr = _fala_no_slot(ctx, ex, guiadas)
+            cortes = _posicoes_guiadas(ctx, ex, guiadas)
+        else:
+            tomadas = _baixar_posicoes(ctx, ex)
+            narr = _narracao(ctx, ex)
+            cortes = []
+            for i, (src, duracao_s) in enumerate(tomadas):
+                corte = ctx.pasta / f"corte_{i:02d}.mp4"
+                montagem.executar(montagem.cmd_cortar(src, corte, duracao_s=duracao_s,
+                                                      largura=largura, altura=altura))
+                cortes.append(corte)
+        if ex.get("acabamento", "hd") == "leve":
+            # T059 (2026-10-15): o padrão. Sem SeedVR2: lanczos para 1080×1920, 24 fps e −14 LUFS,
+            # na linha ffmpeg (sem GPU). A prévia do MiniMax a 736×1280 já serve ao TikTok.
             ctx.checar()
-            ctx.andamento(i * 80 // max(1, len(tomadas)),
-                          f"Ampliando a cena {i + 1} de {len(tomadas)}")
-            corte = ctx.pasta / f"corte_{i:02d}.mp4"
-            montagem.executar(montagem.cmd_cortar(src, corte, duracao_s=duracao_s,
-                                                  largura=largura, altura=altura))
+            ctx.andamento(60, "Finalizando em 1080×1920")
+            return montagem.acabar(ctx.pasta, cortes, narr, largura=largura, altura=altura)
+        ampliadas = []
+        for i, corte in enumerate(cortes):
+            ctx.checar()
+            ctx.andamento(i * 80 // max(1, len(cortes)),
+                          f"Ampliando a cena {i + 1} de {len(cortes)}")
             dados = ctx.rodar_bloco("upscale_video", {
                 "video": corte.read_bytes(), "width": largura, "height": altura,
                 "seed": int(seeds[0]), "prefix": f"sociman/{geracao.id}"}, f"pos{i}")
@@ -427,6 +611,7 @@ APLICADORES: dict[str, base.Aplicador] = {
     "roteiro.plano": RoteiroPlano(), "roteiro.narracao": RoteiroNarracaoAplicador(),
     "cena.keyframe": CenaKeyframe(), "cena.clipe": CenaClipe(),
     "roteiro.montagem": RoteiroMontagem(), "roteiro.acabamento": RoteiroAcabamento(),
+    "roteiro.perguntas": RoteiroPerguntas(), "roteiro.ajuste": RoteiroAjuste(),  # spec 031
 }
 
 

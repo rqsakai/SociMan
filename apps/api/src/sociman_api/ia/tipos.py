@@ -17,7 +17,8 @@ Idioma = Literal["en", "perfil"]
 UsaGuia = Literal["completo", "so_proibidas"]
 Formato = Literal["texto", "lista", "sugestoes", "textos_postagem", "guia", "variacoes",
                   "campos_cena", "taxonomia", "classificacao", "analise", "ficha_produto",
-                  "identidade", "plano_roteiro"]
+                  "identidade", "plano_roteiro",
+                  "perguntas_roteiro", "ajuste_roteiro", "plano_roteiro_v2"]  # spec 031
 TipoCampoId = Literal[
     "avatar.descricao_prompt", "avatar.tom_de_voz", "avatar.regras_imagem",
     "cenario.prompt_ambiente", "asset.nome", "asset.descricao", "perfil.bio", "kit.bordoes",
@@ -28,6 +29,7 @@ TipoCampoId = Literal[
     "produto.ficha",  # spec 012
     "avatar.identidade",  # spec 025
     "roteiro.plano",  # spec 011
+    "roteiro.perguntas", "roteiro.ajuste", "roteiro.plano_guiado",  # spec 031
 ]
 
 MAX_SUGESTOES = 10
@@ -183,6 +185,22 @@ _LISTA: tuple[TipoCampo, ...] = (
               ("frases", "posicoes"), "AI Studio › Vídeos › Roteiro › Planejar com IA",
               "perfil", "plano_roteiro", Limites(trim=False, max_itens=60), listar_regras=False,
               max_tokens=8000, esforco="medium", timeout_s=120.0),
+    # Spec 031 (R5, R6, R4): o chat do vídeo guiado. As perguntas fechadas (passo
+    # `roteiro.perguntas`), o ajuste do "Não aprovo" (passo `roteiro.ajuste`) e o plano v2 (o
+    # passo `roteiro.plano` de um roteiro guiado usa este tipo, `RoteiroPlano.extras_claude`).
+    # Com o guia do perfil base inteiro (as proibidas pedem a 2ª tentativa); fora do `gerar`.
+    TipoCampo("roteiro.perguntas", "Perguntas do vídeo guiado", "roteiro", ("perguntas",),
+              "AI Studio › Vídeos › Novo vídeo › Chat", "perfil", "perguntas_roteiro",
+              Limites(trim=False, max_itens=5), listar_regras=False, max_tokens=4000,
+              timeout_s=60.0),
+    TipoCampo("roteiro.ajuste", "Ajuste do vídeo guiado (Não aprovo)", "roteiro",
+              ("frases", "posicoes"), "AI Studio › Vídeos › Roteiro › Não aprovo", "perfil",
+              "ajuste_roteiro", Limites(trim=False), listar_regras=False, max_tokens=4000,
+              timeout_s=60.0),
+    TipoCampo("roteiro.plano_guiado", "Plano do vídeo guiado (frases, cenas e quadros)",
+              "roteiro", ("frases", "posicoes"), "AI Studio › Vídeos › Roteiro › Montar o vídeo",
+              "perfil", "plano_roteiro_v2", Limites(trim=False, max_itens=60),
+              listar_regras=False, max_tokens=8000, esforco="medium", timeout_s=120.0),
 )
 
 TIPOS: dict[str, TipoCampo] = {t.id: t for t in _LISTA}

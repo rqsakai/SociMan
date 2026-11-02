@@ -249,6 +249,8 @@ def levar_ate(client, h, m: Motores, rot: dict, alvo: str | tuple[str, ...],
                 rot = escolher_keyframes(client, h, rot)
                 if rot["status"] in alvos:
                     return rot
+                if rot["status"] != "aguardando_keyframes":  # 031: a cadeia pediu o seguinte
+                    continue
             rot = aprovar(client, h, rot, PORTAO[rot["status"]])
             continue
         rot = rodar_ate(client, h, m, rot["id"], (*alvos, *AGUARDANDO, "falhou", "pronto"))
@@ -262,3 +264,63 @@ def roteiro_planejado(client, h, m: Motores, b: dict, **kw) -> dict:
     rot = criar_roteiro(client, h, b, **kw)
     rot = acao(client, h, rot, "planejar")
     return rodar_ate(client, h, m, rot["id"], ("aguardando_texto", "narrando"))
+
+
+# ---- spec 031: o vídeo guiado ----
+
+def montar_guiado(client, h, m: Motores, slug: str = "bia", n_cenas: int = 0) -> dict:
+    """O `montar` da 011 mais o cenário com a imagem `cena` (025), que o guiado exige."""
+    from integration.padrao_helpers import cenario_com_cena
+
+    b = montar(client, h, m, slug=slug, n_cenas=n_cenas)
+    b["cenario"] = cenario_com_cena(client, h, m, b["perfil_id"])
+    return b
+
+
+def criar_guiado(client, h, b: dict, status: int = 201, **kw) -> dict:
+    """`POST /api/roteiros` (o "Novo vídeo" guiado) com os blocos de `b`; `kw` sobrescreve."""
+    corpo = {"perfilId": b["perfil_id"], "tipoVideo": "avatar_pov",
+             "avatarId": b["avatar"]["id"], "cenarioId": b["cenario"]["id"],
+             "produtoId": b["produto"]["id"], "duracaoS": 10} | kw
+    r = client.post("/api/roteiros", headers=h, json=corpo)
+    assert r.status_code == status, r.text
+    return r.json()
+
+
+def ver_conversa(client, h, roteiro_id: str) -> dict:
+    r = client.get(f"/api/roteiros/{roteiro_id}/conversa", headers=h)
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def responder(client, h, conv: dict, roteiro_id: str, opcoes: list[str] | None = None,
+              status: int = 200, **kw) -> dict:
+    """Responde a pergunta atual (padrão: a 1ª opção) com o `version` da conversa."""
+    p = conv["perguntaAtual"]
+    corpo = {"version": conv["version"], "perguntaId": p["id"],
+             "opcoes": opcoes if opcoes is not None else [p["opcoes"][0]["id"]]} | kw
+    r = client.post(f"/api/roteiros/{roteiro_id}/conversa/respostas", headers=h, json=corpo)
+    assert r.status_code == status, r.text
+    return r.json()
+
+
+def responder_tudo(client, h, m: Motores, rot: dict) -> dict:
+    """Roda a linha Claude até as perguntas chegarem e responde todas só com cliques."""
+    claude = m.linha_claude()
+    for _ in range(5):
+        conv = ver_conversa(client, h, rot["id"])
+        if conv["estado"] != "sem_perguntas":
+            break
+        claude.volta()
+    while conv["perguntaAtual"] is not None:
+        conv = responder(client, h, conv, rot["id"])
+    assert conv["estado"] == "respondida", conv
+    return conv
+
+
+def guiado_planejado(client, h, m: Motores, b: dict, **kw) -> dict:
+    """Cria, responde o chat e planeja (para em `aguardando_texto`, o modal de cenas)."""
+    rot = criar_guiado(client, h, b, **kw)
+    conv = responder_tudo(client, h, m, rot)
+    rot = acao(client, h, {"id": rot["id"], "version": conv["version"]}, "planejar")
+    return rodar_ate(client, h, m, rot["id"], ("aguardando_texto", "narrando", "falhou"))

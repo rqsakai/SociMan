@@ -37,6 +37,14 @@ criadas (uma frase por cena, o produto 1). Na `<instrucao>`: "sem reuso" cria to
 cenas" pede uma cena por frase com 10 frases (para o corte do `ROTEIRO_MAX_CENAS`); "cena
 inexistente" reaproveita um id que não está na lista. `anthropic_fake.planos` conta as chamadas.
 
+Spec 031 (T015): a resposta padrão cobre as perguntas do chat (`perguntas(...)`: 3 perguntas
+fechadas, a 1ª múltipla), o ajuste do "Não aprovo" (`ajuste(...)`: a mudança do `<alvo>`;
+"ambíguo" no `<pedido>` devolve uma `pergunta`) e o plano v2 do vídeo guiado (`plano_v2(...)`:
+lê a `<grade>`, reaproveita a 1ª cena de `<cenas>` no nível dela, salvo "cenas novas" nas
+`<respostas>`, e fecha a soma com cenas novas de 1 trecho; "não cabe" nas `<respostas>` estoura o
+orçamento da fala na 1ª tentativa, e a 2ª, com o `<erro_anterior>`, vem certa).
+`anthropic_fake.perguntas_pedidas` conta as chamadas de perguntas.
+
 Spec 017: a resposta padrão cobre os formatos `guia` (`guia(...)`) e `variacoes`
 (`variacoes(...)`, 3 textos de postagem **sem** hashtags fixas: quem inclui é o servidor);
 `anthropic_fake.systems` devolve o `system` enviado em cada chamada (texto dos blocos) e
@@ -245,8 +253,12 @@ def _padrao(body: dict[str, Any]) -> dict[str, Any]:
         return resposta
     if "material_en" in props:  # spec 012
         return _ficha(body)
-    if "posicoes" in props and "frases" in props:  # spec 011
-        return _plano(body)
+    if "perguntas" in props:  # spec 031
+        return _perguntas(body)
+    if "mudanca" in props:
+        return _ajuste(body)
+    if "posicoes" in props and "frases" in props:  # spec 011 (v1) e 031 (v2, com a <grade>)
+        return _plano_v2(body) if "<grade " in _texto_user(body) else _plano(body)
     if "descricao_prompt" in props and "notas" in props:  # spec 025
         return identidade(_NOTAS.get("atual"), _NOTAS.get("descricao", DESCRICAO_IDENTIDADE))
     if "proposta" in props:
@@ -305,6 +317,128 @@ def _plano(body: dict[str, Any]) -> dict[str, Any]:
     if "cena inexistente" in pedido:
         return plano(reusar=[ID_INVALIDO])
     return plano(reusar=[] if "sem reuso" in pedido else ids[:1])
+
+
+# ---- spec 031: o chat do vídeo guiado e o plano v2 ----
+
+def pergunta(id_: str, texto_: str, *opcoes: str, multipla: bool = False,
+             exemplos: list[str] | None = None) -> dict[str, Any]:
+    return {"id": id_, "texto": texto_, "multipla": multipla,
+            "opcoes": [{"id": o.lower().replace(" ", "_"), "rotulo": o} for o in opcoes],
+            "exemplos": exemplos or []}
+
+
+PERGUNTAS = (
+    pergunta("foco", "Quais aspectos do produto o vídeo deve mostrar?", "Caimento", "Tecido",
+             "Cor", "Preço", multipla=True, exemplos=["mostrar o caimento", "foco no preço"]),
+    pergunta("cta", "Qual chamada no fim?", "Link na bio", "Carrinho laranja", "Sem chamada",
+             exemplos=["corre no link"]),
+    pergunta("tom", "Qual o tom do vídeo?", "Animado", "Calmo", "Explicativo",
+             exemplos=["estilo antes/depois"]),
+)
+
+
+def perguntas(*itens: dict[str, Any], **kw: Any) -> dict[str, Any]:
+    return mensagem({"perguntas": list(itens or PERGUNTAS),
+                     "explicacao": "Perguntas sobre o produto.", "avisos": []}, **kw)
+
+
+def _perguntas(body: dict[str, Any]) -> dict[str, Any]:
+    return perguntas()
+
+
+def ajuste(alvo: dict[str, Any] | None = None, **mudanca: Any) -> dict[str, Any]:
+    alvo = {"tipo": "narracao", "ordem": None, "quadro": None, "trecho": None} | (alvo or {})
+    dados = {"alvo": alvo, "quadros": [], "acao": None, "motor": None, "velocidade": None,
+             "frases": [], "trechos": None} | mudanca
+    return mensagem({"tipo": "mudanca", "pergunta": None, "mudanca": dados,
+                     "resumo": "Ajustei o que foi pedido.", "explicacao": "Mudança aplicada.",
+                     "avisos": []})
+
+
+def esclarecimento(**kw: Any) -> dict[str, Any]:
+    return mensagem({"tipo": "pergunta", "mudanca": None, "resumo": "Preciso entender melhor.",
+                     "pergunta": pergunta("esclarecer", "O que você quer trocar?",
+                                          "Mais de lado", "Manter o rosto", "Outra pose"),
+                     "explicacao": "O pedido ficou ambíguo.", "avisos": []}, **kw)
+
+
+_ALVO = re.compile(r'<alvo tipo="(\w+)"(?: ordem="(\d+)")?(?: quadro="(\d+)")?'
+                   r'(?: trecho="(\d+)")?')
+
+
+def _ajuste(body: dict[str, Any]) -> dict[str, Any]:
+    texto = _texto_user(body)
+    pedido = texto.split("<pedido>")[-1].split("</pedido>")[0].lower()
+    if "ambíguo" in pedido or "ambiguo" in pedido:
+        return esclarecimento()
+    m = _ALVO.search(texto)
+    tipo, ordem, quadro, trecho = (m.groups() if m else ("narracao", None, None, None))
+    alvo = {"tipo": tipo, "ordem": int(ordem) if ordem else None,
+            "quadro": int(quadro) if quadro else None, "trecho": int(trecho) if trecho else None}
+    if tipo == "narracao":
+        return ajuste(alvo, velocidade=1.15)
+    if tipo == "quadros":
+        return ajuste(alvo, quadros=[{"ordem": alvo["quadro"] or 0,
+                                      "instrucao": "She stands sideways, showing the sleeve"}])
+    if tipo == "posicao":  # a cena da posição: a ação e um quadro por trecho + 1 (US4)
+        n = re.search(r'<cena_da_posicao trechos="(\d)"', texto)
+        trechos = int(n.group(1)) if n else 1
+        return ajuste(alvo, acao="She walks to the mirror and shows the dress",
+                      quadros=[{"ordem": i, "instrucao": f"She walks to the mirror, state {i}"}
+                               for i in range(trechos + 1)])
+    if tipo == "trecho":
+        return ajuste(alvo, acao="She turns slowly to the side, showing the sleeve")
+    return ajuste(alvo)
+
+
+FRASES_GUIADO = ("Achei o vestido perfeito pra quem tem curvas!",
+                 "Olha o caimento desse tecido levinho.",
+                 "Verde esmeralda e manguinha soltinha.",
+                 "Fica lindo no corpo, de verdade.",
+                 "A faixa marca a cintura.",
+                 "Corre no link aqui embaixo!")
+_GRADE = re.compile(r'<grade base="(\d+)" alvo="(\d+)">')
+_CENA_V2 = re.compile(r'<cena id="([0-9a-f-]{36})" nivel="(total|plano)"(?: trechos="(\d)")?')
+
+
+def cena_nova_v2(n: int, trechos: int = 1, motor: str = "minimax") -> dict[str, Any]:
+    return {"nome": f"Cena nova {n}", "acao": "She smiles and shows the dress to the camera",
+            "plano": "medio", "movimento": "parada", "camera": None, "motor": motor,
+            "quadros": [f"She stands in the bedroom wearing the dress, state {i}"
+                        for i in range(trechos + 1)]}
+
+
+def plano_v2(base: int = 5, alvo: int = 10, reusar: list[tuple[str, str, int]] | None = None,
+             frase_longa: bool = False, **kw: Any) -> dict[str, Any]:
+    """Spec 031: `reusar` = [(cena_id, nivel, trechos)] nas primeiras posições; o resto, cenas
+    novas de 1 trecho até fechar `alvo / base`. Uma frase por cena."""
+    total, posicoes, frases = alvo // base, [], []
+    for cena_id, nivel, trechos in (reusar or []):
+        if sum(p["trechos"] for p in posicoes) + trechos > total:
+            break
+        posicoes.append({"cena_id": cena_id, "nivel": nivel, "nova": None, "trechos": trechos,
+                         "motivo": "Esta cena da biblioteca serve."})
+    while sum(p["trechos"] for p in posicoes) < total:
+        posicoes.append({"cena_id": None, "nivel": None, "trechos": 1,
+                         "nova": cena_nova_v2(len(posicoes) + 1), "motivo": "Nenhuma cena serve."})
+    for i, p in enumerate(posicoes):
+        frases.append(FRASES_GUIADO[i % len(FRASES_GUIADO)])
+        p["frases"] = [i + 1]
+    if frase_longa:
+        frases[0] = "Gente, " + "esse vestido é lindo demais, " * 8 + "sério!"
+    return mensagem({"frases": frases, "posicoes": posicoes,
+                     "explicacao": "Montei dentro da grade.", "avisos": []}, **kw)
+
+
+def _plano_v2(body: dict[str, Any]) -> dict[str, Any]:
+    texto = _texto_user(body)
+    base, alvo = (int(x) for x in _GRADE.search(texto).groups())
+    respostas = texto.split("<respostas>")[-1].split("</respostas>")[0].lower()
+    cenas = [(i, n, int(t) if t else 1) for i, n, t in _CENA_V2.findall(texto)]
+    reusar = [] if "cenas novas" in respostas else cenas[:1]
+    longa = "não cabe" in respostas and "<erro_anterior>" not in texto
+    return plano_v2(base, alvo, reusar, frase_longa=longa)
 
 
 _NOTAS: dict[str, Any] = {}
@@ -370,6 +504,13 @@ class AnthropicFake:
         """Spec 011: quantas chamadas pediram o plano do roteiro."""
         return sum("posicoes" in (b.get("output_config", {}).get("format", {})
                                   .get("schema", {}).get("properties", {}))
+                   for b in self.bodies)
+
+    @property
+    def perguntas_pedidas(self) -> int:
+        """Spec 031: quantas chamadas pediram as perguntas do chat."""
+        return sum("perguntas" in (b.get("output_config", {}).get("format", {})
+                                   .get("schema", {}).get("properties", {}))
                    for b in self.bodies)
 
     @property

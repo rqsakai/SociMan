@@ -86,6 +86,10 @@ export const formatoLabel: Record<TipoCampo["formato"], string> = {
   identidade: "Checagem de identidade do kit",
   // spec 011
   plano_roteiro: "Plano do roteiro (frases e cenas)",
+  // spec 031
+  perguntas_roteiro: "Perguntas do chat do vídeo guiado",
+  ajuste_roteiro: "Ajuste pedido no \"Não aprovo\"",
+  plano_roteiro_v2: "Plano do vídeo guiado (na grade)",
 };
 
 export const IA_AUSENTE_TEXTO = "IA não configurada: falta a chave do Claude (ANTHROPIC_API_KEY no .env). O campo continua editável à mão.";

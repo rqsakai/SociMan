@@ -102,6 +102,29 @@ def test_clipe_ltx_com_quadro_final_e_cache(comfy_fake) -> None:
     assert comfy_fake.recusados
 
 
+def test_trecho_base_e_imagens_guardadas(comfy_fake) -> None:
+    """Spec 031 (T015): o clipe de 5 s do MiniMax volta com 124 quadros a 24 fps, e o fake
+    guarda o `start_image`/`end_image` do clipe e o `base_image`/refs do keyframe."""
+    cli = comfy_fake.cliente()
+    ini = cli.upload_image("q0.png", b"quadro0")
+    fim = cli.upload_image("q1.png", b"quadro1")
+    n = quadros("minimax", 5.0)
+    assert n == 124
+    cli, h = _rodar(comfy_fake, "clipe_minimax", {"start_image": ini, "end_image": fim,
+                                                  "prompt": "x", "width": 64, "height": 112,
+                                                  "frames": n, "seed": 5})
+    meta = ComfyFake.meta_do_mp4(_baixar_video(comfy_fake, "clipe_minimax", cli, h))
+    assert (meta["fps"], meta["frames"]) == (24, 124)
+    assert comfy_fake.imagens_de("clipe_minimax") == [{"start_image": b"quadro0",
+                                                       "end_image": b"quadro1"}]
+    cena = cli.upload_image("cena.png", b"cenario")
+    _rodar(comfy_fake, "keyframe", {"base_image": cena, "ref1": ini, "instruction": "x",
+                                    "seed": 1, "prefix": "k"}, sem=("ref2",))
+    assert comfy_fake.imagens_de("keyframe") == [{"base_image": b"cenario", "ref1": b"quadro0"}]
+    assert len(comfy_fake.imagens_de()) == 2
+    assert comfy_fake.recusados == []
+
+
 def test_upscale_devolve_a_entrada_no_tamanho_pedido(comfy_fake, tmp_path) -> None:
     src = tmp_path / "pos.mp4"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i",

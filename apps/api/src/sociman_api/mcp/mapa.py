@@ -457,6 +457,10 @@ _PROIBIDAS_DONO |= {op: "roteiros: ato humano (spec 011)" for op in (
     "roteiros_reverter", "roteiros_regerar_keyframe", "roteiros_enviar_keyframe",
     "roteiros_regerar_clipe", "roteiros_escolher_tomada", "roteiro_padroes_salvar",
     "pronuncias_criar", "pronuncias_editar", "pronuncias_arquivar", "pronuncias_restaurar")}
+# Spec 031: criar o vídeo guiado e responder ao chat são atos humanos.
+_PROIBIDAS_DONO |= {op: "vídeo guiado: ato humano (spec 031)" for op in (
+    "roteiros_criar_guiado", "roteiros_responder", "roteiros_refazer_perguntas",
+    "roteiros_recusar", "roteiros_aprovar_posicao", "roteiros_definir_cena")}
 
 PROIBIDAS: dict[str, str] = {**_PROIBIDAS_I, **_PROIBIDAS_II, **_PROIBIDAS_VII,
                              **_PROIBIDAS_DONO, **_PROIBIDAS_PESSOAS, **_PROIBIDAS_MCP,
@@ -527,6 +531,8 @@ _FORA_DONO |= {op: "roteiros só pela interface no primeiro corte (spec 011)" fo
     "roteiros_listar", "roteiros_listar_agencia", "roteiros_detalhe", "roteiros_versoes",
     "roteiro_padroes_ler", "roteiro_padroes_versoes", "pronuncias_listar",
     "pronuncias_versoes")}
+_FORA_DONO |= {op: "vídeo guiado só pela interface (spec 031)" for op in (
+    "roteiros_grade", "roteiros_conversa", "roteiros_quadros")}
 
 FORA: dict[str, str] = {**_FORA_UPLOAD, **_FORA_DEPRECATED, **_FORA_INFRA, **_FORA_ESCRITAS,
                         **_FORA_DONO, **_FORA_COLETA}

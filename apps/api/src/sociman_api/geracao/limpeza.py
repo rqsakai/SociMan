@@ -23,6 +23,11 @@ intermediários de roteiro com `desuso_em` há mais de 90 dias e não protegidos
 `cena.clipe`, o mesmo objeto), o áudio das narrações e o vídeo das prévias e dos acabamentos. As
 linhas ficam, sem a mídia e com `limpa_em` ("arquivo removido"); a linha de `audios` sai (como na
 fase 1). Um evento `eliminacao_intermediarios` com as contagens; os objetos saem depois do commit.
+
+Spec 031: as tomadas de trecho entram como tomadas locais; a imagem de um quadro arquivado há mais
+de 90 dias e não protegida sai também (a linha de `images`; o quadro arquivado e o candidato
+escolhido ficam com a imagem nula). Cada imagem num SAVEPOINT: uma referência que a seleção não
+previu (FK) a mantém, e o resto segue.
 """
 
 import logging
@@ -30,6 +35,7 @@ import uuid
 from dataclasses import dataclass, field
 
 from sqlalchemy import delete, func, or_, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from sociman_api import storage
@@ -61,6 +67,8 @@ class Resultado:
     # Spec 011 (fase 2): os intermediários de roteiro.
     tomadas: int = 0
     narracoes: int = 0
+    # Spec 031: as imagens dos quadros arquivados.
+    quadros: int = 0
 
 
 def _vencidas(db: Session, limite: int) -> list[Geracao]:
@@ -157,7 +165,7 @@ def limpar(db: Session, actor: Actor = AGENDADOR, *, dry_run: bool = False,
         db.rollback()
         log.exception("falha na fase 2 da limpeza (intermediários); segue na próxima volta")
         return total
-    for campo in ("candidatos", "audios", "bytes", "mantidos", "tomadas", "narracoes"):
+    for campo in ("candidatos", "audios", "bytes", "mantidos", "tomadas", "narracoes", "quadros"):
         setattr(total, campo, getattr(total, campo) + getattr(f2, campo))
     return total
 
@@ -171,7 +179,7 @@ def _intermediarios(db: Session, actor: Actor, dry_run: bool, lote: int) -> Resu
     r = Resultado()
     agora = db.scalar(select(func.now()))
     sai, r.mantidos = retencao.filtrar(retencao.elegiveis(db, agora, lote),
-                                       retencao.protegidos(db))
+                                       retencao.protegidos(db, agora))
     objetos: list[tuple[storage.Bucket, str]] = []
     video_keys: set[str] = set()
     tomadas = list(db.scalars(select(CenaTomada).where(CenaTomada.id.in_(sai.tomadas))
@@ -202,9 +210,23 @@ def _intermediarios(db: Session, actor: Actor, dry_run: bool, lote: int) -> Resu
             audios.append(a)
             r.bytes += a.bytes
             objetos.append(("audios", a.object_key))
+    imagens: list[Image] = []
+    for image_id in sorted(sai.imagens):
+        img = db.get(Image, image_id)
+        if img is None:
+            continue
+        # A imagem do quadro é sempre a escolhida da geração do quadro: quem decide é a proteção
+        # do roteiro (`retencao`); os outros usos (asset, produto, `params` vivo) a mantêm.
+        if midia_em_uso(db, image_id=image_id, ignorar=frozenset({"escolhido"})):
+            r.mantidos += 1
+            continue
+        imagens.append(img)
     r.tomadas, r.narracoes, r.candidatos, r.audios = (len(tomadas), len(narracoes), len(cands),
                                                       len(audios))
-    if dry_run or not (tomadas or cands or narracoes):
+    r.quadros = len(imagens)
+    if dry_run:
+        r.bytes += sum(i.bytes for i in imagens)
+    if dry_run or not (tomadas or cands or narracoes or imagens):
         db.rollback()
         return r
     for t in tomadas:
@@ -222,10 +244,15 @@ def _intermediarios(db: Session, actor: Actor, dry_run: bool, lote: int) -> Resu
                    .values(audio_id=None))
         db.flush()
         db.execute(delete(Audio).where(Audio.id.in_(audio_ids)))
+    apagadas = _imagens_de_quadros(db, imagens)
+    r.mantidos += len(imagens) - len(apagadas)
+    r.quadros = len(apagadas)
+    r.bytes += sum(i.bytes for i in apagadas)
+    objetos += [("imagens", i.object_key) for i in apagadas]
     record_event(db, EVENTO_INTERMEDIARIOS, "ok", actor, details={
         "excecao": EXCECAO_INTERMEDIARIOS, "tomadas": r.tomadas, "narracoes": r.narracoes,
-        "candidatos": r.candidatos, "audios": r.audios, "bytes": r.bytes,
-        "mantidos": r.mantidos})
+        "candidatos": r.candidatos, "audios": r.audios, "quadros": r.quadros,
+        "bytes": r.bytes, "mantidos": r.mantidos})
     db.commit()
     for bucket, key in objetos:
         if not key:
@@ -234,9 +261,37 @@ def _intermediarios(db: Session, actor: Actor, dry_run: bool, lote: int) -> Resu
             storage.apagar_por_excecao(key, bucket=bucket, excecao=EXCECAO_INTERMEDIARIOS)
         except Exception:  # objeto órfão é inofensivo; a linha já ficou sem a mídia
             log.warning("objeto %s/%s não apagado (fica órfão)", bucket, key, exc_info=True)
-    log.info("limpeza de 90 dias (roteiros): %d tomadas, %d narrações, %d vídeos, %d bytes "
-             "(%d mantidos)", r.tomadas, r.narracoes, r.candidatos, r.bytes, r.mantidos)
+    log.info("limpeza de 90 dias (roteiros): %d tomadas, %d narrações, %d vídeos, %d quadros, "
+             "%d bytes (%d mantidos)", r.tomadas, r.narracoes, r.candidatos, r.quadros, r.bytes,
+             r.mantidos)
     return r
+
+
+def _imagens_de_quadros(db: Session, imagens: list[Image]) -> list[Image]:
+    """031: solta a imagem dos quadros arquivados e do candidato escolhido e apaga a linha, cada
+    uma num SAVEPOINT (uma FK não prevista mantém a imagem). Devolve as apagadas."""
+    from sociman_api.cenas.models import CenaQuadro
+
+    apagadas = []
+    for img in imagens:
+        try:
+            with db.begin_nested():
+                db.execute(update(CenaQuadro).where(CenaQuadro.image_id == img.id,
+                                                    CenaQuadro.archived_at.is_not(None))
+                           .values(image_id=None, provisorio=False)
+                           .execution_options(synchronize_session=False))
+                db.execute(update(GeracaoCandidato).where(GeracaoCandidato.image_par_id == img.id)
+                           .values(image_par_id=None).execution_options(synchronize_session=False))
+                db.execute(update(GeracaoCandidato).where(GeracaoCandidato.image_id == img.id)
+                           .values(image_id=None, image_par_id=None)
+                           .execution_options(synchronize_session=False))
+                db.execute(delete(Image).where(Image.id == img.id)
+                           .execution_options(synchronize_session=False))
+        except IntegrityError:
+            log.info("imagem %s de quadro arquivado mantida (ainda referenciada)", img.id)
+            continue
+        apagadas.append(img)
+    return apagadas
 
 
 def rodar(db: Session) -> None:

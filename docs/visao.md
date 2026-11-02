@@ -188,9 +188,33 @@ Um **SPA (PWA) + API Python** para gerenciar as contas de mídia social **manual
    da agência, com **perfil base opcional** (o guia desse perfil entra na geração); criar avatar, cenário ou produto
    de dentro da nova cena; as abas do perfil saem. Substitui a página provisória `/app/estudio`.
    **Ordem decidida pelo dono (2026-10-09): 029 → 011.** A 029 fica com a migration `0024`; a 011 passa a `0027` (depois da `0026_uniao_mercado` da 026).
-30. `030-clonagem-movimento` 📋 **insumo pronto** (`docs/insumos/030-clonagem-movimento.md`, 2026-10-09; depende da 029
-   e da 021): clonar o movimento de um vídeo de até 10 s para o avatar, local na GPU (Wan 2.2 Animate e outros
-   candidatos, a pesquisar no plan).
+30. `030-movimentos` 📋 **insumo em revisão** (`docs/insumos/030-clonagem-movimento.md`, 2026-10-09, a reescrever;
+   estudo `docs/pesquisa/030-movimentos-ux.md` e grill `movimentos-030` Q1–Q5 de 2026-10-15; depende da 029, 021 e
+   031): biblioteca de **movimentos como ficha** (nome, capa em vídeo, para que produto, enquadramento, produto
+   vestido/na mão, 1 a 3 passos de 5 s com quadro final, câmera), curada por nós **e** pessoal (o usuário sobe um
+   vídeo de movimento, guardado com consentimento); dois jeitos de criar vídeo (wizard com narração e "clonar um
+   movimento"); unidade de cobrança = clipe de 5 s; conceito de **provedor** (local hoje, APIs externas no fim do
+   produto). A cópia de pose (Wan Animate / VACE) é fase 2.
+31. `031-video-guiado` ✅ **implementada e testada na GPU com o dono** (`specs/031-video-guiado/`, 2026-10-14/15;
+   migrations `0028_video_guiado` e `0029_acabamento_leve`; research R13 com as medições; **sem commit ainda**):
+   "Novo vídeo" em blocos, chat de perguntas, wizard e avançado, reuso de cenas, 2 a 4 quadros por cena, grade de
+   duração. Decisões da T059: plano sempre no MiniMax, acabamento `leve` padrão e `hd` opcional, regras do quadro
+   fixas, sem teto de tempo no gerador. Pendências em `docs/planos/2026-10-15-fechar-geracao-de-video.md`.
+31b. `031-qualidade-guiado` 🔧 **correções pós-T059** (frente A do plano): fallback genérico das cenas reaproveitadas,
+   regra contra locomoção em 5 s, ação do clipe editável no avançado, "na fila" com tempo estimado.
+32. `032-variantes-video` 📋 **insumo pronto** (`docs/insumos/032-variantes-video.md`, 2026-10-13; depende da
+   031): várias versões aprovadas por cena e vídeos montados pelas combinações, com narrações diferentes (gasta
+   TTS em vez de GPU de vídeo).
+33. `033-banco-de-prompts` 📋 **insumo pronto** (`docs/insumos/033-banco-de-prompts.md`, 2026-10-16; absorve o antigo
+   "033-regras-de-quadro" do estudo da 030, §4.4; depende da 031 e da 008): os blocos fixos de prompt de imagem e
+   vídeo (regras do quadro, composição dos quadros, ambiente fixo, boca, realismo, kit, flat, cenário) viram **blocos
+   editáveis** como as regras da 008 (padrão em código, três níveis global → perfil → formato, "voltar ao padrão",
+   versão), com a tela Assistente de IA › Prompts (onde é usado + prévia do prompt montado); **formatos de cena**
+   (`avatar`, `pov_maos`, `sem_rosto`, `espelho`, `produto_so`) com vocabulário de ações por tipo de produto; prompt
+   negativo do keyframe (com autorização no `comfyui-docker`); checagem do quadro por visão e registro das
+   reprovações. Referências de terceiros em `docs/insumos/prompts-externos/` (só referência, nada redistribuído).
+34. `034-unidades-de-geracao` 📋 **a especificar** (grill da 030, Q2): `unidades` por geração (clipes de 5 s,
+   quadros, acabamento HD) e tempo estimado na tela; base da cobrança quando entrarem os provedores externos.
 
 **Multi-tenant (spec futura, sem número ainda; decisão do dono em 2026-10-08):** usuários terão suas contas e itens
 separados. A camada de mercado da 026 nasce neutra de tenant (um lago coletado uma vez, lido por todos); a camada de

@@ -9403,6 +9403,20 @@
                 },
                 "type": "array"
               },
+              "temCena": {
+                "default": false,
+                "type": "boolean"
+              },
+              "thumbUrl": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "tipo": {
                 "$ref": "#/$defs/AssetTipo"
               },
@@ -11118,11 +11132,29 @@
                   }
                 ]
               },
+              "revogado": {
+                "default": false,
+                "type": "boolean"
+              },
               "tags": {
                 "items": {
                   "type": "string"
                 },
                 "type": "array"
+              },
+              "temCena": {
+                "default": false,
+                "type": "boolean"
+              },
+              "thumbUrl": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "tipo": {
                 "$ref": "#/$defs/AssetTipo"
@@ -11133,6 +11165,17 @@
               },
               "version": {
                 "type": "integer"
+              },
+              "vozId": {
+                "anyOf": [
+                  {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -11425,11 +11468,29 @@
                   }
                 ]
               },
+              "revogado": {
+                "default": false,
+                "type": "boolean"
+              },
               "tags": {
                 "items": {
                   "type": "string"
                 },
                 "type": "array"
+              },
+              "temCena": {
+                "default": false,
+                "type": "boolean"
+              },
+              "thumbUrl": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "tipo": {
                 "$ref": "#/$defs/AssetTipo"
@@ -11440,6 +11501,17 @@
               },
               "version": {
                 "type": "integer"
+              },
+              "vozId": {
+                "anyOf": [
+                  {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
@@ -25973,7 +26045,10 @@
                   "analise",
                   "ficha_produto",
                   "identidade",
-                  "plano_roteiro"
+                  "plano_roteiro",
+                  "perguntas_roteiro",
+                  "ajuste_roteiro",
+                  "plano_roteiro_v2"
                 ],
                 "type": "string"
               },
@@ -26004,7 +26079,10 @@
                   "aprendizado.analise",
                   "produto.ficha",
                   "avatar.identidade",
-                  "roteiro.plano"
+                  "roteiro.plano",
+                  "roteiro.perguntas",
+                  "roteiro.ajuste",
+                  "roteiro.plano_guiado"
                 ],
                 "type": "string"
               },
@@ -26251,7 +26329,10 @@
                   "analise",
                   "ficha_produto",
                   "identidade",
-                  "plano_roteiro"
+                  "plano_roteiro",
+                  "perguntas_roteiro",
+                  "ajuste_roteiro",
+                  "plano_roteiro_v2"
                 ],
                 "type": "string"
               },
@@ -26282,7 +26363,10 @@
                   "aprendizado.analise",
                   "produto.ficha",
                   "avatar.identidade",
-                  "roteiro.plano"
+                  "roteiro.plano",
+                  "roteiro.perguntas",
+                  "roteiro.ajuste",
+                  "roteiro.plano_guiado"
                 ],
                 "type": "string"
               },

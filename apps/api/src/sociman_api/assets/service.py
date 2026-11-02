@@ -240,6 +240,19 @@ def _file_out(f: AssetFile, image: Image, users: dict) -> schemas.AssetFile:
     )
 
 
+# Spec 031: o slot que vira a miniatura dos seletores com imagem.
+_SLOT_MINIATURA = {AssetTipo.avatar: "rosto_frontal", AssetTipo.cenario: "cena"}
+
+
+def _miniatura(asset: Asset) -> AssetFile | None:
+    """O arquivo da miniatura: o slot do kit (rosto frontal ou cena), senão a capa, senão o 1º ativo."""
+    slot = _SLOT_MINIATURA.get(asset.tipo)
+    if slot and (f := asset.slot_ativo(slot)):
+        return f
+    ativos = asset.active_files()
+    return next((f for f in ativos if f.id == asset.primary_file_id), ativos[0] if ativos else None)
+
+
 def _summary_fields(asset: Asset, images: dict[uuid.UUID, Image],
                     usos: dict[uuid.UUID, list[UsoImagem]],
                     nomes: dict[uuid.UUID, str]) -> dict[str, Any]:
@@ -248,6 +261,9 @@ def _summary_fields(asset: Asset, images: dict[uuid.UUID, Image],
         primary = next((f for f in asset.arquivos if f.id == asset.primary_file_id), None)
         if primary is not None and primary.image_id in images:
             cover = image_ref(images[primary.image_id])
+    mini = _miniatura(asset)
+    thumb_url = (imaging.image_urls(images[mini.image_id].object_key)["medium"]
+                 if mini is not None and mini.image_id in images else None)
     return {
         "id": asset.id, "perfil_id": asset.perfil_id,
         "perfil_nome": nomes.get(asset.perfil_id) if asset.perfil_id else None,
@@ -255,7 +271,9 @@ def _summary_fields(asset: Asset, images: dict[uuid.UUID, Image],
         "tags": list(asset.tags), "cover": cover, "file_count": len(asset.active_files()),
         "in_use": any(usos.get(f.image_id) for f in asset.arquivos),
         "archived": asset.archived, "version": asset.version, "updated_at": asset.updated_at,
-        "kit_status": asset.kit_status,
+        "kit_status": asset.kit_status, "thumb_url": thumb_url,
+        "revogado": asset.revogado, "voz_id": asset.voz_id,
+        "tem_cena": asset.tipo == AssetTipo.cenario and asset.slot_ativo("cena") is not None,
     }
 
 
@@ -265,7 +283,8 @@ def summaries_out(db: Session, assets: Sequence[Asset]) -> list[schemas.AssetSum
     por_imagem = usos_de(db, assets)
     primaries = {f.id: f.image_id for a in assets for f in a.arquivos
                  if f.id == a.primary_file_id}
-    images = _images(db, primaries.values())
+    minis = [m.image_id for a in assets if (m := _miniatura(a)) is not None]
+    images = _images(db, [*primaries.values(), *minis])
     nomes = perfil_nomes(db, perfis)
     return [schemas.AssetSummary(**_summary_fields(a, images, por_imagem, nomes))
             for a in assets]
@@ -294,9 +313,8 @@ def asset_out(db: Session, asset: Asset,
         origem=asset.origem,
         consentimento=service_padrao.consentimento_out(
             db, asset.consentimento, para_mcp=actor is not None and actor.kind == "mcp_client"),
-        voz_id=asset.voz_id, voz_padrao=service_padrao.voz_padrao_out(db, asset),
+        voz_padrao=service_padrao.voz_padrao_out(db, asset),
         identidade=asset.identidade, kit=service_padrao.kit_out(db, asset),
-        revogado=asset.revogado,
     )
 
 

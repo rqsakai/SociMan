@@ -24,6 +24,7 @@ from sqlalchemy.orm import Session
 from sociman_api import history, imaging, midia, storage
 from sociman_api.assets.models import Asset
 from sociman_api.auth.deps import Actor
+from sociman_api.cenas import quadros as cenas_quadros
 from sociman_api.cenas import service as cenas_service
 from sociman_api.cenas.models import Cena, CenaStatus, CenaTomada, TomadaOrigem
 from sociman_api.config import get_settings
@@ -33,17 +34,21 @@ from sociman_api.perfis.models import Image, ImageKind, Perfil
 from sociman_api.perfis.schemas import VersionsList
 from sociman_api.perfis.service_perfis import get_perfil_or_404, target_state, versions_out
 from sociman_api.produtos.models import Produto, ProdutoStatus
-from sociman_api.roteiros import aplicadores, estado, maquina, pedidos, schemas, tempos
+from sociman_api.roteiros import aplicadores, estado, grade, maquina, pedidos, schemas, tempos
 from sociman_api.roteiros.estado import S
 from sociman_api.roteiros.models import (
     ENTITY,
     PORTOES_PADRAO,
+    ConversaEstado,
+    PosicaoReuso,
     Roteiro,
+    RoteiroAcabamento,
     RoteiroCena,
     RoteiroModo,
     RoteiroNarracao,
     RoteiroPadroes,
     RoteiroProduto,
+    RoteiroTrecho,
 )
 from sociman_api.vozes.models import Voz
 
@@ -53,7 +58,7 @@ LIMITE_PADRAO = 20
 LIMITE_MAX = 50
 KEYFRAME_MAX_BYTES = 20 * 1024 * 1024
 ASPECTO_TOLERANCIA = 0.01
-EDITAVEIS_NO_PLANO = ("frases", "posicoes", "produtos", "avatar_id")
+EDITAVEIS_NO_PLANO = ("frases", "posicoes", "produtos", "avatar_id", "duracao_s")
 
 
 def invalido(field: str, message: str) -> ApiError:
@@ -162,21 +167,105 @@ def _validar_posicoes(db: Session, r: Roteiro, frases: list[str],
     except tempos.TemposInvalidos as exc:
         raise invalido("posicoes", f"toda frase em exatamente uma cena, em ordem ({exc})") \
             from None
+    if not r.guiado:
+        if any(p.trechos is not None for p in posicoes):
+            raise invalido("posicoes", "trechos só no vídeo guiado")
+        return
+    if novas:
+        _validar_trechos(db, r, posicoes)
 
 
-def _trocar_posicoes(db: Session, r: Roteiro, posicoes: list[schemas.PosicaoIn]) -> None:
+def _trechos_de(db: Session, r: Roteiro, ordem: int, p: schemas.PosicaoIn) -> int | None:
+    """Spec 031: os trechos da posição (o pedido, senão os da posição atual com a mesma cena,
+    senão os da cena)."""
+    if p.trechos is not None:
+        return p.trechos
+    anterior = next((x for x in r.posicoes_rel if x.ordem == ordem), None)
+    if anterior is not None and anterior.cena_id == p.cena_id and anterior.trechos is not None:
+        return anterior.trechos
+    cena = db.get(Cena, p.cena_id)
+    return cena.trechos if cena is not None else None
+
+
+def _validar_trechos(db: Session, r: Roteiro, posicoes: list[schemas.PosicaoIn]) -> None:
+    """Spec 031: cada cena do guiado tem a sequência de quadros com os trechos da posição, e a
+    soma fecha na duração (422 `duracao_nao_fecha`)."""
+    soma = 0
+    for i, p in enumerate(posicoes):
+        trechos = _trechos_de(db, r, i, p)
+        cena = db.get(Cena, p.cena_id)
+        if trechos is None or cena.trechos is None:
+            raise invalido(f"posicoes.{i}.cenaId",
+                           "use uma cena do vídeo guiado (com a sequência de quadros)")
+        if cena.trechos != trechos:
+            raise invalido(f"posicoes.{i}.trechos",
+                           f"a cena tem {cena.trechos} trecho(s); duplique para mudar")
+        soma += trechos * (r.trecho_base_s or 0)
+    if soma != r.duracao_alvo_s:
+        raise ApiError(422, "duracao_nao_fecha",
+                       f"As cenas somam {soma} s; a duração do vídeo é {r.duracao_alvo_s} s",
+                       details={"field": "posicoes", "soma": soma,
+                                "duracaoS": r.duracao_alvo_s})
+
+
+def _trocar_posicoes(db: Session, r: Roteiro, posicoes: list[schemas.PosicaoIn],
+                     guiadas: list[dict[str, Any]] | None = None) -> None:
+    """Troca as posições. No guiado (031), a mesma cena na mesma ordem guarda os trechos, o
+    reuso, o motivo, as aprovações e a tomada de cada trecho; `guiadas` (o revert) traz esses
+    campos do snapshot."""
     antigas = {p.ordem: p for p in r.posicoes_rel}
+    velhos_trechos = {(p.ordem, x.trecho): x.tomada_id for p in r.posicoes_rel
+                      for x in p.trechos_rel}
     for velha in list(r.posicoes_rel):
         r.posicoes_rel.remove(velha)
     db.flush()
     for ordem, p in enumerate(posicoes):
         anterior = antigas.get(ordem)
+        mesma = anterior is not None and anterior.cena_id == p.cena_id
         tomada = p.tomada_id
-        if tomada is None and anterior is not None and anterior.cena_id == p.cena_id:
+        if tomada is None and mesma:
             tomada = anterior.tomada_id  # a mesma cena na mesma posição guarda a tomada
-        r.posicoes_rel.append(RoteiroCena(roteiro_id=r.id, ordem=ordem, cena_id=p.cena_id,
-                                          frases=list(p.frases), tomada_id=tomada))
+        nova = RoteiroCena(roteiro_id=r.id, ordem=ordem, cena_id=p.cena_id,
+                           frases=list(p.frases), tomada_id=tomada)
+        if r.guiado:
+            _guiar(db, r, nova, p, anterior if mesma else None,
+                   guiadas[ordem] if guiadas is not None and ordem < len(guiadas) else None,
+                   {t: v for (o, t), v in velhos_trechos.items() if o == ordem and mesma})
+        r.posicoes_rel.append(nova)
     db.flush()
+    if r.guiado:  # 031 (R12): a tomada de trecho que não ficou em nenhuma posição sai de uso
+        ficam = {x.tomada_id for p in r.posicoes_rel for x in p.trechos_rel}
+        for tomada_id in set(velhos_trechos.values()) - ficam:
+            maquina.desusar_tomada(db, tomada_id)
+
+
+def _guiar(db: Session, r: Roteiro, nova: RoteiroCena, p: schemas.PosicaoIn,
+           anterior: RoteiroCena | None, snap: dict[str, Any] | None,
+           velhas: dict[int, uuid.UUID | None]) -> None:
+    if snap is not None and snap.get("trechos") is not None:
+        nova.trechos = int(snap["trechos"])
+        nova.reuso = PosicaoReuso(snap["reuso"]) if snap.get("reuso") else None
+        nova.motivo = snap.get("motivo")
+        tomadas = [uuid.UUID(t) if t else None for t in snap.get("tomadas_trechos") or []]
+    else:
+        cena = db.get(Cena, p.cena_id)
+        nova.trechos = p.trechos or (anterior.trechos if anterior is not None else None) or \
+            (cena.trechos if cena is not None else None)
+        nova.reuso = anterior.reuso if anterior is not None else None
+        nova.motivo = anterior.motivo if anterior is not None else None
+        tomadas = [velhas.get(t) for t in range(nova.trechos or 0)]
+    if nova.trechos is None:
+        return
+    nova.orcamento_chars = grade.orcamento_chars(nova.trechos * (r.trecho_base_s or 0))
+    if anterior is not None and anterior.trechos == nova.trechos:
+        nova.aprovado_keyframes_em = anterior.aprovado_keyframes_em
+        nova.aprovado_keyframes_por = anterior.aprovado_keyframes_por
+        nova.aprovado_clipe_em = anterior.aprovado_clipe_em
+        nova.aprovado_clipe_por = anterior.aprovado_clipe_por
+    for t, tomada_id in enumerate(tomadas[:nova.trechos]):
+        if tomada_id is not None and db.get(CenaTomada, tomada_id) is not None:
+            nova.trechos_rel.append(RoteiroTrecho(roteiro_id=r.id, ordem=nova.ordem, trecho=t,
+                                                  tomada_id=tomada_id))
 
 
 def _trocar_produtos(db: Session, r: Roteiro, produtos: list[tuple[Produto, uuid.UUID | None]]
@@ -227,8 +316,10 @@ def criar(db: Session, actor: Actor, perfil_id: uuid.UUID, body: schemas.Roteiro
     return r
 
 
-def editar(db: Session, actor: Actor, roteiro_id: uuid.UUID, body: schemas.RoteiroPatch
-           ) -> Roteiro:
+def editar(db: Session, actor: Actor, roteiro_id: uuid.UUID, body: schemas.RoteiroPatch, *,
+           ia: dict[str, Any] | None = None) -> Roteiro:
+    """`ia` (spec 031, R6): o ajuste do "Não aprovo" aplicado pelo save normal, em nome do humano
+    que recusou; vai em `details.ia` (o selo da 008)."""
     r = _editavel(db, roteiro_id, body.version)
     campos = body.model_fields_set - {"version"}
     if r.status == S.planejando and campos & set(EDITAVEIS_NO_PLANO):
@@ -244,6 +335,9 @@ def editar(db: Session, actor: Actor, roteiro_id: uuid.UUID, body: schemas.Rotei
         r.voz_id = _voz(db, body.voz_id).id if body.voz_id else None
     if "velocidade" in campos and body.velocidade is not None:
         r.velocidade = body.velocidade
+    replanejar = False
+    if "duracao_s" in campos and body.duracao_s is not None:
+        replanejar = _mudar_duracao(db, actor, r, body.duracao_s)
     if "produtos" in campos and body.produtos is not None:
         _trocar_produtos(db, r, _produtos(db, body.produtos))
     frases = list(body.frases) if "frases" in campos and body.frases is not None \
@@ -259,15 +353,41 @@ def editar(db: Session, actor: Actor, roteiro_id: uuid.UUID, body: schemas.Rotei
             _validar_posicoes(db, r, frases, atuais, novas=False)
         r.frases = frases
     _comandar(r, actor)
-    if not _record(db, actor, r, "updated", before, {"acao": "updated"}, sempre=False):
+    details: dict[str, Any] = {"acao": "updated"}
+    if replanejar:
+        details["replanejar"] = True
+    if ia is not None:
+        details["ia"] = ia
+    if not _record(db, actor, r, "updated", before, details, sempre=False):
         return r
     maquina.avancar(db, r, actor, humano=True)
     return r
 
 
+def _mudar_duracao(db: Session, actor: Actor, r: Roteiro, duracao_s: int) -> bool:
+    """Spec 031 (FR-033): a duração muda dentro da grade guardada; num roteiro já planejado, o
+    plano é refeito a partir do texto (as gerações abertas são canceladas, nada é apagado).
+    Devolve se vai replanejar."""
+    from sociman_api.roteiros import guiado
+
+    if not r.guiado:
+        raise invalido("duracaoS", "a duração só muda no vídeo guiado")
+    guiado.conferir_duracao(duracao_s, r.trecho_base_s)
+    if duracao_s == r.duracao_alvo_s:
+        return False
+    r.duracao_alvo_s = duracao_s
+    if r.status == S.rascunho:
+        return False
+    _cancelar_abertas(db, actor, r)
+    r.status = S.planejando
+    maquina.limpar_falha(r)
+    r.avisos = []
+    return True
+
+
 def _cancelar_abertas(db: Session, actor: Actor, r: Roteiro) -> int:
     n = 0
-    for passo in estado.PASSO_DA_ETAPA.values():
+    for passo in (*estado.PASSO_DA_ETAPA.values(), "roteiro.perguntas", "roteiro.ajuste"):
         vistas = {g.id: g for g in estado.abertas(db, passo, alvo_id=r.id)}
         vistas |= {g.id: g for g in estado.abertas(db, passo, roteiro_id=r.id)}
         for g in vistas.values():
@@ -292,6 +412,9 @@ def arquivar(db: Session, actor: Actor, roteiro_id: uuid.UUID, version: int) -> 
         g = db.get(Geracao, gid) if gid else None
         if g is not None and g.desuso_em is None:
             g.desuso_em = agora
+    for p in r.posicoes_rel:  # 031: as tomadas dos trechos
+        for x in p.trechos_rel:
+            maquina.desusar_tomada(db, x.tomada_id)
     _comandar(r, actor)
     _record(db, actor, r, "archived", before, {"acao": "archived", "canceladas": canceladas})
     return r
@@ -307,6 +430,11 @@ def restaurar(db: Session, actor: Actor, roteiro_id: uuid.UUID, version: int) ->
     n = estado.narracao_ativa(db, r)
     if n is not None:
         n.desuso_em = None
+    for p in r.posicoes_rel:  # 031: as tomadas dos trechos voltam a ser usadas
+        for x in p.trechos_rel:
+            t = db.get(CenaTomada, x.tomada_id) if x.tomada_id else None
+            if t is not None and t.limpa_em is None:
+                t.desuso_em = None
     _comandar(r, actor)
     _record(db, actor, r, "restored", before, {"acao": "restored"})
     maquina.avancar(db, r, actor, humano=True)
@@ -327,15 +455,20 @@ def reverter(db: Session, actor: Actor, roteiro_id: uuid.UUID, version: int,
     r.velocidade = Decimal(str(state["velocidade"]))
     r.modo = RoteiroModo(state["modo"])
     r.portoes = dict(state["portoes"])
+    if r.guiado and state.get("duracao_alvo_s") is not None:  # 031 (a base é imutável)
+        r.duracao_alvo_s = int(state["duracao_alvo_s"])
+    if r.guiado and state.get("cenario_id"):
+        r.cenario_id = uuid.UUID(state["cenario_id"])
     produtos = [(db.get(Produto, uuid.UUID(p["produto_id"])),
                  uuid.UUID(p["produto_variante_id"]) if p["produto_variante_id"] else None)
                 for p in state.get("produtos") or []]
     _trocar_produtos(db, r, [(p, v) for p, v in produtos if p is not None])
+    snaps = list(state.get("posicoes") or [])
     _trocar_posicoes(db, r, [schemas.PosicaoIn(cena_id=uuid.UUID(p["cena_id"]),
                                                frases=list(p["frases"]),
                                                tomada_id=uuid.UUID(p["tomada_id"])
                                                if p["tomada_id"] else None)
-                             for p in state.get("posicoes") or []])
+                             for p in snaps], guiadas=snaps)
     _comandar(r, actor)
     _record(db, actor, r, "reverted", before, {"from_version": to_version})
     maquina.avancar(db, r, actor, humano=True)
@@ -351,6 +484,8 @@ def planejar(db: Session, actor: Actor, roteiro_id: uuid.UUID, version: int) -> 
         and r.etapa_falhou.value == "plano")
     if not pode:
         raise ApiError(409, "estado_invalido", "O plano só é pedido no rascunho ou no texto")
+    if r.guiado and r.conversa_estado != ConversaEstado.respondida:  # 031 (FR-009)
+        raise ApiError(409, "conversa_incompleta", "Responda as perguntas do chat antes")
     _produtos(db, [schemas.ProdutoRoteiroIn(produto_id=p.produto_id,
                                             variante_id=p.produto_variante_id)
                    for p in sorted(r.produtos_rel, key=lambda p: p.ordem)])
@@ -387,13 +522,22 @@ def aprovar(db: Session, actor: Actor, roteiro_id: uuid.UUID, body: schemas.Apro
                        details={"status": r.status.value})
     if body.portao == "texto":
         _conferir_texto(db, r)
-    if body.portao == "keyframes":
+    if body.portao == "keyframes" and not r.guiado:
         faltam = [p.ordem for p, c in maquina.cenas_do(db, r) if c.keyframe_inicial_id is None]
         if faltam:
             raise ApiError(409, "keyframes_pendentes",
                            f"Escolha o keyframe da posição {faltam[0] + 1} antes de aprovar",
                            details={"ordem": faltam[0]})
     before = history.snapshot(r)
+    if body.acabamento_modo is not None:  # T059: o acabamento escolhido junto da aprovação final
+        if body.portao != "final":
+            raise invalido("acabamentoModo", "só na aprovação do final")
+        r.acabamento_modo = RoteiroAcabamento(body.acabamento_modo)
+    if r.guiado and body.portao in ("keyframes", "clipes"):  # 031 (R9): todas as posições
+        from sociman_api.roteiros import guiado
+
+        guiado.aprovar_todas(db, actor, r, "keyframes" if body.portao == "keyframes"
+                             else "clipe")
     _comandar(r, actor)
     r.avisos = [a for a in (r.avisos or []) if a.get("code") != "cena_incompleta"]
     maquina.passar(db, r, actor, body.portao)
@@ -408,10 +552,18 @@ def controle(db: Session, actor: Actor, roteiro_id: uuid.UUID, body: schemas.Con
     parado (ou ligar o automático) equivale a aprovar, no nome de quem mudou."""
     r = _editavel(db, roteiro_id, body.version)
     before = history.snapshot(r)
-    de = {"modo": r.modo.value, "portoes": dict(r.portoes or {})}
+    de = {"modo": r.modo.value, "portoes": dict(r.portoes or {}),
+          "acabamentoModo": r.acabamento_modo.value}
     r.modo = body.modo
     r.portoes = body.portoes.model_dump()
-    para = {"modo": r.modo.value, "portoes": dict(r.portoes)}
+    if body.acabamento_modo is not None and body.acabamento_modo != r.acabamento_modo.value:
+        # T059: só antes do acabamento começar (depois de pronto, a entrega já virou conteúdo).
+        if estado.nivel(r.status) > estado.nivel(S.aguardando_final):
+            raise ApiError(409, "estado_invalido",
+                           "O acabamento já começou; o modo vale para o próximo vídeo")
+        r.acabamento_modo = RoteiroAcabamento(body.acabamento_modo)
+    para = {"modo": r.modo.value, "portoes": dict(r.portoes),
+            "acabamentoModo": r.acabamento_modo.value}
     _comandar(r, actor)
     details: dict[str, Any] = {"acao": "controle", "de": de, "para": para}
     parado = estado.PORTAO_DO_AGUARDANDO.get(r.status)
@@ -456,6 +608,10 @@ def regerar_keyframe(db: Session, actor: Actor, roteiro_id: uuid.UUID, ordem: in
     if estado.nivel(r.status) < estado.nivel(S.narrando) and r.status != S.falhou:
         raise ApiError(409, "estado_invalido", "Aprove o texto antes dos keyframes")
     p = _posicao(r, ordem)
+    if r.guiado:
+        return _regerar_quadro(db, actor, r, p, body)
+    if body.quadro:
+        raise invalido("quadro", "o roteiro da 011 tem um keyframe por cena")
     cena = cenas_service.get_cena_or_404(db, p.cena_id, lock=True)
     if cena.archived:
         raise ApiError(409, "arquivada", "Restaure a cena antes de regerar")
@@ -484,7 +640,53 @@ def regerar_keyframe(db: Session, actor: Actor, roteiro_id: uuid.UUID, ordem: in
         maquina.cancelar(db, actor, g, "Pedido outro keyframe")
     _comandar(r, actor)
     # A escolha da opção nova (humana ou automática) é que muda o keyframe e as etapas depois.
-    pedidos.keyframe(db, actor, r, cena, ordem)
+    pedidos.keyframe(db, actor, r, cena, ordem, n=body.n_opcoes)
+    return r
+
+
+def _conferir_avatar_da(db: Session, r: Roteiro, cena: Cena) -> None:
+    avatar_id = cena.avatar_id or r.avatar_id
+    problema = estado.problema_do_avatar(db.get(Asset, avatar_id) if avatar_id else None)
+    if problema:
+        raise ApiError(409, *problema)
+
+
+def _regerar_quadro(db: Session, actor: Actor, r: Roteiro, p: RoteiroCena,
+                    body: schemas.RegerarKeyframeIn) -> Roteiro:
+    """031 (avançado; FR-015, FR-026, FR-028): refaz o quadro `quadro` da posição e os seguintes
+    (com a instrução nova, se veio), pedindo `nOpcoes` opções (1 = a cadeia segue com a opção
+    provisória; 2 a 4 = espera a escolha humana). Numa cena reaproveitada, deriva antes, com os
+    quadros de antes já aprovados (FR-022)."""
+    if body.referencias:
+        raise invalido("referencias", "no vídeo guiado, cada quadro nasce do anterior")
+    quadro = body.quadro or 0
+    if quadro > (p.trechos or 0):
+        raise invalido("quadro", f"a cena da posição {p.ordem + 1} tem {(p.trechos or 0) + 1} "
+                                 "quadros")
+    from sociman_api.roteiros import plano_guiado  # o plano importa a máquina
+
+    _conferir_avatar_da(db, r, db.get(Cena, p.cena_id))
+    before = history.snapshot(r)
+    cena = plano_guiado.separar(db, actor, r, p, manter=quadro,
+                                details={"ordem": p.ordem, "regerar": True})
+    if cena.archived:
+        raise ApiError(409, "arquivada", "Restaure a cena antes de regerar")
+    for g in estado.abertas(db, "cena.keyframe", alvo_id=cena.id):
+        if int(estado.extras(g).get("quadro") or 0) >= quadro:
+            maquina.cancelar(db, actor, g, "Pedido outro quadro")
+    instrucoes = {quadro: body.instrucao} if body.instrucao else None
+    refeitos = cenas_quadros.arquivar_desde(db, actor, cena, quadro, instrucoes=instrucoes,
+                                            details={"roteiroId": str(r.id), "regerar": True})
+    _comandar(r, actor)
+    try:
+        g = pedidos.quadro(db, actor, r, p, quadro, n=body.n_opcoes or 1)
+    except pedidos.QuadroSemBase as exc:
+        raise ApiError(409, "quadro_sem_base", f"O quadro {quadro + 1} não pode ser pedido: "
+                       f"{exc}", details={"ordem": p.ordem, "quadro": quadro}) from None
+    _record(db, actor, r, "updated", before,
+            {"acao": "regerar_keyframe", "ordem": p.ordem, "quadro": quadro,
+             "nOpcoes": g.n_opcoes, "geracaoId": str(g.id), "refeitos": refeitos})
+    maquina.avancar(db, r, actor, humano=True)
     return r
 
 
@@ -531,6 +733,10 @@ def regerar_clipe(db: Session, actor: Actor, roteiro_id: uuid.UUID, ordem: int,
                   body: schemas.RegerarClipeIn) -> Roteiro:
     r = _editavel(db, roteiro_id, body.version)
     p = _posicao(r, ordem)
+    if r.guiado:
+        return _regerar_trecho(db, actor, r, p, body)
+    if body.trecho is not None or (body.n_opcoes or 1) > 1:
+        raise invalido("trecho", "o roteiro da 011 não tem trechos")
     cena = cenas_service.get_cena_or_404(db, p.cena_id, lock=True)
     if cena.keyframe_inicial_id is None or cena.status == CenaStatus.rascunho:
         raise ApiError(409, "cena_nao_pronta", "A cena precisa do keyframe aprovado antes do clipe")
@@ -561,6 +767,77 @@ def regerar_clipe(db: Session, actor: Actor, roteiro_id: uuid.UUID, ordem: int,
     return r
 
 
+def _regerar_trecho(db: Session, actor: Actor, r: Roteiro, p: RoteiroCena,
+                    body: schemas.RegerarClipeIn) -> Roteiro:
+    """031 (avançado; FR-015, R8): refaz o clipe do trecho `trecho` da posição, com `nOpcoes`
+    versões (cada uma, uma geração e uma tomada). Com 1, a tomada nova entra sozinha; com 2, a
+    máquina espera a escolha pelo `PUT …/tomada` com o `trecho`. Os outros trechos ficam."""
+    t = body.trecho or 0
+    if t >= (p.trechos or 0):
+        raise invalido("trecho", f"a posição {p.ordem + 1} tem {p.trechos or 0} trecho(s)")
+    cena = cenas_service.get_cena_or_404(db, p.cena_id, lock=True)
+    if cena.archived:
+        raise ApiError(409, "arquivada", "Restaure a cena antes de regerar")
+    if cena.status == CenaStatus.rascunho:
+        raise ApiError(409, "cena_nao_pronta", "Aprove os quadros da cena antes do clipe")
+    _conferir_avatar_da(db, r, cena)
+    motor = body.motor.value if body.motor is not None else cena.motor.value
+    if float(r.trecho_base_s) > pedidos.duracao_max(cena) and body.motor is None:
+        raise ApiError(409, "tomada_longa", "O trecho passa da duração máxima do motor")
+    # O motor escolhido fica na cena (como no regerar da 011): sem isto, a cadeia refazia os
+    # trechos seguintes no motor do plano (T059, 2026-10-15: voltou ao Wan depois do MiniMax).
+    if body.motor is not None and body.motor != cena.motor and cena.status != CenaStatus.usada:
+        antes = history.snapshot(cena)
+        cena.motor = body.motor
+        cenas_service._record(db, actor, cena, "updated", antes,
+                              {"acao": "motor", "roteiroId": str(r.id)})
+    for g in estado.abertas(db, "cena.clipe", alvo_id=cena.id):
+        ex = estado.extras(g)
+        if ex.get("trecho") == t and ex.get("roteiroId") == str(r.id):
+            maquina.cancelar(db, actor, g, "Pedido outro clipe")
+    before = history.snapshot(r)
+    x = p.trecho(t)
+    anterior = db.get(CenaTomada, x.tomada_id) if x is not None and x.tomada_id else None
+    if anterior is not None and anterior.desuso_em is None:
+        anterior.desuso_em = datetime.now(UTC)
+    if x is not None:
+        x.tomada_id = None
+    p.aprovado_clipe_em = p.aprovado_clipe_por = None
+    _comandar(r, actor)
+    n, grupo, ids = body.n_opcoes or 1, str(uuid.uuid4()), []
+    for i in range(n):
+        try:
+            g = pedidos.trecho(db, actor, r, p, t, motor)
+        except pedidos.QuadroSemBase as exc:
+            raise ApiError(409, "quadro_sem_base", str(exc), details={"ordem": p.ordem}) from None
+        g.params = {**g.params, "extras": {**estado.extras(g), "regerar": True, "grupo": grupo,
+                                           "opcoes": n, "opcao": i + 1}}
+        ids.append(str(g.id))
+    _record(db, actor, r, "updated", before,
+            {"acao": "regerar_clipe", "ordem": p.ordem, "trecho": t, "motor": motor,
+             "nOpcoes": n, "geracoes": ids})
+    maquina.avancar(db, r, actor, humano=True)
+    return r
+
+
+def _escolher_tomada_trecho(db: Session, actor: Actor, r: Roteiro, p: RoteiroCena, cena: Cena,
+                            t: CenaTomada, trecho: int | None) -> Roteiro:
+    """031: a tomada de um trecho (a escolha entre as versões do avançado, R8)."""
+    trecho = t.trecho if trecho is None else trecho
+    if trecho is None or t.trecho != trecho or trecho >= (p.trechos or 0):
+        raise invalido("trecho", "a tomada precisa ser deste trecho da posição")
+    if not estado.tomada_serve_trecho(db, t, cena, trecho, r.trecho_base_s):
+        raise ApiError(409, "keyframe_antigo",
+                       "A tomada não serve aos quadros de agora deste trecho")
+    before = history.snapshot(r)
+    maquina.definir_tomada_trecho(db, p, trecho, t)
+    _comandar(r, actor)
+    _record(db, actor, r, "updated", before, {"acao": "escolher_tomada", "ordem": p.ordem,
+                                              "trecho": trecho, "tomadaId": str(t.id)})
+    maquina.avancar(db, r, actor, humano=True)
+    return r
+
+
 def escolher_tomada(db: Session, actor: Actor, roteiro_id: uuid.UUID, ordem: int,
                     body: schemas.EscolherTomadaIn) -> Roteiro:
     r = _editavel(db, roteiro_id, body.version)
@@ -571,6 +848,10 @@ def escolher_tomada(db: Session, actor: Actor, roteiro_id: uuid.UUID, ordem: int
         raise invalido("tomadaId", "a tomada precisa ser desta cena")
     if t.archived or t.limpa_em is not None:
         raise ApiError(409, "arquivada", "A tomada está arquivada ou sem o arquivo")
+    if r.guiado:
+        return _escolher_tomada_trecho(db, actor, r, p, cena, t, body.trecho)
+    if body.trecho is not None:
+        raise invalido("trecho", "o roteiro da 011 não tem trechos")
     if t.origem == TomadaOrigem.geracao_local and t.keyframe_image_id != cena.keyframe_inicial_id:
         raise ApiError(409, "keyframe_antigo", "A tomada é de um keyframe antigo da cena")
     if p.duracao_s is not None and t.duracao_ms < round(float(p.duracao_s) * 1000):
@@ -608,12 +889,21 @@ def _cena_out(db: Session, c: Cena) -> schemas.CenaRoteiro:
         keyframe_refs=cenas_service.locais_out(db, c)["keyframe_refs"], version=c.version)
 
 
-def _tomada_out(t: CenaTomada, cena: Cena) -> schemas.TomadaRoteiro:
+def _tomada_out(t: CenaTomada, cena: Cena,
+                par: tuple[uuid.UUID | None, uuid.UUID | None] | None = None
+                ) -> schemas.TomadaRoteiro:
+    """`par` (031): a tomada de um trecho é antiga quando não começa e termina nos quadros do
+    trecho de agora (quadro[t] e quadro[t+1], R8), não no keyframe inicial da cena."""
+    if par is not None:
+        antigo = t.origem == TomadaOrigem.geracao_local and (
+            t.keyframe_image_id != par[0] or t.keyframe_fim_image_id != par[1])
+    else:
+        antigo = cenas_service.keyframe_antigo(t, cena)
     return schemas.TomadaRoteiro(
         id=t.id, origem=t.origem, motor=t.motor, duracao_ms=t.duracao_ms,
         video_url=_link("cena_tomada", t.id) if t.video_key else None,
         miniatura_url=imaging.image_urls(t.miniatura_key)["thumb"] if t.miniatura_key else None,
-        keyframe_antigo=cenas_service.keyframe_antigo(t, cena), limpa=t.limpa_em is not None)
+        keyframe_antigo=antigo, limpa=t.limpa_em is not None)
 
 
 def _previa_out(db: Session, gid: uuid.UUID | None, assinatura: str) -> schemas.PreviaOut | None:
@@ -655,7 +945,7 @@ def detalhe_out(db: Session, r: Roteiro) -> schemas.RoteiroDetalhe:
             duracao_s=float(p.duracao_s) if p.duracao_s is not None else None,
             tomada=_tomada_out(t, c) if t else None, aviso=p.aviso,
             reaproveitada=c.id not in criadas_aqui,
-            geracoes_abertas=[_geracao_aberta(g) for g in abertas]))
+            geracoes_abertas=[_geracao_aberta(g) for g in abertas], **_guiada_out(db, p, c)))
     n = estado.narracao_ativa(db, r)
     narracao = None
     if n is not None:
@@ -688,10 +978,42 @@ def detalhe_out(db: Session, r: Roteiro) -> schemas.RoteiroDetalhe:
         posicoes=posicoes, narracao=narracao, narracoes_anteriores=anteriores,
         previa=_previa_out(db, r.montagem_geracao_id, assinatura),
         acabamento=_previa_out(db, r.acabamento_geracao_id, assinatura),
-        conteudo_id=r.conteudo_id,
+        acabamento_modo=r.acabamento_modo.value, conteudo_id=r.conteudo_id,
         geracoes_abertas=[_geracao_aberta(g) for g in abertas_roteiro],
         max_cenas=get_settings().roteiro_max_cenas, arquivado=r.archived, version=r.version,
-        created_at=r.created_at, updated_at=r.updated_at)
+        created_at=r.created_at, updated_at=r.updated_at, tipo_video=r.tipo_video,
+        cenario_id=r.cenario_id, duracao_alvo_s=r.duracao_alvo_s, trecho_base_s=r.trecho_base_s,
+        conversa_estado=r.conversa_estado)
+
+
+def quadros_out(db: Session, c: Cena) -> list[schemas.QuadroResumo]:
+    out = []
+    for q in cenas_quadros.ativos(db, c.id):
+        img = db.get(Image, q.image_id) if q.image_id else None
+        out.append(schemas.QuadroResumo(
+            ordem=q.ordem, papel=q.papel, image_id=q.image_id,
+            image_url=imaging.image_urls(img.object_key)["medium"] if img else None,
+            provisorio=q.provisorio, geracao_id=q.geracao_id, instrucao=q.instrucao))
+    return out
+
+
+def _guiada_out(db: Session, p: RoteiroCena, c: Cena) -> dict[str, Any]:
+    """Spec 031: os campos da posição do guiado (vazios na 011)."""
+    if p.trechos is None:
+        return {}
+    trechos = []
+    qs = cenas_quadros.ativos(db, c.id)
+    for t in range(p.trechos):
+        x = p.trecho(t)
+        tomada = db.get(CenaTomada, x.tomada_id) if x is not None and x.tomada_id else None
+        trechos.append(schemas.TomadaTrecho(
+            trecho=t, tomada=_tomada_out(tomada, c, estado.par_do_trecho(qs, t))
+            if tomada else None))
+    return {"trechos": p.trechos, "reuso": p.reuso, "motivo": p.motivo,
+            "orcamento_chars": p.orcamento_chars,
+            "aprovado_keyframes_em": p.aprovado_keyframes_em,
+            "aprovado_clipe_em": p.aprovado_clipe_em, "quadros": quadros_out(db, c),
+            "tomadas_trechos": trechos}
 
 
 def _cenas_criadas_pelo_plano(db: Session, r: Roteiro) -> list[str]:

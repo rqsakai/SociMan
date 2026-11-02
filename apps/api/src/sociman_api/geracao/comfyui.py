@@ -19,13 +19,14 @@ Os erros saem já traduzidos em `MotorErro` (R8): conexão, timeout e 5xx → `s
 Spec 011 (contracts/comfyui-blocos.md): os 5 blocos de vídeo (`clipe_*` e `upscale_video`). O
 `run_bloco` pega a saída do `kind` pedido (`saida="video"`: o SaveVideo devolve o mp4 em
 `outputs[node].images`, como a imagem; o `last_frame` dos clipes é ignorado), o vídeo de entrada do
-`upscale_video` sobe pelo mesmo `/upload/image`, e o teto vale por bloco (`TETOS`).
+`upscale_video` sobe pelo mesmo `/upload/image`, e o teto vale por bloco (`TETOS`; vídeo sem teto).
 """
 
 import copy
 import io
 import json
 import logging
+import math
 import time
 import uuid
 from collections.abc import Callable
@@ -46,9 +47,13 @@ BLOCOS = ("cena", "keyframe", "retrato", "cutout",
           # spec 011
           "clipe_minimax", "clipe_wan", "clipe_wan_qualidade", "clipe_ltx", "upscale_video")
 # Teto de uma execução por bloco, em segundos (spec 011, comfyui-blocos.md); os outros usam o
-# `GERACAO_COMFYUI_TETO_S`. O `upscale_video` é por posição.
-TETOS: dict[str, float] = {"keyframe": 600, "clipe_minimax": 1200, "clipe_wan": 1200,
-                           "clipe_ltx": 1200, "clipe_wan_qualidade": 3600, "upscale_video": 900}
+# `GERACAO_COMFYUI_TETO_S`. Vídeo não tem teto (decisão do dono na T059, 2026-10-15): o Wan
+# qualidade leva ~100 min por trecho nesta GPU, e o teto só fazia a mesma geração recomeçar do zero.
+# Cancelar continua valendo (o `heartbeat`).
+SEM_TETO = math.inf
+TETOS: dict[str, float] = {"keyframe": 600, "clipe_minimax": SEM_TETO, "clipe_wan": SEM_TETO,
+                           "clipe_ltx": SEM_TETO, "clipe_wan_qualidade": SEM_TETO,
+                           "upscale_video": SEM_TETO}
 ALLOWED: tuple[tuple[str, str], ...] = (
     ("GET", "/system_stats"),
     ("POST", "/upload/image"),

@@ -41,7 +41,8 @@ def _aceita(adapter: TypeAdapter, valor) -> bool:
 def test_os_26_ids_e_o_literal():
     # 13 da 008 + guia.montar e guia.testar (spec 017) + 5 da cena (spec 010) + 3 do aprendizado
     # (spec 023) + a ficha do produto (spec 012) + a identidade do avatar (spec 025).
-    assert len(TIPOS) == 26  # + o plano do roteiro (spec 011)
+    # + o plano do roteiro (spec 011) + as perguntas, o ajuste e o plano v2 do guiado (spec 031)
+    assert len(TIPOS) == 29
     assert set(get_args(TipoCampoId)) == set(TIPOS)
     assert set(PADROES) == set(TIPOS) - {"guia.testar"}
     for tid, tipo in TIPOS.items():

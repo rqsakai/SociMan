@@ -1,5 +1,5 @@
-"""Registro dos passos (spec 021, T007, R15): a lista bate com o CHECK da migration 0027 (os 15
-da 0020 e os 6 da 011), e as regras de escolha, aplicação e número de opções do FR-003, FR-010 e
+"""Registro dos passos (spec 021, T007, R15): a lista bate com o CHECK da migration 0028 (os 15
+da 0020, os 6 da 011 e os 2 da 031), e as regras de escolha, aplicação e número de opções do FR-003, FR-010 e
 FR-031 (e o FR-041 da 011: só o `cena.keyframe` tem escolha no roteiro)."""
 
 import re
@@ -12,6 +12,7 @@ from sociman_api.geracao import passos
 VERSIONS = Path(__file__).resolve().parents[2] / "migrations" / "versions"
 PASSOS_011 = ("roteiro.plano", "roteiro.narracao", "cena.keyframe", "cena.clipe",
               "roteiro.montagem", "roteiro.acabamento")
+PASSOS_031 = ("roteiro.perguntas", "roteiro.ajuste")
 
 
 def _passos_da(arquivo: str) -> tuple[str, ...]:
@@ -21,10 +22,12 @@ def _passos_da(arquivo: str) -> tuple[str, ...]:
 
 
 def test_lista_bate_com_o_check_da_migration():
-    assert _passos_da("0027_roteiros_video_local.py") == passos.IDS
-    assert len(passos.IDS) == 21
+    assert _passos_da("0028_video_guiado.py") == passos.IDS
+    assert len(passos.IDS) == 23
+    assert _passos_da("0027_roteiros_video_local.py") == passos.IDS[:21]
     assert _passos_da("0020_geracao_local.py") == passos.IDS[:15]
-    assert passos.IDS[15:] == PASSOS_011
+    assert passos.IDS[15:21] == PASSOS_011
+    assert passos.IDS[21:] == PASSOS_031
 
 
 def test_sem_escolha_e_aplica_alvo():
@@ -32,7 +35,9 @@ def test_sem_escolha_e_aplica_alvo():
     assert sem == {"produto.ficha", "avatar.identidade", "produto.recorte", "voz.teste",
                    # 011 (FR-041): os de resultado único do roteiro
                    "roteiro.plano", "roteiro.narracao", "cena.clipe", "roteiro.montagem",
-                   "roteiro.acabamento"}
+                   "roteiro.acabamento",
+                   # 031: as perguntas e o ajuste (o humano pediu; o resultado volta ao portão)
+                   "roteiro.perguntas", "roteiro.ajuste"}
     assert {p.id for p in passos.PASSOS.values() if not p.aplica_alvo} == {"voz.teste"}
 
 
@@ -77,10 +82,18 @@ def test_passos_da_011():
         p = passos.get(pid)
         assert (p.motor.value, p.alvo_tipo.value, p.resultado) == (motor, alvo, resultado), pid
     assert passos.get("cena.keyframe").image_kind == "keyframe"
+    assert passos.get("cena.keyframe").n_max == 4  # 031: até 4 opções no avançado
     assert passos.get("cena.keyframe").bloco == "keyframe"
     assert passos.get("roteiro.acabamento").bloco == "upscale_video"
     assert set(passos.BLOCOS_CLIPE) == {"minimax", "wan", "wan_qualidade", "ltx"}
     assert passos.BLOCOS_CLIPE["minimax"] == passos.get("cena.clipe").bloco
+
+
+def test_passos_da_031():
+    for pid in PASSOS_031:
+        p = passos.get(pid)
+        assert (p.motor.value, p.alvo_tipo.value, p.resultado) == ("claude", "roteiro", "texto")
+        assert p.sem_escolha and p.n_padrao == p.n_max == 1
 
 
 def test_sobrescrever_so_no_teste_e_volta(monkeypatch):

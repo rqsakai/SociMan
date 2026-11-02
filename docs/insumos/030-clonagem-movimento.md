@@ -1,5 +1,14 @@
 # Insumo da 030: clonagem de movimento
 
+> **Em revisão (2026-10-15).** O estudo `docs/pesquisa/030-movimentos-ux.md` e o grill `movimentos-030` mudaram o
+> recorte: a 030 vira **"Movimentos"** (ficha + biblioteca curada e pessoal + dois jeitos de criar vídeo), e a cópia
+> de pose descrita abaixo passa a ser a **fase 2**. Decisões já fechadas no grill (Q1–Q5): provedores externos só no
+> fim do produto (a 030 desenha o conceito); unidade de cobrança = clipe de 5 s; todo passo tem quadro final
+> (first-last frame; kill: o experimento da T059 não mostrar ganho em 2 de 3 fichas); biblioteca nossa **e** pessoal;
+> o vídeo enviado fica guardado (consentimento e revogação da 025 alcançam o vídeo). Pendentes: Q6–Q10 (modo "clonar
+> um movimento" dentro da 030; como o plano escolhe movimentos; N+2 aprovações; vocabulário; experimento antes do
+> specify). Este arquivo será reescrito depois do grill.
+
 Pedido do dono em 2026-10-09. Este arquivo é insumo para o `/speckit-specify`, não é spec. Depende da 029 (o item "Movimentos" do AI Studio) e da 021 (geração local na GPU).
 
 ## Objetivo

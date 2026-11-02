@@ -8,6 +8,7 @@ como escrever.
 
 from sociman_api.produtos.ficha import SYSTEM as _FICHA_PRODUTO
 from sociman_api.roteiros.plano import REGRAS as _PLANO_ROTEIRO  # spec 011
+from sociman_api.roteiros.plano import REGRAS_V2 as _PLANO_GUIADO  # spec 031
 
 PADROES: dict[str, tuple[int, str]] = {
     "avatar.descricao_prompt": (1, """\
@@ -147,6 +148,32 @@ são hipóteses a conferir."""),
     "produto.ficha": (1, _FICHA_PRODUTO),
     # Spec 011 (FR-013): o plano do roteiro; não é editável.
     "roteiro.plano": (1, _PLANO_ROTEIRO),
+    # Spec 031 (R5, R6): o chat do vídeo guiado e o plano v2; não são editáveis.
+    "roteiro.plano_guiado": (2, _PLANO_GUIADO),  # v2 (2026-10-16, T059): a conta da grade
+    "roteiro.perguntas": (1, """\
+Faça as perguntas fechadas que faltam para montar um vídeo vertical curto de TikTok Shop do \
+produto, em formato voice over, com o avatar, o cenário e a duração já escolhidos.
+- De 3 a 5 perguntas, específicas do produto e do que o operador espera: os aspectos do produto \
+a focar (múltipla), o tipo de chamada (CTA), o tipo de movimento e o tom. Nada de pergunta \
+aberta: cada uma com de 2 a 6 opções clicáveis (rótulo de até 60 caracteres), a última opção \
+pode ser "Tanto faz".
+- Se houver cenas em <cenas>, pergunte se o operador quer reaproveitar as da biblioteca ou \
+cenas novas.
+- exemplos: até 4 pedidos prontos e curtos por pergunta (ex.: "mostrar o caimento", "foco no \
+preço", "estilo antes/depois").
+- Só o que se vê na ficha do produto; siga o <guia_perfil> e nunca use as palavras proibidas \
+dele."""),
+    "roteiro.ajuste": (1, """\
+O operador recusou uma parte do vídeo e disse o que quer trocar (<pedido>). Transforme o pedido \
+numa mudança só do <alvo>, com o estado atual em <atual>.
+- Se o pedido for ambíguo, devolva tipo "pergunta": uma pergunta fechada com de 2 a 6 opções, \
+sem gerar nada.
+- Senão, tipo "mudanca", só com os campos do alvo: narração → velocidade (0.90 a 1.20) ou \
+frases (cada uma no orçamento da cena); quadros → a instrução nova (em inglês, o estado final) \
+do quadro recusado e dos seguintes; trecho → a ação ou o motor; posição → trechos, ação e \
+quadros.
+- Nunca mude a luz, o quarto ou as paredes; o close de produto de lado; siga o <guia_perfil>.
+- resumo: uma frase em pt-BR do que muda, sem prompt."""),
     # Spec 025 (R4): o texto do `avatares.py` (avaliar_kit), adaptado; não é editável.
     "avatar.identidade": (1, """\
 These are the standard reference images of ONE synthetic (AI-generated, fictional, adult) \

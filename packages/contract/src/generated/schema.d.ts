@@ -5569,7 +5569,12 @@ export interface paths {
         /** Listar */
         get: operations["roteiros_listar"];
         put?: never;
-        /** Criar */
+        /**
+         * Criar
+         * @deprecated
+         * @description Deprecated (spec 031, FR-018): a SPA cria pelo `POST /api/roteiros` (o guiado); fica para
+         *     o MCP e os testes da 011.
+         */
         post: operations["roteiros_criar"];
         delete?: never;
         options?: never;
@@ -6008,6 +6013,30 @@ export interface paths {
          */
         get: operations["roteiros_listar_agencia"];
         put?: never;
+        /**
+         * Criar Guiado
+         * @description O "Novo vídeo" em blocos: cria o rascunho e já pede as perguntas do chat.
+         */
+        post: operations["roteiros_criar_guiado"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/grade": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Grade
+         * @description As durações que valem para um vídeo novo (múltiplos do trecho-base, R1).
+         */
+        get: operations["roteiros_grade"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -6084,6 +6113,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/roteiros/{roteiro_id}/conversa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ver Conversa */
+        get: operations["roteiros_conversa"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/conversa/refazer-perguntas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refazer Perguntas */
+        post: operations["roteiros_refazer_perguntas"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/conversa/respostas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Responder */
+        post: operations["roteiros_responder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/roteiros/{roteiro_id}/planejar": {
         parameters: {
             query?: never;
@@ -6095,6 +6175,48 @@ export interface paths {
         put?: never;
         /** Planejar */
         post: operations["roteiros_planejar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/aprovar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Aprovar Posicao
+         * @description Aprova a sequência de quadros (ou os trechos) da posição; com todas aprovadas, o portão
+         *     passa.
+         */
+        post: operations["roteiros_aprovar_posicao"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/cena": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Definir Cena
+         * @description O modal de cenas: o reuso total ou do plano de uma cena da biblioteca, ou uma cena nova
+         *     pedida à IA para a posição.
+         */
+        put: operations["roteiros_definir_cena"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6152,6 +6274,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/roteiros/{roteiro_id}/posicoes/{ordem}/quadros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Quadros
+         * @description Os quadros ativos da cena da posição (esconder a instrução no wizard é regra da tela).
+         */
+        get: operations["roteiros_quadros"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/roteiros/{roteiro_id}/posicoes/{ordem}/tomada": {
         parameters: {
             query?: never;
@@ -6163,6 +6305,27 @@ export interface paths {
         /** Escolher Tomada */
         put: operations["roteiros_escolher_tomada"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/roteiros/{roteiro_id}/recusar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recusar
+         * @description O "Não aprovo": o pedido de troca vai para o chat e a IA o transforma num ajuste só do
+         *     item (ou pergunta antes, quando é ambíguo).
+         */
+        post: operations["roteiros_recusar"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7084,6 +7247,24 @@ export interface components {
             tipo: components["schemas"]["GeracaoAlvo"];
             /** Version */
             version: number;
+        };
+        /**
+         * AlvoRecusa
+         * @description Spec 031 (R6): o item recusado no wizard. `ordem` é a posição (0-based); `quadro` e
+         *     `trecho` dizem de onde refazer.
+         */
+        AlvoRecusa: {
+            /** Ordem */
+            ordem?: number | null;
+            /** Quadro */
+            quadro?: number | null;
+            /**
+             * Tipo
+             * @enum {string}
+             */
+            tipo: "narracao" | "quadros" | "trecho" | "posicao" | "final";
+            /** Trecho */
+            trecho?: number | null;
         };
         /** AlvoRef */
         AlvoRef: {
@@ -8108,11 +8289,26 @@ export interface components {
         };
         /** AprovarIn */
         AprovarIn: {
+            /** Acabamentomodo */
+            acabamentoModo?: ("leve" | "hd") | null;
             /**
              * Portao
              * @enum {string}
              */
             portao: "texto" | "narracao" | "keyframes" | "clipes" | "final";
+            /** Version */
+            version: number;
+        };
+        /**
+         * AprovarPosicaoIn
+         * @description Spec 031 (R9): aprovar a sequência de quadros (ou os trechos) de uma posição.
+         */
+        AprovarPosicaoIn: {
+            /**
+             * Etapa
+             * @enum {string}
+             */
+            etapa: "keyframes" | "clipe";
             /** Version */
             version: number;
         };
@@ -8214,6 +8410,13 @@ export interface components {
             revogado: boolean;
             /** Tags */
             tags: string[];
+            /**
+             * Temcena
+             * @default false
+             */
+            temCena: boolean;
+            /** Thumburl */
+            thumbUrl?: string | null;
             tipo: components["schemas"]["AssetTipo"];
             /**
              * Updatedat
@@ -8400,8 +8603,20 @@ export interface components {
             perfilId: string | null;
             /** Perfilnome */
             perfilNome?: string | null;
+            /**
+             * Revogado
+             * @default false
+             */
+            revogado: boolean;
             /** Tags */
             tags: string[];
+            /**
+             * Temcena
+             * @default false
+             */
+            temCena: boolean;
+            /** Thumburl */
+            thumbUrl?: string | null;
             tipo: components["schemas"]["AssetTipo"];
             /**
              * Updatedat
@@ -8410,6 +8625,8 @@ export interface components {
             updatedAt: string;
             /** Version */
             version: number;
+            /** Vozid */
+            vozId?: string | null;
         };
         /**
          * AssetTipo
@@ -8502,6 +8719,15 @@ export interface components {
              * @enum {string}
              */
             tipo: "usuario" | "mcp_client" | "sistema";
+        };
+        /** AutorConversa */
+        AutorConversa: {
+            /** Id */
+            id: string | null;
+            /** Nome */
+            nome: string | null;
+            /** Tipo */
+            tipo: string;
         };
         /**
          * AvaliacaoOut
@@ -10947,11 +11173,44 @@ export interface components {
         };
         /** ControleIn */
         ControleIn: {
+            /** Acabamentomodo */
+            acabamentoModo?: ("leve" | "hd") | null;
             modo: components["schemas"]["RoteiroModo"];
             portoes: components["schemas"]["Portoes"];
             /** Version */
             version: number;
         };
+        /**
+         * ConversaEstado
+         * @enum {string}
+         */
+        ConversaEstado: "sem_perguntas" | "perguntando" | "respondida";
+        /**
+         * ConversaOut
+         * @description Spec 031: o chat do roteiro guiado. `perguntaAtual` = a primeira sem resposta da rodada;
+         *     `erro` = a IA não respondeu (o "tentar de novo" é o refazer-perguntas).
+         */
+        ConversaOut: {
+            erro: components["schemas"]["ErroRoteiro"] | null;
+            estado: components["schemas"]["ConversaEstado"] | null;
+            geracaoAberta: components["schemas"]["GeracaoAberta"] | null;
+            /** Mensagens */
+            mensagens: components["schemas"]["MensagemConversa"][];
+            perguntaAtual: components["schemas"]["PerguntaConversa"] | null;
+            /** Respondidas */
+            respondidas: number;
+            /** Rodada */
+            rodada: number;
+            /** Total */
+            total: number;
+            /** Version */
+            version: number;
+        };
+        /**
+         * ConversaTipo
+         * @enum {string}
+         */
+        ConversaTipo: "pergunta" | "resposta" | "pedido_troca" | "esclarecimento" | "aviso";
         /** Cor */
         Cor: {
             /** Chave */
@@ -11311,6 +11570,28 @@ export interface components {
             curvas: components["schemas"]["Curva"][];
             /** Distribuicao */
             distribuicao: components["schemas"]["DistribuicaoConta"][];
+        };
+        /**
+         * DefinirCenaIn
+         * @description Spec 031 (FR-019/021, R7): a decisão do modal de cenas para uma posição. `total` e `plano`
+         *     pedem a `cenaId` (da biblioteca); `nova` pede à IA a cena daquela posição. Depois do texto,
+         *     só no modo avançado (`avancado: true`).
+         */
+        DefinirCenaIn: {
+            /**
+             * Avancado
+             * @default false
+             */
+            avancado: boolean;
+            /** Cenaid */
+            cenaId?: string | null;
+            /**
+             * Reuso
+             * @enum {string}
+             */
+            reuso: "total" | "plano" | "nova";
+            /** Version */
+            version: number;
         };
         /** DesaprovarTodasIn */
         DesaprovarTodasIn: {
@@ -11892,6 +12173,8 @@ export interface components {
              * Format: uuid
              */
             tomadaId: string;
+            /** Trecho */
+            trecho?: number | null;
             /** Version */
             version: number;
         };
@@ -12923,8 +13206,20 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade" | "roteiro.plano";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade" | "roteiro.plano" | "roteiro.perguntas" | "roteiro.ajuste" | "roteiro.plano_guiado";
             valorAtual?: components["schemas"]["Valor"];
+        };
+        /**
+         * GradeOut
+         * @description Spec 031 (R1): a grade de duração que vale para um vídeo novo.
+         */
+        GradeOut: {
+            /** Maxtrechosporcena */
+            maxTrechosPorCena: number;
+            /** Opcoes */
+            opcoes: number[];
+            /** Trechobases */
+            trechoBaseS: number;
         };
         /** Guia */
         Guia: {
@@ -13122,7 +13417,7 @@ export interface components {
              * Tipocampo
              * @enum {string}
              */
-            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade" | "roteiro.plano";
+            tipoCampo: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade" | "roteiro.plano" | "roteiro.perguntas" | "roteiro.ajuste" | "roteiro.plano_guiado";
         };
         /** IaChamada */
         IaChamada: {
@@ -14391,6 +14686,33 @@ export interface components {
             /** Valor */
             valor: number | null;
         };
+        /** MensagemConversa */
+        MensagemConversa: {
+            /** Alvo */
+            alvo: {
+                [key: string]: unknown;
+            } | null;
+            autor: components["schemas"]["AutorConversa"];
+            /** Conteudo */
+            conteudo: {
+                [key: string]: unknown;
+            };
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Perguntaid */
+            perguntaId: string | null;
+            /** Seq */
+            seq: number;
+            tipo: components["schemas"]["ConversaTipo"];
+        };
         /** MercadoLinkOut */
         MercadoLinkOut: {
             /** Expiresat */
@@ -14649,6 +14971,13 @@ export interface components {
              * @constant
              */
             ok: true;
+        };
+        /** OpcaoConversa */
+        OpcaoConversa: {
+            /** Id */
+            id: string;
+            /** Rotulo */
+            rotulo: string;
         };
         /**
          * OpcoesTikTok
@@ -15130,6 +15459,21 @@ export interface components {
             /** Items */
             items: components["schemas"]["Perfil"][];
         };
+        /** PerguntaConversa */
+        PerguntaConversa: {
+            /** Exemplos */
+            exemplos: string[];
+            /** Id */
+            id: string;
+            /** Multipla */
+            multipla: boolean;
+            /** Opcoes */
+            opcoes: components["schemas"]["OpcaoConversa"][];
+            /** Rodada */
+            rodada: number;
+            /** Texto */
+            texto: string;
+        };
         /** PeriodoPrevia */
         PeriodoPrevia: {
             /**
@@ -15219,9 +15563,15 @@ export interface components {
             frases: number[];
             /** Tomadaid */
             tomadaId?: string | null;
+            /** Trechos */
+            trechos?: number | null;
         };
         /** PosicaoOut */
         PosicaoOut: {
+            /** Aprovadoclipeem */
+            aprovadoClipeEm?: string | null;
+            /** Aprovadokeyframesem */
+            aprovadoKeyframesEm?: string | null;
             /** Aviso */
             aviso: string | null;
             cena: components["schemas"]["CenaRoteiro"];
@@ -15233,11 +15583,22 @@ export interface components {
             geracoesAbertas: components["schemas"]["GeracaoAberta"][];
             /** Inicios */
             inicioS: number | null;
+            /** Motivo */
+            motivo?: string | null;
+            /** Orcamentochars */
+            orcamentoChars?: number | null;
             /** Ordem */
             ordem: number;
+            /** Quadros */
+            quadros?: components["schemas"]["QuadroResumo"][];
             /** Reaproveitada */
             reaproveitada: boolean;
+            reuso?: components["schemas"]["PosicaoReuso"] | null;
             tomada: components["schemas"]["TomadaRoteiro"] | null;
+            /** Tomadastrechos */
+            tomadasTrechos?: components["schemas"]["TomadaTrecho"][];
+            /** Trechos */
+            trechos?: number | null;
         };
         /** PosicaoRanking */
         PosicaoRanking: {
@@ -15281,6 +15642,12 @@ export interface components {
             /** Valornum */
             valorNum: number | null;
         };
+        /**
+         * PosicaoReuso
+         * @description A decisão do modal de cenas (FR-019): a cena como está, só o plano dela ou uma nova.
+         * @enum {string}
+         */
+        PosicaoReuso: "total" | "plano" | "nova";
         /**
          * PostResumo
          * @description Um post analisado, resumido para listas (principais, alertas).
@@ -16063,6 +16430,32 @@ export interface components {
              */
             plannedAt: string;
         };
+        /**
+         * QuadroPapel
+         * @description Spec 031: o papel do quadro na sequência da cena (derivado da ordem e do total).
+         * @enum {string}
+         */
+        QuadroPapel: "inicio" | "meio1" | "meio2" | "fim";
+        /**
+         * QuadroResumo
+         * @description Spec 031: um quadro da sequência da cena (o texto da instrução fica fora do wizard por
+         *     regra da tela, FR-015).
+         */
+        QuadroResumo: {
+            /** Geracaoid */
+            geracaoId: string | null;
+            /** Imageid */
+            imageId: string | null;
+            /** Imageurl */
+            imageUrl: string | null;
+            /** Instrucao */
+            instrucao: string;
+            /** Ordem */
+            ordem: number;
+            papel: components["schemas"]["QuadroPapel"];
+            /** Provisorio */
+            provisorio: boolean;
+        };
         /** QuandoPostarOut */
         QuandoPostarOut: {
             atividadeSeguidores?: components["schemas"]["PublicoAtividadeSeguidores"];
@@ -16174,16 +16567,13 @@ export interface components {
             motivo: string;
             por: components["schemas"]["UserRef"];
         };
-        /** RecusarIn */
-        RecusarIn: {
-            /** Motivo */
-            motivo: string;
-            /** Version */
-            version: number;
-        };
         /** RegerarClipeIn */
         RegerarClipeIn: {
             motor?: components["schemas"]["CenaMotor"] | null;
+            /** Nopcoes */
+            nOpcoes?: number | null;
+            /** Trecho */
+            trecho?: number | null;
             /** Version */
             version: number;
         };
@@ -16191,6 +16581,10 @@ export interface components {
         RegerarKeyframeIn: {
             /** Instrucao */
             instrucao?: string | null;
+            /** Nopcoes */
+            nOpcoes?: number | null;
+            /** Quadro */
+            quadro?: number | null;
             /** Referencias */
             referencias?: string[] | null;
             /** Version */
@@ -16249,6 +16643,20 @@ export interface components {
             /** Custo */
             custo: number;
             existente: components["schemas"]["Existente"] | null;
+        };
+        /**
+         * ResponderIn
+         * @description Spec 031: a resposta a uma pergunta do chat (só cliques, ou com o texto curto).
+         */
+        ResponderIn: {
+            /** Opcoes */
+            opcoes?: string[];
+            /** Perguntaid */
+            perguntaId: string;
+            /** Texto */
+            texto?: string | null;
+            /** Version */
+            version: number;
         };
         /** ResultadoItem */
         ResultadoItem: {
@@ -16402,6 +16810,11 @@ export interface components {
         /** RoteiroDetalhe */
         RoteiroDetalhe: {
             acabamento: components["schemas"]["PreviaOut"] | null;
+            /**
+             * Acabamentomodo
+             * @enum {string}
+             */
+            acabamentoModo: "leve" | "hd";
             /** Arquivado */
             arquivado: boolean;
             avatar: components["schemas"]["AvatarRef"] | null;
@@ -16409,13 +16822,18 @@ export interface components {
             avisos: components["schemas"]["AvisoRoteiro"][];
             /** Brief */
             brief: string;
+            /** Cenarioid */
+            cenarioId?: string | null;
             /** Conteudoid */
             conteudoId: string | null;
+            conversaEstado?: components["schemas"]["ConversaEstado"] | null;
             /**
              * Createdat
              * Format: date-time
              */
             createdAt: string;
+            /** Duracaoalvos */
+            duracaoAlvoS?: number | null;
             erro: components["schemas"]["ErroRoteiro"] | null;
             etapaFalhou: components["schemas"]["RoteiroEtapa"] | null;
             formato: components["schemas"]["RoteiroFormato"];
@@ -16450,6 +16868,9 @@ export interface components {
             /** Produtos */
             produtos: components["schemas"]["ProdutoRoteiro"][];
             status: components["schemas"]["RoteiroStatus"];
+            tipoVideo?: components["schemas"]["RoteiroTipoVideo"] | null;
+            /** Trechobases */
+            trechoBaseS?: number | null;
             /**
              * Updatedat
              * Format: date-time
@@ -16489,6 +16910,45 @@ export interface components {
          * @enum {string}
          */
         RoteiroFormato: "voice_over";
+        /**
+         * RoteiroGuiadoIn
+         * @description Spec 031: o "Novo vídeo" guiado (os 6 blocos). Sem `vozId`, vale a voz padrão do avatar;
+         *     sem `varianteId`, a primeira variante ativa com recorte; sem `nome`, "<produto> – dd/mm".
+         */
+        RoteiroGuiadoIn: {
+            /** Acabamentomodo */
+            acabamentoModo?: ("leve" | "hd") | null;
+            /**
+             * Avatarid
+             * Format: uuid
+             */
+            avatarId: string;
+            /**
+             * Cenarioid
+             * Format: uuid
+             */
+            cenarioId: string;
+            /** Duracaos */
+            duracaoS: number;
+            /** Nome */
+            nome?: string | null;
+            /**
+             * Perfilid
+             * Format: uuid
+             */
+            perfilId: string;
+            /**
+             * Produtoid
+             * Format: uuid
+             */
+            produtoId: string;
+            /** @default avatar_pov */
+            tipoVideo: components["schemas"]["RoteiroTipoVideo"];
+            /** Varianteid */
+            varianteId?: string | null;
+            /** Vozid */
+            vozId?: string | null;
+        };
         /** RoteiroIn */
         RoteiroIn: {
             /** Avatarid */
@@ -16538,6 +16998,8 @@ export interface components {
             avatarId?: string | null;
             /** Brief */
             brief?: string | null;
+            /** Duracaos */
+            duracaoS?: number | null;
             /** Frases */
             frases?: string[] | null;
             /** Nome */
@@ -16592,6 +17054,12 @@ export interface components {
          * @enum {string}
          */
         RoteiroStatus: "rascunho" | "planejando" | "aguardando_texto" | "narrando" | "aguardando_narracao" | "gerando_keyframes" | "aguardando_keyframes" | "gerando_clipes" | "aguardando_clipes" | "montando" | "aguardando_final" | "finalizando" | "pronto" | "falhou";
+        /**
+         * RoteiroTipoVideo
+         * @description Spec 031: o tipo do vídeo guiado (nulo = roteiro da 011).
+         * @enum {string}
+         */
+        RoteiroTipoVideo: "avatar_pov";
         /** RoteiroVersionIn */
         RoteiroVersionIn: {
             /** Version */
@@ -17214,12 +17682,12 @@ export interface components {
              * Formato
              * @enum {string}
              */
-            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes" | "campos_cena" | "taxonomia" | "classificacao" | "analise" | "ficha_produto" | "identidade" | "plano_roteiro";
+            formato: "texto" | "lista" | "sugestoes" | "textos_postagem" | "guia" | "variacoes" | "campos_cena" | "taxonomia" | "classificacao" | "analise" | "ficha_produto" | "identidade" | "plano_roteiro" | "perguntas_roteiro" | "ajuste_roteiro" | "plano_roteiro_v2";
             /**
              * Id
              * @enum {string}
              */
-            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade" | "roteiro.plano";
+            id: "avatar.descricao_prompt" | "avatar.tom_de_voz" | "avatar.regras_imagem" | "cenario.prompt_ambiente" | "asset.nome" | "asset.descricao" | "perfil.bio" | "kit.bordoes" | "kit.series" | "postagem.titulo" | "postagem.descricao" | "postagem.hashtags" | "postagem.textos" | "guia.montar" | "guia.testar" | "cena.acao" | "cena.camera" | "cena.estilo" | "cena.audio" | "cena.ajustar" | "aprendizado.taxonomia" | "aprendizado.classificacao" | "aprendizado.analise" | "produto.ficha" | "avatar.identidade" | "roteiro.plano" | "roteiro.perguntas" | "roteiro.ajuste" | "roteiro.plano_guiado";
             /**
              * Idioma
              * @enum {string}
@@ -17347,6 +17815,12 @@ export interface components {
             origem: components["schemas"]["TomadaOrigem"];
             /** Videourl */
             videoUrl: string | null;
+        };
+        /** TomadaTrecho */
+        TomadaTrecho: {
+            tomada: components["schemas"]["TomadaRoteiro"] | null;
+            /** Trecho */
+            trecho: number;
         };
         /** TomadasList */
         TomadasList: {
@@ -18367,6 +18841,26 @@ export interface components {
         };
         /** VersionIn */
         sociman_api__perfis__schemas__VersionIn: {
+            /** Version */
+            version: number;
+        };
+        /** RecusarIn */
+        sociman_api__postagem__schemas__RecusarIn: {
+            /** Motivo */
+            motivo: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * RecusarIn
+         * @description Spec 031: o "Não aprovo": as opções de troca clicadas e/ou o texto curto.
+         */
+        sociman_api__roteiros__schemas__RecusarIn: {
+            alvo: components["schemas"]["AlvoRecusa"];
+            /** Opcoes */
+            opcoes?: string[];
+            /** Texto */
+            texto?: string | null;
             /** Version */
             version: number;
         };
@@ -30952,7 +31446,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RecusarIn"];
+                "application/json": components["schemas"]["sociman_api__postagem__schemas__RecusarIn"];
             };
         };
         responses: {
@@ -43976,6 +44470,113 @@ export interface operations {
             };
         };
     };
+    roteiros_criar_guiado: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroGuiadoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_grade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GradeOut"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     roteiros_detalhe: {
         parameters: {
             query?: never;
@@ -44318,6 +44919,215 @@ export interface operations {
             };
         };
     };
+    roteiros_conversa: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversaOut"];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_refazer_perguntas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoteiroVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_responder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResponderIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConversaOut"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     roteiros_planejar: {
         parameters: {
             query?: never;
@@ -44330,6 +45140,159 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RoteiroVersionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_aprovar_posicao: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+                ordem: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AprovarPosicaoIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_definir_cena: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+                ordem: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DefinirCenaIn"];
             };
         };
         responses: {
@@ -44659,6 +45622,65 @@ export interface operations {
             };
         };
     };
+    roteiros_quadros: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+                ordem: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuadroResumo"][];
+                };
+            };
+            /** @description Dados inválidos (validation_error) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     roteiros_escolher_tomada: {
         parameters: {
             query?: never;
@@ -44722,6 +45744,86 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    roteiros_recusar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roteiro_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["sociman_api__roteiros__schemas__RecusarIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoteiroDetalhe"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
