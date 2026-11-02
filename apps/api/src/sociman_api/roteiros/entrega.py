@@ -3,7 +3,8 @@
 1. o conteúdo da 014 (vídeo próprio) com o vídeo HD, copiado no MinIO, título = nome do roteiro e
    `gerado_ia = true`, **sem destino** (aprovar, agendar e publicar continuam na 014/015);
 2. a `roteiro_entregas` (só inserção) com a narração, a prévia, o acabamento, as posições e os
-   motores (a atribuição do MiniMax);
+   motores (a atribuição do MiniMax; no guiado, 031, os dos trechos, com a tomada de cada trecho
+   e as imagens dos quadros);
 3. o vínculo das cenas ao conteúdo (`cenas.usos.definir`, a 010), no nome de quem comandou o
    roteiro (Divergência 5: `cena_usos.criado_por` é humano); as cenas viram `usada`;
 4. o roteiro `pronto` com o `conteudo_id`, e o `desuso_em` no acabamento (o conteúdo já tem a
@@ -12,11 +13,13 @@
 
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from sociman_api import history
 from sociman_api.auth.deps import Actor
+from sociman_api.cenas import quadros as cenas_quadros
 from sociman_api.cenas import schemas as cenas_schemas
 from sociman_api.cenas import usos as cenas_usos
 from sociman_api.conteudos import video_proprio
@@ -28,6 +31,20 @@ ATRIBUICAO_MINIMAX = ("Este vídeo usa o modelo MiniMax H3: a licença exige exi
                       "em uso comercial.")
 
 
+def _posicao(db: Session, p: dict[str, Any]) -> dict[str, Any]:
+    """A posição como foi entregue. No guiado (031), também a tomada de cada trecho e as imagens
+    dos quadros da cena naquele momento (a limpeza de 90 dias as protege, `retencao`)."""
+    item = {"ordem": p["ordem"], "cenaId": p["cenaId"], "tomadaId": p["tomadaId"],
+            "keyframeImageId": p.get("keyframeImageId"), "motor": p.get("motor"),
+            "duracaoS": p["duracaoS"]}
+    if p.get("trechos") is not None:
+        item["trechos"] = [{"trecho": x["trecho"], "tomadaId": x.get("tomadaId"),
+                            "motor": x.get("motor")} for x in p["trechos"]]
+        item["quadros"] = [str(q.image_id) for q in
+                           cenas_quadros.ativos(db, uuid.UUID(p["cenaId"])) if q.image_id]
+    return item
+
+
 def entregar(db: Session, r: Roteiro, geracao: Geracao, candidato: GeracaoCandidato) -> uuid.UUID:
     """Cria o conteúdo e a entrega e deixa o roteiro `pronto`. Devolve o id do conteúdo."""
     autor = Actor(kind="user", user_id=r.comandado_por or geracao.created_by)
@@ -36,10 +53,9 @@ def entregar(db: Session, r: Roteiro, geracao: Geracao, candidato: GeracaoCandid
     conteudo = video_proprio.create_de_objeto(
         db, autor, r.perfil_id, candidato.video_key, filename=f"roteiro-{r.id.hex[:8]}.mp4",
         titulo=titulo, gerado_ia=True)
-    posicoes = [{"ordem": p["ordem"], "cenaId": p["cenaId"], "tomadaId": p["tomadaId"],
-                 "keyframeImageId": p.get("keyframeImageId"), "motor": p.get("motor"),
-                 "duracaoS": p["duracaoS"]} for p in ex.get("posicoes") or []]
-    motores = sorted({p["motor"] for p in posicoes if p.get("motor")})
+    posicoes = [_posicao(db, p) for p in ex.get("posicoes") or []]
+    motores = sorted({m for p in posicoes for m in [p.get("motor")] + [
+        x.get("motor") for x in p.get("trechos") or []] if m})
     db.add(RoteiroEntrega(
         roteiro_id=r.id, conteudo_id=conteudo.id, narracao_id=uuid.UUID(ex["narracaoId"]),
         montagem_geracao_id=uuid.UUID(ex["montagemGeracaoId"]),

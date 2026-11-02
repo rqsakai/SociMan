@@ -27,6 +27,7 @@ pacote `assets` não importa `geracao`.
 """
 
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -70,6 +71,18 @@ class Pedido:
     rotulo: str | None
     texto: str | None
     extras: dict[str, Any] | None
+
+
+@dataclass(frozen=True)
+class ExtrasClaude:
+    """Spec 031: o que um passo `claude` acrescenta à chamada (tudo opcional): o tipo de campo no
+    lugar do do passo (o plano v2 do vídeo guiado), o guia que vale nas garantias (as proibidas
+    pedem a 2ª tentativa, 017) com a versão enviada, e os problemas que dependem do alvo."""
+
+    tipo: Any = None  # ia.tipos.TipoCampo
+    efetivo: Any = None  # ia.guia.GuiaEfetivo
+    guia_perfil_version: int | None = None
+    problemas: Callable[[Any], list[str]] | None = None
 
 
 class Aplicador:
@@ -133,6 +146,10 @@ class Aplicador:
                      "width": p["largura"], "height": p["altura"], "frames": extras["quadros"],
                      "seed": seed, "prefix": prefixo}]
         raise MotorErro("internal", detalhe=f"bloco desconhecido: {bloco}")
+
+    def extras_claude(self, db: Session, geracao: Geracao) -> ExtrasClaude:
+        """Spec 031: o tipo, o guia e os problemas do alvo de um passo `claude` (padrão: nada)."""
+        return ExtrasClaude()
 
     def executar_video(self, geracao: Geracao, ctx: Any) -> Any:
         """Spec 011: o trabalho de um passo de vídeo (`ctx` é um `geracao.video.Contexto`).

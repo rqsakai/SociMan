@@ -36,6 +36,12 @@ Falhas: `fora = True` (conexão recusada em tudo: `httpx.ConnectError`), `erro_5
 execução com `status_str: "error"` e `torch.OutOfMemoryError`; `vazia` termina em `success`
 sem imagens.
 
+**Spec 031 (T015):** cada prompt aceito guarda em `PromptFake.imagens` os bytes das imagens que
+ele usa, pelo nome do parâmetro (`base_image`, `ref1`, `ref2` do keyframe; `start_image` e
+`end_image` dos clipes; o opcional que saiu não aparece). `ComfyFake.imagens_de(bloco)` lista
+esses dicionários na ordem dos prompts. Um clipe de trecho-base (5 s no MiniMax e no LTX:
+`frames` 124 e 121) volta com exatamente esses quadros a 24 fps.
+
 `requests` guarda cada pedido como `Pedido(metodo, caminho, corpo)`: JSON decodificado, os
 campos de texto do multipart (com `image` = nome do arquivo) ou a query do GET.
 """
@@ -95,6 +101,8 @@ class PromptFake:
     params: dict[str, Any] = field(default_factory=dict)
     # Spec 011: saídas a mais por nó (o `last_frame` dos clipes).
     extras: dict[str, dict[str, str]] = field(default_factory=dict)
+    # Spec 031: os bytes das imagens do prompt, pelo nome do parâmetro.
+    imagens: dict[str, bytes] = field(default_factory=dict)
 
 
 def _ids_opcionais(contrato: dict[str, Any]) -> set[str]:
@@ -151,6 +159,11 @@ class ComfyFake:
 
     def ultimo(self) -> PromptFake:
         return max(self.prompts.values(), key=lambda p: p.numero)
+
+    def imagens_de(self, bloco: str | None = None) -> list[dict[str, bytes]]:
+        """As imagens de cada prompt aceito (do `bloco`, se dado), na ordem de chegada."""
+        return [p.imagens for p in sorted(self.prompts.values(), key=lambda p: p.numero)
+                if bloco is None or p.bloco == bloco]
 
     @staticmethod
     def seed_do_png(dados: bytes) -> int:
@@ -305,9 +318,12 @@ class ComfyFake:
                           "details": "; ".join(erros)},
                 "node_errors": {}})
         falha = self._falhas.pop(0) if self._falhas else self.falhar_sempre
+        contrato = self._blocos[bloco][1]["params"] if bloco else {}
+        imagens = {nome: self.uploads[params[nome]] for nome, spec in contrato.items()
+                   if spec["kind"] in ("image", "image_optional") and nome in params}
         p = PromptFake(id=str(uuid.uuid4()), numero=next(self._numero), bloco=bloco or "",
                        workflow=copy.deepcopy(wf), voltas=self.voltas, falha=falha,
-                       params=params)
+                       params=params, imagens=imagens)
         self.prompts[p.id] = p
         return self._json(200, {"prompt_id": p.id, "number": p.numero, "node_errors": {}})
 

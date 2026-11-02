@@ -12,6 +12,13 @@
   padrão do código, `version 0`.
 
 Nada é apagado: cenas e tomadas são arquivadas, e o vínculo é desfeito (`desfeito_em`).
+
+Spec 031 (vídeo guiado): a cena do guiado tem `trechos` (1 a 3) e `trechos + 1` quadros em
+`cena_quadros` (o keyframe de cada ponto, sem versão própria: mudar um quadro versiona a cena);
+`keyframe_inicial_id`/`keyframe_final_id` viram espelhos do quadro 0 e do último
+(`cenas/quadros.py`). A tomada de um trecho guarda o `trecho` e o quadro final usado
+(`keyframe_fim_image_id`, a chave do reuso, R8). `origem_cena_id` aponta a cena de onde a
+derivada saiu (reuso do plano, FR-022).
 """
 
 import enum
@@ -21,10 +28,12 @@ from decimal import Decimal
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     SmallInteger,
@@ -62,6 +71,15 @@ class CenaMotor(enum.StrEnum):
     wan = "wan"  # plano de rosto sem fala
     wan_qualidade = "wan_qualidade"  # tecido ou giro em que a física importa
     ltx = "ltx"
+
+
+class QuadroPapel(enum.StrEnum):
+    """Spec 031: o papel do quadro na sequência da cena (derivado da ordem e do total)."""
+
+    inicio = "inicio"
+    meio1 = "meio1"
+    meio2 = "meio2"
+    fim = "fim"
 
 
 class CenaStatus(enum.StrEnum):
@@ -202,6 +220,46 @@ class Cena(_Versioned, AuditMixin, Base):
     keyframe_geracao_id: Mapped[uuid.UUID | None] = mapped_column(Uuid,
                                                                   ForeignKey("geracoes.id"))
     duracao_max_s: Mapped[Decimal | None] = mapped_column(Numeric(4, 1))
+    # ---- spec 031: o vídeo guiado (nulos nas cenas da 010/011) ----
+    trechos: Mapped[int | None] = mapped_column(SmallInteger)
+    origem_cena_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("cenas.id"))
+
+
+class CenaQuadro(Base):
+    """Spec 031: um quadro (keyframe) da sequência da cena. Nada é apagado: recusar ou refazer
+    arquiva o quadro e cria outro na mesma ordem (UNIQUE parcial entre os não arquivados)."""
+
+    __tablename__ = "cena_quadros"
+    __table_args__ = (
+        CheckConstraint("ordem BETWEEN 0 AND 3", name="ck_cena_quadros_ordem"),
+        CheckConstraint("NOT provisorio OR image_id IS NOT NULL",
+                        name="ck_cena_quadros_provisorio"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    cena_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("cenas.id"), nullable=False)
+    ordem: Mapped[int] = mapped_column(SmallInteger, nullable=False)
+    papel: Mapped[QuadroPapel] = mapped_column(Enum(QuadroPapel, name="quadro_papel"),
+                                               nullable=False)
+    instrucao: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
+    image_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("images.id"))
+    geracao_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("geracoes.id"))
+    # A opção única aplicada pela máquina para seguir a cadeia (R3), ainda sem aprovação humana.
+    provisorio: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False,
+                                             server_default=text("false"))
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    archived_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False,
+                                                 server_default=func.now())
+    created_by: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("users.id"))
+
+    @property
+    def archived(self) -> bool:
+        return self.archived_at is not None
+
+
+Index("uq_cena_quadros_ordem", CenaQuadro.cena_id, CenaQuadro.ordem, unique=True,
+      postgresql_where=text("archived_at IS NULL"))
 
 
 class CenaTomada(_Versioned, AuditMixin, Base):
@@ -239,6 +297,10 @@ class CenaTomada(_Versioned, AuditMixin, Base):
     fps: Mapped[int | None] = mapped_column(SmallInteger)
     desuso_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     limpa_em: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # ---- spec 031: a tomada de um trecho (R8; nulos na tomada inteira da 010/011) ----
+    trecho: Mapped[int | None] = mapped_column(SmallInteger)
+    keyframe_fim_image_id: Mapped[uuid.UUID | None] = mapped_column(Uuid,
+                                                                    ForeignKey("images.id"))
 
     @property
     def limpa(self) -> bool:

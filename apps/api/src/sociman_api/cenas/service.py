@@ -848,6 +848,54 @@ def duplicar(db: Session, actor: Actor, cena_id: uuid.UUID) -> Cena:
     return cena
 
 
+def derivar_cena(db: Session, actor: Actor, origem: Cena, *, avatar_id: uuid.UUID | None,
+                 cenario_id: uuid.UUID | None, produto_id: uuid.UUID | None,
+                 produto_variante_id: uuid.UUID | None, perfil_base_id: uuid.UUID | None,
+                 instrucoes: list[str], manter: int = 0,
+                 mudancas: dict[str, Any] | None = None,
+                 details: dict[str, Any] | None = None) -> Cena:
+    """Spec 031 (FR-022, R7): a cena **derivada** de outra (o reuso do plano, ou o ajuste sobre
+    uma cena reaproveitada). Copia ação, câmera, movimento, motor e os outros campos da origem
+    (com `mudancas` por cima), troca o avatar, o cenário, o produto e o perfil base, nasce em
+    `rascunho` com `origem_cena_id` e a sequência de `len(instrucoes)` quadros; os `manter`
+    primeiros levam a imagem do quadro da origem (já aprovada, R3). A origem não muda: ela ganha
+    só uma versão com `details.acao = "derivada"` (histórico nas duas, FR-037)."""
+    from sociman_api.cenas import quadros as cenas_quadros  # quadros importa este módulo
+
+    if origem.archived:
+        raise ApiError(409, "arquivada", "Restaure a cena antes de reaproveitar")
+    perfil_base.perfil_existente(db, perfil_base_id)
+    valores = {f: getattr(origem, f) for f in CAMPOS_EDITAVEIS}
+    valores["tags"] = list(origem.tags)
+    valores.update(avatar_id=avatar_id, cenario_id=cenario_id, avatar_arquivo_id=None,
+                   cenario_arquivo_id=None, produto_id=produto_id,
+                   produto_variante_id=produto_variante_id if produto_id else None)
+    if produto_id is not None:  # o catálogo no lugar da referência leve (`ck_cenas_produto_modo`)
+        valores.update(produto_nome=None, produto_imagem_id=None)
+    locais = {f: getattr(origem, f) for f in CAMPOS_LOCAIS_DUPLICAR}
+    locais["keyframe_refs"] = list(origem.keyframe_refs or [])
+    for campo, valor in (mudancas or {}).items():
+        if campo not in valores and campo not in locais:
+            raise ValueError(f"campo não aceito na derivação: {campo}")
+        (valores if campo in valores else locais)[campo] = valor
+    validar_refs(db, perfil_base_id, valores, novos=set(_UUIDS))
+    cena = Cena(id=uuid.uuid4(), perfil_id=perfil_base_id, origem_cena_id=origem.id,
+                status=CenaStatus.rascunho, created_by=actor.user_id, updated_by=actor.user_id,
+                **valores, **locais)
+    db.add(cena)
+    db.flush()
+    info = {"acao": "derivada", "origemCenaId": str(origem.id), **(details or {})}
+    _record(db, actor, cena, "created", None, info)
+    cenas_quadros.criar(db, actor, cena, instrucoes, details={"origemCenaId": str(origem.id)})
+    if manter:
+        cenas_quadros.copiar_imagens(db, actor, cena, origem, manter,
+                                     details={"origemCenaId": str(origem.id)})
+    antes = history.snapshot(origem)
+    _record(db, actor, origem, "updated", antes,
+            {"acao": "derivada", "derivadaId": str(cena.id), **(details or {})}, sempre=True)
+    return cena
+
+
 def arquivar(db: Session, actor: Actor, cena_id: uuid.UUID, version: int) -> Cena:
     cena = get_cena_or_404(db, cena_id, lock=True)
     history.check_version(cena, version, LABEL)
@@ -903,6 +951,9 @@ def _de_snapshot_local(campo: str, valor: Any) -> Any:
     return valor
 
 
+_ESPELHOS_QUADROS = frozenset({"keyframe_inicial_id", "keyframe_final_id", "keyframe_geracao_id"})
+
+
 def reverter(db: Session, actor: Actor, cena_id: uuid.UUID, version: int,
              to_version: int) -> Cena:
     """Só o dono humano (rota). Recusado em `usada`; um snapshot `usada` sem vínculo ativo volta
@@ -918,7 +969,9 @@ def reverter(db: Session, actor: Actor, cena_id: uuid.UUID, version: int,
     if "perfil_id" in state:  # 029: o perfil base volta (mesmo arquivado)
         cena.perfil_id = uuid.UUID(state["perfil_id"]) if state["perfil_id"] else None
     for campo in CAMPOS_LOCAIS:  # 011: as versões antigas não têm os campos locais
-        if campo in state:
+        # 031: na cena do guiado, os keyframes são espelhos dos quadros ativos (o revert não
+        # volta quadros; a imagem de um quadro refeito pode já ter saído na limpeza de 90 dias).
+        if campo in state and not (cena.trechos is not None and campo in _ESPELHOS_QUADROS):
             setattr(cena, campo, _de_snapshot_local(campo, state[campo]))
     status = CenaStatus(state["status"])
     if status == CenaStatus.usada and not tem_uso_ativo(db, cena.id):

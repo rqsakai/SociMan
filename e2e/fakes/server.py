@@ -487,6 +487,95 @@ def _plano_roteiro(user: str, instrucao: str) -> dict:
     return {"frases": list(FRASES_ROTEIRO), "posicoes": posicoes}
 
 
+# Spec 031 (T030): o chat do vídeo guiado, o "Não aprovo" e o plano v2, como no
+# `tests/fakes/anthropic_fake.py`: 3 perguntas fechadas (a 1ª múltipla); o ajuste muda o <alvo>
+# ("ambíguo" no <pedido> devolve uma pergunta de esclarecimento); o plano v2 lê a <grade>,
+# reaproveita a 1ª cena de <cenas> no nível dela (salvo "cenas novas" nas <respostas>) e fecha a
+# soma com cenas novas de 1 trecho ("não cabe" estoura a fala na 1ª tentativa).
+def _pergunta(id_: str, texto_: str, *opcoes: str, multipla: bool = False,
+              exemplos: tuple[str, ...] = ()) -> dict:
+    return {"id": id_, "texto": texto_, "multipla": multipla,
+            "opcoes": [{"id": o.lower().replace(" ", "_"), "rotulo": o} for o in opcoes],
+            "exemplos": list(exemplos)}
+
+
+PERGUNTAS_ROTEIRO = (
+    _pergunta("foco", "Quais aspectos do produto o vídeo deve mostrar?", "Caimento", "Tecido",
+              "Cor", "Preço", multipla=True, exemplos=("mostrar o caimento", "foco no preço")),
+    _pergunta("cta", "Qual chamada no fim?", "Link na bio", "Carrinho laranja", "Sem chamada",
+              exemplos=("corre no link",)),
+    _pergunta("tom", "Qual o tom do vídeo?", "Animado", "Calmo", "Explicativo",
+              exemplos=("estilo antes/depois",)),
+)
+_ALVO_ROTEIRO = re.compile(r'<alvo tipo="(\w+)"(?: ordem="(\d+)")?(?: quadro="(\d+)")?'
+                           r'(?: trecho="(\d+)")?')
+FRASES_GUIADO = ("Achei o vestido perfeito pra quem tem curvas!",
+                 "Olha o caimento desse tecido levinho.",
+                 "Verde esmeralda e manguinha soltinha.",
+                 "Fica lindo no corpo, de verdade.",
+                 "A faixa marca a cintura.",
+                 "Corre no link aqui embaixo!")
+_GRADE = re.compile(r'<grade base="(\d+)" alvo="(\d+)">')
+_CENA_V2 = re.compile(r'<cena id="([0-9a-f-]{36})" nivel="(total|plano)"(?: trechos="(\d)")?')
+
+
+def _ajuste_roteiro(user: str) -> dict:
+    pedido = user.split("<pedido>")[-1].split("</pedido>")[0].lower()
+    if "ambíguo" in pedido or "ambiguo" in pedido:
+        return {"tipo": "pergunta", "mudanca": None, "resumo": "Preciso entender melhor.",
+                "pergunta": _pergunta("esclarecer", "O que você quer trocar?", "Mais de lado",
+                                      "Manter o rosto", "Outra pose")}
+    m = _ALVO_ROTEIRO.search(user)
+    tipo, ordem, quadro, trecho = m.groups() if m else ("narracao", None, None, None)
+    alvo = {"tipo": tipo, "ordem": int(ordem) if ordem else None,
+            "quadro": int(quadro) if quadro else None, "trecho": int(trecho) if trecho else None}
+    mudanca = {"alvo": alvo, "quadros": [], "acao": None, "motor": None, "velocidade": None,
+               "frases": [], "trechos": None}
+    if tipo == "narracao":
+        mudanca["velocidade"] = 1.15
+    elif tipo == "quadros":
+        mudanca["quadros"] = [{"ordem": alvo["quadro"] or 0,
+                               "instrucao": "She stands sideways, showing the sleeve"}]
+    elif tipo == "posicao":  # a cena da posição (o modal de cenas): a ação e trechos + 1 quadros
+        n = re.search(r'<cena_da_posicao trechos="(\d)"', user)
+        trechos = int(n.group(1)) if n else 1
+        mudanca["acao"] = "She walks to the mirror and shows the dress"
+        mudanca["quadros"] = [{"ordem": i, "instrucao": f"She walks to the mirror, state {i}"}
+                              for i in range(trechos + 1)]
+    elif tipo == "trecho":
+        mudanca["acao"] = "She turns slowly to the side, showing the sleeve"
+    return {"tipo": "mudanca", "pergunta": None, "mudanca": mudanca,
+            "resumo": "Ajustei o que foi pedido."}
+
+
+def _plano_v2(user: str) -> dict:
+    base, alvo = (int(x) for x in _GRADE.search(user).groups())
+    respostas = user.split("<respostas>")[-1].split("</respostas>")[0].lower()
+    cenas = [(i, n, int(t) if t else 1) for i, n, t in _CENA_V2.findall(user)]
+    reusar = [] if "cenas novas" in respostas else cenas[:1]
+    total, posicoes, frases = alvo // base, [], []
+    for cena_id, nivel, trechos in reusar:
+        if trechos > total:
+            break
+        posicoes.append({"cena_id": cena_id, "nivel": nivel, "nova": None, "trechos": trechos,
+                         "motivo": "Esta cena da biblioteca serve."})
+    while sum(p["trechos"] for p in posicoes) < total:
+        n = len(posicoes) + 1
+        posicoes.append({"cena_id": None, "nivel": None, "trechos": 1, "motivo": "Nenhuma cena serve.",
+                         "nova": {"nome": f"Cena nova {n}",
+                                  "acao": "She smiles and shows the dress to the camera",
+                                  "plano": "medio", "movimento": "parada", "camera": None,
+                                  "motor": "minimax",
+                                  "quadros": [f"She stands in the bedroom wearing the dress, state {i}"
+                                              for i in range(2)]}})
+    for i, p in enumerate(posicoes):
+        frases.append(FRASES_GUIADO[i % len(FRASES_GUIADO)])
+        p["frases"] = [i + 1]
+    if "não cabe" in respostas and "<erro_anterior>" not in user:
+        frases[0] = "Gente, " + "esse vestido é lindo demais, " * 8 + "sério!"
+    return {"frases": frases, "posicoes": posicoes}
+
+
 DESCRICAO_IDENTIDADE = (  # spec 025: 40 a 80 palavras, em inglês, sem nada de proibido
     "Adult woman in her early thirties with warm medium-brown skin, an oval face, almond-shaped "
     "dark brown eyes under softly arched eyebrows, a straight medium nose, full lips, shoulder-"
@@ -521,8 +610,12 @@ def claude(body: dict) -> tuple[int, dict]:
                  "descricao_prompt": DESCRICAO_IDENTIDADE}
     elif "material_en" in props:  # spec 012
         dados = _ficha_produto(body, instrucao)
-    elif "posicoes" in props and "frases" in props:  # spec 011: o plano do roteiro
-        dados = _plano_roteiro(user, instrucao)
+    elif "perguntas" in props:  # spec 031: as perguntas do chat
+        dados = {"perguntas": list(PERGUNTAS_ROTEIRO)}
+    elif "mudanca" in props:  # spec 031: o ajuste do "Não aprovo"
+        dados = _ajuste_roteiro(user)
+    elif "posicoes" in props and "frases" in props:  # spec 011 (v1) e 031 (v2, com a <grade>)
+        dados = _plano_v2(user) if "<grade " in user else _plano_roteiro(user, instrucao)
     elif "titulo" in props:  # textos_postagem
         dados = {"titulo": f"Título sugerido pela IA {n}{emoji}",
                  "descricao": f"Descrição sugerida pela IA, versão {n}.",

@@ -1,5 +1,5 @@
 import { CheckCircle2, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { AndamentoGeracao } from "@/components/geracao/AndamentoGeracao";
 import { Button } from "@/components/ui/button";
 import type { GeracaoStatus } from "@sociman/contract";
@@ -26,19 +26,20 @@ const rotuloAprovar: Record<RoteiroPortao, string> = {
 
 // "Aprovar <etapa>" (spec 011): só aparece com o roteiro parado neste portão; o histórico guarda quem
 // aprovou. A API recusa fora de hora (409 `portao_fora_de_hora`) e com pendência (ex.: keyframes).
-export function BotaoAprovar({ roteiro, portao, rodar, travado, motivo }: EtapaProps & { portao: RoteiroPortao; motivo?: string | null }) {
+export function BotaoAprovar({ roteiro, portao, rodar, travado, motivo, acabamentoModo, extra }: EtapaProps & { portao: RoteiroPortao; motivo?: string | null; acabamentoModo?: AcabamentoModo; extra?: ReactNode }) {
   const [busy, setBusy] = useState(false);
   if (travado || portaoParado(roteiro.status) !== portao) return null;
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-lg border border-warning/60 bg-warning/5 p-3" data-testid={`aprovar-${portao}`}>
       <p className="min-w-0 flex-1 text-sm">{motivo ?? "O roteiro está parado aqui, esperando a sua revisão."}</p>
+      {extra}
       <Button
         type="button"
         disabled={busy}
         aria-busy={busy}
         onClick={async () => {
           setBusy(true);
-          await rodar(() => api.roteiros.aprovar(roteiro.id, roteiro.version, portao), "Etapa aprovada. O roteiro segue.");
+          await rodar(() => api.roteiros.aprovar(roteiro.id, roteiro.version, portao, portao === "final" ? acabamentoModo : undefined), "Etapa aprovada. O roteiro segue.");
           setBusy(false);
         }}
       >
@@ -49,11 +50,18 @@ export function BotaoAprovar({ roteiro, portao, rodar, travado, motivo }: EtapaP
   );
 }
 
+export type AcabamentoModo = "leve" | "hd";
+// T059 (2026-10-15): o acabamento padrão é o leve (segundos, sem GPU); o HD com IA é opcional.
+export const ACABAMENTOS: { id: AcabamentoModo; rotulo: string; dica: string }[] = [
+  { id: "leve", rotulo: "Leve (padrão)", dica: "1080×1920 em segundos. Já serve ao TikTok." },
+  { id: "hd", rotulo: "HD com IA", dica: "Ampliação por IA, cena a cena. Uns 20 min para 15 s." },
+];
+
 const passoLabel: Record<string, string> = {
   "roteiro.plano": "Plano (frases e cenas)",
   "roteiro.narracao": "Narração",
   "roteiro.montagem": "Prévia",
-  "roteiro.acabamento": "Acabamento HD",
+  "roteiro.acabamento": "Acabamento",
   "cena.keyframe": "Keyframe",
   "cena.clipe": "Clipe",
 };

@@ -7,6 +7,7 @@ import type {
   RoteiroStatus,
 } from "@sociman/contract";
 import { useInfiniteQuery, useQuery, type QueryClient } from "@tanstack/react-query";
+import { useRef } from "react";
 import { api } from "./api";
 import { uploadMultipart } from "./marcaApi";
 
@@ -46,7 +47,7 @@ export const statusRoteiroLabel: Record<RoteiroStatus, string> = {
   aguardando_clipes: "Aguardando os clipes",
   montando: "Montando a prévia",
   aguardando_final: "Aguardando o final",
-  finalizando: "Fazendo o acabamento HD",
+  finalizando: "Fazendo o acabamento",
   pronto: "Pronto",
   falhou: "Falhou",
 };
@@ -78,7 +79,7 @@ export const etapaFalhouLabel: Record<RoteiroEtapa, string> = {
   keyframes: "os keyframes",
   clipes: "os clipes",
   montagem: "a montagem da prévia",
-  acabamento: "o acabamento HD",
+  acabamento: "o acabamento",
 };
 
 export const motorLabel: Record<CenaMotor, string> = {
@@ -184,12 +185,23 @@ export function useRoteirosAgencia(perfilFiltro: string, filtros: RoteiroFiltros
   });
 }
 
+// Entre uma geração que acaba e a próxima que a máquina pede (ex.: o ajuste do "Não aprovo" da 031
+// e os quadros refeitos), o roteiro pode parecer parado por um instante: o polling continua por uma
+// folga depois da última mudança (geração andando ou versão nova).
+const FOLGA_MS = 20_000;
+
 export function useRoteiro(id: string) {
+  const visto = useRef<{ em: number; version: number | null }>({ em: 0, version: null });
   return useQuery({
     queryKey: roteiroKey(id),
     queryFn: () => api.roteiros.detalhe(id),
     enabled: id !== "",
-    refetchInterval: (q) => (q.state.data && roteiroMudando(q.state.data) ? POLL_MS : false),
+    refetchInterval: (q) => {
+      const d = q.state.data;
+      if (!d) return false;
+      if (roteiroMudando(d) || d.version !== visto.current.version) visto.current = { em: Date.now(), version: d.version };
+      return roteiroMudando(d) || Date.now() - visto.current.em < FOLGA_MS ? POLL_MS : false;
+    },
   });
 }
 

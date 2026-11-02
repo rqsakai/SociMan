@@ -3,11 +3,13 @@
  * produtos, o avatar e a voz, e as ações (planejar com IA, tentar de novo, arquivar/restaurar); o erro
  * e os avisos; os portões e o modo (T048); as etapas Texto, Narração, Keyframes, Clipes e Final, em
  * abas (`?etapa=`; sem ela, a etapa onde o roteiro está); e o histórico (reverter só o dono). O
- * `useRoteiro` recarrega a cada 2 s enquanto o roteiro trabalha sozinho.
+ * `useRoteiro` recarrega a cada 2 s enquanto o roteiro trabalha sozinho. Spec 031: o vídeo guiado
+ * tem o switch "Wizard / Avançado" no topo (o wizard com o modal de cenas; o avançado é este
+ * detalhe da 011, com os quadros e os trechos); os roteiros da 011 abrem sempre no avançado.
  */
 import { useQueryClient } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, ArrowLeft, Loader2, RotateCcw, Sparkles, TriangleAlert } from "lucide-react";
-import { useState } from "react";
+import { Archive, ArchiveRestore, ArrowLeft, Info, Loader2, RotateCcw, Sparkles, TriangleAlert } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { ApiErrorAlert } from "@/components/ApiErrorAlert";
@@ -46,6 +48,10 @@ import { Final } from "./etapas/Final";
 import { Keyframes } from "./etapas/Keyframes";
 import { Narracao } from "./etapas/Narracao";
 import { Texto } from "./etapas/Texto";
+import { ModalCenas } from "./wizard/ModalCenas";
+import { Wizard } from "./wizard/Wizard";
+import { gravarModo, lerModo, PORTOES_TODOS, portoesTodosLigados, type ModoTela } from "@/lib/videoGuiado";
+import { cn } from "@/lib/utils";
 
 const PLANEJAVEL = new Set(["rascunho", "aguardando_texto"]);
 
@@ -103,14 +109,21 @@ function Voltar({ perfilId }: { perfilId: string | null }) {
 }
 
 function RoteiroTela({ r, rodar, error, onReload }: { r: Roteiro; rodar: RodarRoteiro; error: unknown; onReload: () => void }) {
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const [busy, setBusy] = useState<string | null>(null);
-  const [salvandoPortoes, setSalvandoPortoes] = useState(false);
   const etapaUrl = params.get("etapa");
   const etapa: Etapa = ETAPAS.some((e) => e.id === etapaUrl) ? (etapaUrl as Etapa) : etapaAtual(r);
   const atual = etapaAtual(r);
   const travado = r.arquivado;
   const podePlanejar = !travado && (PLANEJAVEL.has(r.status) || (r.status === "falhou" && r.etapaFalhou === "plano"));
+  // Spec 031 (FR-014, FR-018, R9): o vídeo guiado abre no wizard (o chat, depois um item por vez) e
+  // troca para o avançado pelo switch do topo; o último modo fica no navegador. Quem planeja no
+  // guiado é o "Montar o vídeo" do chat. Os roteiros da 011 abrem sempre no avançado.
+  const guiado = r.tipoVideo != null;
+  const [modo, setModo] = useState<ModoTela>(() => (guiado ? (lerModo(r.id) ?? "wizard") : "avancado"));
+  const wizard = guiado && modo === "wizard";
+  // No wizard, o aviso de fala tem um bloco próprio com as saídas (T050).
+  const avisos = wizard ? r.avisos.filter((a) => a.code !== "fala_nao_cabe") : r.avisos;
 
   async function acao(nome: string, fn: () => Promise<unknown>, ok: string) {
     setBusy(nome);
@@ -174,7 +187,7 @@ function RoteiroTela({ r, rodar, error, onReload }: { r: Roteiro; rodar: RodarRo
             </dl>
           </div>
           <div className="flex flex-wrap gap-2">
-            {podePlanejar && (
+            {podePlanejar && !guiado && (
               <Button type="button" disabled={busy !== null} aria-busy={busy === "planejar"} onClick={() => void acao("planejar", () => api.roteiros.planejar(r.id, r.version), "Plano pedido à IA.")}>
                 {busy === "planejar" ? <Loader2 className="animate-spin" aria-hidden="true" /> : <Sparkles aria-hidden="true" />}
                 {r.posicoes.length > 0 ? "Planejar de novo com IA" : "Planejar com IA"}
@@ -222,13 +235,13 @@ function RoteiroTela({ r, rodar, error, onReload }: { r: Roteiro; rodar: RodarRo
           <AlertDescription>{r.erro.message}</AlertDescription>
         </Alert>
       )}
-      {r.avisos.length > 0 && (
+      {avisos.length > 0 && (
         <Alert data-testid="roteiro-avisos">
           <TriangleAlert className="text-warning" aria-hidden="true" />
           <AlertTitle>Avisos</AlertTitle>
           <AlertDescription>
             <ul className="list-disc pl-5">
-              {r.avisos.map((a, i) => (
+              {avisos.map((a, i) => (
                 <li key={`${a.code}-${i}`}>
                   {a.ordem != null && `Cena ${a.ordem + 1}: `}
                   {a.message}
@@ -239,6 +252,92 @@ function RoteiroTela({ r, rodar, error, onReload }: { r: Roteiro; rodar: RodarRo
         </Alert>
       )}
 
+      <ModoSwitch
+        guiado={guiado}
+        modo={modo}
+        onChange={(m) => {
+          setModo(m);
+          gravarModo(r.id, m);
+        }}
+      />
+
+      {wizard ? (
+        <>
+          <PortoesDoWizard r={r} rodar={rodar} travado={travado} />
+          <Wizard roteiro={r} rodar={rodar} travado={travado} ModalCenas={ModalCenas} />
+        </>
+      ) : (
+        <Avancado r={r} rodar={rodar} travado={travado} etapa={etapa} atual={atual} guiado={guiado} />
+      )}
+
+      {/* O histórico mostra as frases e os prompts: só no avançado (FR-015). */}
+      {!wizard && <HistoricoRoteiro roteiro={r} onReload={onReload} />}
+    </Page>
+  );
+}
+
+// O switch "Wizard / Avançado" (FR-014, R9). Os roteiros da 011 não têm cenário nem grade: abrem
+// sempre no avançado, e o lugar do switch explica por quê (FR-018).
+function ModoSwitch({ guiado, modo, onChange }: { guiado: boolean; modo: ModoTela; onChange: (m: ModoTela) => void }) {
+  if (!guiado) {
+    return (
+      <p className="flex items-start gap-2 text-sm text-muted-foreground" data-testid="modo-so-avancado">
+        <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+        Este vídeo foi criado antes do vídeo guiado (sem cenário nem grade de duração): ele abre sempre no modo avançado.
+      </p>
+    );
+  }
+  const opcoes: { id: ModoTela; rotulo: string }[] = [
+    { id: "wizard", rotulo: "Wizard" },
+    { id: "avancado", rotulo: "Avançado" },
+  ];
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <div role="radiogroup" aria-label="Modo da tela" className="inline-flex rounded-lg border bg-muted p-0.5" data-testid="modo-switch">
+        {opcoes.map((o) => (
+          <button
+            key={o.id}
+            type="button"
+            role="radio"
+            aria-checked={modo === o.id}
+            onClick={() => onChange(o.id)}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+              modo === o.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {o.rotulo}
+          </button>
+        ))}
+      </div>
+      <p className="min-w-0 flex-1 text-xs text-muted-foreground">
+        {modo === "wizard" ? "Um passo por vez, para aprovar ou não." : "Texto, prompts, portões e mais de uma versão por item. Trocar de modo não perde nada."}
+      </p>
+    </div>
+  );
+}
+
+// FR-035: no wizard, todos os portões ficam ligados e o modo é "revisar" (cada item espera a
+// aprovação). Se o avançado desligou algum, o wizard religa todos ao abrir, uma vez, e avisa.
+function PortoesDoWizard({ r, rodar, travado }: { r: Roteiro; rodar: RodarRoteiro; travado: boolean }) {
+  // uma tentativa por versão do roteiro (um 409 de versão tenta de novo na próxima leitura)
+  const pedido = useRef<number | null>(null);
+  const precisa = !travado && r.status !== "pronto" && !portoesTodosLigados(r);
+  useEffect(() => {
+    if (!precisa || pedido.current === r.version) return;
+    pedido.current = r.version;
+    void rodar(() => api.roteiros.controle(r.id, { version: r.version, modo: "revisar", portoes: { ...PORTOES_TODOS } }), "No wizard, todos os portões ficam ligados: cada item espera a sua aprovação.");
+  }, [precisa, r.id, r.version, rodar]);
+  return null;
+}
+
+// O detalhe da 011: os portões e o modo, e as etapas em abas (`?etapa=`). No guiado (031), o mesmo
+// avançado, com a troca de cenas por posição e, nas etapas, os quadros e os trechos.
+function Avancado({ r, rodar, travado, etapa, atual, guiado }: { r: Roteiro; rodar: RodarRoteiro; travado: boolean; etapa: Etapa; atual: Etapa; guiado: boolean }) {
+  const [, setParams] = useSearchParams();
+  const [salvandoPortoes, setSalvandoPortoes] = useState(false);
+  return (
+    <>
       <Card className="shadow-card" aria-labelledby="portoes-titulo">
         <CardHeader>
           <h2 id="portoes-titulo" className="text-base font-semibold">
@@ -275,7 +374,8 @@ function RoteiroTela({ r, rodar, error, onReload }: { r: Roteiro; rodar: RodarRo
         </TabsList>
         <Card className="shadow-card">
           <CardContent>
-            <TabsContent value="texto">
+            <TabsContent value="texto" className="flex flex-col gap-4">
+              {guiado && r.posicoes.length > 0 && <ModalCenas roteiro={r} rodar={rodar} travado={travado} avancado />}
               <Texto key={`texto-${r.id}`} roteiro={r} rodar={rodar} travado={travado} />
             </TabsContent>
             <TabsContent value="narracao">
@@ -293,9 +393,7 @@ function RoteiroTela({ r, rodar, error, onReload }: { r: Roteiro; rodar: RodarRo
           </CardContent>
         </Card>
       </Tabs>
-
-      <HistoricoRoteiro roteiro={r} onReload={onReload} />
-    </Page>
+    </>
   );
 }
 

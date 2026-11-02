@@ -4,13 +4,17 @@ Cada passo diz o motor, o tipo de alvo, o tipo de resultado, o número padrão e
 (o pedido pode reduzir, nunca aumentar), se vai direto ao alvo sem escolha humana
 (`sem_escolha`: só os passos de texto e o `produto.recorte`, FR-010 e FR-031; o `voz.teste` é
 entregue sem mudar o alvo), o bloco do ComfyUI e o `kind` da imagem gerada. O CHECK
-`ck_geracoes_passo` (migration 0020, refeito na 0027) repete a lista (o teste cruzado confere).
+`ck_geracoes_passo` (migration 0020, refeito na 0027 e na 0028) repete a lista (o teste cruzado confere).
 
 Spec 011: os 6 passos do roteiro. O único com escolha é o `cena.keyframe` (FR-041); os de
 resultado único vão direto ao roteiro ou à cena, porque a conferência humana é o portão do
 roteiro. O `cena.clipe` declara o bloco do motor padrão (`clipe_minimax`): o bloco de cada pedido
 vem do motor da cena, em `params.bloco`. A `roteiro.montagem` roda no motor `ffmpeg` (sem bloco,
 fora da trava de GPU, R2).
+
+Spec 031: `roteiro.perguntas` e `roteiro.ajuste` (Claude, resultado único, sem escolha: o humano
+pediu e o resultado volta ao portão do roteiro). O `cena.keyframe` aceita até 4 opções; o quadro
+do guiado vai em `extras.quadro`, e o trecho do `cena.clipe` em `extras.trecho`.
 
 Os sufixos `REALISMO` e `MANTER` vêm do `cenarios.py` do pipeline (R6): a cena sai sem pessoas,
 sem texto e com área livre embaixo para os produtos.
@@ -79,10 +83,14 @@ _PASSOS: tuple[Passo, ...] = (
     # spec 011
     Passo("roteiro.plano", _CL, _R, "texto", 1, 1, sem_escolha=True),
     Passo("roteiro.narracao", _T, _R, "audio", 1, 1, sem_escolha=True),
-    Passo("cena.keyframe", _C, _CE, "imagem", 2, 2, bloco="keyframe", image_kind="keyframe"),
+    # spec 031: até 4 opções no avançado; o quadro do guiado pede 1 no wizard (`extras.quadro`)
+    Passo("cena.keyframe", _C, _CE, "imagem", 2, 4, bloco="keyframe", image_kind="keyframe"),
     Passo("cena.clipe", _C, _CE, "video", 1, 1, sem_escolha=True, bloco="clipe_minimax"),
     Passo("roteiro.montagem", _F, _R, "video", 1, 1, sem_escolha=True),
     Passo("roteiro.acabamento", _C, _R, "video", 1, 1, sem_escolha=True, bloco="upscale_video"),
+    # spec 031 (vídeo guiado): as perguntas do chat e o ajuste do "Não aprovo"
+    Passo("roteiro.perguntas", _CL, _R, "texto", 1, 1, sem_escolha=True),
+    Passo("roteiro.ajuste", _CL, _R, "texto", 1, 1, sem_escolha=True),
 )
 BLOCOS_CLIPE: dict[str, Bloco] = {"minimax": "clipe_minimax", "wan": "clipe_wan",
                                   "wan_qualidade": "clipe_wan_qualidade", "ltx": "clipe_ltx"}

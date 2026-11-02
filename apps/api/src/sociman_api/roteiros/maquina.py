@@ -18,6 +18,13 @@ A cada volta:
 
 O roteiro é travado (`FOR UPDATE`) por quem chama. Uma chamada aninhada (o gancho da escolha
 automática dentro de um handler) só marca "de novo", e o laço de fora segue.
+
+Spec 031 (vídeo guiado, R3 e R8): nos keyframes, a sequência de cada cena é **encadeada** (o
+quadro i+1 só é pedido quando o i tem imagem, porque nasce dele), e nos clipes há um pedido por
+trecho que não tem tomada que sirva (o par de quadros vizinhos é a chave). Refazer um quadro
+arquiva ele e os seguintes (`cenas/quadros.py`): os trechos que tocam os refeitos deixam de
+servir e só eles voltam (FR-028); as gerações abertas de quadros refeitos são canceladas. Os
+roteiros da 011 seguem pelo caminho de antes.
 """
 
 import uuid
@@ -30,8 +37,9 @@ from sqlalchemy.orm import Session
 
 from sociman_api.assets.models import Asset
 from sociman_api.auth.deps import ROTEIRO, Actor
+from sociman_api.cenas import quadros as cenas_quadros
 from sociman_api.cenas import service as cenas_service
-from sociman_api.cenas.models import Cena, CenaStatus, CenaTomada
+from sociman_api.cenas.models import Cena, CenaQuadro, CenaStatus, CenaTomada
 from sociman_api.errors import ApiError
 from sociman_api.geracao import service as geracao_service
 from sociman_api.geracao.models import Geracao, GeracaoStatus
@@ -45,6 +53,7 @@ from sociman_api.roteiros.models import (
     RoteiroEntrega,
     RoteiroEtapa,
     RoteiroModo,
+    RoteiroTrecho,
 )
 from sociman_api.vozes.models import Voz
 
@@ -121,10 +130,44 @@ def _distintas(pares: list[tuple[RoteiroCena, Cena]]) -> list[tuple[int, Cena]]:
 
 # ---- o que está atual ----
 
+def _quadro_aberto(db: Session, r: Roteiro, cena: Cena, q: CenaQuadro) -> list[Geracao]:
+    """As gerações abertas do quadro (a ligada a ele em `cena_quadros.geracao_id`)."""
+    return [g for g in estado.abertas(db, "cena.keyframe", alvo_id=cena.id)
+            if g.id == q.geracao_id and estado.extras(g).get("quadro") == q.ordem]
+
+
+def _aprovada(db: Session, r: Roteiro, cena: Cena) -> bool:
+    """A sequência da cena foi aprovada em alguma posição dela (R9), ou o portão não pede."""
+    if not gate_ligado(r, "keyframes"):
+        return True
+    return any(p.aprovado_keyframes_em is not None for p, c in cenas_do(db, r) if c.id == cena.id)
+
+
+def _quadros_ok(db: Session, r: Roteiro, nivel: int) -> bool:
+    """031: até o portão, cada cena tem a sequência completa ou o próximo quadro em revisão;
+    depois dele, completa, sem provisório sem aprovação e com a cena fora de `rascunho`."""
+    for _, c in _distintas(cenas_do(db, r)):
+        qs = cenas_quadros.ativos(db, c.id)
+        if not qs:
+            return False
+        prox = next((q for q in qs if q.image_id is None), None)
+        if nivel > estado.nivel(S.aguardando_keyframes):
+            if prox is not None or c.status == CenaStatus.rascunho:
+                return False
+            if any(q.provisorio for q in qs) and not _aprovada(db, r, c):
+                return False
+        elif prox is not None and not any(estado.em_revisao(g)
+                                          for g in _quadro_aberto(db, r, c, prox)):
+            return False
+    return True
+
+
 def _keyframes_ok(db: Session, r: Roteiro, nivel: int) -> bool:
     pares = cenas_do(db, r)
     if not pares or any(c.archived for _, c in pares):
         return False
+    if r.guiado:
+        return _quadros_ok(db, r, nivel)
     for _, c in _distintas(pares):
         if c.keyframe_inicial_id is None:
             if nivel > estado.nivel(S.aguardando_keyframes):
@@ -137,7 +180,23 @@ def _keyframes_ok(db: Session, r: Roteiro, nivel: int) -> bool:
     return True
 
 
+def _trechos_ok(db: Session, r: Roteiro) -> bool:
+    """031: todo trecho de toda posição tem a tomada que serve ao par de quadros de agora."""
+    for p, c in cenas_do(db, r):
+        if p.duracao_s is None or p.trechos is None or r.trecho_base_s is None:
+            return False
+        qs = cenas_quadros.ativos(db, c.id)
+        for t in range(p.trechos):
+            x = p.trecho(t)
+            tomada = db.get(CenaTomada, x.tomada_id) if x is not None and x.tomada_id else None
+            if not estado.tomada_serve_trecho(db, tomada, c, t, r.trecho_base_s, qs):
+                return False
+    return True
+
+
 def _tomadas_ok(db: Session, r: Roteiro) -> bool:
+    if r.guiado:
+        return _trechos_ok(db, r)
     for p, c in cenas_do(db, r):
         if p.duracao_s is None or p.tomada_id is None:
             return False
@@ -155,6 +214,11 @@ def _geracao_atual(db: Session, geracao_id: uuid.UUID | None, assinatura: str) -
 
 def previa_ok(db: Session, r: Roteiro) -> bool:
     return _geracao_atual(db, r.montagem_geracao_id, estado.assinatura(r))
+
+
+def _modo_do_acabamento(db: Session, geracao_id: uuid.UUID | None) -> str | None:
+    g = db.get(Geracao, geracao_id) if geracao_id else None
+    return estado.extras(g).get("acabamento", "hd") if g is not None else None
 
 
 def entrega_ok(db: Session, r: Roteiro) -> bool:
@@ -213,13 +277,52 @@ def passar(db: Session, r: Roteiro, ator: Actor, portao: str) -> None:
     r.status = estado.DEPOIS_DO_PORTAO[portao]
 
 
+ETAPA_DA_POSICAO = {"keyframes": "keyframes", "clipes": "clipe"}
+
+
+def posicao_aprovada(p: RoteiroCena, etapa: str) -> bool:
+    return (p.aprovado_keyframes_em if etapa == "keyframes" else p.aprovado_clipe_em) \
+        is not None
+
+
+def todas_aprovadas(r: Roteiro, portao_: str) -> bool:
+    """031 (R9): o portão de keyframes (ou de clipes) do guiado passa quando toda posição tem a
+    aprovação humana da sua sequência (ou dos seus trechos)."""
+    etapa = ETAPA_DA_POSICAO.get(portao_)
+    pos = estado.posicoes(r)
+    return r.guiado and etapa is not None and bool(pos) and \
+        all(posicao_aprovada(p, etapa) for p in pos)
+
+
 def portao(db: Session, r: Roteiro, nome: str) -> None:
     """Fim do trabalho de uma etapa: para no portão ligado, ou segue (no automático, com o ator
-    `system:roteiro`)."""
+    `system:roteiro`). No guiado, o portão de keyframes ou de clipes com todas as posições já
+    aprovadas por humanos segue no nome do último que comandou."""
     if gate_ligado(r, nome):
+        if todas_aprovadas(r, nome):
+            passar(db, r, pedidos.ator_da_maquina(r), nome)
+            return
         r.status = estado.AGUARDANDO_DO_PORTAO[nome]
     else:
         passar(db, r, ROTEIRO, nome)
+
+
+def invalidar_aprovacoes(db: Session, r: Roteiro) -> None:
+    """031 (R9, FR-028): a aprovação dos clipes de uma posição deixa de valer quando um trecho
+    dela não tem mais a tomada que serve (um quadro refeito, ou o trecho recusado). A dos quadros
+    é zerada por quem muda o quadro (`cenas/quadros.py`)."""
+    if not r.guiado:
+        return
+    for p, c in cenas_do(db, r):
+        if p.aprovado_clipe_em is None or p.trechos is None or r.trecho_base_s is None:
+            continue
+        qs = cenas_quadros.ativos(db, c.id)
+        for t in range(p.trechos):
+            x = p.trecho(t)
+            tomada = db.get(CenaTomada, x.tomada_id) if x is not None and x.tomada_id else None
+            if not estado.tomada_serve_trecho(db, tomada, c, t, r.trecho_base_s, qs):
+                p.aprovado_clipe_em = p.aprovado_clipe_por = None
+                break
 
 
 # ---- etapas ----
@@ -230,8 +333,22 @@ def _planejando(db: Session, r: Roteiro, ator: Actor) -> None:
     pedidos.plano(db, ator, r)
 
 
+def avisar_fala(db: Session, r: Roteiro) -> None:
+    """Spec 031 (R4, FR-032): com a narração pronta, os avisos `fala_nao_cabe` do guiado são
+    trocados pelos de agora (o wizard avisa antes dos keyframes)."""
+    if not r.guiado:
+        return
+    fala = estado.fala_guiada(db, r)
+    outros = [a for a in (r.avisos or []) if a.get("code") != "fala_nao_cabe"]
+    if outros != (r.avisos or []):
+        r.avisos = outros
+    for a in (fala[1] if fala is not None else []):
+        avisar(r, a["code"], a["message"], a.get("ordem"))
+
+
 def _narrando(db: Session, r: Roteiro, ator: Actor) -> None:
     if estado.narracao_atual(db, r):
+        avisar_fala(db, r)
         portao(db, r, "narracao")
         return
     if not r.frases or not r.posicoes_rel:
@@ -267,6 +384,64 @@ def _conferir_produto(db: Session, cena: Cena, ordem: int) -> None:
                     "não está aprovado", {"ordem": ordem})
 
 
+def _cancelar_quadros_velhos(db: Session, ator: Actor, r: Roteiro, cena: Cena,
+                             qs: list[CenaQuadro]) -> None:
+    """As gerações deste roteiro para quadros que foram refeitos (o quadro ativo não aponta
+    mais para elas) ficaram velhas (FR-028)."""
+    ligadas = {q.geracao_id for q in qs if q.geracao_id is not None}
+    for g in estado.abertas(db, "cena.keyframe", alvo_id=cena.id):
+        ex = estado.extras(g)
+        if ex.get("quadro") is not None and ex.get("roteiroId") == str(r.id) and \
+                g.id not in ligadas:
+            cancelar(db, ator, g, "O quadro foi refeito")
+
+
+def _gerando_quadros(db: Session, r: Roteiro, ator: Actor,
+                     pares: list[tuple[RoteiroCena, Cena]]) -> None:
+    """031 (R3): a cadeia de cada cena. O próximo quadro sem imagem é pedido (1 opção) só quando
+    o anterior tem a sua; no automático, a opção 1 segue pelo `automatico.tentar` (o gancho da
+    escolha avança de novo e pede o seguinte)."""
+    from sociman_api.roteiros import automatico
+
+    automatico_ = not gate_ligado(r, "keyframes")
+    pendentes, esperando = False, True
+    for ordem, c in _distintas(pares):
+        qs = cenas_quadros.ativos(db, c.id)
+        if not qs:
+            raise Falha(RoteiroEtapa.keyframes, "invalid_roteiro",
+                        f"A cena da posição {ordem + 1} não tem a sequência de quadros",
+                        {"ordem": ordem})
+        _cancelar_quadros_velhos(db, ator, r, c, qs)
+        prox = next((q for q in qs if q.image_id is None), None)
+        if prox is None:
+            continue
+        pendentes = True
+        abertas = _quadro_aberto(db, r, c, prox)
+        if abertas:
+            # A opção única segue como provisória (R3); com o portão desligado, a opção 1. O
+            # resto (2+ opções no avançado) espera a escolha humana.
+            for g in abertas:
+                if estado.em_revisao(g):
+                    automatico.tentar(db, g)
+            if not automatico_ and not any(estado.em_revisao(g) for g in abertas):
+                esperando = False
+            continue
+        esperando = False
+        _conferir_avatar(db, r, RoteiroEtapa.keyframes, c)
+        _conferir_produto(db, c, ordem)
+        posicao = next(p for p, cena in pares if cena.id == c.id)
+        try:
+            pedidos.quadro(db, ator, r, posicao, prox.ordem, n=1)
+        except pedidos.QuadroSemBase as exc:
+            raise Falha(RoteiroEtapa.keyframes, "entrada_invalida",
+                        f"O quadro {prox.ordem + 1} da posição {ordem + 1} não pode ser pedido: "
+                        f"{exc}", {"ordem": ordem}) from None
+    if not pendentes:
+        portao(db, r, "keyframes")
+    elif not automatico_ and esperando:
+        r.status = S.aguardando_keyframes
+
+
 def _gerando_keyframes(db: Session, r: Roteiro, ator: Actor) -> None:
     from sociman_api.roteiros import automatico
 
@@ -278,6 +453,9 @@ def _gerando_keyframes(db: Session, r: Roteiro, ator: Actor) -> None:
     if arquivadas:
         avisar(r, "cena_arquivada", "Troque ou restaure a cena arquivada para seguir",
                arquivadas[0])
+        return
+    if r.guiado:
+        _gerando_quadros(db, r, ator, pares)
         return
     faltam = [(o, c) for o, c in _distintas(pares) if c.keyframe_inicial_id is None]
     if not faltam:
@@ -314,9 +492,123 @@ def _definir_tomada(db: Session, p: RoteiroCena, t: CenaTomada) -> None:
     t.desuso_em = None
 
 
+def desusar_tomada(db: Session, tomada_id: uuid.UUID | None) -> None:
+    """031 (R12): a tomada deixou de servir a um trecho; a limpeza de 90 dias conta daqui (a
+    tomada atual de outro trecho ou de um vídeo entregue continua protegida, `retencao`)."""
+    t = db.get(CenaTomada, tomada_id) if tomada_id else None
+    if t is not None and t.desuso_em is None:
+        t.desuso_em = datetime.now(UTC)
+
+
+def definir_tomada_trecho(db: Session, p: RoteiroCena, t: int, tomada: CenaTomada) -> None:
+    """031: o trecho `t` da posição passa a usar a tomada (a anterior fica em desuso, R12); a
+    aprovação dos clipes da posição deixa de valer."""
+    x = p.trecho(t)
+    if x is None:
+        x = RoteiroTrecho(roteiro_id=p.roteiro_id, ordem=p.ordem, trecho=t)
+        p.trechos_rel.append(x)
+    if x.tomada_id == tomada.id:
+        return
+    desusar_tomada(db, x.tomada_id)
+    x.tomada_id = tomada.id
+    tomada.desuso_em = None
+    p.aprovado_clipe_em = p.aprovado_clipe_por = None
+    db.flush()
+
+
+_FINAIS = (GeracaoStatus.escolhido, GeracaoStatus.descartada, GeracaoStatus.cancelada,
+           GeracaoStatus.entregue, GeracaoStatus.falhou)
+
+
+def _regerar_espera(db: Session, r: Roteiro, p: RoteiroCena, c: Cena, t: int) -> str | None:
+    """031 (avançado): o trecho sem tomada depois de um "regerar" (`service._regerar_trecho`)
+    espera o pedido mais recente dele, em vez de voltar à tomada antiga: `"geracao"` enquanto
+    uma versão roda; `"escolha"` quando as 2 versões chegaram e servem (o humano escolhe pelo
+    `PUT …/tomada`). None = segue a regra de sempre (sem pedido, ou ele não serve mais)."""
+    gs = [g for g in db.scalars(select(Geracao).where(
+        Geracao.passo == "cena.clipe", Geracao.alvo_id == c.id)
+        .order_by(Geracao.created_at.desc(), Geracao.id).limit(40))
+        if (ex := estado.extras(g)).get("regerar") and ex.get("trecho") == t
+        and ex.get("ordem") == p.ordem and ex.get("roteiroId") == str(r.id)]
+    if not gs:
+        return None
+    grupo = estado.extras(gs[0]).get("grupo")
+    gs = [g for g in gs if estado.extras(g).get("grupo") == grupo] if grupo else gs[:1]
+    inicio, fim = estado.par_do_trecho(cenas_quadros.ativos(db, c.id), t)
+    atuais = [g for g in gs if estado.extras(g).get("keyframeId") == str(inicio)
+              and estado.extras(g).get("keyframeFimId") == str(fim)]
+    if any(g.status not in _FINAIS for g in atuais):
+        return "geracao"
+    if len(gs) < 2:
+        return None
+    servem = db.scalars(select(CenaTomada).where(
+        CenaTomada.geracao_id.in_([g.id for g in atuais]), CenaTomada.cena_id == c.id))
+    if any(estado.tomada_serve_trecho(db, x, c, t, r.trecho_base_s) for x in servem):
+        return "escolha"
+    return None
+
+
+def _gerando_trechos(db: Session, r: Roteiro, ator: Actor,
+                     pares: list[tuple[RoteiroCena, Cena]]) -> None:
+    """031 (R2, R8): um clipe por trecho sem tomada que sirva. A mesma cena em duas posições
+    (reuso total) pede uma vez; a geração de um par de quadros que mudou é cancelada."""
+    base_s = r.trecho_base_s
+    precisa: dict[tuple[uuid.UUID, int], tuple[RoteiroCena, Cena]] = {}
+    escolher: set[tuple[uuid.UUID, int]] = set()
+    for p, c in pares:
+        if p.trechos is None:
+            raise Falha(RoteiroEtapa.clipes, "invalid_roteiro",
+                        f"A posição {p.ordem + 1} não tem os trechos", {"ordem": p.ordem})
+        for t in range(p.trechos):
+            x = p.trecho(t)
+            if x is None or x.tomada_id is None:
+                espera = _regerar_espera(db, r, p, c, t)
+                if espera is not None:  # o "regerar" do avançado: a nova (ou a escolha)
+                    precisa.setdefault((c.id, t), (p, c))
+                    if espera == "escolha":
+                        escolher.add((c.id, t))
+                    continue
+            tomada = estado.tomada_util_trecho(db, c, t, base_s, x.tomada_id if x else None)
+            if tomada is not None:
+                definir_tomada_trecho(db, p, t, tomada)
+            else:
+                precisa.setdefault((c.id, t), (p, c))
+    for (cena_id, t), (p, c) in precisa.items():
+        if (cena_id, t) in escolher:
+            continue
+        maximo = pedidos.duracao_max(c)
+        if base_s > maximo:
+            raise Falha(RoteiroEtapa.clipes, "entrada_invalida",
+                        f"O trecho da posição {p.ordem + 1} tem {base_s} s, e o motor "
+                        f"{c.motor.value} vai até {maximo:.1f} s", {"ordem": p.ordem})
+        inicio, fim = estado.par_do_trecho(cenas_quadros.ativos(db, c.id), t)
+        espera = False
+        for g in estado.abertas(db, "cena.clipe", alvo_id=c.id):
+            ex = estado.extras(g)
+            if ex.get("trecho") != t:
+                continue
+            if ex.get("keyframeId") != str(inicio) or ex.get("keyframeFimId") != str(fim):
+                cancelar(db, ator, g, "Um quadro do trecho mudou")
+            else:
+                espera = True
+        if espera:
+            continue
+        _conferir_avatar(db, r, RoteiroEtapa.clipes, c)
+        try:
+            pedidos.trecho(db, ator, r, p, t)
+        except pedidos.QuadroSemBase as exc:
+            raise Falha(RoteiroEtapa.clipes, "entrada_invalida", str(exc),
+                        {"ordem": p.ordem}) from None
+    if not precisa:
+        portao(db, r, "clipes")
+
+
 def _gerando_clipes(db: Session, r: Roteiro, ator: Actor) -> None:
     pares = cenas_do(db, r)
     if any(p.duracao_s is None for p, _ in pares):
+        return
+    if r.guiado:
+        _gerando_trechos(db, r, ator, pares)
         return
     precisa: dict[uuid.UUID, tuple[int, Cena, float]] = {}
     regerando = {int(estado.extras(g).get("ordem", -1))
@@ -382,10 +674,12 @@ def _finalizando(db: Session, r: Roteiro, ator: Actor) -> None:
         return
     espera = False
     for g in estado.abertas(db, "roteiro.acabamento", alvo_id=r.id):
-        if estado.extras(g).get("assinatura") == assinatura:
-            espera = True
-        else:
+        if estado.extras(g).get("assinatura") != assinatura:
             cancelar(db, ator, g, "As cenas ou a narração mudaram")
+        elif _modo_do_acabamento(db, g.id) != r.acabamento_modo.value:  # T059
+            cancelar(db, ator, g, "O modo do acabamento mudou")
+        else:
+            espera = True
     if not espera:
         pedidos.acabamento(db, ator, r, assinatura)
 
@@ -430,6 +724,7 @@ def _laco(db: Session, r: Roteiro, ator: Actor, humano: bool) -> None:
         antes = r.status
         if estado.nivel(r.status) >= estado.nivel(S.narrando):
             estado.recalcular_tempos(db, r)
+            invalidar_aprovacoes(db, r)
             reposicionar(db, r)
             if estado.nivel(r.status) < estado.nivel(antes):
                 _cancelar_seguintes(db, r, ator)

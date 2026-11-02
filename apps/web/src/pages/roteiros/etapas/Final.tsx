@@ -6,18 +6,42 @@ import { fmtSeg } from "@/components/roteiro/LinhaTempos";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { roteiroKey } from "@/lib/roteiros";
-import { Andamentos, BotaoAprovar, type EtapaProps } from "./comum";
+import { useState } from "react";
+import { Field, NativeSelect } from "@/components/ui/field";
+import { ACABAMENTOS, type AcabamentoModo, Andamentos, BotaoAprovar, type EtapaProps } from "./comum";
 
 // Etapa Final (spec 011, US5, T045): a prévia (as tomadas cortadas na duração de cada cena, com a
-// narração), aprovar (o acabamento HD entra na fila da GPU) e, com o roteiro pronto, o vídeo HD e o
+// narração), aprovar (o acabamento: leve na linha ffmpeg ou HD na GPU) e, pronto, o vídeo final e o
 // link para o conteúdo da 014 (sem destino aprovado: agendar e publicar são as telas da 014/015).
 export function Final({ roteiro, rodar, travado }: EtapaProps) {
   const { previa, acabamento } = roteiro;
   const queryClient = useQueryClient();
   const renovar = () => void queryClient.invalidateQueries({ queryKey: roteiroKey(roteiro.id) });
+  const [modo, setModo] = useState<AcabamentoModo>(roteiro.acabamentoModo);
+  const escolha = ACABAMENTOS.find((a) => a.id === modo);
   return (
     <div className="space-y-4" data-testid="etapa-final">
-      <BotaoAprovar roteiro={roteiro} rodar={rodar} travado={travado} portao="final" motivo="Assista à prévia. Aprovar faz o acabamento HD (1080×1920, 24 fps), o passo mais demorado." />
+      <BotaoAprovar
+        roteiro={roteiro}
+        rodar={rodar}
+        travado={travado}
+        portao="final"
+        acabamentoModo={modo}
+        motivo="Assista à prévia. Aprovar faz o acabamento (1080×1920, 24 fps, −14 LUFS)."
+        extra={
+          <Field label="Acabamento" hint={escolha?.dica} className="min-w-48">
+            {({ id, describedBy }) => (
+              <NativeSelect id={id} value={modo} aria-describedby={describedBy} data-testid="acabamento-modo" onChange={(e) => setModo(e.target.value as AcabamentoModo)}>
+                {ACABAMENTOS.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.rotulo}
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
+          </Field>
+        }
+      />
       <Andamentos geracoes={roteiro.geracoesAbertas} filtro={(g) => g.passo === "roteiro.montagem" || g.passo === "roteiro.acabamento"} />
 
       {roteiro.status === "pronto" && roteiro.conteudoId && (
@@ -46,13 +70,13 @@ export function Final({ roteiro, rodar, travado }: EtapaProps) {
           )}
         </section>
         {acabamento && (
-          <section className="space-y-2" aria-label="Vídeo HD" data-testid="roteiro-hd">
+          <section className="space-y-2" aria-label="Vídeo final" data-testid="roteiro-hd">
             <h3 className="flex flex-wrap items-center gap-2 text-sm font-semibold">
               Vídeo HD
               {acabamento.duracaoMs != null && <span className="text-xs font-normal text-muted-foreground tabular-nums">{fmtSeg(acabamento.duracaoMs / 1000)}</span>}
               {!acabamento.atual && <Badge className="bg-warning text-warning-foreground">desatualizado</Badge>}
             </h3>
-            {acabamento.videoUrl ? <PlayerVideo chave={acabamento.geracaoId} url={acabamento.videoUrl} rotulo="Vídeo HD" testId="player-hd" onRenovar={renovar} /> : <p className="text-sm text-muted-foreground">Sem arquivo.</p>}
+            {acabamento.videoUrl ? <PlayerVideo chave={acabamento.geracaoId} url={acabamento.videoUrl} rotulo="Vídeo final" testId="player-hd" onRenovar={renovar} /> : <p className="text-sm text-muted-foreground">Sem arquivo.</p>}
           </section>
         )}
       </div>

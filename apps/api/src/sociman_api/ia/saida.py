@@ -26,6 +26,7 @@ from sociman_api.ia import guia as guia_mod
 from sociman_api.ia.tipos import CAMPOS_CENA_IA, LIMITES_CENA, TipoCampo
 from sociman_api.postagem import textos  # normalizar_hashtags e os limites da postagem
 from sociman_api.produtos import ficha as ficha_produto  # spec 012 (puro)
+from sociman_api.roteiros import formatos as formatos_roteiro  # spec 031 (puro)
 from sociman_api.roteiros import plano as plano_roteiro  # spec 011 (puro)
 
 EXPLICACAO_MAX = 400
@@ -174,6 +175,10 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "taxonomia": PropostaTaxonomia, "classificacao": PropostaClassificacao,
     "analise": PropostaAnalise, "ficha_produto": ficha_produto.FichaSaida,
     "identidade": PropostaIdentidade, "plano_roteiro": plano_roteiro.PlanoSaida,
+    # spec 031: o chat do vídeo guiado e o plano v2
+    "perguntas_roteiro": formatos_roteiro.PerguntasSaida,
+    "ajuste_roteiro": formatos_roteiro.AjusteSaida,
+    "plano_roteiro_v2": plano_roteiro.PlanoSaidaV2,
 }
 VARIACOES = 3
 
@@ -296,6 +301,12 @@ def problemas(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
         erros.extend(_problemas_identidade(parsed))
     elif isinstance(parsed, plano_roteiro.PlanoSaida):  # spec 011
         erros.extend(plano_roteiro.problemas(parsed))
+    elif isinstance(parsed, plano_roteiro.PlanoSaidaV2):  # spec 031
+        erros.extend(plano_roteiro.problemas_v2(parsed))
+    elif isinstance(parsed, formatos_roteiro.PerguntasSaida):
+        erros.extend(formatos_roteiro.problemas_perguntas(parsed))
+    elif isinstance(parsed, formatos_roteiro.AjusteSaida):
+        erros.extend(formatos_roteiro.problemas_ajuste(parsed))
     elif isinstance(parsed, PropostaCamposCena):
         if not parsed.acao.strip():
             erros.append("a ação veio vazia")
@@ -335,6 +346,12 @@ def _textos(parsed: BaseModel) -> list[str]:
         return list(_campos_cena(parsed).values())
     if isinstance(parsed, PropostaIdentidade):  # spec 025: as proibidas do perfil (so_proibidas)
         return [parsed.descricao_prompt]
+    if isinstance(parsed, plano_roteiro.PlanoSaidaV2):  # spec 031: a fala do vídeo
+        return list(parsed.frases)
+    if isinstance(parsed, formatos_roteiro.PerguntasSaida):
+        return formatos_roteiro.textos_perguntas(parsed)
+    if isinstance(parsed, formatos_roteiro.AjusteSaida):
+        return formatos_roteiro.textos_ajuste(parsed)
     return []
 
 
@@ -592,6 +609,21 @@ def finalizar(tipo: TipoCampo, parsed: BaseModel, excluir: Excluir = NADA,
         if erros:
             raise Invalida("; ".join(erros))
         out.proposta = plano_roteiro.proposta(parsed)
+    elif isinstance(parsed, plano_roteiro.PlanoSaidaV2):  # spec 031: estrutura sempre válida
+        erros = plano_roteiro.problemas_v2(parsed)
+        if erros:
+            raise Invalida("; ".join(erros))
+        out.proposta = plano_roteiro.proposta_v2(parsed)
+    elif isinstance(parsed, formatos_roteiro.PerguntasSaida):
+        erros = formatos_roteiro.problemas_perguntas(parsed)
+        if erros:
+            raise Invalida("; ".join(erros))
+        out.proposta = formatos_roteiro.proposta_perguntas(parsed)
+    elif isinstance(parsed, formatos_roteiro.AjusteSaida):
+        erros = formatos_roteiro.problemas_ajuste(parsed)
+        if erros:
+            raise Invalida("; ".join(erros))
+        out.proposta = formatos_roteiro.proposta_ajuste(parsed)
     else:  # pragma: no cover
         raise TypeError(type(parsed).__name__)
     _avisos_do_guia(tipo, parsed, out, efetivo)

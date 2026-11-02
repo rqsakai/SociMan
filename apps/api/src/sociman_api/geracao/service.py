@@ -102,19 +102,21 @@ def _usa_seeds(passo: passos.Passo) -> bool:
 
 def _nova(db: Session, actor: Actor, perfil_id: uuid.UUID | None, passo: passos.Passo,
           alvo_tipo: GeracaoAlvo, alvo_id: uuid.UUID, params: dict[str, Any], n: int,
-          de_geracao_id: uuid.UUID | None = None) -> Geracao:
-    """Cria a geração na fila (seeds novas, R7), com a versão `created` e o gancho."""
+          de_geracao_id: uuid.UUID | None = None, motor: GeracaoMotor | None = None) -> Geracao:
+    """Cria a geração na fila (seeds novas, R7), com a versão `created` e o gancho. `motor` (T059):
+    o passo pode rodar noutra linha neste pedido (o acabamento `leve` no ffmpeg, sem GPU)."""
+    motor = motor or passo.motor
     if _usa_seeds(passo):
         params = {**params, "seeds": seeds.novas(db, alvo_tipo, alvo_id, passo.id, n)}
     else:
         params = {**params, "seeds": []}
     params["n"] = n
     g = Geracao(perfil_id=perfil_id, alvo_tipo=alvo_tipo, alvo_id=alvo_id, passo=passo.id,
-                motor=passo.motor, params=params, n_opcoes=n, status=GeracaoStatus.na_fila,
+                motor=motor, params=params, n_opcoes=n, status=GeracaoStatus.na_fila,
                 de_geracao_id=de_geracao_id, created_by=actor.user_id, updated_by=actor.user_id)
     db.add(g)
     db.flush()
-    details: dict[str, Any] = {"passo": passo.id, "motor": passo.motor.value,
+    details: dict[str, Any] = {"passo": passo.id, "motor": motor.value,
                                "alvoTipo": alvo_tipo.value, "alvoId": str(alvo_id),
                                "nOpcoes": n}
     if de_geracao_id is not None:
@@ -126,21 +128,26 @@ def _nova(db: Session, actor: Actor, perfil_id: uuid.UUID | None, passo: passos.
 
 def criar_para_alvo(db: Session, actor: Actor, perfil_id: uuid.UUID | None, passo_id: str,
                     alvo_tipo: GeracaoAlvo, alvo_id: uuid.UUID, params: dict[str, Any], *,
-                    perfil_base: base.Pedido = base.AUSENTE) -> Geracao:
+                    perfil_base: base.Pedido = base.AUSENTE, n: int | None = None,
+                    motor: GeracaoMotor | None = None) -> Geracao:
     """Pedido montado pelo cadastro do próprio alvo (o produto da 012, R1): o `params` já vem
     pronto do fluxo do alvo, que validou as referências. Seeds novas como no `pedir` (R7).
 
     `perfil_id` é o perfil base do item. Sem `perfil_base`, vale ele, como antes da 029 (os
     pedidos que o próprio cadastro encadeia não recusam o perfil arquivado); com ele (pedido
-    humano), passa pelo `resolver`."""
+    humano), passa pelo `resolver`. `n` (spec 031: o quadro do guiado pede 1 no wizard) fica
+    entre 1 e o `n_max` do passo; sem ele, o padrão do passo."""
     passo = _passo(passo_id)
     if passo.alvo_tipo != alvo_tipo:
         raise aplicadores.alvo_incompativel()
     _aplicador(passo)
+    if n is not None and not 1 <= n <= passo.n_max:
+        raise aplicadores.entrada_invalida("nOpcoes", f"de 1 a {passo.n_max} neste passo")
     if perfil_base is not base.AUSENTE:
         perfil = base.resolver(db, perfil_id, perfil_base)
         perfil_id = perfil.id if perfil is not None else None
-    return _nova(db, actor, perfil_id, passo, alvo_tipo, alvo_id, params, passo.n_padrao)
+    return _nova(db, actor, perfil_id, passo, alvo_tipo, alvo_id, params, n or passo.n_padrao,
+                 motor=motor)
 
 
 # ---- pedir ----
@@ -214,7 +221,8 @@ class EscolhaRecusada(Exception):
 
 
 _ROTEIRO_DA_POSICAO = text("""
-    SELECT r.modo::text AS modo, r.portoes AS portoes, r.status::text AS status
+    SELECT r.modo::text AS modo, r.portoes AS portoes, r.status::text AS status,
+           r.tipo_video::text AS tipo_video
       FROM roteiros r
       JOIN roteiro_cenas rc ON rc.roteiro_id = r.id
       JOIN cenas c ON c.id = rc.cena_id
@@ -226,14 +234,18 @@ _ROTEIRO_DA_POSICAO = text("""
 """)
 
 
-def escolher_automatico(db: Session, geracao: Geracao) -> Geracao:
+def escolher_automatico(db: Session, geracao: Geracao, *, opcao_unica: bool = False
+                        ) -> Geracao:
     """A **única** exceção à escolha humana da 021 (R9): a opção 1 do `cena.keyframe` pedido por
     um roteiro em modo automático ou com o portão KEYFRAMES desligado. Só `roteiros/automatico.py`
     chama (guarda AST), no gancho `rodando → revisao`, na mesma transação. Confere:
     1. o passo é `cena.keyframe` e a geração está em `revisao`;
     2. `params.extras.roteiroId` aponta um roteiro não arquivado com uma posição (a `ordem` do
        pedido, se houver) daquela cena ainda pedindo o keyframe, num status de keyframes;
-    3. o roteiro está em `automatico` ou com `portoes.keyframes = false`.
+    3. o roteiro está em `automatico` ou com `portoes.keyframes = false`; ou, com `opcao_unica`
+       (spec 031, R3), o roteiro é guiado, o pedido é de um quadro da sequência
+       (`extras.quadro`) e de **1 opção**: ela vira o quadro **provisório** para a cadeia seguir,
+       e o portão continua esperando a aprovação humana da sequência.
     Satisfeitas as três, escolhe o candidato `numero = 1` pelo mesmo caminho do `escolher` humano
     (o aplicador grava a versão da cena; o autor é o ator `system:roteiro`, e a versão da geração
     leva `details.automatico = true`). Senão, `EscolhaRecusada` (nada muda)."""
@@ -252,7 +264,10 @@ def escolher_automatico(db: Session, geracao: Geracao) -> Geracao:
                                              "ordem": ordem, "geracao": geracao.id}).first()
     if linha is None or linha.status not in ("gerando_keyframes", "aguardando_keyframes"):
         raise EscolhaRecusada("roteiro")
-    if linha.modo != "automatico" and (linha.portoes or {}).get("keyframes", True):
+    if opcao_unica:
+        if linha.tipo_video is None or extras.get("quadro") is None or geracao.n_opcoes != 1:
+            raise EscolhaRecusada("opcao_unica")
+    elif linha.modo != "automatico" and (linha.portoes or {}).get("keyframes", True):
         raise EscolhaRecusada("portao")
     cand = db.scalar(select(GeracaoCandidato).where(GeracaoCandidato.geracao_id == geracao.id,
                                                     GeracaoCandidato.numero == 1))
@@ -267,7 +282,8 @@ def escolher_automatico(db: Session, geracao: Geracao) -> Geracao:
     transicao(db, geracao, GeracaoStatus.escolhido)
     _record(db, actor, geracao, "updated", before,
             {"acao": "escolher", "candidatoId": str(cand.id), "numero": cand.numero,
-             "automatico": True, "roteiroId": str(roteiro_id)})
+             "automatico": True, "roteiroId": str(roteiro_id),
+             **({"opcaoUnica": True} if opcao_unica else {})})
     db.flush()
     return geracao
 

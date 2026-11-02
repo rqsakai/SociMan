@@ -71,7 +71,7 @@ const Aprendizado = lazy(() => import("./pages/aprendizado/Aprendizado"));
 // 029-ai-studio: uma rota lazy por lista.
 // 011-roteiros-video-local
 const RoteirosList = lazy(() => import("./pages/roteiros/RoteirosList"));
-const RoteiroNovo = lazy(() => import("./pages/roteiros/RoteiroNovo"));
+const VideoNovo = lazy(() => import("./pages/roteiros/VideoNovo"));
 const RoteiroDetalhe = lazy(() => import("./pages/roteiros/RoteiroDetalhe"));
 const EstudioAvatares = lazy(() => import("./pages/estudio/Avatares"));
 const EstudioCenarios = lazy(() => import("./pages/estudio/Cenarios"));
@@ -193,7 +193,7 @@ export default function App() {
                 {/* 029-ai-studio */}
                 <Route path="/app/estudio" element={<EstudioRedirect />} />
                 <Route path="/app/estudio/videos" element={<Suspense fallback={carregando}><RoteirosList /></Suspense>} />
-                <Route path="/app/estudio/videos/novo" element={<Suspense fallback={carregando}><RoteiroNovo /></Suspense>} />
+                <Route path="/app/estudio/videos/novo" element={<Suspense fallback={carregando}><VideoNovo /></Suspense>} />
                 <Route path="/app/roteiros/:id" element={<Suspense fallback={carregando}><RoteiroDetalhe /></Suspense>} />
                 <Route path="/app/estudio/avatares" element={<Suspense fallback={carregando}><EstudioAvatares /></Suspense>} />
                 <Route path="/app/estudio/cenarios" element={<Suspense fallback={carregando}><EstudioCenarios /></Suspense>} />

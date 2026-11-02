@@ -78,6 +78,19 @@ def test_json_invalido_duas_vezes(anthropic_fake):  # noqa: F811
     anthropic_fake.responder(mensagem({"x": 1}), mensagem({"y": 2}))
     res = _gerar(anthropic_fake, "perfil.bio")
     assert res.erro_code == "invalid"
+    assert res.erro_detalhe == "a resposta não veio no formato JSON pedido"
+
+
+def test_invalid_guarda_o_motivo_da_recusa(anthropic_fake):  # noqa: F811
+    """T059 (spec 031): a recusa da validação fica no resultado, para a chamada e o erro da
+    geração dizerem o que veio errado (antes só saía "fora do formato")."""
+    anthropic_fake.responder(itens("Olha isso!"), itens("olha isso!"))
+    res = _gerar(anthropic_fake, "kit.bordoes", {"itens": ["Olha isso!"]},
+                 Excluir(atuais=("Olha isso!",)))
+    assert res.erro_code == "invalid" and res.erro_detalhe
+    assert "nenhuma sugestão nova e válida" in res.erro_detalhe
+    anthropic_fake.responder(texto("Título bom"))
+    assert _gerar(anthropic_fake, "postagem.titulo").erro_detalhe is None
 
 
 def test_timeout_recusa_e_erros_http(anthropic_fake):  # noqa: F811

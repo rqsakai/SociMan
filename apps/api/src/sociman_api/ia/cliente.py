@@ -46,6 +46,7 @@ class Resultado:
     validada: saida.Validada | None = None
     erro_code: str | None = None  # timeout | refusal | invalid | api_error
     erro_status: int | None = None  # status HTTP do Claude, se houve
+    erro_detalhe: str | None = None  # `invalid`: o que a validação recusou (spec 031, T059)
     uso: Uso = field(default_factory=Uso)
     duration_ms: int = 0
 
@@ -86,10 +87,13 @@ class IaClient:
     def gerar(self, tipo: TipoCampo, system: list[dict[str, Any]],
               user: Callable[[str | None], str | list[dict[str, Any]]],
               excluir: saida.Excluir = saida.NADA,
-              efetivo: GuiaEfetivo = saida.SEM_GUIA) -> Resultado:
+              efetivo: GuiaEfetivo = saida.SEM_GUIA,
+              extra: Callable[[BaseModel], list[str]] | None = None) -> Resultado:
         """`user(erro_anterior)` monta a mensagem do usuário (com o erro na 2ª tentativa); pode
         devolver blocos de conteúdo (texto e imagens dos quadros, spec 023).
-        `efetivo`: o guia que vale nas garantias (fixas e proibidas, spec 017)."""
+        `efetivo`: o guia que vale nas garantias (fixas e proibidas, spec 017).
+        `extra` (spec 031): os problemas que dependem do alvo (a soma e o orçamento do plano do
+        vídeo guiado), somados aos do formato na decisão da 2ª tentativa."""
         res = Resultado(model=self.model)
         schema = saida.SCHEMAS[tipo.formato]
         inicio = time.monotonic()
@@ -109,7 +113,8 @@ class IaClient:
                 parsed = getattr(resposta, "parsed_output", None)
                 melhor = parsed or melhor
                 problemas = (["a resposta não veio no formato JSON pedido"] if parsed is None
-                             else saida.problemas(tipo, parsed, excluir, efetivo))
+                             else [*saida.problemas(tipo, parsed, excluir, efetivo),
+                                   *(extra(parsed) if extra is not None else [])])
                 pode_repetir = (tentativa == 1
                                 and time.monotonic() - t0 < SEGUNDA_TENTATIVA_ATE_S)
                 if problemas and pode_repetir:
@@ -117,11 +122,13 @@ class IaClient:
                     continue
                 if melhor is None:
                     res.erro_code = "invalid"
+                    res.erro_detalhe = _detalhe(erro_anterior, "; ".join(problemas))
                     break
                 try:
                     res.validada = saida.finalizar(tipo, melhor, excluir, efetivo)
-                except saida.Invalida:
+                except saida.Invalida as exc:
                     res.erro_code = "invalid"
+                    res.erro_detalhe = _detalhe(erro_anterior, str(exc))
                 break
         except anthropic.APITimeoutError:
             res.erro_code = "timeout"
@@ -132,7 +139,17 @@ class IaClient:
             res.erro_code = "api_error"
             log.warning("Claude fora do alcance para o assistente")
         res.duration_ms = int((time.monotonic() - inicio) * 1000)
+        if res.erro_detalhe:  # o motivo vai ao log e a `ia_chamadas.explicacao` (sem o texto)
+            log.warning("Claude: resposta de %s recusada pela validação: %s", tipo.id,
+                        res.erro_detalhe[:500])
         return res
+
+
+def _detalhe(anterior: str | None, atual: str) -> str:
+    """O que a validação recusou, com a 1ª tentativa quando foi outro motivo."""
+    if anterior and anterior != atual:
+        return f"1ª tentativa: {anterior} | 2ª tentativa: {atual}"
+    return atual
 
 
 def get_ia_client() -> IaClient | None:

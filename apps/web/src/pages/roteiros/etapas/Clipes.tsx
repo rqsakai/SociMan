@@ -9,6 +9,7 @@ import { Field, NativeSelect } from "@/components/ui/field";
 import { api } from "@/lib/api";
 import { MOTORES, motorLabel, roteiroKey, type CenaMotor, type RoteiroPosicao } from "@/lib/roteiros";
 import { Andamentos, BotaoAprovar, type EtapaProps } from "./comum";
+import { TrechosAvancado } from "./Guiado";
 
 // Etapa Clipes (spec 011, US4, T038): por posição, a tomada do roteiro (player), o motor, "Regerar
 // clipe" (com outro motor, se quiser), as tomadas da cena (com "keyframe antigo" e "arquivo
@@ -18,9 +19,24 @@ export function Clipes({ roteiro, rodar, travado }: EtapaProps) {
     <div className="space-y-4" data-testid="etapa-clipes">
       <BotaoAprovar roteiro={roteiro} rodar={rodar} travado={travado} portao="clipes" />
       <ol className="grid gap-4 lg:grid-cols-2" aria-label="Clipes por cena">
-        {roteiro.posicoes.map((p) => (
-          <ClipePosicao key={p.ordem} roteiroId={roteiro.id} version={roteiro.version} posicao={p} rodar={rodar} travado={travado} />
-        ))}
+        {roteiro.posicoes.map((p) =>
+          // 031: no guiado, um clipe por trecho (par de quadros vizinhos), com as versões.
+          p.trechos != null ? (
+            <li key={p.ordem} className="space-y-3 rounded-xl border p-3" data-testid={`clipe-cena-${p.ordem + 1}`}>
+              <h3 className="text-sm font-semibold">
+                Cena {p.ordem + 1}: {p.cena.nome}
+              </h3>
+              {p.aviso && (
+                <p role="status" className="text-sm text-warning-foreground" data-testid="aviso-posicao">
+                  {p.aviso}
+                </p>
+              )}
+              <TrechosAvancado roteiro={roteiro} posicao={p} rodar={rodar} travado={travado} />
+            </li>
+          ) : (
+            <ClipePosicao key={p.ordem} roteiroId={roteiro.id} version={roteiro.version} posicao={p} rodar={rodar} travado={travado} />
+          ),
+        )}
       </ol>
     </div>
   );

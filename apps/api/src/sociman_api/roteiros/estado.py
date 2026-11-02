@@ -9,6 +9,10 @@ derivações, sem gravar nada além dos campos técnicos das posições (`recalc
   outras candidatas são a escolhida da cena (local) e a local mais recente;
 - **assinatura** da prévia: a narração e (ordem, tomada, duração) de cada posição. A prévia e o
   acabamento guardam a assinatura no `params.extras`; mudou, deixaram de ser atuais.
+
+Spec 031 (vídeo guiado): a duração da posição é fixa (`trechos × trecho_base_s`, R4) e não sai
+da fala; a tomada útil é **por trecho** (`tomada_serve_trecho`, R8: o par de quadros vizinhos é a
+chave do reuso), e a assinatura leva a tomada de cada trecho. Os roteiros da 011 seguem iguais.
 """
 
 import hashlib
@@ -22,7 +26,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from sociman_api.assets.models import Asset, AssetTipo
-from sociman_api.cenas.models import Cena, CenaTomada, TomadaOrigem
+from sociman_api.cenas import quadros as cenas_quadros
+from sociman_api.cenas.models import Cena, CenaQuadro, CenaTomada, TomadaOrigem
 from sociman_api.geracao.models import TERMINADOS, Geracao, GeracaoStatus
 from sociman_api.roteiros import pronuncia, tempos
 from sociman_api.roteiros.models import (
@@ -140,9 +145,35 @@ def posicoes(r: Roteiro) -> list[RoteiroCena]:
     return sorted(r.posicoes_rel, key=lambda p: p.ordem)
 
 
+def duracao_guiada(r: Roteiro, p: RoteiroCena) -> Decimal | None:
+    """Spec 031 (R4): a duração fixa da posição do guiado (nula sem `trechos`)."""
+    if p.trechos is None or r.trecho_base_s is None:
+        return None
+    return Decimal(p.trechos * r.trecho_base_s)
+
+
+def _tempos_guiados(db: Session, r: Roteiro) -> bool:
+    pos = posicoes(r)
+    inicio = Decimal(0)
+    ok = bool(pos)
+    for p in pos:
+        duracao = duracao_guiada(r, p)
+        novo = (inicio, duracao) if duracao is not None else (None, None)
+        if (p.inicio_s, p.duracao_s) != novo:
+            p.inicio_s, p.duracao_s = novo
+        if duracao is None:
+            ok = False
+        else:
+            inicio += duracao
+    db.flush()
+    return ok
+
+
 def recalcular_tempos(db: Session, r: Roteiro) -> bool:
     """`inicio_s`/`duracao_s` das posições pela narração ativa (R6), só quando ela é atual; senão
-    nulos. Devolve se as durações existem."""
+    nulos. No guiado (031), pela grade, com ou sem narração. Devolve se as durações existem."""
+    if r.guiado:
+        return _tempos_guiados(db, r)
     n = narracao_ativa(db, r) if narracao_atual(db, r) else None
     pos = posicoes(r)
     limites = None
@@ -160,6 +191,24 @@ def recalcular_tempos(db: Session, r: Roteiro) -> bool:
     return limites is not None
 
 
+def fala_guiada(db: Session, r: Roteiro
+                ) -> tuple[list[tempos.BlocoFala], list[dict[str, Any]]] | None:
+    """Spec 031 (R4): os blocos de fala por slot e os avisos `fala_nao_cabe` do guiado, pela
+    narração atual e pela grade. Nulo sem narração atual, sem durações ou com as frases fora das
+    posições."""
+    n = narracao_ativa(db, r) if narracao_atual(db, r) else None
+    pos = posicoes(r)
+    duracoes = [duracao_guiada(r, p) for p in pos]
+    if n is None or not pos or any(d is None for d in duracoes):
+        return None
+    try:
+        return tempos.fala_por_slot(n.tempos, [list(p.frases) for p in pos],
+                                    [float(d) for d in duracoes], float(n.velocidade),
+                                    ordens=[p.ordem for p in pos])
+    except tempos.TemposInvalidos:
+        return None
+
+
 # ---- tomadas ----
 
 def _ms(duracao_s: Decimal | float) -> int:
@@ -174,6 +223,8 @@ def tomada_serve(t: CenaTomada | None, cena: Cena, duracao_s: Decimal | float, *
         return False
     if t.origem == TomadaOrigem.flow_manual:
         return aceita_flow
+    if t.trecho is not None:  # 031: a tomada de um trecho só serve ao trecho (R8)
+        return False
     return t.keyframe_image_id is not None and t.keyframe_image_id == cena.keyframe_inicial_id
 
 
@@ -195,10 +246,64 @@ def tomada_util(db: Session, cena: Cena, duracao_s: Decimal | float,
     return next((t for t in locais if tomada_serve(t, cena, duracao_s, aceita_flow=False)), None)
 
 
+# ---- tomadas por trecho (spec 031, R8) ----
+
+FRACAO_MIN_TRECHO = 0.95  # o `setpts` cobre até 5% (R2)
+
+
+def par_do_trecho(quadros: list[CenaQuadro], t: int) -> tuple[uuid.UUID | None,
+                                                              uuid.UUID | None]:
+    """As imagens dos quadros t e t+1 (o início e o fim do trecho t)."""
+    por_ordem = {q.ordem: q.image_id for q in quadros}
+    return por_ordem.get(t), por_ordem.get(t + 1)
+
+
+def tomada_serve_trecho(db: Session, tomada: CenaTomada | None, cena: Cena, t: int,
+                        base_s: float, quadros: list[CenaQuadro] | None = None) -> bool:
+    """R8: a tomada serve ao trecho `t` da cena quando é da mesma cena e do mesmo trecho, não está
+    arquivada nem limpa, começa no quadro t e termina no t+1 de agora e dura pelo menos 95% do
+    trecho-base (o `setpts` cobre a diferença). `quadros` evita reler a sequência."""
+    if tomada is None or tomada.cena_id != cena.id or tomada.trecho != t:
+        return False
+    if tomada.archived or tomada.limpa_em is not None:
+        return False
+    if tomada.duracao_ms < math.floor(float(base_s) * 1000 * FRACAO_MIN_TRECHO):
+        return False
+    inicio, fim = par_do_trecho(quadros if quadros is not None
+                                else cenas_quadros.ativos(db, cena.id), t)
+    return inicio is not None and fim is not None and tomada.keyframe_image_id == inicio \
+        and tomada.keyframe_fim_image_id == fim
+
+
+def tomada_util_trecho(db: Session, cena: Cena, t: int, base_s: float,
+                       atual_id: uuid.UUID | None) -> CenaTomada | None:
+    """A do trecho da posição, senão a mais recente da cena que serve (reuso total, R7)."""
+    quadros = cenas_quadros.ativos(db, cena.id)
+    atual = db.get(CenaTomada, atual_id) if atual_id else None
+    if tomada_serve_trecho(db, atual, cena, t, base_s, quadros):
+        return atual
+    inicio, fim = par_do_trecho(quadros, t)
+    if inicio is None or fim is None:
+        return None
+    candidatas = db.scalars(select(CenaTomada).where(
+        CenaTomada.cena_id == cena.id, CenaTomada.trecho == t,
+        CenaTomada.archived_at.is_(None), CenaTomada.limpa_em.is_(None),
+        CenaTomada.keyframe_image_id == inicio, CenaTomada.keyframe_fim_image_id == fim)
+        .order_by(CenaTomada.created_at.desc(), CenaTomada.id))
+    return next((x for x in candidatas
+                 if tomada_serve_trecho(db, x, cena, t, base_s, quadros)), None)
+
+
 def assinatura(r: Roteiro) -> str:
-    carga = {"narracao": str(r.narracao_id),
-             "posicoes": [[p.ordem, str(p.tomada_id), f"{Decimal(str(p.duracao_s or 0)):.3f}"]
-                          for p in posicoes(r)]}
+    """A da 011 (sem mudança para ela); no guiado, cada posição leva também a tomada de cada
+    trecho, na ordem."""
+    linhas = []
+    for p in posicoes(r):
+        linha = [p.ordem, str(p.tomada_id), f"{Decimal(str(p.duracao_s or 0)):.3f}"]
+        if p.trechos is not None:
+            linha.append([str(x.tomada_id) for x in p.trechos_ordenados()])
+        linhas.append(linha)
+    carga = {"narracao": str(r.narracao_id), "posicoes": linhas}
     return hashlib.sha256(json.dumps(carga, sort_keys=True).encode()).hexdigest()
 
 

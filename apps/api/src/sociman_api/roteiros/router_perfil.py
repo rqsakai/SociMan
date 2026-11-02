@@ -41,10 +41,12 @@ def listar(
                       arquivados=arquivados, q=q, cursor=cursor, limite=limite)
 
 
-@router.post("/roteiros", operation_id="roteiros_criar", status_code=201,
+@router.post("/roteiros", operation_id="roteiros_criar", status_code=201, deprecated=True,
              response_model=schemas.RoteiroDetalhe, responses=_errors(400, 401, 403, 404, 409))
 def criar(perfil_id: UUID, body: schemas.RoteiroIn, actor: RequireHuman,
           db: Db) -> schemas.RoteiroDetalhe:
+    """Deprecated (spec 031, FR-018): a SPA cria pelo `POST /api/roteiros` (o guiado); fica para
+    o MCP e os testes da 011."""
     return svc.detalhe_out(db, svc.criar(db, actor, perfil_id, body))
 
 

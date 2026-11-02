@@ -1,13 +1,13 @@
 import { expect, test, type APIRequestContext, type Locator, type Page } from "@playwright/test";
 import { OWNER } from "./fixtures";
-import { apiToken, compose, createPerfilViaApi, login, nav, pngBuffer } from "./helpers";
+import { apiToken, compose, createPerfilViaApi, login, pngBuffer } from "./helpers";
 
 // Spec 011 (T057): roteiros com vídeo local, com o Claude, o ComfyUI e o shop-tts falsos
 // (`e2e/fakes/server.py` e `geracao_fake.py`, no `openshorts-fake`) e o serviço `gerador`. O plano
 // tem 3 frases, uma por cena (todas novas: o perfil não tem cena para reaproveitar); os clipes e o
 // upscale devolvem o mp4 fixo de 8 s; a narração é o wav fixo de 6 s. A montagem e o acabamento
 // usam o ffmpeg de verdade do gerador.
-// - revisar: criar pela tela, planejar, aprovar o texto e a narração (com a pronúncia do perfil no
+// - revisar: criar (pela API da 011), planejar, aprovar o texto e a narração (com a pronúncia do perfil no
 //   pedido ao shop-tts), usar uma opção de keyframe e enviar outro pronto, aprovar os clipes e o
 //   final; o conteúdo abre com o selo "Gerado por IA" e o vínculo com o roteiro;
 // - automático: criar, ligar o automático e planejar (3 ações humanas, SC-001) e o roteiro chega
@@ -125,25 +125,20 @@ async function confirmar(page: Page, botao: string, escopo: Locator): Promise<vo
   await expect(dialogo).toBeHidden();
 }
 
-// Pela tela: AI Studio › Vídeos › Novo vídeo, sem avatar (vídeo só de produto) e com a voz.
-async function criarPelaTela(page: Page, b: Base, nome: string): Promise<string> {
-  await nav(page, "Vídeos");
-  await expect(page.getByRole("heading", { level: 1, name: "Vídeos" })).toBeVisible();
-  await page.getByRole("link", { name: "Novo vídeo" }).first().click();
-  await expect(page).toHaveURL(/\/app\/estudio\/videos\/novo/);
-  const form = page.getByTestId("roteiro-novo");
-  await form.getByLabel("Perfil do vídeo").selectOption(b.perfilId);
-  await form.getByLabel("Nome do vídeo").fill(nome);
-  await form.getByLabel("Brief").fill("Short canelado de cintura alta, venda animada.");
-  const produtos = form.getByTestId("roteiro-produtos");
-  await produtos.getByLabel("Produto aprovado").selectOption(b.produtoId);
-  await produtos.getByRole("button", { name: "Adicionar produto" }).click();
-  await expect(produtos.getByRole("button", { name: /^Tirar / })).toHaveCount(1);
-  await form.getByLabel("Avatar").selectOption("");
-  await form.getByLabel("Voz").selectOption(b.vozId);
-  await form.getByRole("button", { name: "Criar vídeo" }).click();
-  await expect(page).toHaveURL(/\/app\/roteiros\/[0-9a-f-]+$/, { timeout: 15_000 });
-  return page.url().split("/").at(-1) as string;
+// Pela API da 011 (`POST /api/perfis/{id}/roteiros`, deprecated): o "Novo vídeo" da tela agora é o
+// guiado da 031 (`e2e/video-guiado.spec.ts`). Sem avatar (vídeo só de produto) e com a voz; o
+// roteiro abre na tela como antes.
+async function criarPelaApi(page: Page, request: APIRequestContext, b: Base, nome: string): Promise<string> {
+  const r = await json<{ id: string }>(
+    await request.post(`/api/perfis/${b.perfilId}/roteiros`, {
+      headers: b.auth,
+      data: { nome, brief: "Short canelado de cintura alta, venda animada.", avatarId: null, vozId: b.vozId, produtos: [{ produtoId: b.produtoId }] },
+    }),
+    201,
+  );
+  await page.goto(`/app/roteiros/${r.id}`);
+  await expect(page).toHaveURL(new RegExp(`/app/roteiros/${r.id}$`));
+  return r.id;
 }
 
 const status = (page: Page) => page.getByTestId("roteiro-status");
@@ -161,8 +156,11 @@ test("revisar: do plano ao conteúdo com todos os portões", async ({ page, requ
   const b = await preparar(request);
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
-  const roteiroId = await criarPelaTela(page, b, "Short canelado · revisar");
+  const roteiroId = await criarPelaApi(page, request, b, "Short canelado · revisar");
   await expect(status(page)).toHaveText("Rascunho");
+  // 031 (FR-018): o roteiro da 011 abre no avançado, sem o switch, e a tela diz por quê.
+  await expect(page.getByTestId("modo-so-avancado")).toBeVisible();
+  await expect(page.getByRole("radiogroup", { name: "Modo da tela" })).toHaveCount(0);
   await expect(page.getByTestId("roteiro-pecas")).toContainText("Roberta vendas");
 
   // 1. Texto: o plano chega com 3 cenas novas; aprovar.
@@ -238,7 +236,7 @@ test("automático: termina sem parar com no máximo 3 ações humanas (SC-001)",
   await login(page, OWNER.email, OWNER.password);
   await expect(page).toHaveURL(/\/app$/);
 
-  const roteiroId = await criarPelaTela(page, b, "Short canelado · automático");
+  const roteiroId = await criarPelaApi(page, request, b, "Short canelado · automático");
   acoes++; // 1. criar
 
   const portoes = page.getByTestId("portoes");

@@ -105,6 +105,8 @@ _TABLES += ("produto_variantes", "produtos")
 # cobre o ciclo `narracao_id`).
 _TABLES += ("roteiro_entregas", "roteiro_narracoes", "roteiro_cenas", "roteiro_produtos",
             "roteiros", "roteiro_padroes", "pronuncias")
+# Spec 031: o vídeo guiado (a conversa é só de inserção; o TRUNCATE passa).
+_TABLES += ("roteiro_conversa", "roteiro_trechos", "cena_quadros")
 # Spec 026: o lago, a operação e a infra da coleta (o CASCADE cobre as FKs e os ciclos; os
 # triggers só de inserção não disparam no TRUNCATE). A linha única de `coleta_config` some com o
 # TRUNCATE (sem linha = padrões, desligada).

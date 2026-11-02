@@ -29,8 +29,11 @@ _BOCA = {
     "The person": ("The person's mouth stays closed in a gentle smile the whole time, they do not "
                    "speak, their jaw does not move."),
 }
+# T059 (2026-10-15): o MiniMax reenquadrou um corpo inteiro para plano médio fechado; o
+# enquadramento do 1º quadro é o do clipe, salvo quando a ação pede outra coisa.
 AMBIENTE_FIXO = ("The room, furniture, walls and lighting stay exactly the same for the whole "
-                 "shot.")
+                 "shot. The camera keeps the framing and distance of the first frame; no zoom, "
+                 "crop or reframing unless the action asks for it.")
 REALISMO = "Natural real-time motion, realistic skin and fabric texture, sharp detail."
 
 # FR-028: mudança de luz recolore o produto; "phone video" desenha a moldura do celular. Só avisam.
